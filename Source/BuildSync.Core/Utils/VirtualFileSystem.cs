@@ -34,7 +34,7 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
-        public int LastChildRefreshTime = 0;
+        public ulong LastChildRefreshTime = 0;
 
         /// <summary>
         /// 
@@ -106,7 +106,7 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
-        public int ChildrenRefreshInterval = 60 * 1000;
+        public ulong ChildrenRefreshInterval = 60 * 1000;
 
         /// <summary>
         /// 
@@ -145,11 +145,11 @@ namespace BuildSync.Core.Utils
         /// <param name="Node"></param>
         private void RefreshNodeChildren(VirtualFileSystemNode Node)
         {
-            int ElapsedTime = Environment.TickCount - Node.LastChildRefreshTime;
+            ulong ElapsedTime = TimeUtils.Ticks - Node.LastChildRefreshTime;
             if (Node.LastChildRefreshTime == 0 || (ElapsedTime > ChildrenRefreshInterval && AutoRefreshChildren))
             {
                 OnRequestChildren?.Invoke(this, Node.Path);
-                Node.LastChildRefreshTime = Environment.TickCount;
+                Node.LastChildRefreshTime = TimeUtils.Ticks;
             }
         }
 
@@ -281,6 +281,20 @@ namespace BuildSync.Core.Utils
             }
 
             return Child;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public void RemoveNode(string Path)
+        {
+            VirtualFileSystemNode Node = GetNodeByPath(Path);
+            if (Node != null && Node.Parent != null)
+            {
+                OnNodeRemoved?.Invoke(this, Node);
+                Node.Parent.Children.Remove(Node);
+            }
         }
 
         /// <summary>

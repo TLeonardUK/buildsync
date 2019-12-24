@@ -199,18 +199,21 @@ namespace BuildSync.Core.Downloads
             }
 
             // Go through each manifest download and pause any that are no longer relevant.
-            foreach (ManifestDownloadState State in ManifestDownloader.States.States.ToArray())
+            foreach (ManifestDownloadState Downloader in ManifestDownloader.States.States)
             {
-                if (!ActiveManifestIds.Contains(State.ManifestId))
+                if (!ActiveManifestIds.Contains(Downloader.ManifestId))
                 {
-                    ManifestDownloadState Downloader = ManifestDownloader.GetDownload(State.ManifestId);
-                    if (Downloader != null)
+                    if (!Downloader.Paused)
                     {
-                        if (!Downloader.Paused)
-                        {
-                            ManifestDownloader.PauseDownload(State.ManifestId);
-                        }
+                        ManifestDownloader.PauseDownload(Downloader.ManifestId);
                     }
+
+                    Downloader.Active = false;
+                }
+                else
+                {
+                    Downloader.Active = true;
+                    Downloader.LastActive = DateTime.Now;
                 }
             }
         }

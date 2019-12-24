@@ -19,11 +19,16 @@ namespace BuildSync.Client.Forms
     public partial class MainForm : Form
     {
         #region Fields
-        
+
         /// <summary>
         /// 
         /// </summary>
         private bool ForcedExit = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ConsoleForm ConsoleOutputForm = null;
 
         #endregion
         #region Methods
@@ -119,6 +124,24 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ViewConsoleClicked(object sender, EventArgs e)
+        {
+            if (ConsoleOutputForm != null)
+            {
+                ConsoleOutputForm.Show(this);
+            }
+            else
+            {
+                ConsoleOutputForm = new ConsoleForm();
+                ConsoleOutputForm.Show(this);
+            }
+        }
+
+        /// <summary>
         ///     Invoked when the user clicks the notify icon
         /// </summary>
         /// <param name="sender">Object that invoked this event.</param>
@@ -196,6 +219,11 @@ namespace BuildSync.Client.Forms
             {
                 peerCountLabel.Text = "Unable to connect to server '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
                 peerCountLabel.ForeColor = Color.Red;
+            }
+            else if (!Program.AreDownloadsAllowed())
+            {
+                peerCountLabel.Text = "Traffic disabled by bandwidth settings";
+                peerCountLabel.ForeColor = Color.Orange;
             }
             else
             {

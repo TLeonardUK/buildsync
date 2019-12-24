@@ -119,7 +119,16 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        private long StorageMaxSize = 0;
+        private List<string> PendingOrphanCleanups = new List<string>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long StorageMaxSize
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// 
@@ -130,6 +139,26 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         private const int IdealDownloadQueueSize = 100;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool InternalTrafficEnabled = true;
+        public bool TrafficEnabled
+        {
+            get { return InternalTrafficEnabled; }
+            set
+            {
+                if (InternalTrafficEnabled != value)
+                {
+                    if (!value && DownloadQueue != null)
+                    {
+                        DownloadQueue.Clear();
+                    }
+                    InternalTrafficEnabled = value;
+                }
+            }
+        }
 
         /// <summary>
         /// 
@@ -186,9 +215,16 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public BlockListState GetBlockListState()
+        public BlockListState GetBlockListState(bool ReturnEmptyIfTrafficDisabled = true)
         {
             BlockListState Result = new BlockListState();
+            
+            if (ReturnEmptyIfTrafficDisabled && !TrafficEnabled)
+            {
+                Result.States = new ManifestBlockListState[0];
+                return Result;
+            }
+
             Result.States = new ManifestBlockListState[StateCollection.States.Count];
 
             for (int i = 0; i < StateCollection.States.Count; i++)
@@ -230,6 +266,8 @@ namespace BuildSync.Core.Downloads
                 State.Manifest = ManifestRegistry.GetManifestById(State.ManifestId);
             }
 
+            CleanUpOrphanBuilds();
+
             StateDirtyCount++;
         }
 
@@ -264,7 +302,7 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Priority"></param>
-        public ManifestDownloadState AddLocalDownload(BuildManifest Manifest, string LocalPath)
+        public ManifestDownloadState AddLocalDownload(BuildManifest Manifest, string LocalPath, bool Available = true)
         {
             ManifestDownloadState State = GetDownload(Manifest.Guid);
             if (State != null)
@@ -281,10 +319,11 @@ namespace BuildSync.Core.Downloads
             State.Manifest = Manifest;
             State.State = ManifestDownloadProgressState.Complete;
             State.LocalFolder = Path.Combine(StorageRootPath, State.ManifestId.ToString());
+            State.LastActive = Available ? DateTime.Now : (DateTime.Now - new TimeSpan(1000, 0, 0));
 
             // We have everything.
             State.BlockStates.Resize((int)Manifest.BlockCount);
-            State.BlockStates.SetAll(true);
+            State.BlockStates.SetAll(Available);
 
             Console.WriteLine("Added local download of manifest: {0}", Manifest.Guid.ToString());
             StateCollection.States.Add(State);
@@ -314,6 +353,7 @@ namespace BuildSync.Core.Downloads
             State.Manifest = null;
             State.State = ManifestDownloadProgressState.RetrievingManifest;
             State.LocalFolder = Path.Combine(StorageRootPath, State.ManifestId.ToString());
+            State.LastActive = DateTime.Now;
 
             Console.WriteLine("Started download of manifest: {0}", ManifestId.ToString());
             StateCollection.States.Add(State);
@@ -403,11 +443,11 @@ namespace BuildSync.Core.Downloads
                         else
                         {
                             // Request manifest from server.
-                            int Elapsed = Environment.TickCount - State.LastManifestRequestTime;
+                            ulong Elapsed = TimeUtils.Ticks - State.LastManifestRequestTime;
                             if (State.LastManifestRequestTime == 0 || Elapsed > ManifestRequestInterval)
                             {
                                 OnManifestRequested?.Invoke(State.ManifestId);
-                                State.LastManifestRequestTime = Environment.TickCount;
+                                State.LastManifestRequestTime = TimeUtils.Ticks;
                             }
                         }
 
@@ -566,6 +606,103 @@ namespace BuildSync.Core.Downloads
 
             DownloadInitializationInProgress = AnyInitialising;
             DownloadValidationInProgress = AnyValidating;
+
+            PruneDiskSpace();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void PruneDiskSpace()
+        {
+            long TotalSize = 0;
+            foreach (ManifestDownloadState State in StateCollection.States)
+            {
+                if (State.Manifest != null)
+                {
+                    TotalSize += State.Manifest.GetTotalSize();
+                }
+            }
+
+            if (TotalSize > StorageMaxSize)
+            {
+                // Select manifests for deletion.
+                List<ManifestDownloadState> DeletionCandidates = new List<ManifestDownloadState>();
+                foreach (ManifestDownloadState State in StateCollection.States)
+                {
+                    if (!State.Active)
+                    {
+                        DeletionCandidates.Add(State); 
+                    }
+                }
+
+                DeletionCandidates.Sort((Item1, Item2) => -Item1.LastActive.CompareTo(Item2.LastActive));
+
+                // Delete this state.
+                if (DeletionCandidates.Count > 0)
+                {
+                    ManifestDownloadState State = DeletionCandidates[0];
+
+                    Console.WriteLine("Deleting download to prune storage space: {0}", State.ManifestId.ToString());
+
+                    // Remove state from our state collection.
+                    StateCollection.States.Remove(State);
+                    StateDirtyCount++;
+
+                    // Ask IO queue to delete the folder.
+                    IOQueue.DeleteDir(State.LocalFolder, null);
+
+                    // Remove the manifest from the registry.
+                    ManifestRegistry.UnregisterManifest(State.ManifestId);
+                }
+
+                CleanUpOrphanBuilds();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void CleanUpOrphanBuilds()
+        {
+            if (Directory.Exists(StorageRootPath))
+            {
+                // Check if there are any folders in the storage directory that do not have a manifest associated with them.
+                foreach (string Dir in Directory.GetDirectories(StorageRootPath))
+                {
+                    Guid ManifestId = Guid.Empty;
+
+                    if (Guid.TryParse(Path.GetFileName(Dir), out ManifestId))
+                    {
+                        BuildManifest Manifest = ManifestRegistry.GetManifestById(ManifestId);
+                        if (Manifest == null)
+                        {
+                            lock (PendingOrphanCleanups)
+                            {
+                                Console.WriteLine("Deleting directory in storage folder that appears to have no matching manifest (probably a previous failed delete): {0}", Dir);
+                                if (!PendingOrphanCleanups.Contains(Dir))
+                                {
+                                    PendingOrphanCleanups.Add(Dir);
+                                    IOQueue.DeleteDir(Dir, (bool bSuccess) =>
+                                    {
+                                        PendingOrphanCleanups.Remove(Dir);
+                                    });
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // If we have a manifest but no download state add as local download
+                            // with no available blocks so we can clean it up if needed for space.
+                            if (GetDownload(ManifestId) == null)
+                            {
+                                Console.WriteLine("Found build directory for manifest, but no download state, added as local download, might have been orphaned due to settings save failure?: {0}", Dir);
+                                AddLocalDownload(Manifest, Dir, false);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -770,7 +907,7 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         public void UpdateBlockQueue()
         {
-            if (AvailableBlocks == null)
+            if (AvailableBlocks == null || !TrafficEnabled)
             {
                 return;
             }

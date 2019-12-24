@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
@@ -11,6 +12,7 @@ using System.Timers;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
 
@@ -74,7 +76,7 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        private static int LastSettingsSaveTime = Environment.TickCount;
+        private static ulong LastSettingsSaveTime = TimeUtils.Ticks;
 
         /// <summary>
         /// 
@@ -105,7 +107,7 @@ namespace BuildSync.Client
             PollTimer = new System.Timers.Timer(1);
             PollTimer.Elapsed += (object sender, ElapsedEventArgs e) =>
             {
-                lock (PollTimer)
+                if (Monitor.TryEnter(PollTimer))
                 {
                     // Make sure it invokes on main thread, maybe spend some time
                     // make all the ui->program interaction thread safe?
@@ -116,6 +118,8 @@ namespace BuildSync.Client
                             OnPoll();
                         }));
                     }
+
+                    Monitor.Exit(PollTimer);
                 }
             };
             PollTimer.Start();
@@ -156,6 +160,8 @@ namespace BuildSync.Client
             CurrentStoragePath = Settings.StoragePath;
 
             Settings.Save(SettingsPath);
+
+            ApplySettings();
         }
 
         /// <summary>
@@ -172,18 +178,21 @@ namespace BuildSync.Client
         public static void ApplySettings()
         {
             // Server settings.
-            if (NetClient.ServerHostname != Settings.ServerHostname ||
-                NetClient.ServerPort != Settings.ServerPort ||
-                NetClient.PeerListenPortRangeMin != Settings.ClientPortRangeMin ||
-                NetClient.PeerListenPortRangeMax != Settings.ClientPortRangeMax)
+            if (NetClient != null)
             {
-                NetClient.ServerHostname = Settings.ServerHostname;
-                NetClient.ServerPort = Settings.ServerPort;
-                NetClient.PeerListenPortRangeMin = Settings.ClientPortRangeMin;
-                NetClient.PeerListenPortRangeMax = Settings.ClientPortRangeMax;
+                if (NetClient.ServerHostname != Settings.ServerHostname ||
+                    NetClient.ServerPort != Settings.ServerPort ||
+                    NetClient.PeerListenPortRangeMin != Settings.ClientPortRangeMin ||
+                    NetClient.PeerListenPortRangeMax != Settings.ClientPortRangeMax)
+                {
+                    NetClient.ServerHostname = Settings.ServerHostname;
+                    NetClient.ServerPort = Settings.ServerPort;
+                    NetClient.PeerListenPortRangeMin = Settings.ClientPortRangeMin;
+                    NetClient.PeerListenPortRangeMax = Settings.ClientPortRangeMax;
 
-                NetClient.RestartConnections();
-                SaveSettings();
+                    NetClient.RestartConnections();
+                    SaveSettings();
+                }
             }
 
             // Storage settings.
@@ -202,8 +211,16 @@ namespace BuildSync.Client
                 SaveSettings();
             }
 
+            if (ManifestDownloadManager != null && Settings.StorageMaxSize != ManifestDownloadManager.StorageMaxSize)
+            {
+                ManifestDownloadManager.StorageMaxSize = Settings.StorageMaxSize;
+
+                SaveSettings();
+            }
+
             // Bandwidth settings.
-            // TODO
+            NetConnection.GlobalBandwidthThrottleIn.MaxRate = Settings.BandwidthMaxDown;
+            NetConnection.GlobalBandwidthThrottleOut.MaxRate = Settings.BandwidthMaxUp;
         }
 
         /// <summary>
@@ -272,15 +289,51 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
+        /// <returns></returns>
+        public static bool AreDownloadsAllowed()
+        {
+            bool Result = false;
+
+            if (Settings.BandwidthStartTimeHour != 0 || Settings.BandwidthStartTimeMin != 0 ||
+                Settings.BandwidthEndTimeHour != 0 || Settings.BandwidthEndTimeMin != 0)
+            {
+                TimeSpan Start = new TimeSpan(Settings.BandwidthStartTimeHour, Settings.BandwidthStartTimeMin, 0);
+                TimeSpan End = new TimeSpan(Settings.BandwidthEndTimeHour, Settings.BandwidthEndTimeMin, 0);
+                TimeSpan Now = DateTime.Now.TimeOfDay;
+
+                // Start and stop times are in the same day
+                if (Start <= End)
+                {
+                    Result = (Now >= Start && Now <= End);
+                }
+                // Start and stop times are in different days
+                else
+                {
+                    Result = (Now >= Start || Now <= End);
+                }
+            }
+            else
+            {
+                Result = true;
+            }
+
+            return Result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static void OnPoll()
         {
-            NetClient.Poll();
+            NetClient.TrafficEnabled = AreDownloadsAllowed();
+            ManifestDownloadManager.TrafficEnabled = AreDownloadsAllowed();
 
+            NetClient.Poll();
             DownloadManager.Poll(NetClient.IsConnected);
             ManifestDownloadManager.Poll();
 
             // Update save data if download states have changed recently.
-            if (Environment.TickCount - LastSettingsSaveTime > MinimumTimeBetweenSettingsSaves || ForceSaveSettingsPending)
+            if (TimeUtils.Ticks - LastSettingsSaveTime > MinimumTimeBetweenSettingsSaves || ForceSaveSettingsPending)
             {
                 if (ManifestDownloadManager.AreStatesDirty || DownloadManager.AreStatesDirty || ForceSaveSettingsPending)
                 {
@@ -294,7 +347,7 @@ namespace BuildSync.Client
                     DownloadManager.AreStatesDirty = false;
 
                     ForceSaveSettingsPending = false;
-                    LastSettingsSaveTime = Environment.TickCount;
+                    LastSettingsSaveTime = TimeUtils.Ticks;
                 }
             }
         }

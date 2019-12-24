@@ -39,6 +39,33 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
+        public void UnregisterManifest(Guid ManifestId)
+        {
+            BuildManifest Manifest = GetManifestById(ManifestId);
+            if (Manifest == null)
+            {
+                return;
+            }
+
+            string FilePath = Path.Combine(RootPath, ManifestId.ToString() + ".manifest");
+            Console.WriteLine("Unregistering manifest: {0}", FilePath);
+
+            try
+            {
+                File.Delete(FilePath);
+            }
+            catch (Exception Ex)
+            {
+                Console.WriteLine("Failed to delete unregistered manifest file {0} with error: {1}", FilePath, Ex.Message);
+            }
+
+            ManifestFileSystem.RemoveNode(Manifest.VirtualPath);
+            Manifests.Remove(Manifest);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public List<string> GetVirtualPathChildren(string Path)
         {
             return ManifestFileSystem.GetChildrenNames(Path);

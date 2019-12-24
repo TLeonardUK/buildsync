@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Collections.Generic;
+using BuildSync.Core.Utils;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Manifests;
@@ -38,7 +39,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private int LastListenAttempt = 0;
+        private ulong LastListenAttempt = 0;
 
         /// <summary>
         /// 
@@ -95,7 +96,7 @@ namespace BuildSync.Core
                 // Reattempt to create listen server?
                 if (!ListenConnection.IsListening)
                 {
-                    int ElapsedTime = Environment.TickCount - LastListenAttempt;
+                    ulong ElapsedTime = TimeUtils.Ticks - LastListenAttempt;
                     if (ElapsedTime > ListenAttemptInterval)
                     {
                         ListenForClients();
@@ -213,7 +214,7 @@ namespace BuildSync.Core
         private void ListenForClients()
         {
             ListenConnection.BeginListen(ServerPort);
-            LastListenAttempt = Environment.TickCount;
+            LastListenAttempt = TimeUtils.Ticks;
         }
 
         /// <summary>

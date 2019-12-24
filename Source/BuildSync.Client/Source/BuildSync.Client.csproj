@@ -136,6 +136,12 @@
     <Compile Include="Forms\AddDownloadForm.Designer.cs">
       <DependentUpon>AddDownloadForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\ConsoleForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ConsoleForm.Designer.cs">
+      <DependentUpon>ConsoleForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -187,6 +193,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\AddDownloadForm.resx">
       <DependentUpon>AddDownloadForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ConsoleForm.resx">
+      <DependentUpon>ConsoleForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>

@@ -18,9 +18,16 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public class AsyncIOQueue
     {
+        public enum TaskType
+        {
+            Read,
+            Write,
+            DeleteDir
+        }
+
         private struct Task
         {
-            public bool IsWrite;
+            public TaskType Type;
             public string Path;
             public long Offset;
             public long Size;
@@ -32,7 +39,7 @@ namespace BuildSync.Core.Utils
         {
             public string Path;
             public Stream Stream;
-            public int LastAccessed = 0;
+            public ulong LastAccessed = 0;
             public int ActiveOperations = 0;
         }
 
@@ -158,7 +165,7 @@ namespace BuildSync.Core.Utils
                 {
                     if (Stm.Path == Path)
                     {
-                        Stm.LastAccessed = Environment.TickCount;
+                        Stm.LastAccessed = TimeUtils.Ticks;
                         return Stm;
                     }
                 }
@@ -168,7 +175,7 @@ namespace BuildSync.Core.Utils
                     Console.WriteLine("Opening stream for async queue: {0}", Path);
 
                     ActiveStream NewStm = new ActiveStream();
-                    NewStm.LastAccessed = Environment.TickCount;
+                    NewStm.LastAccessed = TimeUtils.Ticks;
                     NewStm.Path = Path;
                     NewStm.Stream = new FileStream(Path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite, 1 * 1024 * 1024, FileOptions.Asynchronous/* | FileOptions.WriteThrough*/);
                     ActiveStreams.Add(NewStm);
@@ -195,7 +202,7 @@ namespace BuildSync.Core.Utils
                 {
                     ActiveStream Stm = ActiveStreams[i];
 
-                    int Elapsed = Environment.TickCount - Stm.LastAccessed;
+                    ulong Elapsed = TimeUtils.Ticks - Stm.LastAccessed;
                     if (Elapsed > MaxStreamAge && Stm.ActiveOperations == 0)
                     {
                         Console.WriteLine("Closing stream for async queue: {0}", Stm.Path);
@@ -252,18 +259,23 @@ namespace BuildSync.Core.Utils
         /// <param name="Work"></param>
         private void RunTask(Task Work)
         {
-            ActiveStream Stm = GetActiveStream(Work.Path);
-            if (Stm == null)
+            ActiveStream Stm = null;
+            if (Work.Type == TaskType.Write || Work.Type == TaskType.Read)
             {
-                return;
+                Stm = GetActiveStream(Work.Path);
+                if (Stm == null)
+                {
+                    return;
+                }
+
+                Interlocked.Increment(ref Stm.ActiveOperations);
             }
 
-            Interlocked.Increment(ref Stm.ActiveOperations);
-
-            if (Work.IsWrite)
+            if (Work.Type == TaskType.Write)
             {
                 Stm.Stream.Seek(Work.Offset, SeekOrigin.Begin);
-                Stm.Stream.BeginWrite(Work.Data, 0, (int) Work.Size, Result => {
+                Stm.Stream.BeginWrite(Work.Data, 0, (int)Work.Size, Result =>
+                {
 
                     try
                     {
@@ -282,14 +294,30 @@ namespace BuildSync.Core.Utils
                     {
                         Interlocked.Add(ref InternalQueuedOut, -Work.Size);
                         Interlocked.Decrement(ref Stm.ActiveOperations);
-                        Stm.LastAccessed = Environment.TickCount;
+                        Stm.LastAccessed = TimeUtils.Ticks;
                     }
 
                 }, null);
             }
-            else
+            else if (Work.Type == TaskType.Read)
             {
                 ReadWithOffset(Stm, Work, 0);
+            }
+            else if (Work.Type == TaskType.DeleteDir)
+            {
+                try
+                {
+                    CloseAllStreamsInDirectory(Work.Path);
+
+                    FileUtils.DeleteDirectory(Work.Path);
+
+                    Work.Callback?.Invoke(true);
+                }
+                catch (Exception Ex)
+                {
+                    Console.WriteLine("Failed to delete directory {0} with error: {1}", Work.Path, Ex.Message);
+                    Work.Callback?.Invoke(false);
+                }
             }
         }
 
@@ -330,7 +358,7 @@ namespace BuildSync.Core.Utils
                 }
                 finally
                 {
-                    Stm.LastAccessed = Environment.TickCount;
+                    Stm.LastAccessed = TimeUtils.Ticks;
                 }
 
             }, null);
@@ -342,10 +370,22 @@ namespace BuildSync.Core.Utils
         /// <param name="Path"></param>
         /// <param name="Offset"></param>
         /// <param name="Size"></param>
+        public void DeleteDir(string InPath, IOCompleteCallbackHandler InCallback)
+        {
+            TaskQueue.Enqueue(new Task { Type = TaskType.DeleteDir, Path = InPath, Callback = InCallback });
+            WakeThread();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        /// <param name="Offset"></param>
+        /// <param name="Size"></param>
         public void Write(string InPath, long InOffset, long InSize, byte[] InData, IOCompleteCallbackHandler InCallback)
         {
             Interlocked.Add(ref InternalQueuedOut, InSize);
-            TaskQueue.Enqueue(new Task { IsWrite = true, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
+            TaskQueue.Enqueue(new Task { Type = TaskType.Write, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
             WakeThread();
         }
 
@@ -358,7 +398,7 @@ namespace BuildSync.Core.Utils
         public void Read(string InPath, long InOffset, long InSize, byte[] InData, IOCompleteCallbackHandler InCallback)
         {
             Interlocked.Add(ref InternalQueuedIn, InSize);
-            TaskQueue.Enqueue(new Task { IsWrite = false, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
+            TaskQueue.Enqueue(new Task { Type = TaskType.Read, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
             WakeThread();
         }
     }

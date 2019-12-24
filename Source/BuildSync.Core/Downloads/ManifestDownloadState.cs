@@ -59,6 +59,16 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        public bool Active;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DateTime LastActive;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public Guid ManifestId;
 
         /// <summary>
@@ -80,7 +90,7 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         [XmlIgnore, NonSerialized]
-        public int LastManifestRequestTime = 0;
+        public ulong LastManifestRequestTime = 0;
 
         /// <summary>
         /// 

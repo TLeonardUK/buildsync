@@ -2,6 +2,7 @@
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
+using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Networking;
@@ -49,7 +50,7 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
-            public int LastConnectionAttemptTime = 0;
+            public ulong LastConnectionAttemptTime = 0;
 
             /// <summary>
             /// 
@@ -118,7 +119,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private int LastConnectionAttempt = 0;
+        private ulong LastConnectionAttempt = 0;
 
         /// <summary>
         /// 
@@ -158,7 +159,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private int LastListenAttempt = 0;
+        private ulong LastListenAttempt = 0;
 
         /// <summary>
         /// 
@@ -188,17 +189,22 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private bool ForceBlockListUpdate = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private int LastManifestStateDirtyCounter = 0;
 
         /// <summary>
         /// 
         /// </summary>
-        private int LastBlockListUpdateTime = 0;
+        private ulong LastBlockListUpdateTime = 0;
 
         /// <summary>
         /// 
         /// </summary>
-        private const int BlockListUpdateInterval = 15 * 1000;
+        private const int BlockListUpdateInterval = 10 * 1000;
 
         /// <summary>
         /// 
@@ -300,6 +306,23 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private bool InternalTrafficEnabled = true;
+        public bool TrafficEnabled
+        {
+            get { return InternalTrafficEnabled; }
+            set
+            {
+                if (InternalTrafficEnabled != value)
+                {
+                    ForceBlockListUpdate = true;
+                    InternalTrafficEnabled = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public BuildSyncClient()
         {
             Connection.OnMessageRecieved += HandleMessage;
@@ -370,7 +393,7 @@ namespace BuildSync.Core
                 // Reconnect?
                 if (!Connection.IsConnected && !Connection.IsConnecting && !InternalConnectionsDisabled)
                 {
-                    int ElapsedTime = Environment.TickCount - LastConnectionAttempt;
+                    ulong ElapsedTime = TimeUtils.Ticks - LastConnectionAttempt;
                     if (ElapsedTime > ConnectionAttemptInterval)
                     {
                         ConnectionInfoUpdateRequired = true;
@@ -381,7 +404,7 @@ namespace BuildSync.Core
                 // Reattempt to create listen server?
                 if (!ListenConnection.IsListening && !InternalConnectionsDisabled)
                 {
-                    int ElapsedTime = Environment.TickCount - LastListenAttempt;
+                    ulong ElapsedTime = TimeUtils.Ticks - LastListenAttempt;
                     if (ElapsedTime > ListenAttemptInterval)
                     {
                         ConnectionInfoUpdateRequired = true;
@@ -405,13 +428,14 @@ namespace BuildSync.Core
                     ConnectionInfoUpdateRequired = false;
                 }
 
-                int ElapsedTime = Environment.TickCount - LastBlockListUpdateTime;
-                if (ElapsedTime > BlockListUpdateInterval && BlockListUpdatePending)
+                ulong ElapsedTime = TimeUtils.Ticks - LastBlockListUpdateTime;
+                if ((ElapsedTime > BlockListUpdateInterval && BlockListUpdatePending) || ForceBlockListUpdate)
                 {
                     SendBlockListUpdate();
 
-                    LastBlockListUpdateTime = Environment.TickCount;
+                    LastBlockListUpdateTime = TimeUtils.Ticks;
                     BlockListUpdatePending = false;
+                    ForceBlockListUpdate = false;
                 }
             }
             else
@@ -460,7 +484,7 @@ namespace BuildSync.Core
         {
             Connection.BeginConnect(ServerHostname, ServerPort);
 
-            LastConnectionAttempt = Environment.TickCount;
+            LastConnectionAttempt = TimeUtils.Ticks;
         }
 
         /// <summary>
@@ -472,7 +496,7 @@ namespace BuildSync.Core
             int Port = PeerListenPortRangeMin + (PortIndex++ % PortCount);
             ListenConnection.BeginListen(Port, false);
 
-            LastListenAttempt = Environment.TickCount;
+            LastListenAttempt = TimeUtils.Ticks;
         }
 
         /// <summary>
@@ -626,18 +650,18 @@ namespace BuildSync.Core
                     // Attempt connection if time has elapsed.
                     if (!peer.Connection.IsConnected && !peer.Connection.IsConnecting && !peer.RemoteInitiated)
                     {
-                        int Elapsed = Environment.TickCount - peer.LastConnectionAttemptTime;
+                        ulong Elapsed = TimeUtils.Ticks - peer.LastConnectionAttemptTime;
                         if (peer.LastConnectionAttemptTime == 0 || Elapsed > ConnectionAttemptInterval)
                         {
                             Console.WriteLine("Connecting to peer: {0}", peer.Address.ToString());
                             peer.Connection.BeginConnect(peer.Address.Address.ToString(), peer.Address.Port);
 
-                            peer.LastConnectionAttemptTime = Environment.TickCount;
+                            peer.LastConnectionAttemptTime = TimeUtils.Ticks;
                         }
                     }
                     else if (peer.Connection.IsConnected)
                     {
-                        peer.LastConnectionAttemptTime = Environment.TickCount;
+                        peer.LastConnectionAttemptTime = TimeUtils.Ticks;
 
                         if (!peer.WasConnected)
                         {

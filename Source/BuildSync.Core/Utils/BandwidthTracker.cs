@@ -15,7 +15,7 @@ namespace BuildSync.Core.Utils
         private long TotalBytesSent = 0;
         private long TotalBytesRecieved = 0;
 
-        private int BandwidthTimeStart = 0;
+        private ulong BandwidthTimeStart = 0;
         private long BandwidthTimeStartBytesSent = 0;
         private long BandwidthTimeStartBytesRecieved = 0;
 
@@ -86,7 +86,7 @@ namespace BuildSync.Core.Utils
         private void Update()
         { 
             // Calculate bandwidth.
-            int Elapsed = Environment.TickCount - BandwidthTimeStart;            
+            ulong Elapsed = TimeUtils.Ticks - BandwidthTimeStart;            
             if (Elapsed > 1000)
             {
                 if (BandwidthTimeStart == 0)
@@ -99,12 +99,12 @@ namespace BuildSync.Core.Utils
 
                 double Delta = Elapsed / 1000.0;
 
-                BandwidthSent = (BandwidthSent * 0.5) + ((Sent * Delta) * 0.5);
-                BandwidthRecieved = (BandwidthRecieved * 0.5) + ((Recieved * Delta) * 0.5);
+                BandwidthSent = (BandwidthSent * 0.8) + ((Sent * Delta) * 0.2);
+                BandwidthRecieved = (BandwidthRecieved * 0.8) + ((Recieved * Delta) * 0.2);
 
                 BandwidthTimeStartBytesSent = TotalBytesSent;
                 BandwidthTimeStartBytesRecieved = TotalBytesRecieved;
-                BandwidthTimeStart = Environment.TickCount;
+                BandwidthTimeStart = TimeUtils.Ticks;
             }
         }
     }

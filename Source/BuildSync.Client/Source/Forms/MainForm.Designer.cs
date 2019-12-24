@@ -62,6 +62,8 @@
             this.addDownloadToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.downloadList1 = new BuildSync.Client.Controls.DownloadList();
+            this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
+            this.viewConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.notifyIconContextMenu.SuspendLayout();
@@ -213,10 +215,12 @@
             // 
             this.adminToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.publishBuildToolStripMenuItem,
-            this.manageBuildsToolStripMenuItem});
+            this.manageBuildsToolStripMenuItem,
+            this.toolStripSeparator5,
+            this.viewConsoleToolStripMenuItem});
             this.adminToolStripMenuItem.Name = "adminToolStripMenuItem";
-            this.adminToolStripMenuItem.Size = new System.Drawing.Size(81, 29);
-            this.adminToolStripMenuItem.Text = "Admin";
+            this.adminToolStripMenuItem.Size = new System.Drawing.Size(107, 29);
+            this.adminToolStripMenuItem.Text = "Advanced";
             // 
             // publishBuildToolStripMenuItem
             // 
@@ -229,7 +233,7 @@
             // 
             this.manageBuildsToolStripMenuItem.Name = "manageBuildsToolStripMenuItem";
             this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(270, 34);
-            this.manageBuildsToolStripMenuItem.Text = "Manage Builds ...";
+            this.manageBuildsToolStripMenuItem.Text = "Manage builds ...";
             // 
             // helpToolStripMenuItem
             // 
@@ -327,6 +331,18 @@
             this.downloadList1.Size = new System.Drawing.Size(1007, 316);
             this.downloadList1.TabIndex = 6;
             // 
+            // toolStripSeparator5
+            // 
+            this.toolStripSeparator5.Name = "toolStripSeparator5";
+            this.toolStripSeparator5.Size = new System.Drawing.Size(267, 6);
+            // 
+            // viewConsoleToolStripMenuItem
+            // 
+            this.viewConsoleToolStripMenuItem.Name = "viewConsoleToolStripMenuItem";
+            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(270, 34);
+            this.viewConsoleToolStripMenuItem.Text = "View console ...";
+            this.viewConsoleToolStripMenuItem.Click += new System.EventHandler(this.ViewConsoleClicked);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -387,6 +403,8 @@
         private System.Windows.Forms.ToolStripMenuItem manageBuildsToolStripMenuItem;
         private System.Windows.Forms.ToolStripStatusLabel totalDiskDownBandwidthLabel;
         private System.Windows.Forms.ToolStripStatusLabel totalDiskUpBandwidthLabel;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
+        private System.Windows.Forms.ToolStripMenuItem viewConsoleToolStripMenuItem;
     }
 }
 

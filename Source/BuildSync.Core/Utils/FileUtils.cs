@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
@@ -14,18 +15,49 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static byte[] Compress(byte[] data)
+        {
+            MemoryStream output = new MemoryStream();
+            using (DeflateStream dstream = new DeflateStream(output, CompressionLevel.Optimal))
+            {
+                dstream.Write(data, 0, data.Length);
+            }
+            return output.ToArray();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static byte[] Decompress(byte[] data)
+        {
+            MemoryStream input = new MemoryStream(data);
+            MemoryStream output = new MemoryStream();
+            using (DeflateStream dstream = new DeflateStream(input, CompressionMode.Decompress))
+            {
+                dstream.CopyTo(output);
+            }
+            return output.ToArray();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="objectToWrite"></param>
         /// <param name="append"></param>
         /// <returns></returns>
-        public static byte[] WriteToArray<T>(T objectToWrite, bool append = false)
+        public static byte[] WriteToArray<T>(T objectToWrite)
         {             
             using (MemoryStream stream = new MemoryStream())
             {
                 var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
                 binaryFormatter.Serialize(stream, objectToWrite);
 
-                return stream.ToArray();
+                return Compress(stream.ToArray());
             }
         }
 
@@ -37,7 +69,7 @@ namespace BuildSync.Core.Utils
         /// <returns></returns>
         public static T ReadFromArray<T>(byte[] Data)
         {
-            using (MemoryStream stream = new MemoryStream(Data))
+            using (MemoryStream stream = new MemoryStream(Decompress(Data)))
             {
                 var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
                 return (T)binaryFormatter.Deserialize(stream);
@@ -45,36 +77,42 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        ///     Writes the given object instance to a binary file.
-        ///     <para>Object type (and all child types) must be decorated with the [Serializable] attribute.</para>
-        ///     <para>To prevent a variable from being serialized, decorate it with the [NonSerialized] attribute; cannot be applied to properties.</para>
+        /// 
         /// </summary>
-        /// <typeparam name="T">The type of object being written to the binary file.</typeparam>
-        /// <param name="filePath">The file path to write the object instance to.</param>
-        /// <param name="objectToWrite">The object instance to write to the binary file.</param>
-        /// <param name="append">If false the file will be overwritten if it already exists. If true the contents will be appended to the file.</param>
-        public static void WriteToBinaryFile<T>(string filePath, T objectToWrite, bool append = false)
+        /// <typeparam name="T"></typeparam>
+        /// <param name="filePath"></param>
+        /// <param name="objectToWrite"></param>
+        public static void WriteToBinaryFile<T>(string filePath, T objectToWrite)
         {
+            byte[] Data = WriteToArray(objectToWrite);
+            File.WriteAllBytes(filePath, Data);
+
+            /*
             using (Stream stream = File.Open(filePath, append ? FileMode.Append : FileMode.Create))
             {
                 var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
                 binaryFormatter.Serialize(stream, objectToWrite);
-            }
+            }*/
         }
 
         /// <summary>
-        ///     Reads an object instance from a binary file.
+        /// 
         /// </summary>
-        /// <typeparam name="T">The type of object to read from the binary file.</typeparam>
-        /// <param name="filePath">The file path to read the object instance from.</param>
-        /// <returns>Returns a new instance of the object read from the binary file.</returns>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
         public static T ReadFromBinaryFile<T>(string filePath)
         {
-            using (Stream stream = File.Open(filePath, FileMode.Open))
+            byte[] Data = File.ReadAllBytes(filePath);
+            return ReadFromArray<T>(Data);
+
+/*
+ *          using (Stream stream = File.Open(filePath, FileMode.Open))
             {
                 var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
                 return (T)binaryFormatter.Deserialize(stream);
             }
+            */
         }
 
         /// <summary>
@@ -91,6 +129,38 @@ namespace BuildSync.Core.Utils
                     var hash = md5.ComputeHash(stream);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                 }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="DirPath"></param>
+        public static void DeleteDirectory(string DirPath)
+        {
+            File.SetAttributes(DirPath, FileAttributes.Normal);
+
+            string[] Files = Directory.GetFiles(DirPath);
+            string[] Dirs = Directory.GetDirectories(DirPath);
+
+            foreach (string file in Files)
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            }
+
+            foreach (string dir in Dirs)
+            {
+                DeleteDirectory(dir);
+            }
+
+            try
+            {
+                Directory.Delete(DirPath, false);
+            }
+            catch (Exception Ex)
+            {
+                Console.WriteLine("Unable to delete directory {0} with error: {1}", DirPath, Ex.Message);
             }
         }
     }

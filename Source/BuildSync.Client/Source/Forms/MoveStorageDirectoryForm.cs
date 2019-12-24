@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Forms
 {
@@ -175,7 +176,7 @@ namespace BuildSync.Client.Forms
                         {
                             try
                             {
-                                Directory.Delete(Dir, true);
+                                FileUtils.DeleteDirectory(Dir);
                             }
                             catch (Exception Ex)
                             {
@@ -198,7 +199,7 @@ namespace BuildSync.Client.Forms
                         {
                             try
                             {
-                                Directory.Delete(Dir, true);
+                                FileUtils.DeleteDirectory(Dir);
                             }
                             catch (Exception SubEx)
                             {

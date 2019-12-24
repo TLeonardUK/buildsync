@@ -54,7 +54,7 @@ namespace BuildSync.Core.Networking
         private Queue<byte[]> SendQueue = new Queue<byte[]>();
         private bool Sending = false;
 
-        private int LastKeepAliveSendTime = 0;
+        private ulong LastKeepAliveSendTime = 0;
         private const int KeepAliveInterval = 5 * 1000;
 
         private NetMessage_Handshake Handshake = null;
@@ -62,6 +62,16 @@ namespace BuildSync.Core.Networking
         private Queue<Action> EventQueue = new Queue<Action>();
 
         private int OutstandingAsyncCalls = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static BandwidthThrottler GlobalBandwidthThrottleIn = new BandwidthThrottler();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static BandwidthThrottler GlobalBandwidthThrottleOut = new BandwidthThrottler();
 
         /// <summary>
         /// 
@@ -260,11 +270,11 @@ namespace BuildSync.Core.Networking
 
             if (IsConnected && !IsListening && Handshake != null)
             {
-                int Elapsed = Environment.TickCount - LastKeepAliveSendTime;
+                ulong Elapsed = TimeUtils.Ticks - LastKeepAliveSendTime;
                 if (Elapsed > KeepAliveInterval)
                 {
                     Send(new NetMessage_KeepAlive());
-                    LastKeepAliveSendTime = Environment.TickCount;
+                    LastKeepAliveSendTime = TimeUtils.Ticks;
                 }
             }
 
@@ -548,7 +558,10 @@ namespace BuildSync.Core.Networking
             try
             {
                 Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginSend
-                Socket.BeginSend(Block, Offset, Length, SocketFlags.None, Result =>
+
+                int BytesToSend = GlobalBandwidthThrottleOut.Throttle(Length);
+
+                Socket.BeginSend(Block, Offset, BytesToSend, SocketFlags.None, Result =>
                 {
                     lock (SendQueue)
                     {
@@ -562,7 +575,7 @@ namespace BuildSync.Core.Networking
                             if (BytesSent < Length)
                             {
                                 int NextChunkOffset = Offset + BytesSent;
-                                int NextChunkSize = Length - NextChunkOffset;
+                                int NextChunkSize = Length - BytesSent;
                                 SendBlock(Block, NextChunkOffset, NextChunkSize);
                             }
                             else
@@ -627,7 +640,9 @@ namespace BuildSync.Core.Networking
             {
                 Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginReceive
 
-                Socket.BeginReceive(MessageBuffer, Offset, Size, SocketFlags.None, Result =>
+                int BytesToRecv = GlobalBandwidthThrottleIn.Throttle(Size);
+
+                Socket.BeginReceive(MessageBuffer, Offset, BytesToRecv, SocketFlags.None, Result =>
                 {
                     try
                     {
@@ -708,7 +723,10 @@ namespace BuildSync.Core.Networking
             try
             {
                 Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginReceive
-                Socket.BeginReceive(MessageBuffer, NetMessage.HeaderSize + Offset, Size, SocketFlags.None, Result =>
+
+                int BytesToRecv = GlobalBandwidthThrottleIn.Throttle(Size);
+
+                Socket.BeginReceive(MessageBuffer, NetMessage.HeaderSize + Offset, BytesToRecv, SocketFlags.None, Result =>
                 {
                     try
                     {

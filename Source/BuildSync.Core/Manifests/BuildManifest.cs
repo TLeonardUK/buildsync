@@ -378,7 +378,7 @@ namespace BuildSync.Core.Manifests
         /// <returns></returns>
         public byte[] ToByteArray()
         {
-            return FileUtils.WriteToArray<BuildManifest>(this, false);
+            return FileUtils.WriteToArray<BuildManifest>(this);
         }
 
         /// <summary>
@@ -388,7 +388,7 @@ namespace BuildSync.Core.Manifests
         /// <returns></returns>
         public void WriteToFile(string FilePath)
         {
-            FileUtils.WriteToBinaryFile<BuildManifest>(FilePath, this, false);
+            FileUtils.WriteToBinaryFile<BuildManifest>(FilePath, this);
         }
 
         /// <summary>

@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using BuildSync.Core.Manifests;
 using BuildSync.Core;
+using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Networking.Messages;
@@ -139,7 +140,7 @@ namespace BuildSync.Client.Publishing
                     // Recreated directory.
                     if (Directory.Exists(LocalFolder))
                     {
-                        Directory.Delete(LocalFolder, true);
+                        FileUtils.DeleteDirectory(LocalFolder);
                     }
                     Directory.CreateDirectory(LocalFolder);
 
