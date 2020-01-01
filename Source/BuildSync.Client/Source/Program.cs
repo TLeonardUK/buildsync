@@ -296,7 +296,7 @@ namespace BuildSync.Client
             NetConnection.GlobalBandwidthThrottleOut.MaxRate = Settings.BandwidthMaxUp;
 
             // General settings.
-            ProcessUtils.SetLaunchOnStartup("Build Sync", Settings.RunOnStartup);
+            ProcessUtils.SetLaunchOnStartup("Build Sync - Client", Settings.RunOnStartup);
         }
 
         /// <summary>

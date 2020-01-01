@@ -195,6 +195,16 @@ namespace BuildSync.Server
             }
 
             Settings.Save(SettingsPath);
+
+            ApplySettings();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static void ApplySettings()
+        {
+            ProcessUtils.SetLaunchOnStartup("Build Sync - Server", Settings.RunOnStartup);
         }
 
         /// <summary>

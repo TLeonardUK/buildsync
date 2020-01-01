@@ -171,8 +171,10 @@ namespace BuildSync.Server.Commands
             }
 
             // Update the value.
+            IpcClient.Respond(string.Format("Applying value '{1}' to '{0}'.", Name, Value));
             Property.SetValue(Program.Settings, ValueToSet);
             Program.SaveSettings();
+            Program.ApplySettings();
             IpcClient.Respond(string.Format("SUCCESS: Setting '{0}' was set to '{1}'.", Name, Value));
         }
     }
