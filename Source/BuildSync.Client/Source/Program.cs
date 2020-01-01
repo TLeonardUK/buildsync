@@ -151,7 +151,7 @@ namespace BuildSync.Client
 #if SHIPPING
             try
             {
-                if (WindowUtils.BringOtherAppInstanceToFront("Build Sync"))
+                if (WindowUtils.BringOtherAppInstanceToFront("Build Sync - Client"))
                 {
                     return;
                 }

@@ -32,7 +32,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         private void InitMutex()
         {
-            string appGuid = ((GuidAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(GuidAttribute), false).GetValue(0)).Value;
+            string appGuid = ((GuidAttribute)Assembly.GetEntryAssembly().GetCustomAttributes(typeof(GuidAttribute), false).GetValue(0)).Value;
             string mutexId = string.Format("Global\\{{{0}}}", appGuid);
             MainMutex = new Mutex(false, mutexId);
 

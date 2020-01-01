@@ -38,6 +38,7 @@ namespace BuildSync.Core.Utils
                 ShowWindow(handle, SW_RESTORE);
             }
 
+            Console.WriteLine("Bring app to front.");
             SetForegroundWindow(handle);
             return true;
 

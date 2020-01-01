@@ -13,7 +13,10 @@
     <MediaTemplate EmbedCab="yes" />
 
     <!-- Major Upgrade Rule to disallow downgrades -->
-    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MajorUpgrade   Schedule="afterInstallInitialize"
+                    DowngradeErrorMessage="A newer version of [ProductName] is already installed."
+                    AllowSameVersionUpgrades="yes"
+                    IgnoreRemoveFailure="no" />
 
     <!--Common Launch Condition-->
     <!-- Examples at http://wixtoolset.org/documentation/manual/v3/customactions/wixnetfxextension.html -->
