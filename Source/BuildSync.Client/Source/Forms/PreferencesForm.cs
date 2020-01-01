@@ -30,6 +30,7 @@ namespace BuildSync.Client.Forms
             this.InitializeComponent();
 
             this.AddSettingsPanel<ServerSettings>("serverSettingsNode");
+            this.AddSettingsPanel<GeneralSettings>("generalSettingsNode");
             this.AddSettingsPanel<StorageSettings>("storageSettingsNode");
             this.AddSettingsPanel<BandwidthSettings>("bandwidthSettingsNode");
 

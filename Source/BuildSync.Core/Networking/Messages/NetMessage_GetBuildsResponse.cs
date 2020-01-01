@@ -13,6 +13,7 @@ namespace BuildSync.Core.Networking.Messages
         {
             public string VirtualPath;
             public System.Guid Guid;
+            public DateTime CreateTime;
         }
 
         /// <summary>
@@ -37,6 +38,7 @@ namespace BuildSync.Core.Networking.Messages
             {
                 serializer.Serialize(ref Builds[i].VirtualPath);
                 serializer.Serialize(ref Builds[i].Guid);
+                serializer.Serialize(ref Builds[i].CreateTime);
             }
         }
     }

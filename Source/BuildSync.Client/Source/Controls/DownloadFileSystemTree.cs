@@ -24,7 +24,18 @@ namespace BuildSync.Client.Controls
         {
             public bool IsBuild;
             public bool IsBuildContainer;
+            public Guid ManifestId;
+            public DateTime CreateTime;
         }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool CanSelectBuildContainers
+        {
+            get;
+            set;
+        } = true;
 
         /// <summary>
         /// 
@@ -37,7 +48,7 @@ namespace BuildSync.Client.Controls
                 if (SelectedNode != null)
                 {
                     DownloadFileSystemTreeNodeMetadata Metadata = SelectedNode.Tag as DownloadFileSystemTreeNodeMetadata;
-                    if (Metadata != null && (Metadata.IsBuild || Metadata.IsBuildContainer))
+                    if (Metadata != null && (Metadata.IsBuild || (Metadata.IsBuildContainer && CanSelectBuildContainers)))
                     {
                         return SelectedNode.FullPath;
                     }
@@ -49,6 +60,26 @@ namespace BuildSync.Client.Controls
                 PathsToSelect = BuildFileSystem.GetSubPaths(value);
                 PathsToSelect.Reverse();
                 SelectNextPath();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Guid SelectedManifestId
+        {
+            get
+            {
+                TreeNode SelectedNode = MainTreeView.SelectedNode;
+                if (SelectedNode != null)
+                {
+                    DownloadFileSystemTreeNodeMetadata Metadata = SelectedNode.Tag as DownloadFileSystemTreeNodeMetadata;
+                    if (Metadata != null)
+                    {
+                        return Metadata.ManifestId;
+                    }
+                }
+                return Guid.Empty;
             }
         }
 
@@ -127,6 +158,8 @@ namespace BuildSync.Client.Controls
                     DownloadFileSystemTreeNodeMetadata Metadata = new DownloadFileSystemTreeNodeMetadata();
                     Metadata.IsBuild = Node.Metadata != null ? ((Guid)Node.Metadata) != Guid.Empty : false;
                     Metadata.IsBuildContainer = false;
+                    Metadata.ManifestId = Node.Metadata != null ? (Guid)Node.Metadata : Guid.Empty;
+                    Metadata.CreateTime = Node.Metadata != null ? Node.CreateTime : DateTime.UtcNow;
 
                     TreeNode TrNode = new TreeNode(Node.Name);
                     TrNode.Tag = Metadata;
@@ -142,7 +175,24 @@ namespace BuildSync.Client.Controls
                         TrNode.ImageIndex = 2;
                     }
 
-                    NodeCollection.Add(TrNode);
+                    // Insert based on create time.
+                    bool Inserted = false;
+                    for (int i = 0; i < NodeCollection.Count; i++)
+                    {
+                        TreeNode SubNode = NodeCollection[i];
+                        DownloadFileSystemTreeNodeMetadata SubNodeMetadata = SubNode.Tag as DownloadFileSystemTreeNodeMetadata;
+                        if (SubNodeMetadata.CreateTime < Metadata.CreateTime)
+                        {
+                            NodeCollection.Insert(i, TrNode);
+                            Inserted = true;
+                            break;
+                        }
+                    }
+
+                    if (!Inserted)
+                    {
+                        NodeCollection.Add(TrNode);
+                    }
 
                     // If its a build, the folder parent becomes a "container".
                     if (Metadata.IsBuild && TrNode.Parent != null)
@@ -209,7 +259,11 @@ namespace BuildSync.Client.Controls
             List<VirtualFileSystemInsertChild> NewChildren = new List<VirtualFileSystemInsertChild>();
             foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
             {
-                NewChildren.Add(new VirtualFileSystemInsertChild { VirtualPath = Build.VirtualPath, Metadata = Build.Guid });
+                NewChildren.Add(new VirtualFileSystemInsertChild { 
+                    VirtualPath = Build.VirtualPath,
+                    CreateTime = Build.Guid == Guid.Empty ? DateTime.UtcNow : Build.CreateTime, 
+                    Metadata = Build.Guid 
+                });
             }
             BuildFileSystem.ReconcileChildren(RootPath, NewChildren);
             /*

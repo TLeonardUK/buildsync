@@ -12,7 +12,7 @@ using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Networking.Messages;
 
-namespace BuildSync.Client.Publishing
+namespace BuildSync.Client.Tasks
 {
     /// <summary>
     /// 
@@ -26,13 +26,17 @@ namespace BuildSync.Client.Publishing
         FailedGuidAlreadyExists,
         Failed,
         Success,
+        Unknown
     }
 
     /// <summary>
     /// 
     /// </summary>
-    public class BuildPublisher
+    public class PublishBuildTask
     {
+        private BuildManifest Manifest = null;
+        private string LocalPath = "";
+
         /// <summary>
         /// 
         /// </summary>
@@ -66,8 +70,9 @@ namespace BuildSync.Client.Publishing
         /// <param name="Name"></param>
         /// <param name="VirtualPath"></param>
         /// <param name="LocalPath"></param>
-        public void Start(string Name, string VirtualPath, string LocalPath)
+        public void Start(string VirtualPath, string InLocalPath)
         {
+            LocalPath = InLocalPath;
             State = BuildPublishingState.ScanningFiles;
 
             Task.Run(() =>
@@ -75,7 +80,7 @@ namespace BuildSync.Client.Publishing
                 try
                 {
                     // Build manifest from directory.
-                    BuildManifest Manifest = BuildManifest.BuildFromDirectory(LocalPath, VirtualPath, (string InFile, float InProgress) =>
+                    Manifest = BuildManifest.BuildFromDirectory(LocalPath, VirtualPath, (string InFile, float InProgress) =>
                     {
                         Progress = InProgress * 0.5f;
                         CurrentFile = InFile;
@@ -165,19 +170,27 @@ namespace BuildSync.Client.Publishing
                         File.Copy(Src, Dst);
                     }
 
-                    // Add "completed" manifest downloader entry for this build so we can start seeding it.
-                    // Progress 50-100 is the copy to our storage location.
-                    ManifestDownloadState LocalState = Program.ManifestDownloadManager.AddLocalDownload(Manifest, LocalPath);
-
                     State = BuildPublishingState.Success;
                     Progress = 100;
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Manifest publishing failed with exception: {0}", ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.Main, "Manifest publishing failed with exception: {0}", ex.Message);
                     State = BuildPublishingState.Failed;
                 }
             });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Commit()
+        {
+            // Add "completed" manifest downloader entry for this build so we can start seeding it.
+            // Progress 50-100 is the copy to our storage location.
+            ManifestDownloadState LocalState = Program.ManifestDownloadManager.AddLocalDownload(Manifest, LocalPath);
+
+            Program.SaveSettings();
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System.Diagnostics;
 
 namespace BuildSync.Core.Networking
 {
@@ -67,6 +68,22 @@ namespace BuildSync.Core.Networking
             else
             {
                 Writer.Write(Value);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Value"></param>
+        public void Serialize(ref DateTime Value)
+        {
+            if (IsLoading)
+            {
+                Value = new DateTime(Reader.ReadInt64());
+            }
+            else
+            {
+                Writer.Write(Value.Ticks);
             }
         }
 
@@ -142,15 +159,60 @@ namespace BuildSync.Core.Networking
             if (IsLoading)
             {
                 int Length = Reader.ReadInt32();
-                Value = new byte[Length];
-                Reader.BaseStream.Read(Value, 0, Length);
-                //Writer.Write(Value);
+                if (Length == -1)
+                {
+                    Value = null;
+                }
+                else
+                {
+                    Value = new byte[Length]; 
+                    Reader.BaseStream.Read(Value, 0, Length);
+                }
             }
             else
             {
-                Writer.Write(Value.Length);
-                Writer.BaseStream.Write(Value, 0, Value.Length);
-//                Writer.Write(Value);
+                if (Value == null)
+                {
+                    Writer.Write(-1);
+                }
+                else
+                { 
+                    Writer.Write(Value.Length);
+                    Writer.BaseStream.Write(Value, 0, Value.Length);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Value"></param>
+        public void Serialize(ref NetCachedArray Value)
+        {
+            if (IsLoading)
+            {
+                int Length = Reader.ReadInt32();
+                if (Length == -1)
+                {
+                    Value.SetNull();
+                }
+                else
+                {
+                    Value.Resize(Length);
+                    Reader.BaseStream.Read(Value.Data, 0, Length);
+                }
+            }
+            else
+            {
+                if (Value.Data == null)
+                {
+                    Writer.Write(-1);
+                }
+                else
+                {
+                    Writer.Write(Value.Length);
+                    Writer.BaseStream.Write(Value.Data, 0, Value.Length);
+                }
             }
         }
     }

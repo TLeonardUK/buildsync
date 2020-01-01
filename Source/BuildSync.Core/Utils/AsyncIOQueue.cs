@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Text;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Utils
 {
@@ -49,6 +50,7 @@ namespace BuildSync.Core.Utils
         private object WakeObject = new object();
 
         private const int MaxStreamAge = 10 * 1000;
+        private const int MaxStreams = 100;
 
         private List<ActiveStream> ActiveStreams = new List<ActiveStream>();
 
@@ -57,6 +59,8 @@ namespace BuildSync.Core.Utils
         private long InternalQueuedOut = 0;
         private long InternalQueuedIn = 0;
 
+        private int ActiveTasks = 0;
+
         /// <summary>
         /// 
         /// </summary>
@@ -64,7 +68,7 @@ namespace BuildSync.Core.Utils
         {
             get
             {
-                return TaskQueue.IsEmpty;
+                return TaskQueue.IsEmpty && ActiveTasks == 0;
             }
         }
 
@@ -126,9 +130,17 @@ namespace BuildSync.Core.Utils
                         Monitor.Wait(WakeObject, 1000);
                         continue;
                     }
+
+                    Interlocked.Increment(ref ActiveTasks);
                 }
 
-                RunTask(NewTask);
+                if (!RunTask(NewTask))
+                {
+                    TaskQueue.Enqueue(NewTask);
+                }
+
+                Interlocked.Decrement(ref ActiveTasks);
+
                 CloseOldStreams();
             }
         }
@@ -149,15 +161,47 @@ namespace BuildSync.Core.Utils
         /// </summary>
         public void Stop()
         {
-            IsRunning = false;
+            lock (WakeObject)
+            {
+                IsRunning = false;
+                Monitor.Pulse(WakeObject);
+            }
+
             TaskThread.Join();
         }
 
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="Path"></param>
         /// <returns></returns>
-        private ActiveStream GetActiveStream(string Path)
+        private bool TryFixFileAttributes(string Path)
+        {
+            try
+            {
+                if (File.Exists(Path))
+                {
+                    FileAttributes attributes = File.GetAttributes(Path);
+                    if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.IO, "Removing read-only flag on file '{0}'", Path);
+                        File.SetAttributes(Path, attributes & ~FileAttributes.ReadOnly);
+                        return true;
+                    }
+                }
+            }
+            catch (Exception Ex)
+            {
+                Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to fix permissions on file '{0}' with error {1}", Path, Ex.Message);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private ActiveStream GetActiveStream(string Path, bool AllowPermissionFixes = true)
         {
             lock (ActiveStreams)
             {
@@ -170,9 +214,40 @@ namespace BuildSync.Core.Utils
                     }
                 }
 
+                // We need to remove one stream to max space.
+                while (ActiveStreams.Count >= MaxStreams)
+                {
+                    ActiveStream OldestStream = null;
+
+                    // Find oldest thats not doing anything.
+                    foreach (ActiveStream Stm in ActiveStreams)
+                    {
+                        if (Stm.ActiveOperations == 0)
+                        {
+                            if (OldestStream == null || Stm.LastAccessed < OldestStream.LastAccessed)
+                            {
+                                OldestStream = Stm;
+                            }
+                        }
+                    }
+
+                    if (OldestStream == null)
+                    {
+                        Thread.Sleep(1);
+                    }
+                    else
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.IO, "Closing stream for async queue (as we have reached maximum stream count): {0}", OldestStream.Path);
+
+                        OldestStream.Stream.Close();
+
+                        ActiveStreams.Remove(OldestStream);
+                    }
+                }
+
                 try
                 {
-                    Console.WriteLine("Opening stream for async queue: {0}", Path);
+                    Logger.Log(LogLevel.Info, LogCategory.IO, "Opening stream for async queue: {0}", Path);
 
                     ActiveStream NewStm = new ActiveStream();
                     NewStm.LastAccessed = TimeUtils.Ticks;
@@ -184,7 +259,12 @@ namespace BuildSync.Core.Utils
                 }
                 catch (Exception Ex)
                 {
-                    Console.WriteLine("Failed to open stream '{0}' with error {1}", Path, Ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to open stream '{0}' with error {1}", Path, Ex.Message);
+
+                    if (AllowPermissionFixes && TryFixFileAttributes(Path))
+                    {
+                        return GetActiveStream(Path, false);
+                    }
                 }
             }
 
@@ -205,7 +285,7 @@ namespace BuildSync.Core.Utils
                     ulong Elapsed = TimeUtils.Ticks - Stm.LastAccessed;
                     if (Elapsed > MaxStreamAge && Stm.ActiveOperations == 0)
                     {
-                        Console.WriteLine("Closing stream for async queue: {0}", Stm.Path);
+                        Logger.Log(LogLevel.Info, LogCategory.IO, "Closing stream for async queue: {0}", Stm.Path);
 
                         Stm.Stream.Close();
 
@@ -234,7 +314,7 @@ namespace BuildSync.Core.Utils
                     {
                         if (Stm.ActiveOperations == 0)
                         {
-                            Console.WriteLine("Force closing stream for async queue: {0}", Stm.Path);
+                            Logger.Log(LogLevel.Info, LogCategory.IO, "Force closing stream for async queue: {0}", Stm.Path);
 
                             Stm.Stream.Close();
 
@@ -257,7 +337,7 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <param name="Work"></param>
-        private void RunTask(Task Work)
+        private bool RunTask(Task Work)
         {
             ActiveStream Stm = null;
             if (Work.Type == TaskType.Write || Work.Type == TaskType.Read)
@@ -265,39 +345,60 @@ namespace BuildSync.Core.Utils
                 Stm = GetActiveStream(Work.Path);
                 if (Stm == null)
                 {
-                    return;
+                    Work.Callback?.Invoke(false);
+                    return true;
                 }
 
                 Interlocked.Increment(ref Stm.ActiveOperations);
             }
 
+            // Limit to one operation per stream (not sure if this is neccessary with async?)
+            if (Stm != null && Stm.ActiveOperations > 0)
+            {
+//                return false;
+            }
+
             if (Work.Type == TaskType.Write)
             {
-                Stm.Stream.Seek(Work.Offset, SeekOrigin.Begin);
-                Stm.Stream.BeginWrite(Work.Data, 0, (int)Work.Size, Result =>
+                lock (Stm)
                 {
-
                     try
                     {
-                        BandwidthStats.BytesIn(Work.Size);
+                        // TODO: Lock?
+                        Stm.Stream.Seek(Work.Offset, SeekOrigin.Begin);
+                        Stm.Stream.BeginWrite(Work.Data, 0, (int)Work.Size, Result =>
+                        {
 
-                        Stm.Stream.EndWrite(Result);
+                            try
+                            {
+                                BandwidthStats.BytesIn(Work.Size);
 
-                        Work.Callback?.Invoke(true);
+                                Stm.Stream.EndWrite(Result);
+
+                                Work.Callback?.Invoke(true);
+                            }
+                            catch (Exception Ex)
+                            {
+                                Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to write to file {0} with error: {1}", Stm.Path, Ex.Message);
+                                Work.Callback?.Invoke(false);
+                            }
+                            finally
+                            {
+                                Interlocked.Add(ref InternalQueuedOut, -Work.Size);
+                                Interlocked.Decrement(ref Stm.ActiveOperations);
+                            }
+
+                        }, null);
                     }
                     catch (Exception Ex)
                     {
-                        Console.WriteLine("Failed to write to file {0} with error: {1}", Stm.Path, Ex.Message);
+                        Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to write to file {0} with error: {1}", Stm.Path, Ex.Message);
+
                         Work.Callback?.Invoke(false);
-                    }
-                    finally
-                    {
                         Interlocked.Add(ref InternalQueuedOut, -Work.Size);
                         Interlocked.Decrement(ref Stm.ActiveOperations);
-                        Stm.LastAccessed = TimeUtils.Ticks;
                     }
-
-                }, null);
+                }
             }
             else if (Work.Type == TaskType.Read)
             {
@@ -315,10 +416,12 @@ namespace BuildSync.Core.Utils
                 }
                 catch (Exception Ex)
                 {
-                    Console.WriteLine("Failed to delete directory {0} with error: {1}", Work.Path, Ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to delete directory {0} with error: {1}", Work.Path, Ex.Message);
                     Work.Callback?.Invoke(false);
                 }
             }
+
+            return true;
         }
 
         /// <summary>
@@ -330,38 +433,50 @@ namespace BuildSync.Core.Utils
         /// <param name="Size"></param>
         private void ReadWithOffset(ActiveStream Stm, Task Work, int Offset)
         {
-            Stm.Stream.Seek(Work.Offset + Offset, SeekOrigin.Begin);
-            Stm.Stream.BeginRead(Work.Data, Offset, (int)Work.Size - Offset, Result => {
-
+            lock (Stm)
+            {
                 try
                 {
-                    int BytesRead = Stm.Stream.EndRead(Result);
-                    BandwidthStats.BytesOut(BytesRead);
-
-                    if (BytesRead < Work.Size)
+                    Stm.Stream.Seek(Work.Offset + Offset, SeekOrigin.Begin);
+                    Stm.Stream.BeginRead(Work.Data, Offset, (int)Work.Size - Offset, Result =>
                     {
-                        ReadWithOffset(Stm, Work, Offset + BytesRead);
-                        return;
-                    }
 
-                    Work.Callback?.Invoke(true);
-                    Interlocked.Add(ref InternalQueuedIn, -Work.Size);
-                    Interlocked.Decrement(ref Stm.ActiveOperations);
+                        try
+                        {
+                            int BytesRead = Stm.Stream.EndRead(Result);
+                            BandwidthStats.BytesOut(BytesRead);
+
+                            if (BytesRead < Work.Size)
+                            {
+                                ReadWithOffset(Stm, Work, Offset + BytesRead);
+                                return;
+                            }
+
+                            Work.Callback?.Invoke(true);
+                        }
+                        catch (Exception Ex)
+                        {
+                            Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to read file {0} with error: {1}", Stm.Path, Ex.Message);
+
+                            Work.Callback?.Invoke(false);
+                        }
+                        finally
+                        {
+                            Interlocked.Add(ref InternalQueuedIn, -Work.Size);
+                            Interlocked.Decrement(ref Stm.ActiveOperations);
+                        }
+
+                    }, null);
                 }
                 catch (Exception Ex)
                 {
-                    Console.WriteLine("Failed to read file {0} with error: {1}", Stm.Path, Ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to read to file {0} with error: {1}", Stm.Path, Ex.Message);
 
                     Work.Callback?.Invoke(false);
                     Interlocked.Add(ref InternalQueuedIn, -Work.Size);
                     Interlocked.Decrement(ref Stm.ActiveOperations);
                 }
-                finally
-                {
-                    Stm.LastAccessed = TimeUtils.Ticks;
-                }
-
-            }, null);
+            }
         }
 
         /// <summary>

@@ -160,7 +160,7 @@ namespace BuildSync.Core.Utils
             }
             catch (Exception Ex)
             {
-                Console.WriteLine("Unable to delete directory {0} with error: {1}", DirPath, Ex.Message);
+                Logger.Log(LogLevel.Error, LogCategory.IO, "Unable to delete directory {0} with error: {1}", DirPath, Ex.Message);
             }
         }
     }

@@ -156,6 +156,16 @@ namespace BuildSync.Core.Downloads
 
             foreach (DownloadState State in StateCollection.States)
             {
+                // If not set to auto update and we already have a completed download, do nothing else.
+                if (!State.UpdateAutomatically && State.ActiveManifestId != Guid.Empty)
+                {
+                    ManifestDownloadState OldVersionDownloader = ManifestDownloader.GetDownload(State.ActiveManifestId);
+                    if (OldVersionDownloader != null && OldVersionDownloader.State == ManifestDownloadProgressState.Complete)
+                    {
+                        continue;
+                    }
+                }
+
                 if (bHasConnection)
                 {
                     State.ActiveManifestId = GetTargetManifestForVirtualPath(State.VirtualPath);

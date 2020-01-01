@@ -28,10 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.TaskProgressLabel = new System.Windows.Forms.Label();
             this.TaskProgressBar = new System.Windows.Forms.ProgressBar();
             this.TotalProgressBar = new System.Windows.Forms.ProgressBar();
             this.TotalProgressLabel = new System.Windows.Forms.Label();
+            this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // TaskProgressLabel
@@ -66,6 +68,11 @@
             this.TotalProgressLabel.TabIndex = 3;
             this.TotalProgressLabel.Text = "Total Progress";
             // 
+            // UpdateTimer
+            // 
+            this.UpdateTimer.Enabled = true;
+            this.UpdateTimer.Tick += new System.EventHandler(this.UpdateTimerTick);
+            // 
             // MoveStorageDirectoryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -94,5 +101,6 @@
         private System.Windows.Forms.ProgressBar TaskProgressBar;
         private System.Windows.Forms.ProgressBar TotalProgressBar;
         private System.Windows.Forms.Label TotalProgressLabel;
+        private System.Windows.Forms.Timer UpdateTimer;
     }
 }

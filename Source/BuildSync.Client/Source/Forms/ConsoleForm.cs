@@ -63,6 +63,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private TextWriter OriginalConsoleOut = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public ConsoleForm()
         {
             InitializeComponent();
@@ -76,6 +81,7 @@ namespace BuildSync.Client.Forms
         private void Closing(object sender, FormClosingEventArgs e)
         {
             Hide();
+            Console.SetOut(OriginalConsoleOut);
             e.Cancel = true;
         }
 
@@ -86,6 +92,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
+            OriginalConsoleOut = Console.Out;
             Console.SetOut(new ConsoleTextBoxRedirecter(logTextBox, Console.Out));
         }
     }

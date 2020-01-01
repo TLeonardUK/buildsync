@@ -133,6 +133,16 @@ namespace BuildSync.Client.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap appbar_controller_xbox {
+            get {
+                object obj = ResourceManager.GetObject("appbar.controller.xbox", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap appbar_delete {
             get {
                 object obj = ResourceManager.GetObject("appbar.delete", resourceCulture);

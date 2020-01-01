@@ -61,9 +61,9 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(19, 23);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(229, 20);
+            this.label1.Size = new System.Drawing.Size(232, 20);
             this.label1.TabIndex = 10;
-            this.label1.Text = "Hostname of distribution server";
+            this.label1.Text = "Hostname of coordinator server";
             // 
             // savePathBrowseButton
             // 
@@ -80,9 +80,9 @@
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(19, 119);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(388, 20);
+            this.label2.Size = new System.Drawing.Size(391, 20);
             this.label2.TabIndex = 14;
-            this.label2.Text = "Network port to communication with distribution server";
+            this.label2.Text = "Network port to communication with coordinator server";
             // 
             // ServerPortTextBox
             // 

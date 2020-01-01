@@ -15,6 +15,8 @@ using BuildSync.Core.Utils;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
+using BuildSync.Client.Commands;
+using CommandLine;
 
 namespace BuildSync.Client
 {
@@ -94,40 +96,106 @@ namespace BuildSync.Client
         private static string CurrentStoragePath = "";
 
         /// <summary>
+        /// 
+        /// </summary>
+        private static bool Exiting = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static bool InCommandLineMode = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static CommandIPC IPCServer = new CommandIPC("buildsync-client", false);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static string AppDataDir
+        {
+            get
+            {
+                string Namespace = "Client";
+
+#if !SHIPPING
+                int ProcessCount = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length;
+                if (ProcessCount > 1)
+                {
+                    Namespace = "Client." + (ProcessCount - 1);
+                }
+#endif
+
+                return Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BuildSync"), Namespace);
+            }
+        }
+
+        /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        public static void Main()
         {
+            Logger.SetupStandardLogging(Path.Combine(AppDataDir, "Logging"), InCommandLineMode);
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            OnStart();
-
-            PollTimer = new System.Timers.Timer(1);
-            PollTimer.Elapsed += (object sender, ElapsedEventArgs e) =>
+#if SHIPPING
+            try
             {
-                if (Monitor.TryEnter(PollTimer))
+                if (WindowUtils.BringOtherAppInstanceToFront("Build Sync"))
                 {
-                    // Make sure it invokes on main thread, maybe spend some time
-                    // make all the ui->program interaction thread safe?
-                    if (AppForm != null && AppForm.IsHandleCreated)
-                    {
-                        AppForm.Invoke((MethodInvoker)(() =>
-                        {
-                            OnPoll();
-                        }));
-                    }
-
-                    Monitor.Exit(PollTimer);
+                    return;
                 }
-            };
-            PollTimer.Start();
 
-            AppForm = new MainForm();
-            Application.Run(AppForm);
+                using (new SingleGlobalInstance(100))
+                {
+#endif
+                    BuildSettings.Init();
 
-            OnStop();
+                    OnStart();
+
+                    PollTimer = new System.Timers.Timer(1);
+                    PollTimer.Elapsed += (object sender, ElapsedEventArgs e) =>
+                    {
+                        if (Monitor.TryEnter(PollTimer))
+                        {
+                            // Make sure it invokes on main thread, maybe spend some time
+                            // make all the ui->program interaction thread safe?
+                            if (AppForm != null && AppForm.IsHandleCreated && !AppForm.IsDisposed && !AppForm.Disposing)
+                            {
+                                try
+                                {
+                                    AppForm.Invoke((MethodInvoker)(() =>
+                                    {
+                                        OnPoll();
+                                    }));
+                                }
+                                catch (ObjectDisposedException)
+                                {
+                                    // Ignore ...
+                                }
+                            }
+
+                            Monitor.Exit(PollTimer);
+                        }
+                    };
+                    PollTimer.Start();
+
+                    AppForm = new MainForm();
+                    Application.Run(AppForm);
+
+                    OnStop();
+#if SHIPPING
+                }
+            }
+            catch (TimeoutException Ex)
+            {
+                MessageBox.Show("Application is already running.", "Already Running", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+#endif
         }
 
         /// <summary>
@@ -135,22 +203,14 @@ namespace BuildSync.Client
         /// </summary>
         private static void InitSettings()
         {
-            string Namespace = "Client";
+            string AppDir = AppDataDir;
 
-#if true//DEBUG
-            int ProcessCount = Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length;
-            if (ProcessCount > 1)
-            {
-                Namespace = "Client_" + ProcessCount;
-            }
-#endif
-
-            SettingsPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\BuildSync\"+ Namespace + @"\Config.xml";
+            SettingsPath = Path.Combine(AppDir, "Config.json");
             Settings.Load<Settings>(SettingsPath, out Settings);
 
             if (Settings.StoragePath.Length == 0)
             {
-                Settings.StoragePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\BuildSync\" + Namespace + @"\Storage\";
+                Settings.StoragePath = Path.Combine(AppDir, "Storage");
                 if (!Directory.Exists(Settings.StoragePath))
                 {
                     Directory.CreateDirectory(Settings.StoragePath);
@@ -167,9 +227,16 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        public static void SaveSettings()
+        public static void SaveSettings(bool ForceNow = false)
         {
-            ForceSaveSettingsPending = true;
+            if (ForceNow)
+            {
+                Program.Settings.Save(SettingsPath);
+            }
+            else
+            {
+                ForceSaveSettingsPending = true;
+            }
         }
 
         /// <summary>
@@ -221,6 +288,9 @@ namespace BuildSync.Client
             // Bandwidth settings.
             NetConnection.GlobalBandwidthThrottleIn.MaxRate = Settings.BandwidthMaxDown;
             NetConnection.GlobalBandwidthThrottleOut.MaxRate = Settings.BandwidthMaxUp;
+
+            // General settings.
+            ProcessUtils.SetLaunchOnStartup("Build Sync", Settings.RunOnStartup);
         }
 
         /// <summary>
@@ -238,7 +308,7 @@ namespace BuildSync.Client
             NetClient = new BuildSyncClient();
 
             BuildRegistry = new BuildManifestRegistry();
-            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"));
+            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), int.MaxValue);
 
             NetClient.Start(
                 Settings.ServerHostname,
@@ -266,7 +336,10 @@ namespace BuildSync.Client
             };
             BuildFileSystem.OnRequestChildren += (VirtualFileSystem FileSystem, string Path) =>
             {
-                NetClient.RequestBuilds(Path);
+                if (NetClient.IsConnected)
+                {
+                    NetClient.RequestBuilds(Path);
+                }
             };
             BuildFileSystem.Init();
 
@@ -337,11 +410,11 @@ namespace BuildSync.Client
             {
                 if (ManifestDownloadManager.AreStatesDirty || DownloadManager.AreStatesDirty || ForceSaveSettingsPending)
                 {
-                    Console.WriteLine("Saving settings.");
+                    Logger.Log(LogLevel.Verbose, LogCategory.Main, "Saving settings.");
 
                     Program.Settings.DownloadStates = DownloadManager.States;
                     Program.Settings.ManifestDownloadStates = ManifestDownloadManager.States;
-                    Program.Settings.Save(SettingsPath);
+                    SaveSettings(true);
 
                     ManifestDownloadManager.AreStatesDirty = false;
                     DownloadManager.AreStatesDirty = false;
@@ -350,6 +423,8 @@ namespace BuildSync.Client
                     LastSettingsSaveTime = TimeUtils.Ticks;
                 }
             }
+
+            PollIpcServer();
         }
 
         /// <summary>
@@ -361,6 +436,56 @@ namespace BuildSync.Client
             {
                 NetClient.Disconnect();
                 NetClient = null;
+            }
+
+            IOQueue.Stop();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        internal static void RequestExit()
+        {
+            Exiting = true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        internal static void PumpLoop(Action UpdateDelegate = null)
+        {
+            while (!Exiting)
+            {
+                UpdateDelegate?.Invoke();
+
+                Program.OnPoll();
+                Application.DoEvents();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static void PollIpcServer()
+        {
+            string Command;
+            string[] Args;
+            if (IPCServer.Recieve(out Command, out Args))
+            {
+                if (Command == "RunCommand")
+                {
+                    Parser.Default.ParseArguments<CommandLineAddOptions, CommandLineDeleteOptions, CommandLineListOptions, CommandLineConfigureOptions>(Args)
+                       .WithParsed<CommandLineAddOptions>(opts => { opts.Run(IPCServer); })
+                       .WithParsed<CommandLineDeleteOptions>(opts => { opts.Run(IPCServer); })
+                       .WithParsed<CommandLineListOptions>(opts => { opts.Run(IPCServer); })
+                       .WithParsed<CommandLineConfigureOptions>(opts => { opts.Run(IPCServer); })
+                       .WithNotParsed((errs) => { });
+                }
+                else
+                {
+                    Console.WriteLine("Recieved unknown ipc command '{0}'.", Command);
+                    IPCServer.Respond("Unknown Command");
+                }
             }
         }
     }

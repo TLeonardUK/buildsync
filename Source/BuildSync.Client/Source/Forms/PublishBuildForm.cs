@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using BuildSync.Client.Publishing;
+using BuildSync.Client.Tasks;
 using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace BuildSync.Client.Forms
@@ -21,7 +21,7 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        private BuildPublisher Publisher = null;
+        private PublishBuildTask Publisher = null;
 
         /// <summary>
         /// 
@@ -37,7 +37,6 @@ namespace BuildSync.Client.Forms
         private void ValidateState()
         {
             PublishButton.Enabled = (
-                NameTextBox.Text.Trim().Length > 3 &&
                 VirtualPathTextBox.Text.Trim().Length >= 3 &&
                 LocalFolderTextBox.Text.Length > 0 &&
                 Directory.Exists(LocalFolderTextBox.Text)
@@ -85,12 +84,11 @@ namespace BuildSync.Client.Forms
             PublishProgressBar.Visible = true;
             PublishProgressLabel.Visible = true;
 
-            NameTextBox.Enabled = false;
             VirtualPathTextBox.Enabled = false;
             LocalFolderBrowseButton.Enabled = false;
 
-            Publisher = new BuildPublisher();
-            Publisher.Start(NameTextBox.Text, VirtualPathTextBox.Text, LocalFolderTextBox.Text);
+            Publisher = new PublishBuildTask();
+            Publisher.Start(VirtualPathTextBox.Text, LocalFolderTextBox.Text);
         }
 
         /// <summary>
@@ -149,6 +147,7 @@ namespace BuildSync.Client.Forms
                         }
                     case BuildPublishingState.Success:
                         {
+                            Publisher.Commit();
                             Publisher = null;
                             MessageBox.Show("Finished publishing manifest.", "Manifest published", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             Close();
@@ -170,7 +169,6 @@ namespace BuildSync.Client.Forms
                     PublishProgressBar.Visible = false;
                     PublishProgressLabel.Visible = false;
 
-                    NameTextBox.Enabled = true;
                     VirtualPathTextBox.Enabled = true;
                     LocalFolderBrowseButton.Enabled = true;
                 }

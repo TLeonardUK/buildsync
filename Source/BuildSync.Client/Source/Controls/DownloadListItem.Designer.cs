@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.MainPanel = new System.Windows.Forms.Panel();
             this.NameLabel = new System.Windows.Forms.Label();
             this.PlayButton = new System.Windows.Forms.Button();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
@@ -43,24 +43,26 @@
             this.RemoveButton = new System.Windows.Forms.Button();
             this.SettingsButton = new System.Windows.Forms.Button();
             this.ProgressBar = new System.Windows.Forms.ProgressBar();
-            this.panel1.SuspendLayout();
+            this.MainPanel.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
-            // panel1
+            // MainPanel
             // 
-            this.panel1.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            this.panel1.Controls.Add(this.NameLabel);
-            this.panel1.Controls.Add(this.PlayButton);
-            this.panel1.Controls.Add(this.flowLayoutPanel1);
-            this.panel1.Controls.Add(this.RemoveButton);
-            this.panel1.Controls.Add(this.SettingsButton);
-            this.panel1.Controls.Add(this.ProgressBar);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(6, 6);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(903, 71);
-            this.panel1.TabIndex = 0;
+            this.MainPanel.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.MainPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.MainPanel.Controls.Add(this.NameLabel);
+            this.MainPanel.Controls.Add(this.PlayButton);
+            this.MainPanel.Controls.Add(this.flowLayoutPanel1);
+            this.MainPanel.Controls.Add(this.RemoveButton);
+            this.MainPanel.Controls.Add(this.SettingsButton);
+            this.MainPanel.Controls.Add(this.ProgressBar);
+            this.MainPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.MainPanel.Location = new System.Drawing.Point(6, 6);
+            this.MainPanel.Name = "MainPanel";
+            this.MainPanel.Size = new System.Drawing.Size(903, 71);
+            this.MainPanel.TabIndex = 0;
+            this.MainPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.MainPanel_Paint);
             // 
             // NameLabel
             // 
@@ -74,7 +76,7 @@
             // PlayButton
             // 
             this.PlayButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+            this.PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_controller_xbox;
             this.PlayButton.Location = new System.Drawing.Point(734, 11);
             this.PlayButton.Name = "PlayButton";
             this.PlayButton.Size = new System.Drawing.Size(50, 50);
@@ -223,12 +225,12 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Transparent;
-            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.MainPanel);
             this.Name = "DownloadListItem";
             this.Padding = new System.Windows.Forms.Padding(6, 6, 6, 0);
             this.Size = new System.Drawing.Size(915, 77);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            this.MainPanel.ResumeLayout(false);
+            this.MainPanel.PerformLayout();
             this.flowLayoutPanel1.ResumeLayout(false);
             this.flowLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
@@ -237,7 +239,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel MainPanel;
         private System.Windows.Forms.ProgressBar ProgressBar;
         private System.Windows.Forms.Label NameLabel;
         private System.Windows.Forms.Label BuildLabel;

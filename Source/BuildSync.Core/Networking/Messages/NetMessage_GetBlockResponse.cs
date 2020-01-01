@@ -22,7 +22,7 @@ namespace BuildSync.Core.Networking.Messages
         /// <summary>
         /// 
         /// </summary>
-        public byte[] Data;
+        public NetCachedArray Data = new NetCachedArray();
 
         protected override void SerializePayload(NetMessageSerializer serializer)
         {

@@ -39,6 +39,11 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        public DateTime CreateTime = DateTime.UtcNow;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public object Metadata = null;
 
         /// <summary>
@@ -61,13 +66,22 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        public void SortChildren()
+        {
+            Children.Sort((Item1, Item2) => -Item1.CreateTime.CompareTo(Item2.CreateTime));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Naem"></param>
-        public VirtualFileSystemNode(string InName, string InPath, VirtualFileSystemNode InParent = null, object InMetadata = null)
+        public VirtualFileSystemNode(string InName, string InPath, DateTime InCreateTime, VirtualFileSystemNode InParent = null, object InMetadata = null)
         {
             Name = InName;
             Path = InPath;
             Parent = InParent;
             Metadata = InMetadata;
+            CreateTime = InCreateTime;
         }
     }
 
@@ -95,6 +109,7 @@ namespace BuildSync.Core.Utils
     public struct VirtualFileSystemInsertChild
     {
         public string VirtualPath;
+        public DateTime CreateTime;
         public object Metadata;
     }
 
@@ -135,7 +150,7 @@ namespace BuildSync.Core.Utils
 
         public VirtualFileSystem()
         {
-            Root = new VirtualFileSystemNode("", "", null, null);
+            Root = new VirtualFileSystemNode("", "", DateTime.UtcNow, null, null);
             RefreshNodeChildren(Root);
         }
 
@@ -186,6 +201,10 @@ namespace BuildSync.Core.Utils
         public void ReconcileChildren(string Path, List<VirtualFileSystemInsertChild> Children)
         {
             VirtualFileSystemNode BaseNode = GetNodeByPath(Path);
+            if (BaseNode == null)
+            {
+                BaseNode = InsertNode(Path, DateTime.UtcNow, null); 
+            }
 
             List<VirtualFileSystemNode> ChildrenToRemove = new List<VirtualFileSystemNode>();
             List<VirtualFileSystemInsertChild> ChildrenToAdd = new List<VirtualFileSystemInsertChild>();
@@ -221,6 +240,7 @@ namespace BuildSync.Core.Utils
                     {
                         // Update metadata while we are here in case it changed.
                         Child.Metadata = NewChild.Metadata;
+                        Child.CreateTime = NewChild.CreateTime;
                         Exists = true;
                         break;
                     }
@@ -235,43 +255,55 @@ namespace BuildSync.Core.Utils
             // Remove children.
             foreach (VirtualFileSystemNode Child in ChildrenToRemove)
             {
-                OnNodeRemoved?.Invoke(this, Child);
                 BaseNode.Children.Remove(Child);
             }
 
             // Add children.
+            List<VirtualFileSystemNode> NewChildren = new List<VirtualFileSystemNode>();
             foreach (VirtualFileSystemInsertChild NewChild in ChildrenToAdd)
             {
                 string NodeName = GetNodeName(NewChild.VirtualPath);
 
-                VirtualFileSystemNode Child = new VirtualFileSystemNode(NodeName, NewChild.VirtualPath, BaseNode, NewChild.Metadata);
+                VirtualFileSystemNode Child = new VirtualFileSystemNode(NodeName, NewChild.VirtualPath, NewChild.CreateTime, BaseNode, NewChild.Metadata);
                 BaseNode.Children.Add(Child);
-
-                OnNodeAdded?.Invoke(this, Child);
+                NewChildren.Add(Child);
             }
 
+            // Sort all children by create time.
+            BaseNode.Children.Sort((Item1, Item2) => -Item1.CreateTime.CompareTo(Item2.CreateTime));
+
+            // Fire events.
+            foreach (VirtualFileSystemNode Child in ChildrenToRemove)
+            {
+                OnNodeRemoved?.Invoke(this, Child);
+            }
+            foreach (VirtualFileSystemNode Child in NewChildren)
+            {
+                OnNodeAdded?.Invoke(this, Child);
+            }
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="Path"></param>
-        public VirtualFileSystemNode InsertNode(string Path, object Metadata = null)
+        public VirtualFileSystemNode InsertNode(string Path, DateTime CreateTime, object Metadata = null)
         {
             VirtualFileSystemNode ParentNode = Root;
 
             string ParentPath = GetParentPath(Path);
             if (ParentPath.Length > 0)
             {
-                ParentNode = InsertNode(ParentPath, null);
+                ParentNode = InsertNode(ParentPath, CreateTime, null);
             }
 
             string NodeName = GetNodeName(Path);
             VirtualFileSystemNode Child = ParentNode.GetChildByName(NodeName);
             if (Child == null)
             {
-                Child = new VirtualFileSystemNode(NodeName, Path, ParentNode, Metadata);
+                Child = new VirtualFileSystemNode(NodeName, Path, CreateTime, ParentNode, Metadata);
                 ParentNode.Children.Add(Child);
+                ParentNode.SortChildren();
 
                 OnNodeAdded?.Invoke(this, Child);
             }
@@ -421,7 +453,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="Path"></param>
         /// <returns></returns>
-        public string GetParentPath(string InPath)
+        public static string GetParentPath(string InPath)
         {
             int Index = InPath.LastIndexOfAny(new char[] { '\\', '/' });
             if (Index < 0)
@@ -434,9 +466,19 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="InPath"></param>
+        /// <returns></returns>
+        public static string Normalize(string InPath)
+        {
+            return InPath.Replace('\\', '/').TrimEnd('/');
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Path"></param>
         /// <returns></returns>
-        public string GetNodeName(string InPath)
+        public static string GetNodeName(string InPath)
         {
             int Index = InPath.LastIndexOfAny(new char[] { '\\', '/' });
             if (Index < 0)

@@ -19,6 +19,39 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        public DownloadListItem SelectedItem
+        {
+            get
+            {
+                foreach (DownloadListItem Ctl in Controls)
+                {
+                    Point TopLeft = Ctl.PointToScreen(Point.Empty);
+                    Point BottomRight = Ctl.PointToScreen(new Point(Ctl.ClientSize.Width, Ctl.ClientSize.Height));
+                    Point CursorPos = Cursor.Position;
+
+                    if (CursorPos.X < TopLeft.X ||
+                        CursorPos.Y < TopLeft.Y ||
+                        CursorPos.X > BottomRight.X ||
+                        CursorPos.Y > BottomRight.Y)
+                    {
+                        continue;
+                    }
+
+                    return Ctl;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private DownloadListItem OldSelectedItem = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public DownloadList()
         {
             InitializeComponent();
@@ -34,6 +67,20 @@ namespace BuildSync.Client.Controls
             if (DesignMode)
             {
                 return;
+            }
+
+            DownloadListItem NewSelectedItem = SelectedItem;
+            if (OldSelectedItem != NewSelectedItem)
+            {
+                if (OldSelectedItem != null)
+                {
+                    OldSelectedItem.Selected = false;
+                }
+                if (NewSelectedItem != null)
+                {
+                    NewSelectedItem.Selected = true;
+                }
+                OldSelectedItem = NewSelectedItem;
             }
 
             List<DownloadListItem> ExistingItems = new List<DownloadListItem>();

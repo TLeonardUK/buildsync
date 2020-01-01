@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
+using System.Text.Json.Serialization;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
 
@@ -18,12 +19,13 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public List<ManifestDownloadState> States = new List<ManifestDownloadState>();
+        public List<ManifestDownloadState> States { get; set; } = new List<ManifestDownloadState>();
     }
 
     /// <summary>
     /// 
     /// </summary>
+    [Serializable, JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ManifestDownloadProgressState
     {
         RetrievingManifest,
@@ -44,70 +46,70 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public Guid Id;
+        public Guid Id { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public ManifestDownloadProgressState State;
+        public ManifestDownloadProgressState State { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public bool Paused;
+        public bool Paused { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public bool Active;
+        public bool Active { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public DateTime LastActive;
+        public DateTime LastActive { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public Guid ManifestId;
+        public Guid ManifestId { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public int Priority;
+        public int Priority { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public string LocalFolder;
+        public string LocalFolder { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public SparseStateArray BlockStates;
+        public SparseStateArray BlockStates { get; set; } = new SparseStateArray();
 
         /// <summary>
         /// 
         /// </summary>
-        [XmlIgnore, NonSerialized]
+        [NonSerialized]
         public ulong LastManifestRequestTime = 0;
 
         /// <summary>
         /// 
         /// </summary>
-        [XmlIgnore, NonSerialized]
+        [NonSerialized]
         public BuildManifest Manifest;
 
         /// <summary>
         /// 
         /// </summary>
-        [XmlIgnore, NonSerialized]
+        [NonSerialized]
         public BandwidthTracker BandwidthStats = new BandwidthTracker();
 
         /// <summary>
         /// 
         /// </summary>
-        [XmlIgnore]
+        [JsonIgnore]
         public float Progress
         {
             get
@@ -120,15 +122,22 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        [XmlIgnore]
+        [JsonIgnore]
         public long BytesRemaining
         {
             get
             {
-                long TotalSize = Manifest.GetTotalSize();
-                long Downloaded = Manifest.GetTotalSizeOfBlocks(BlockStates);
+                if (Manifest == null)
+                {
+                    return 0;
+                }
+                else
+                {
+                    long TotalSize = Manifest.GetTotalSize();
+                    long Downloaded = Manifest.GetTotalSizeOfBlocks(BlockStates);
 
-                return TotalSize - Downloaded;
+                    return TotalSize - Downloaded;
+                }
             }
         }
     }

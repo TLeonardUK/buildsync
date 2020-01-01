@@ -6,6 +6,7 @@ using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core
 {
@@ -140,17 +141,23 @@ namespace BuildSync.Core
                             }
                         }
 
+                        Logger.Log(LogLevel.Info, LogCategory.Peers, "----- Peer Relevant Addresses -----");
+                        Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer: {0}", State.PeerConnectionAddress == null ? "Unknown" : State.PeerConnectionAddress.ToString());
+                        if (NewPeers.Count > 0)
+                        {
+                            for (int i = 0; i < NewPeers.Count; i++)
+                            {
+                                Logger.Log(LogLevel.Info, LogCategory.Peers, "[{0}] {1}", i, NewPeers[i].ToString());
+                            }
+                        }
+                        else
+                        {
+                            Logger.Log(LogLevel.Info, LogCategory.Peers, "\tNo Relevant Peers");
+                        }
+
                         // Send it!
                         if (IsDifferent)
                         {
-                            Console.WriteLine("----- Peer Relevant Addresses -----");
-                            Console.WriteLine("Peer: {0}", Connection.ListenAddress == null ? "Unknown" : Connection.ListenAddress.ToString());
-
-                            for (int i = 0; i < NewPeers.Count; i++)
-                            {
-                                Console.WriteLine("[{0}] {1}", i, NewPeers[i].ToString());
-                            }
-
                             NetMessage_RelevantPeerListUpdate Msg = new NetMessage_RelevantPeerListUpdate();
                             Msg.PeerAddresses = NewPeers;
                             Connection.Send(Msg);
@@ -234,7 +241,7 @@ namespace BuildSync.Core
         {
             List<NetConnection> Clients = ListenConnection.AllClients;
 
-            Console.WriteLine("=======================");
+            Logger.Log(LogLevel.Info, LogCategory.Peers, "=======================");
             foreach (NetConnection Connection in Clients)
             {
                 if (Connection.Metadata == null)
@@ -248,20 +255,64 @@ namespace BuildSync.Core
                     continue;
                 }
 
-                Console.WriteLine("Peer[{0}]", ClientState.PeerConnectionAddress == null ? "Unknown" : ClientState.PeerConnectionAddress.ToString());
+                Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer[{0}]", ClientState.PeerConnectionAddress == null ? "Unknown" : ClientState.PeerConnectionAddress.ToString());
                 for (int i = 0; i < ClientState.BlockState.States.Length; i++)
                 {
                     ManifestBlockListState State = ClientState.BlockState.States[i];
-                    Console.WriteLine("\tManifest[{0}] Id={1} Active={2}", i, State.Id.ToString(), State.IsActive);
+                    Logger.Log(LogLevel.Info, LogCategory.Peers, "\tManifest[{0}] Id={1} Active={2}", i, State.Id.ToString(), State.IsActive);
                     if (State.BlockState.Ranges != null)
                     {
                         for (int j = 0; j < State.BlockState.Ranges.Count; j++)
                         {
-                            Console.WriteLine("\t\tRegion[{0}] Start={1} End={2} Active={3}", j, State.BlockState.Ranges[j].Start, State.BlockState.Ranges[j].End, State.BlockState.Ranges[j].State);
+                            Logger.Log(LogLevel.Info, LogCategory.Peers, "\t\tRegion[{0}] Start={1} End={2} Active={3}", j, State.BlockState.Ranges[j].Start, State.BlockState.Ranges[j].End, State.BlockState.Ranges[j].State);
                         }
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Root"></param>
+        private void SendBuildsUpdate(NetConnection Connection, string RootPath)
+        {
+            List<string> Children = ManifestRegistry.GetVirtualPathChildren(RootPath);
+
+            NetMessage_GetBuildsResponse ResponseMsg = new NetMessage_GetBuildsResponse();
+            ResponseMsg.RootPath = RootPath;
+            ResponseMsg.Builds = new NetMessage_GetBuildsResponse.BuildInfo[Children.Count];
+
+            // Folders first.
+            int Index = 0;
+            for (int i = 0; i < ResponseMsg.Builds.Length; i++)
+            {
+                BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
+                if (Manifest == null)
+                {
+                    ResponseMsg.Builds[Index].Guid = Guid.Empty;
+                    ResponseMsg.Builds[Index].CreateTime = DateTime.UtcNow;
+                    ResponseMsg.Builds[Index].VirtualPath = Children[i];
+
+                    Index++;
+                }
+            }
+
+            // Builds second.
+            for (int i = 0; i < ResponseMsg.Builds.Length; i++)
+            {
+                BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
+                if (Manifest != null)
+                {
+                    ResponseMsg.Builds[Index].Guid = Manifest.Guid;
+                    ResponseMsg.Builds[Index].CreateTime = Manifest.CreateTime;
+                    ResponseMsg.Builds[Index].VirtualPath = Children[i];
+
+                    Index++;
+                }
+            }
+
+            Connection.Send(ResponseMsg);
         }
 
         /// <summary>
@@ -278,22 +329,9 @@ namespace BuildSync.Core
             {
                 NetMessage_GetBuilds Msg = BaseMessage as NetMessage_GetBuilds;
 
-                Console.WriteLine("Recieved request for builds in folder: {0}", Msg.RootPath);
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for builds in folder: {0}", Msg.RootPath);
 
-                List<string> Children = ManifestRegistry.GetVirtualPathChildren(Msg.RootPath);
-
-                NetMessage_GetBuildsResponse ResponseMsg = new NetMessage_GetBuildsResponse();
-                ResponseMsg.RootPath = Msg.RootPath;
-                ResponseMsg.Builds = new NetMessage_GetBuildsResponse.BuildInfo[Children.Count];
-                for (int i = 0; i < ResponseMsg.Builds.Length; i++)
-                {
-                    BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
-
-                    ResponseMsg.Builds[i].Guid = Manifest != null ? Manifest.Guid : Guid.Empty;
-                    ResponseMsg.Builds[i].VirtualPath = Children[i];
-                }
-
-                Connection.Send(ResponseMsg);
+                SendBuildsUpdate(Connection, Msg.RootPath);
             }
 
             // ------------------------------------------------------------------------------
@@ -306,10 +344,11 @@ namespace BuildSync.Core
                 NetMessage_PublishManifestResponse ResponseMsg = new NetMessage_PublishManifestResponse();
                 ResponseMsg.Result = PublishManifestResult.Failed;
 
-                Console.WriteLine("Recieved request to publish manifest.");
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to publish manifest.");
+                BuildManifest Manifest = null;
                 try
                 {
-                    BuildManifest Manifest = BuildManifest.FromByteArray(Msg.Data);
+                    Manifest = BuildManifest.FromByteArray(Msg.Data);
                     ResponseMsg.ManifestId = Msg.ManifestId;
 
                     // Check something doesn't already exist at the virtual path.
@@ -331,10 +370,15 @@ namespace BuildSync.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Failed to process publish request due to error: {0}", ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to process publish request due to error: {0}", ex.Message);
                 }
 
                 Connection.Send(ResponseMsg);
+
+                if (Manifest != null)
+                {
+                    SendBuildsUpdate(Connection, VirtualFileSystem.GetParentPath(Manifest.VirtualPath));
+                }
             }
 
             // ------------------------------------------------------------------------------
@@ -348,12 +392,12 @@ namespace BuildSync.Core
 
                 if (State.BlockState != null)
                 {
-                    Console.WriteLine("Recieved block list update from client, applying as patch ({0} states).", Msg.BlockState.States.Length);
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block list update from client, applying as patch ({0} states).", Msg.BlockState.States.Length);
                     State.BlockState = Msg.BlockState;// State.BlockState.ApplyDelta(Msg.BlockState);
                 }
                 else
                 {
-                    Console.WriteLine("Recieved block list update from client, applying as new state ({0} states).", Msg.BlockState.States.Length);
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block list update from client, applying as new state ({0} states).", Msg.BlockState.States.Length);
                     State.BlockState = Msg.BlockState;
                 }
 
@@ -372,7 +416,7 @@ namespace BuildSync.Core
             }
 
             // ------------------------------------------------------------------------------
-            // Peer connection info update.
+            // Client connection info update.
             // ------------------------------------------------------------------------------
             else if (BaseMessage is NetMessage_ConnectionInfo)
             {
@@ -382,7 +426,7 @@ namespace BuildSync.Core
 
                 State.PeerConnectionAddress = Msg.PeerConnectionAddress;
 
-                Console.WriteLine("Peers connection address was updated to: " + State.PeerConnectionAddress.ToString());
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Clients connection address was updated to: " + State.PeerConnectionAddress.ToString());
             }
 
             // ------------------------------------------------------------------------------
@@ -392,7 +436,7 @@ namespace BuildSync.Core
             {
                 NetMessage_GetManifest Msg = BaseMessage as NetMessage_GetManifest;
 
-                Console.WriteLine("Recieved request for manifest: {0}", Msg.ManifestId.ToString());
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for manifest: {0}", Msg.ManifestId.ToString());
 
                 try
                 {
@@ -407,9 +451,40 @@ namespace BuildSync.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Failed to process manifest request due to error: {0}", ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to process manifest request due to error: {0}", ex.Message);
                 }
-            }            
+            }
+
+            // ------------------------------------------------------------------------------
+            // Client requested a manifest is deleted.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_DeleteManifest)
+            {
+                NetMessage_DeleteManifest Msg = BaseMessage as NetMessage_DeleteManifest;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for deleting manifest: {0}", Msg.ManifestId.ToString());
+
+                try
+                {
+                    BuildManifest Manifest = ManifestRegistry.GetManifestById(Msg.ManifestId);
+                    if (Manifest != null)
+                    {
+                        string Path = Manifest.VirtualPath;
+
+                        ManifestRegistry.UnregisterManifest(Msg.ManifestId);
+
+                        NetMessage_DeleteManifestResponse ResponseMsg = new NetMessage_DeleteManifestResponse();
+                        ResponseMsg.ManifestId = Msg.ManifestId;
+                        Connection.Send(ResponseMsg);
+
+                        SendBuildsUpdate(Connection, VirtualFileSystem.GetParentPath(Path));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to process manifest delete request due to error: {0}", ex.Message);
+                }
+            }
         }
     }
 }

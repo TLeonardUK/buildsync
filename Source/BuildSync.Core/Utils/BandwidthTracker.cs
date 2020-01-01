@@ -99,8 +99,8 @@ namespace BuildSync.Core.Utils
 
                 double Delta = Elapsed / 1000.0;
 
-                BandwidthSent = (BandwidthSent * 0.8) + ((Sent * Delta) * 0.2);
-                BandwidthRecieved = (BandwidthRecieved * 0.8) + ((Recieved * Delta) * 0.2);
+                BandwidthSent = (BandwidthSent * 0.66) + ((Sent * Delta) * 0.33);
+                BandwidthRecieved = (BandwidthRecieved * 0.66) + ((Recieved * Delta) * 0.33);
 
                 BandwidthTimeStartBytesSent = TotalBytesSent;
                 BandwidthTimeStartBytesRecieved = TotalBytesRecieved;

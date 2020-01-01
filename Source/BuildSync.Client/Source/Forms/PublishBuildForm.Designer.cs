@@ -29,8 +29,6 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.NameTextBox = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.PublishButton = new System.Windows.Forms.Button();
             this.VirtualPathTextBox = new System.Windows.Forms.TextBox();
@@ -44,31 +42,12 @@
             this.ProgressTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
-            // NameTextBox
-            // 
-            this.NameTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.NameTextBox.Location = new System.Drawing.Point(16, 109);
-            this.NameTextBox.Name = "NameTextBox";
-            this.NameTextBox.Size = new System.Drawing.Size(809, 26);
-            this.NameTextBox.TabIndex = 18;
-            this.NameTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 86);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(51, 20);
-            this.label2.TabIndex = 17;
-            this.label2.Text = "Name";
-            // 
             // panel1
             // 
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(13, 304);
+            this.panel1.Location = new System.Drawing.Point(13, 223);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(825, 1);
             this.panel1.TabIndex = 16;
@@ -77,7 +56,7 @@
             // 
             this.PublishButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.PublishButton.Enabled = false;
-            this.PublishButton.Location = new System.Drawing.Point(695, 320);
+            this.PublishButton.Location = new System.Drawing.Point(695, 239);
             this.PublishButton.Name = "PublishButton";
             this.PublishButton.Size = new System.Drawing.Size(143, 45);
             this.PublishButton.TabIndex = 15;
@@ -89,7 +68,7 @@
             // 
             this.VirtualPathTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.VirtualPathTextBox.Location = new System.Drawing.Point(16, 172);
+            this.VirtualPathTextBox.Location = new System.Drawing.Point(16, 107);
             this.VirtualPathTextBox.Name = "VirtualPathTextBox";
             this.VirtualPathTextBox.Size = new System.Drawing.Size(809, 26);
             this.VirtualPathTextBox.TabIndex = 20;
@@ -98,7 +77,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 149);
+            this.label1.Location = new System.Drawing.Point(12, 84);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(91, 20);
             this.label1.TabIndex = 19;
@@ -108,7 +87,7 @@
             // 
             this.LocalFolderTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.LocalFolderTextBox.Location = new System.Drawing.Point(16, 233);
+            this.LocalFolderTextBox.Location = new System.Drawing.Point(16, 168);
             this.LocalFolderTextBox.Name = "LocalFolderTextBox";
             this.LocalFolderTextBox.ReadOnly = true;
             this.LocalFolderTextBox.Size = new System.Drawing.Size(672, 26);
@@ -118,7 +97,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(12, 210);
+            this.label3.Location = new System.Drawing.Point(12, 145);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(96, 20);
             this.label3.TabIndex = 21;
@@ -126,7 +105,7 @@
             // 
             // LocalFolderBrowseButton
             // 
-            this.LocalFolderBrowseButton.Location = new System.Drawing.Point(695, 233);
+            this.LocalFolderBrowseButton.Location = new System.Drawing.Point(695, 168);
             this.LocalFolderBrowseButton.Name = "LocalFolderBrowseButton";
             this.LocalFolderBrowseButton.Size = new System.Drawing.Size(130, 26);
             this.LocalFolderBrowseButton.TabIndex = 23;
@@ -137,7 +116,7 @@
             // PublishProgressBar
             // 
             this.PublishProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.PublishProgressBar.Location = new System.Drawing.Point(16, 345);
+            this.PublishProgressBar.Location = new System.Drawing.Point(16, 264);
             this.PublishProgressBar.Name = "PublishProgressBar";
             this.PublishProgressBar.Size = new System.Drawing.Size(661, 20);
             this.PublishProgressBar.TabIndex = 24;
@@ -147,7 +126,7 @@
             // 
             this.PublishProgressLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.PublishProgressLabel.AutoSize = true;
-            this.PublishProgressLabel.Location = new System.Drawing.Point(14, 318);
+            this.PublishProgressLabel.Location = new System.Drawing.Point(14, 237);
             this.PublishProgressLabel.Name = "PublishProgressLabel";
             this.PublishProgressLabel.Size = new System.Drawing.Size(231, 20);
             this.PublishProgressLabel.TabIndex = 25;
@@ -173,7 +152,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(849, 379);
+            this.ClientSize = new System.Drawing.Size(849, 303);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.PublishProgressLabel);
             this.Controls.Add(this.PublishProgressBar);
@@ -182,8 +161,6 @@
             this.Controls.Add(this.label3);
             this.Controls.Add(this.VirtualPathTextBox);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.NameTextBox);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.PublishButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -199,9 +176,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox NameTextBox;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button PublishButton;
         private System.Windows.Forms.TextBox VirtualPathTextBox;

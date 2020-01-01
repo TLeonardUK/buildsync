@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using BuildSync.Client.Controls;
 
 namespace BuildSync.Client.Forms
 {
@@ -29,6 +30,11 @@ namespace BuildSync.Client.Forms
         /// 
         /// </summary>
         private ConsoleForm ConsoleOutputForm = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private DownloadListItem ContextMenuDownloadItem = null;
 
         #endregion
         #region Methods
@@ -89,7 +95,16 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void PublishBuildClicked(object sender, EventArgs e)
         {
-            (new PublishBuildForm()).ShowDialog(this);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ManageBuildsClicked(object sender, EventArgs e)
+        {
+            (new ManageBuildsForm()).ShowDialog(this);
         }
 
         /// <summary>
@@ -153,8 +168,25 @@ namespace BuildSync.Client.Forms
                 return;
             }
 
-            e.Cancel = true;
-            this.Visible = false;
+            if (Program.Settings.MinimizeToTrayOnClose)
+            {
+                e.Cancel = true;
+                this.WindowState = FormWindowState.Minimized;
+            }
+            else
+            {
+                e.Cancel = false;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ClientSizeHasChanged(object sender, EventArgs e)
+        {
+            ShowInTaskbar = (WindowState != FormWindowState.Minimized);
         }
 
         /// <summary>
@@ -166,7 +198,7 @@ namespace BuildSync.Client.Forms
         {
             if (e.Button == MouseButtons.Left)
             {
-                this.Visible = true;
+                this.WindowState = FormWindowState.Normal;
                 this.BringToFront();
                 this.Focus();
             }
@@ -179,10 +211,14 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void PauseAllClicked(object sender, EventArgs e)
         {
-            /*foreach (DownloadState State in Program.DownloadManager.States.States)
+            foreach (DownloadState State in Program.DownloadManager.States.States)
             {
-                State.Paused = true;
-            }*/
+                ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(State.ActiveManifestId);
+                if (Downloader != null && Downloader.State == ManifestDownloadProgressState.Downloading)
+                {
+                    State.Paused = true;
+                }
+            }
         }
 
         /// <summary>
@@ -192,10 +228,10 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void ResumeAllClicked(object sender, EventArgs e)
         {
-            /*foreach (DownloadState State in Program.DownloadManager.States.States)
+            foreach (DownloadState State in Program.DownloadManager.States.States)
             {
                 State.Paused = false;
-            }*/
+            }
         }
 
         /// <summary>
@@ -206,6 +242,56 @@ namespace BuildSync.Client.Forms
         private void UpdateTimerTick(object sender, EventArgs e)
         {
             RefreshState();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ForceRevalidateClicked(object sender, EventArgs e)
+        {
+            ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
+            if (Downloader != null)
+            {
+                Program.ManifestDownloadManager.ValidateDownload(Downloader.ManifestId);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ForceRedownloadClicked(object sender, EventArgs e)
+        {
+            ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
+            if (Downloader != null)
+            {
+                Program.ManifestDownloadManager.RestartDownload(Downloader.ManifestId);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DownloadListContextMenuShowing(object sender, CancelEventArgs e)
+        {
+            ContextMenuDownloadItem = mainDownloadList.SelectedItem;
+            if (ContextMenuDownloadItem != null)
+            {
+                ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
+
+                forceRedownloadToolStripMenuItem.Enabled = true;
+                forceRevalidateToolStripMenuItem.Enabled = (Downloader != null && Downloader.State == ManifestDownloadProgressState.Complete);
+            }
+            else
+            {
+                forceRedownloadToolStripMenuItem.Enabled = false;
+                forceRevalidateToolStripMenuItem.Enabled = false;
+            }
         }
 
         /// <summary>
@@ -231,7 +317,7 @@ namespace BuildSync.Client.Forms
                 peerCountLabel.ForeColor = Color.Black;
             }
 
-            publishBuildToolStripMenuItem.Enabled = Connected;
+            //publishBuildToolStripMenuItem.Enabled = Connected;
             manageBuildsToolStripMenuItem.Enabled = Connected;
             addDownloadToolStripMenuItem.Enabled = Connected;
             addDownloadToolStripMenuItem1.Enabled = Connected;

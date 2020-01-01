@@ -8,18 +8,18 @@ namespace BuildSync.Core.Utils
     /// 
     /// </summary>
     [Serializable]
-    public struct SparseStateArray
+    public class SparseStateArray
     {
         [Serializable]
         public class Range
         {
-            public int Start;
-            public int End;
-            public bool State;
+            public int Start { get; set; }
+            public int End { get; set; }
+            public bool State { get; set; }
         };
 
-        public List<Range> Ranges;
-        public int Size;
+        public List<Range> Ranges { get; set; }
+        public int Size { get; set; }
 
         /// <summary>
         /// 
@@ -125,7 +125,7 @@ namespace BuildSync.Core.Utils
         /// <returns></returns>
         public SparseStateArray Clone()
         {
-            SparseStateArray Result;
+            SparseStateArray Result = new SparseStateArray();
             Result.Size = Size;
             Result.Ranges = null;
 

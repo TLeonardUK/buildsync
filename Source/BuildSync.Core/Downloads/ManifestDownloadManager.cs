@@ -1,13 +1,10 @@
-﻿using System;
-using System.IO;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using BuildSync.Core.Manifests;
+﻿using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Utils;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace BuildSync.Core.Downloads
 {
@@ -36,6 +33,7 @@ namespace BuildSync.Core.Downloads
         public Guid ManifestId;
         public int RangeStart;
         public int RangeEnd;
+        public long Size;
     }
 
     /// <summary>
@@ -55,6 +53,9 @@ namespace BuildSync.Core.Downloads
     {
         public Guid ManifestId;
         public int BlockIndex;
+
+        public ulong TimeStarted;
+        public long Size;
     }
 
     /// <summary>
@@ -264,6 +265,10 @@ namespace BuildSync.Core.Downloads
             foreach (ManifestDownloadState State in StateCollection.States)
             {
                 State.Manifest = ManifestRegistry.GetManifestById(State.ManifestId);
+                if (State.Manifest == null)
+                {
+                    State.State = ManifestDownloadProgressState.RetrievingManifest;
+                }
             }
 
             CleanUpOrphanBuilds();
@@ -325,7 +330,7 @@ namespace BuildSync.Core.Downloads
             State.BlockStates.Resize((int)Manifest.BlockCount);
             State.BlockStates.SetAll(Available);
 
-            Console.WriteLine("Added local download of manifest: {0}", Manifest.Guid.ToString());
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Added local download of manifest: {0}", Manifest.Guid.ToString());
             StateCollection.States.Add(State);
 
             StateDirtyCount++;
@@ -355,12 +360,58 @@ namespace BuildSync.Core.Downloads
             State.LocalFolder = Path.Combine(StorageRootPath, State.ManifestId.ToString());
             State.LastActive = DateTime.Now;
 
-            Console.WriteLine("Started download of manifest: {0}", ManifestId.ToString());
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Started download of manifest: {0}", ManifestId.ToString());
             StateCollection.States.Add(State);
 
             StateDirtyCount++;
 
             return State;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Manifest"></param>
+        /// <param name="Priority"></param>
+        public void RestartDownload(Guid ManifestId)
+        {
+            ManifestDownloadState State = GetDownload(ManifestId);
+            if (State == null)
+            {
+                return;
+            }
+
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Restarted download of manifest: {0}", ManifestId.ToString());
+            State.Paused = false;
+            State.BlockStates.SetAll(false);
+            State.State = ManifestDownloadProgressState.RetrievingManifest;
+
+            StateDirtyCount++;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Manifest"></param>
+        /// <param name="Priority"></param>
+        public void ValidateDownload(Guid ManifestId)
+        {
+            ManifestDownloadState State = GetDownload(ManifestId);
+            if (State == null)
+            {
+                return;
+            }
+
+            if (State.State != ManifestDownloadProgressState.Complete)
+            {
+                return;
+            }
+
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating download of manifest: {0}", ManifestId.ToString());
+            State.Paused = false;
+            State.State = ManifestDownloadProgressState.Validating;
+
+            StateDirtyCount++;
         }
 
         /// <summary>
@@ -375,7 +426,7 @@ namespace BuildSync.Core.Downloads
                 return;
             }
 
-            Console.WriteLine("Paused download of manifest: {0}", ManifestId.ToString());
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Paused download of manifest: {0}", ManifestId.ToString());
             State.Paused = true;
 
             StateDirtyCount++;
@@ -393,7 +444,7 @@ namespace BuildSync.Core.Downloads
                 return;
             }
 
-            Console.WriteLine("Resumed download of manifest: {0}", ManifestId.ToString());
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Resumed download of manifest: {0}", ManifestId.ToString());
             State.Paused = false;
 
             StateDirtyCount++;
@@ -434,7 +485,7 @@ namespace BuildSync.Core.Downloads
                         State.Manifest = ManifestRegistry.GetManifestById(State.ManifestId);
                         if (State.Manifest != null)
                         {
-                            Console.WriteLine("Retrieved manifest for download '{0}', starting download.", State.Id);
+                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrieved manifest for download '{0}', starting download.", State.Id);
                             ChangeState(State, ManifestDownloadProgressState.Initializing);
                             State.BlockStates.Resize((int)State.Manifest.BlockCount);
 
@@ -463,14 +514,14 @@ namespace BuildSync.Core.Downloads
                             {
                                 try
                                 {
-                                    System.Console.WriteLine("Initializing directory: {0}", State.LocalFolder);
+                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Initializing directory: {0}", State.LocalFolder);
                                     State.Manifest.InitializeDirectory(State.LocalFolder);
                                     ChangeState(State, ManifestDownloadProgressState.Downloading);
                                 }
                                 catch (Exception Ex)
                                 {
                                     ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
-                                    System.Console.WriteLine("Failed to intialize directory with error: {0}", Ex.Message);
+                                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to intialize directory with error: {0}", Ex.Message);
                                 }
                                 finally
                                 {
@@ -485,7 +536,7 @@ namespace BuildSync.Core.Downloads
                 // Restarting from an initialization failure, try again.
                 case ManifestDownloadProgressState.InitializeFailed:
                     {
-                        System.Console.WriteLine("Retrying initialization after resume from error.");
+                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying initialization after resume from error.");
                         ChangeState(State, ManifestDownloadProgressState.Initializing);
                         break;
                     }
@@ -524,7 +575,7 @@ namespace BuildSync.Core.Downloads
                                 {
                                     try
                                     {
-                                        System.Console.WriteLine("Validating directory: {0}", State.LocalFolder);
+                                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
                                         List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder);
                                         if (FailedFiles.Count == 0)
                                         {
@@ -543,7 +594,7 @@ namespace BuildSync.Core.Downloads
                                     catch (Exception Ex)
                                     {
                                         ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
-                                        System.Console.WriteLine("Failed to validate directory with error: {0}", Ex.Message);
+                                        Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to validate directory with error: {0}", Ex.Message);
                                     }
                                     finally
                                     {
@@ -559,7 +610,7 @@ namespace BuildSync.Core.Downloads
                 // Restarting from an validation failure, try again.
                 case ManifestDownloadProgressState.ValidationFailed:
                     {
-                        System.Console.WriteLine("Retrying downloading after resume from validation error.");
+                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying downloading after resume from validation error.");
                         ChangeState(State, ManifestDownloadProgressState.Downloading);
                         break;
                     }
@@ -636,14 +687,14 @@ namespace BuildSync.Core.Downloads
                     }
                 }
 
-                DeletionCandidates.Sort((Item1, Item2) => -Item1.LastActive.CompareTo(Item2.LastActive));
+                DeletionCandidates.Sort((Item1, Item2) => Item1.LastActive.CompareTo(Item2.LastActive));
 
                 // Delete this state.
                 if (DeletionCandidates.Count > 0)
                 {
                     ManifestDownloadState State = DeletionCandidates[0];
 
-                    Console.WriteLine("Deleting download to prune storage space: {0}", State.ManifestId.ToString());
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Deleting download to prune storage space: {0}", State.ManifestId.ToString());
 
                     // Remove state from our state collection.
                     StateCollection.States.Remove(State);
@@ -679,7 +730,7 @@ namespace BuildSync.Core.Downloads
                         {
                             lock (PendingOrphanCleanups)
                             {
-                                Console.WriteLine("Deleting directory in storage folder that appears to have no matching manifest (probably a previous failed delete): {0}", Dir);
+                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Deleting directory in storage folder that appears to have no matching manifest (probably a previous failed delete): {0}", Dir);
                                 if (!PendingOrphanCleanups.Contains(Dir))
                                 {
                                     PendingOrphanCleanups.Add(Dir);
@@ -696,7 +747,7 @@ namespace BuildSync.Core.Downloads
                             // with no available blocks so we can clean it up if needed for space.
                             if (GetDownload(ManifestId) == null)
                             {
-                                Console.WriteLine("Found build directory for manifest, but no download state, added as local download, might have been orphaned due to settings save failure?: {0}", Dir);
+                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Found build directory for manifest, but no download state, added as local download, might have been orphaned due to settings save failure?: {0}", Dir);
                                 AddLocalDownload(Manifest, Dir, false);
                             }
                         }
@@ -711,12 +762,36 @@ namespace BuildSync.Core.Downloads
         /// <param name="ManifestId"></param>
         /// <param name="BlockIndex"></param>
         /// <param name="Data"></param>
-        public bool GetBlockData(Guid ManifestId, int BlockIndex, ref byte[] Data, BlockAccessCompleteHandler Callback)
+        public bool GetBlockInfo(Guid ManifestId, int BlockIndex, ref BuildManifestFileInfo FileInfo, ref long BlockOffset, ref long BlockSize)
         {
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State == null)
             {
-                Console.WriteLine("Request for block from manifest we do not have.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for block from manifest we do not have.");
+                return false;
+            }
+
+            if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for invalid block info.");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        /// <param name="BlockIndex"></param>
+        /// <param name="Data"></param>
+        public bool GetBlockData(Guid ManifestId, int BlockIndex, ref NetCachedArray Data, BlockAccessCompleteHandler Callback)
+        {
+            ManifestDownloadState State = GetDownload(ManifestId);
+            if (State == null)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for block from manifest we do not have.");
                 return false;
             }
 
@@ -726,21 +801,20 @@ namespace BuildSync.Core.Downloads
 
             if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
             {
-                Console.WriteLine("Request for invalid block info.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for invalid block info.");
                 return false;
             }
 
             // Ensure we have block.
             if (!State.BlockStates.Get(BlockIndex))
             {
-                Console.WriteLine("Request for block data for block we do not have.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for block data for block we do not have.");
                 return false;
             }
 
-            // Ensure the file exists locally.
             string LocalFile = Path.Combine(State.LocalFolder, FileInfo.Path);
-            Data = new byte[BlockSize];
-            IOQueue.Read(LocalFile, BlockOffset, BlockSize, Data, (bool bSuccess) =>
+            Data.Resize((int)BlockSize);
+            IOQueue.Read(LocalFile, BlockOffset, BlockSize, Data.Data, (bool bSuccess) =>
             {
                 if (bSuccess)
                 {
@@ -759,12 +833,12 @@ namespace BuildSync.Core.Downloads
         /// <param name="ManifestId"></param>
         /// <param name="BlockIndex"></param>
         /// <param name="Data"></param>
-        public bool SetBlockData(Guid ManifestId, int BlockIndex, byte[] Data, BlockAccessCompleteHandler Callback)
+        public bool SetBlockData(Guid ManifestId, int BlockIndex, NetCachedArray Data, BlockAccessCompleteHandler Callback)
         {
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State == null)
             {
-                Console.WriteLine("Request to set block from manifest we do not have.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block from manifest we do not have.");
                 return false;
             }
 
@@ -774,27 +848,27 @@ namespace BuildSync.Core.Downloads
 
             if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
             {
-                Console.WriteLine("Request to set block which we don't have info for.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block which we don't have info for.");
                 return false;
             }
 
             // Ensure data is valid.
             if (Data.Length != BlockSize)
             {
-                Console.WriteLine("Request to write block with smaller than expected data.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to write block with smaller than expected data.");
                 return false;
             }
 
             // Ensure we have block.
             if (State.BlockStates.Get(BlockIndex))
             {
-                Console.WriteLine("Request to set block data for block we not have.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block data for block we not have.");
                 return false;
             }
 
             // Ensure the file exists locally.
             string LocalFile = Path.Combine(State.LocalFolder, FileInfo.Path);
-            IOQueue.Write(LocalFile, BlockOffset, BlockSize, Data, (bool bSuccess) =>
+            IOQueue.Write(LocalFile, BlockOffset, BlockSize, Data.Data, (bool bSuccess) =>
             {
                 if (bSuccess)
                 {
@@ -816,7 +890,7 @@ namespace BuildSync.Core.Downloads
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State == null)
             {
-                Console.WriteLine("Request to set block from manifest we do not have.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block from manifest we do not have.");
                 return;
             }
 
@@ -826,7 +900,7 @@ namespace BuildSync.Core.Downloads
 
             if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
             {
-                Console.WriteLine("Request to set block which we don't have info for.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block which we don't have info for.");
                 return;
             }
 
@@ -844,7 +918,7 @@ namespace BuildSync.Core.Downloads
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State == null)
             {
-                Console.WriteLine("Request to unset block from manifest we do not have.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to unset block from manifest we do not have.");
                 return;
             }
 
@@ -870,7 +944,7 @@ namespace BuildSync.Core.Downloads
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State == null)
             {
-                Console.WriteLine("Request to unset block from manifest we do not have.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to unset block from manifest we do not have.");
                 return;
             }
 
@@ -880,7 +954,7 @@ namespace BuildSync.Core.Downloads
 
             if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
             {
-                Console.WriteLine("Request to unset block which we don't have info for.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to unset block which we don't have info for.");
                 return;
             }
 
@@ -950,7 +1024,7 @@ namespace BuildSync.Core.Downloads
                     }
 
                     // Generate the ranges to download.
-                    SparseStateArray DownloadRanges;
+                    SparseStateArray DownloadRanges = new SparseStateArray();
                     DownloadRanges.Size = 0;
                     DownloadRanges.Ranges = null;
                     DownloadRanges.FromArray(ToDownload);
@@ -975,7 +1049,7 @@ namespace BuildSync.Core.Downloads
             }
 
             // Sort by priority.
-            ManifestQueues.Sort((Item1, Item2) => Item1.HighestPriority.CompareTo(Item2.HighestPriority));
+            ManifestQueues.Sort((Item1, Item2) => -Item1.HighestPriority.CompareTo(Item2.HighestPriority));
 
             // Now to generate the actual download priority queue.
             // To do this we go through each manifest in priority order. The higher the priority the more blocks they get to add to the queue.

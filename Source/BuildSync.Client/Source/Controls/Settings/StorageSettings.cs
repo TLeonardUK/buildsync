@@ -29,7 +29,7 @@ namespace BuildSync.Client.Controls.Settings
 
             SkipValidity = true;
             StoragePathTextBox.Text = Program.Settings.StoragePath;
-            StorageMaxSizeTextBox.Value = Program.Settings.StorageMaxSize / 1024 / 1024;
+            StorageMaxSizeTextBox.Value = Program.Settings.StorageMaxSize / 1024 / 1024 / 1024;
             SkipValidity = false;
 
             UpdateValidityState();
@@ -57,7 +57,7 @@ namespace BuildSync.Client.Controls.Settings
             }
 
             Program.Settings.StoragePath = StoragePathTextBox.Text;
-            Program.Settings.StorageMaxSize = (long)StorageMaxSizeTextBox.Value * 1024 * 1024;
+            Program.Settings.StorageMaxSize = (long)StorageMaxSizeTextBox.Value * 1024 * 1024 * 1024;
 
             if (Directory.Exists(Program.Settings.StoragePath))
             {

@@ -26,6 +26,27 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        private bool InternalSelected = false;
+        public bool Selected
+        {
+            get
+            {
+                return InternalSelected;
+            }
+            set
+            {
+                if (InternalSelected != value)
+                {
+                    InternalSelected = value;
+                    MainPanel.Invalidate();
+                    MainPanel.Refresh();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public DownloadListItem()
         {
             InitializeComponent();
@@ -34,46 +55,147 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        private enum LaunchOption
+        {
+            Pause,
+            Resume,
+            Launch
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private enum StateColoring
+        { 
+            Success,
+            Error,
+            Warning,
+            Info
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <param name="Build"></param>
+        /// <param name="Progress"></param>
+        private void SetStatus(string State, StateColoring Coloring, string Build, float Progress, bool ContinuousWork, LaunchOption LaunchType, string UpRate, string DownRate)
+        {
+            if (EtaLabel.Text != State)
+            {
+                EtaLabel.Text = State;
+            }
+
+            if (BuildLabel.Text != Build)
+            {
+                BuildLabel.Text = Build;
+            }
+
+            Color TargetColor = Color.Black;
+            if (Coloring == StateColoring.Error)
+            {
+                TargetColor = Color.Red;
+            }
+            else if (Coloring == StateColoring.Info)
+            {
+                TargetColor = Color.Black;
+            }
+            else if (Coloring == StateColoring.Warning)
+            {
+                TargetColor = Color.Orange;
+            }
+            else if (Coloring == StateColoring.Success)
+            {
+                TargetColor = Color.Green;
+            }
+
+            if (EtaLabel.ForeColor != TargetColor)
+            {
+                EtaLabel.ForeColor = TargetColor;
+            }
+
+            if (!ContinuousWork)
+            {
+                if (ProgressBar.Style != ProgressBarStyle.Marquee)
+                {
+                    ProgressBar.Style = ProgressBarStyle.Marquee;
+                    ProgressBar.Value = 0;
+                }
+            }
+            else
+            {
+                if (ProgressBar.Style != ProgressBarStyle.Continuous)
+                {
+                    ProgressBar.Style = ProgressBarStyle.Continuous;
+                }
+
+                if (ProgressBar.Value != (int)Progress)
+                {
+                    ProgressBar.Value = (int)Progress;
+                }
+            }
+
+            Bitmap TargetIcon = null;
+            if (LaunchType == LaunchOption.Launch)
+            {
+                TargetIcon = global::BuildSync.Client.Properties.Resources.appbar_controller_xbox;
+            }
+            else if (LaunchType == LaunchOption.Resume)
+            {
+                TargetIcon = global::BuildSync.Client.Properties.Resources.appbar_control_play;
+            }
+            else if (LaunchType == LaunchOption.Pause)
+            {
+                TargetIcon = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+            }
+            if (PlayButton.Image != TargetIcon)
+            {
+                PlayButton.Image = TargetIcon;
+            }
+
+            if (DownloadSpeedLabel.Text != DownRate)
+            {
+                DownloadSpeedLabel.Text = DownRate;
+            }
+            if (UploadSpeedLabel.Text != UpRate)
+            {
+                UploadSpeedLabel.Text = UpRate;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void RefreshState()
         {
-            NameLabel.Text = State.Name;
-
-            EtaLabel.ForeColor = Color.Black;
+            if (State.Name != NameLabel.Text)
+            {
+                NameLabel.Text = State.Name;
+            }
 
             ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(State.ActiveManifestId);
             if (Downloader != null)
             {
+                string UpRate = StringUtils.FormatAsTransferRate(Downloader.BandwidthStats.RateOut);
+                string DownRate = StringUtils.FormatAsTransferRate(Downloader.BandwidthStats.RateIn);
+
                 if (Downloader.Paused)
                 {
                     switch (Downloader.State)
                     {
                         case ManifestDownloadProgressState.InitializeFailed:
                             {
-                                EtaLabel.Text = "Disk Error";
-                                EtaLabel.ForeColor = Color.Red;
-                                BuildLabel.Text = Downloader.Manifest.VirtualPath;
-                                ProgressBar.Style = ProgressBarStyle.Continuous;
-                                ProgressBar.Value = 0;
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_play;
+                                SetStatus("Disk Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Resume, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.ValidationFailed:
                             {
-                                EtaLabel.Text = "Validation Error";
-                                EtaLabel.ForeColor = Color.Red;
-                                BuildLabel.Text = Downloader.Manifest.VirtualPath;
-                                ProgressBar.Style = ProgressBarStyle.Continuous;
-                                ProgressBar.Value = 0;
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_play;
+                                SetStatus("Validation Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Resume, UpRate, DownRate);
                                 break;
                             }
                         default:
                             {
-                                EtaLabel.Text = "-";
-                                BuildLabel.Text = Downloader.Manifest == null ? "-" : Downloader.Manifest.VirtualPath;
-                                ProgressBar.Style = ProgressBarStyle.Continuous;
-                                ProgressBar.Value = (int)(Downloader.Progress * 100);
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_play;
+                                SetStatus("-", StateColoring.Info, (Downloader.Manifest == null ? "-" : Downloader.Manifest.VirtualPath), Downloader.Progress * 100, true, LaunchOption.Resume, UpRate, DownRate);
                                 break;
                             }
                     }
@@ -84,106 +206,87 @@ namespace BuildSync.Client.Controls
                     {
                         case ManifestDownloadProgressState.Complete:
                             {
-                                EtaLabel.Text = "-";
-                                BuildLabel.Text = Downloader.Manifest.VirtualPath;
-                                ProgressBar.Style = ProgressBarStyle.Continuous;
-                                ProgressBar.Value = 100;
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_rocket_rotated_45;
+                                SetStatus("Complete", StateColoring.Success, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Launch, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Initializing:
                             {
-                                EtaLabel.Text = "Initializing";
-                                BuildLabel.Text = Downloader.Manifest.VirtualPath;
-                                ProgressBar.Style = ProgressBarStyle.Marquee;
-                                ProgressBar.Value = 0;
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+                                SetStatus("Initializing", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Validating:
                             {
-                                EtaLabel.Text = "Validating";
-                                BuildLabel.Text = Downloader.Manifest.VirtualPath;
-                                ProgressBar.Style = ProgressBarStyle.Marquee;
-                                ProgressBar.Value = 0;
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
-                                break;
-                            }
-                        case ManifestDownloadProgressState.InitializeFailed:
-                            {
-                                EtaLabel.Text = "Disk Error";
-                                EtaLabel.ForeColor = Color.Red;
-                                BuildLabel.Text = Downloader.Manifest.VirtualPath;
-                                ProgressBar.Style = ProgressBarStyle.Continuous;
-                                ProgressBar.Value = 0;
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+                                SetStatus("Validating", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Downloading:
                             {
                                 long SecondsToDownload = (long)((double)Downloader.BytesRemaining / (double)Downloader.BandwidthStats.RateIn);
+
+                                string Status = "";
+                                StateColoring StatusColor = StateColoring.Info;
                                 if (Downloader.BandwidthStats.RateIn == 0)
                                 {
                                     if (Program.NetClient.IsConnected)
                                     {
-                                        EtaLabel.Text = "Calculating";
-                                        BuildLabel.Text = "Calculating";
+                                        Status = "Locating Blocks";
                                     }
                                     else
                                     {
-                                        EtaLabel.Text = "No Connection";
-                                        EtaLabel.ForeColor = Color.Red;
-                                        BuildLabel.Text = "Unknown";
+                                        Status = "No Connection";
+                                        StatusColor = StateColoring.Error;
                                     }
                                 }
                                 else
                                 {
-                                    EtaLabel.Text = StringUtils.FormatAsDuration(SecondsToDownload);
+                                    Status = StringUtils.FormatAsDuration(SecondsToDownload);
                                 }
 
-                                BuildLabel.Text = Downloader.Manifest.VirtualPath;
-                                ProgressBar.Style = ProgressBarStyle.Continuous;
-                                ProgressBar.Value = (int)(Downloader.Progress * 100);
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+                                SetStatus(Status, StatusColor, Downloader.Manifest.VirtualPath, Downloader.Progress * 100, true, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.RetrievingManifest:
                             {
+                                string Status = "";
+                                StateColoring StatusColor = StateColoring.Info;
                                 if (Program.NetClient.IsConnected)
                                 {
-                                    EtaLabel.Text = "Calculating";
-                                    BuildLabel.Text = "Calculating";
+                                    Status = "Locating Blocks";
                                 }
                                 else
                                 {
-                                    EtaLabel.Text = "No Connection";
-                                    EtaLabel.ForeColor = Color.Red;
-                                    BuildLabel.Text = "Unknown";
+                                    Status = "No Connection";
+                                    StatusColor = StateColoring.Error;
                                 }
-                                ProgressBar.Style = ProgressBarStyle.Marquee;
-                                ProgressBar.Value = 0;
-                                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+
+                                SetStatus(Status, StatusColor, "Locating", 0, false, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                     }
                 }
-
-                UploadSpeedLabel.Text = StringUtils.FormatAsTransferRate(Downloader.BandwidthStats.RateOut);
-                DownloadSpeedLabel.Text = StringUtils.FormatAsTransferRate(Downloader.BandwidthStats.RateIn);
             }
             else
             {
-                EtaLabel.Text = "Calculating";
-                BuildLabel.Text = "Calculating";
-                ProgressBar.Value = 0;
-                ProgressBar.Style = ProgressBarStyle.Marquee;
-                PlayButton.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+                string Status = "";
+                StateColoring StatusColor = StateColoring.Info;
 
-                UploadSpeedLabel.Text = "0 kb/s";
-                DownloadSpeedLabel.Text = "0 kb/s";
+                if (Program.NetClient.IsConnected)
+                {
+                    Status = "Waiting for available download";
+                }
+                else
+                {
+                    Status = "No Connection";
+                    StatusColor = StateColoring.Error;
+                }
+
+                SetStatus(Status, StatusColor, "Unknown", 0, false, LaunchOption.Pause, "0 kb/s", "0 kb/s");
             }
 
-            SettingsButton.Enabled = (Program.NetClient.IsConnected);
+            if (SettingsButton.Enabled != Program.NetClient.IsConnected)
+            {
+                SettingsButton.Enabled = (Program.NetClient.IsConnected);
+            }
         }
 
         /// <summary>
@@ -231,7 +334,9 @@ namespace BuildSync.Client.Controls
                     {
                         case ManifestDownloadProgressState.Complete:
                             {
-                                // TODO: Launch
+                                LaunchForm Form = new LaunchForm();
+                                Form.Downloader = Downloader;
+                                Form.ShowDialog();
                                 break;
                             }
                         default:
@@ -241,6 +346,19 @@ namespace BuildSync.Client.Controls
                             }
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MainPanel_Paint(object sender, PaintEventArgs e)
+        {
+            if (Selected)
+            {
+                ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, Color.DarkBlue, ButtonBorderStyle.Solid);
             }
         }
     }

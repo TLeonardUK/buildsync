@@ -53,7 +53,24 @@
   <PropertyGroup>
     <ApplicationIcon>AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Shipping|AnyCPU'">
+    <OutputPath>..\Intermediate\BuildSync.Client\bin\Shipping\</OutputPath>
+    <DefineConstants>TRACE;SHIPPING</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CommandLine, Version=2.6.0.0, Culture=neutral, PublicKeyToken=5a870481e358d379, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\CommandLineParser.2.6.0\lib\net461\CommandLine.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\WindowsAPICodePack.1.1.0\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
     </Reference>
@@ -82,6 +99,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandLineAddOptions.cs" />
+    <Compile Include="Commands\CommandLineConfigureOptions.cs" />
+    <Compile Include="Commands\CommandLineDeleteOptions.cs" />
+    <Compile Include="Commands\CommandLineListOptions.cs" />
     <Compile Include="Controls\DownloadFileSystemTree.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -99,6 +120,12 @@
     </Compile>
     <Compile Include="Controls\DownloadListItem.Designer.cs">
       <DependentUpon>DownloadListItem.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\Settings\GeneralSettings.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\Settings\GeneralSettings.Designer.cs">
+      <DependentUpon>GeneralSettings.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\Settings\BandwidthSettings.cs">
       <SubType>UserControl</SubType>
@@ -142,11 +169,23 @@
     <Compile Include="Forms\ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\LaunchForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\LaunchForm.Designer.cs">
+      <DependentUpon>LaunchForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ManageBuildsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ManageBuildsForm.Designer.cs">
+      <DependentUpon>ManageBuildsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\MoveStorageDirectoryForm.cs">
       <SubType>Form</SubType>
@@ -168,7 +207,8 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Publishing\BuildPublisher.cs" />
+    <Compile Include="Tasks\PublishBuildTask.cs" />
+    <Compile Include="Tasks\MoveStorageTask.cs" />
     <Compile Include="Settings.cs" />
     <EmbeddedResource Include="Controls\DownloadFileSystemTree.resx">
       <DependentUpon>DownloadFileSystemTree.cs</DependentUpon>
@@ -178,6 +218,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\DownloadListItem.resx">
       <DependentUpon>DownloadListItem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\Settings\GeneralSettings.resx">
+      <DependentUpon>GeneralSettings.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\Settings\BandwidthSettings.resx">
       <DependentUpon>BandwidthSettings.cs</DependentUpon>
@@ -197,8 +240,14 @@
     <EmbeddedResource Include="Forms\ConsoleForm.resx">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\LaunchForm.resx">
+      <DependentUpon>LaunchForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ManageBuildsForm.resx">
+      <DependentUpon>ManageBuildsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\MoveStorageDirectoryForm.resx">
       <DependentUpon>MoveStorageDirectoryForm.cs</DependentUpon>
@@ -219,6 +268,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="app.config" />
     <None Include="App.manifest" />
   </ItemGroup>
   <ItemGroup>
@@ -277,12 +327,6 @@
     <None Include="Resources\appbar.delete.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\BuildSync.Core\BuildSync.Core.csproj">
-      <Project>{46fddc0c-e8ab-43bf-a9f1-1d70faf44d7d}</Project>
-      <Name>BuildSync.Networking</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\appbar.disk.download.png" />
   </ItemGroup>
   <ItemGroup>
@@ -290,6 +334,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\buildsync.png" />
+    <None Include="Resources\appbar.controller.xbox.png" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
@@ -302,6 +348,12 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildSync.Core\BuildSync.Core.csproj">
+      <Project>{1d25dae9-8b10-4721-8911-789813751186}</Project>
+      <Name>BuildSync.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

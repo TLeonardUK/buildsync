@@ -30,8 +30,9 @@
         {
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("Server", 2, 2);
-            System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("Storage", 0, 0);
-            System.Windows.Forms.TreeNode treeNode3 = new System.Windows.Forms.TreeNode("Bandwidth", 1, 1);
+            System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("General", 3, 3);
+            System.Windows.Forms.TreeNode treeNode3 = new System.Windows.Forms.TreeNode("Storage", 0, 0);
+            System.Windows.Forms.TreeNode treeNode4 = new System.Windows.Forms.TreeNode("Bandwidth", 1, 1);
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PreferencesForm));
             this.panel1 = new System.Windows.Forms.Panel();
             this.closeButton = new System.Windows.Forms.Button();
@@ -84,18 +85,23 @@
             treeNode1.Name = "serverSettingsNode";
             treeNode1.SelectedImageIndex = 2;
             treeNode1.Text = "Server";
-            treeNode2.ImageIndex = 0;
-            treeNode2.Name = "storageSettingsNode";
-            treeNode2.SelectedImageIndex = 0;
-            treeNode2.Text = "Storage";
-            treeNode3.ImageIndex = 1;
-            treeNode3.Name = "bandwidthSettingsNode";
-            treeNode3.SelectedImageIndex = 1;
-            treeNode3.Text = "Bandwidth";
+            treeNode2.ImageIndex = 3;
+            treeNode2.Name = "generalSettingsNode";
+            treeNode2.SelectedImageIndex = 3;
+            treeNode2.Text = "General";
+            treeNode3.ImageIndex = 0;
+            treeNode3.Name = "storageSettingsNode";
+            treeNode3.SelectedImageIndex = 0;
+            treeNode3.Text = "Storage";
+            treeNode4.ImageIndex = 1;
+            treeNode4.Name = "bandwidthSettingsNode";
+            treeNode4.SelectedImageIndex = 1;
+            treeNode4.Text = "Bandwidth";
             this.groupTreeView.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
             treeNode1,
             treeNode2,
-            treeNode3});
+            treeNode3,
+            treeNode4});
             this.groupTreeView.SelectedImageIndex = 0;
             this.groupTreeView.ShowLines = false;
             this.groupTreeView.ShowPlusMinus = false;
@@ -111,6 +117,7 @@
             this.treeImageList.Images.SetKeyName(0, "appbar.disk.png");
             this.treeImageList.Images.SetKeyName(1, "appbar.arrow.left.right.png");
             this.treeImageList.Images.SetKeyName(2, "appbar.connect.png");
+            this.treeImageList.Images.SetKeyName(3, "appbar.settings.png");
             // 
             // splitContainer1
             // 

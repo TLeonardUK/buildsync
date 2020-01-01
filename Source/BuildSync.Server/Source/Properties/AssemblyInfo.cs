@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Build Sync - Server")]
-[assembly: AssemblyDescription("Tool for syncronizing application builds across a network.")]
+[assembly: AssemblyDescription("Tool for synchronizing application builds across a network.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Tim Leonard")]
 [assembly: AssemblyProduct("Build Sync")]

@@ -39,7 +39,6 @@
             this.MainTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.MainTreeView.FullRowSelect = true;
             this.MainTreeView.HideSelection = false;
-            this.MainTreeView.HotTracking = true;
             this.MainTreeView.ImageIndex = 0;
             this.MainTreeView.ImageList = this.TreeImageList;
             this.MainTreeView.Indent = 10;

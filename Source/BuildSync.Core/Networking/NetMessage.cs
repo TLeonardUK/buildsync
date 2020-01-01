@@ -3,6 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using System.Diagnostics;
+using System.Reflection;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Networking
 {
@@ -35,14 +38,26 @@ namespace BuildSync.Core.Networking
 
         public static void LoadMessageTypes()
         {
-            Type[] subTypes = (from domainAssembly in AppDomain.CurrentDomain.GetAssemblies()
-                               from assemblyType in domainAssembly.GetTypes()
-                               where typeof(NetMessage).IsAssignableFrom(assemblyType)
-                               select assemblyType).ToArray();
+            MessageTypes.Clear();
 
-            foreach (Type type in subTypes)
+            foreach (Assembly Assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                MessageTypes.Add(type.Name.GetHashCode(), type);
+                try
+                {
+                    foreach (Type Type in Assembly.GetTypes())
+                    {
+                        if (typeof(NetMessage).IsAssignableFrom(Type))
+                        {
+                            MessageTypes.Add(Type.Name.GetHashCode(), Type);
+                        }
+                    }
+
+                }
+                catch (ReflectionTypeLoadException)
+                {
+                    // Skip this assembly, for some reason any runtime generated (via dynamic complilation) assemblies
+                    // cannot have their types examined.
+                }
             }
         }
 
@@ -82,23 +97,39 @@ namespace BuildSync.Core.Networking
                 return null;
             }
 
+            //Stopwatch stop1 = new Stopwatch();
+            //stop1.Start();
+
             Msg = Activator.CreateInstance(MessageTypes[Msg.Id]) as NetMessage;
             if (Msg == null)
             {
                 return null;
             }
 
+            //stop1.Stop();
+            //Console.WriteLine("  - new instance {0}", ((float)stop1.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
+            //stop1.Restart();
+
             using (MemoryStream dataStream = new MemoryStream(Buffer, HeaderSize, Buffer.Length - HeaderSize, false))
             {
                 using (BinaryReader dataReader = new BinaryReader(dataStream))
                 {
+                    //stop1.Stop();
+                    //Console.WriteLine("  - new readers {0}", ((float)stop1.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
+
                     try
                     {
+                        //Stopwatch stop = new Stopwatch();
+                        //stop.Start();
+
                         Msg.SerializePayload(new NetMessageSerializer(dataReader));
+
+                        //stop.Stop();
+                        //Console.WriteLine("  - deserialize {0}", ((float)stop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Failed to decode message, with error {0}", ex.Message);
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to decode message, with error {0}", ex.Message);
                     }
 
                     return Msg;

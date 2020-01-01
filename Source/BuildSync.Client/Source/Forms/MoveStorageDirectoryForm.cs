@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BuildSync.Core.Utils;
+using BuildSync.Client.Tasks;
 
 namespace BuildSync.Client.Forms
 {
@@ -21,6 +22,8 @@ namespace BuildSync.Client.Forms
         private string OldDirectory = "";
         private string NewDirectory = "";
         private bool Finished = false;
+
+        private MoveStorageTask MoveTask = new MoveStorageTask();
 
         /// <summary>
         /// 
@@ -74,8 +77,8 @@ namespace BuildSync.Client.Forms
         private void FormLoaded(object sender, EventArgs e)
         {
             // Disconnect from everybody.
-            Program.NetClient.ConnectionsDisabled = true;
-
+            MoveTask.Start(OldDirectory, NewDirectory);
+/*
             // Run the rest async.
             Task.Run(() =>
             {
@@ -180,7 +183,7 @@ namespace BuildSync.Client.Forms
                             }
                             catch (Exception Ex)
                             {
-                                Console.WriteLine("Failed to delete directory {0} with error: {1}", Dir, Ex.Message);
+                                Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to delete directory {0} with error: {1}", Dir, Ex.Message);
                             }
                         }
 
@@ -192,7 +195,7 @@ namespace BuildSync.Client.Forms
                     }
                     catch (Exception Ex)
                     {
-                        Console.WriteLine("Failed to move storage directory with error: {0}", Ex.Message);
+                        Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to move storage directory with error: {0}", Ex.Message);
 
                         // Delete all the copied files.
                         foreach (string Dir in NewDirectories)
@@ -203,7 +206,7 @@ namespace BuildSync.Client.Forms
                             }
                             catch (Exception SubEx)
                             {
-                                Console.WriteLine("Failed to delete directory {0} with error: {1}", Dir, SubEx.Message);
+                                Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to delete directory {0} with error: {1}", Dir, SubEx.Message);
                             }
                         }
                     }
@@ -228,6 +231,66 @@ namespace BuildSync.Client.Forms
                 {
                 }
             });
+            */
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void UpdateTimerTick(object sender, EventArgs e)
+        {
+            string Message = "";
+            switch (MoveTask.State)
+            {
+                case MoveStorageState.WaitingForIOQueueToDrain:
+                    {
+                        Message = "Waiting for io queue to empty";
+                        break;
+                    }
+                case MoveStorageState.WaitingForDownloadInitToFinish:
+                    {
+                        Message = "Waiting for download initialization to finish.";
+                        break;
+                    }
+                case MoveStorageState.WaitingForDownloadValidationToFinish:
+                    {
+                        Message = "Waiting for download validation to finish.";
+                        break;
+                    }
+                case MoveStorageState.CopyingFiles:
+                    {
+                        Message = "Copying: " + MoveTask.CurrentFile;
+                        break;
+                    }
+                case MoveStorageState.CleaningUpOldDirectory:
+                    {
+                        Message = "Cleaning up old directory.";
+                        break;
+                    }
+                case MoveStorageState.Success:
+                    {
+                        DialogResult = DialogResult.OK;
+                        Finished = true;
+                        UpdateTimer.Enabled = false;
+                        Close();
+                        return;
+                    }
+                case MoveStorageState.FailedDiskError:
+                case MoveStorageState.Failed:
+                default:
+                    {
+                        DialogResult = DialogResult.Abort;
+                        Finished = true;
+                        UpdateTimer.Enabled = false;
+                        MessageBox.Show("Failed to change storage directory due to disk error.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Close();
+                        return;
+                    }
+            }
+
+            SetProgress(Message, MoveTask.SubProgress, MoveTask.Progress);
         }
     }
 }

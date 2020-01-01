@@ -35,7 +35,6 @@
             // UpdateTimer
             // 
             this.UpdateTimer.Enabled = true;
-            this.UpdateTimer.Interval = 200;
             this.UpdateTimer.Tick += new System.EventHandler(this.UpdateTimerTick);
             // 
             // DownloadList

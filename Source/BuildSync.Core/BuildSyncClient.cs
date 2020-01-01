@@ -7,6 +7,7 @@ using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core
 {
@@ -25,8 +26,23 @@ namespace BuildSync.Core
     /// <summary>
     /// 
     /// </summary>
+    public delegate void LostConnectionToServerHandler();
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public delegate void FailedToConnectToServerHandler();
+
+    /// <summary>
+    /// 
+    /// </summary>
     public delegate void ManifestPublishResultRecievedHandler(Guid ManifestId, PublishManifestResult Result);
 
+    /// <summary>
+    /// 
+    /// </summary>
+    public delegate void ManifestDeleteResultRecievedHandler(Guid ManifestId);
+    
     /// <summary>
     /// 
     /// </summary>
@@ -70,7 +86,17 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
+            public const int BlockDownloadTimeout = 30 * 1000;
+
+            /// <summary>
+            /// 
+            /// </summary>
             public List<ManifestPendingDownloadBlock> ActiveBlockDownloads = new List<ManifestPendingDownloadBlock>();
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public long ActiveBlockDownloadSize = 0;
 
             /// <summary>
             /// 
@@ -104,6 +130,71 @@ namespace BuildSync.Core
                 }
                 return false;
             }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <returns></returns>
+            public bool SetBlockState(Guid ManifestId, int BlockIndex, bool State)
+            {
+                foreach (ManifestBlockListState ManifestState in BlockState.States)
+                {
+                    if (ManifestState.Id == ManifestId)
+                    {
+                        ManifestState.BlockState.Set(BlockIndex, State);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public void PruneTimeoutDownloads()
+            {
+                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                {
+                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                    ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+                    if (Elapsed > BlockDownloadTimeout)
+                    {
+                        ActiveBlockDownloadSize -= Download.Size;
+                        ActiveBlockDownloads.RemoveAt(i);
+                        i--;
+                    }
+                }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public void RemoveActiveBlockDownload(Guid ManifestId, int BlockIndex)
+            {
+                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                {
+                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+                    
+                    if (Download.BlockIndex == BlockIndex &&
+                        Download.ManifestId == ManifestId)
+                    {
+                        ActiveBlockDownloadSize -= Download.Size;
+                        ActiveBlockDownloads.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="Block"></param>
+            public void AddActiveBlockDownload(ManifestPendingDownloadBlock Block)
+            {
+                ActiveBlockDownloadSize += Block.Size;
+                ActiveBlockDownloads.Add(Block);
+            }
         };
 
         /// <summary>
@@ -134,7 +225,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private const int ConcurrentBlockDownloadLimit = 20;
+        private const int ConcurrentBlockDownloadBytesLimit = 4 * 1024 * 1024; // 4mb of queued data? Seems unlikely we would read faster than this.
 
         /// <summary>
         /// 
@@ -254,7 +345,22 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        public event ManifestDeleteResultRecievedHandler OnManifestDeleteResultRecieved;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public event ConenctedToServerHandler OnConnectedToServer;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event LostConnectionToServerHandler OnLostConnectionToServer;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event FailedToConnectToServerHandler OnFailedToConnectToServer;        
 
         /// <summary>
         /// 
@@ -327,6 +433,8 @@ namespace BuildSync.Core
         {
             Connection.OnMessageRecieved += HandleMessage;
             Connection.OnConnect += (NetConnection Connection) => { OnConnectedToServer?.Invoke(); };
+            Connection.OnDisconnect += (NetConnection Connection) => { OnLostConnectionToServer?.Invoke(); };
+            Connection.OnConnectFailed += (NetConnection Connection) => { OnFailedToConnectToServer?.Invoke(); };
 
             ListenConnection.OnClientConnect += PeerConnected;
         }
@@ -535,6 +643,12 @@ namespace BuildSync.Core
 
             lock (Peers)
             {
+                // Remove any downloads that have timed out.
+                foreach (Peer peer in Peers)
+                {
+                    peer.PruneTimeoutDownloads();
+                }
+                
                 for (int i = 0; i < ManifestDownloadManager.DownloadQueue.Count; i++)
                 {
                     ManifestPendingDownloadBlock Item = ManifestDownloadManager.DownloadQueue[i];
@@ -550,7 +664,18 @@ namespace BuildSync.Core
                             continue;
                         }
                     }
+
                     if (AlreadyDownloading)
+                    {
+                        continue;
+                    }
+
+                    // Get block information so we know if its small enough to add to any peers queue.
+                    long BlockOffset = 0;
+                    long BlockSize = 0;
+                    BuildManifestFileInfo FileInfo = null;
+
+                    if (!ManifestDownloadManager.GetBlockInfo(Item.ManifestId, Item.BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
                     {
                         continue;
                     }
@@ -562,14 +687,20 @@ namespace BuildSync.Core
                     {
                         Peer peer = Peers[(j + PeerCycleIndex) % Peers.Count];
 
-                        if (peer.ActiveBlockDownloads.Count < ConcurrentBlockDownloadLimit && peer.HasBlock(Item))
+                        if (peer.ActiveBlockDownloadSize + BlockSize <= ConcurrentBlockDownloadBytesLimit && peer.HasBlock(Item))
                         {
                             NetMessage_GetBlock Msg = new NetMessage_GetBlock();
                             Msg.ManifestId = Item.ManifestId;
                             Msg.BlockIndex = Item.BlockIndex;
                             peer.Connection.Send(Msg);
 
-                            peer.ActiveBlockDownloads.Add(Item);
+                            Item.TimeStarted = TimeUtils.Ticks;
+                            Item.Size = BlockSize;
+
+                            peer.AddActiveBlockDownload(Item);
+
+                            //Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}.", Msg.ManifestId, Msg.BlockIndex, BlockSize, peer.ActiveBlockDownloadSize);
+
                             break;
                         }
                     }
@@ -653,7 +784,7 @@ namespace BuildSync.Core
                         ulong Elapsed = TimeUtils.Ticks - peer.LastConnectionAttemptTime;
                         if (peer.LastConnectionAttemptTime == 0 || Elapsed > ConnectionAttemptInterval)
                         {
-                            Console.WriteLine("Connecting to peer: {0}", peer.Address.ToString());
+                            Logger.Log(LogLevel.Info, LogCategory.Peers, "Connecting to peer: {0}", peer.Address.ToString());
                             peer.Connection.BeginConnect(peer.Address.Address.ToString(), peer.Address.Port);
 
                             peer.LastConnectionAttemptTime = TimeUtils.Ticks;
@@ -716,7 +847,7 @@ namespace BuildSync.Core
 
                     if (ShouldRemove)
                     {
-                        Console.WriteLine("Disconnecting from peer: {0}", peer.Address.ToString());
+                        Logger.Log(LogLevel.Info, LogCategory.Peers, "Disconnecting from peer: {0}", peer.Address.ToString());
 
                         peer.Connection.OnMessageRecieved -= HandleMessage;
 
@@ -739,7 +870,7 @@ namespace BuildSync.Core
         /// </summary>
         private void SendBlockListUpdate()
         {
-            Console.WriteLine("Sending block list update.");
+            Logger.Log(LogLevel.Info, LogCategory.Main, "Sending block list update.");
 
             BlockListState State = ManifestDownloadManager.GetBlockListState();
 
@@ -751,12 +882,12 @@ namespace BuildSync.Core
             {
                 if (peer.Connection.IsConnected)
                 {
-                    Console.WriteLine("\tSent to peer: " + peer.Connection.Address.ToString());
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "\tSent to peer: " + peer.Connection.Address.ToString());
                     peer.Connection.Send(Msg);
                 }
             }
 
-            Console.WriteLine("\tSent to server.");
+            Logger.Log(LogLevel.Info, LogCategory.Main, "\tSent to server.");
             Connection.Send(Msg);
 
             /*
@@ -783,7 +914,7 @@ namespace BuildSync.Core
         {
             if (!Connection.IsConnected)
             {
-                Console.WriteLine("Failed to request builds, no connection to server?");
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request builds, no connection to server?");
                 return false;
             }
 
@@ -801,7 +932,7 @@ namespace BuildSync.Core
         {
             if (!Connection.IsConnected)
             {
-                Console.WriteLine("Failed to request manifests, no connection to server?");
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request manifests, no connection to server?");
                 return false;
             }
 
@@ -835,7 +966,7 @@ namespace BuildSync.Core
         {
             if (!Connection.IsConnected)
             {
-                Console.WriteLine("Failed to publish, no connection to server?");
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to publish, no connection to server?");
                 return false;
             }
 
@@ -844,6 +975,25 @@ namespace BuildSync.Core
             NetMessage_PublishManifest Msg = new NetMessage_PublishManifest();
             Msg.Data = Data;
             Msg.ManifestId = Manifest.Guid;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="guid"></param>
+        public bool DeleteManifest(Guid ManifestId)
+        {
+            if (!Connection.IsConnected)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete, no connection to server?");
+                return false;
+            }
+
+            NetMessage_DeleteManifest Msg = new NetMessage_DeleteManifest();
+            Msg.ManifestId = ManifestId;
             Connection.Send(Msg);
 
             return true;
@@ -862,7 +1012,7 @@ namespace BuildSync.Core
                 peer = GetPeerByAddress(ClientConnection.Address);
                 if (peer == null)
                 {
-                    Console.WriteLine("Peer connected from {0}.", ClientConnection.Address.ToString());
+                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}.", ClientConnection.Address.ToString());
 
                     peer = new Peer();
                     peer.Address = ClientConnection.Address;
@@ -890,7 +1040,7 @@ namespace BuildSync.Core
             {
                 NetMessage_GetBuildsResponse Msg = BaseMessage as NetMessage_GetBuildsResponse;
 
-                Console.WriteLine("Recieved builds in folder: {0}", Msg.RootPath);
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved builds in folder: {0}", Msg.RootPath);
 
                 OnBuildsRecieved?.Invoke(Msg.RootPath, Msg.Builds);
             }
@@ -900,9 +1050,19 @@ namespace BuildSync.Core
             {
                 NetMessage_PublishManifestResponse Msg = BaseMessage as NetMessage_PublishManifestResponse;
 
-                Console.WriteLine("Recieved response for manifest publish: {0}", Msg.Result.ToString());
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved response for manifest publish: {0}", Msg.Result.ToString());
 
                 OnManifestPublishResultRecieved?.Invoke(Msg.ManifestId, Msg.Result);
+            }
+
+            // Server is giving us response to manifest deleting.
+            else if (BaseMessage is NetMessage_DeleteManifestResponse)
+            {
+                NetMessage_DeleteManifestResponse Msg = BaseMessage as NetMessage_DeleteManifestResponse;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved response for manifest delete: {0}", Msg.ManifestId);
+
+                OnManifestDeleteResultRecieved?.Invoke(Msg.ManifestId);
             }
 
             // Server is sending us a list of peers that are relevant to our active downloads.
@@ -910,7 +1070,7 @@ namespace BuildSync.Core
             {
                 NetMessage_RelevantPeerListUpdate Msg = BaseMessage as NetMessage_RelevantPeerListUpdate;
 
-                Console.WriteLine("Recieved relevant peer list update.");
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved relevant peer list update.");
 
                 RelevantPeerAddresses = Msg.PeerAddresses;
             }
@@ -920,7 +1080,7 @@ namespace BuildSync.Core
             {
                 NetMessage_GetManifestResponse Msg = BaseMessage as NetMessage_GetManifestResponse;
 
-                Console.WriteLine("Recieved manifest: {0}", Msg.ManifestId.ToString());
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved manifest: {0}", Msg.ManifestId.ToString());
                 try
                 {
                     BuildManifest Manifest = BuildManifest.FromByteArray(Msg.Data);
@@ -928,7 +1088,7 @@ namespace BuildSync.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Failed to process manifest response due to error: {0}", ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to process manifest response due to error: {0}", ex.Message);
                 }
             }
 
@@ -937,7 +1097,7 @@ namespace BuildSync.Core
             {
                 NetMessage_BlockListUpdate Msg = BaseMessage as NetMessage_BlockListUpdate;
 
-                Console.WriteLine("Recieved block list update from: {0}", Connection.Address.ToString());
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block list update from: {0}", Connection.Address.ToString());
 
                 Peer peer = GetPeerByConnection(Connection);
                 if (peer != null)
@@ -947,13 +1107,13 @@ namespace BuildSync.Core
 
                 UpdateAvailableBlocks();
             }
-            
+
             // Peer requested a block of data from us.
             else if (BaseMessage is NetMessage_GetBlock)
             {
                 NetMessage_GetBlock Msg = BaseMessage as NetMessage_GetBlock;
 
-                //Console.WriteLine("Recieved request for block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
+                //Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
 
                 NetMessage_GetBlockResponse Response = new NetMessage_GetBlockResponse();
                 Response.ManifestId = Msg.ManifestId;
@@ -968,13 +1128,16 @@ namespace BuildSync.Core
                             if (!bSuccess)
                             {
                                 ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
-                                Response.Data = null;
+                                Response.Data.SetNull(); 
                             }
 
                             if (Connection.IsConnected)
                             {
                                 Connection.Send(Response);
                             }
+
+                            Response.Data.SetNull(); // Free data it's been serialized by this point.
+
                         });
                     }
 
@@ -986,38 +1149,53 @@ namespace BuildSync.Core
             {
                 NetMessage_GetBlockResponse Msg = BaseMessage as NetMessage_GetBlockResponse;
 
-                //Console.WriteLine("Recieved block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
-
-                ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, (bool bSuccess) => {
+                if (Msg.Data == null)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved null block {0} in manifest {1} from {2}, looks like peer no longer has it.", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
 
                     lock (DeferredActions)
                     {
                         DeferredActions.Enqueue(() =>
                         {
-                            // Mark block as complete.
-                            if (bSuccess)
-                            {
-                                ManifestDownloadManager.MarkBlockAsComplete(Msg.ManifestId, Msg.BlockIndex);
-                            }
-
-                            // Remove active download marker for this block.
                             Peer peer = GetPeerByConnection(Connection);
                             if (peer != null)
                             {
-                                for (int i = 0; i < peer.ActiveBlockDownloads.Count; i++)
-                                {
-                                    if (peer.ActiveBlockDownloads[i].BlockIndex == Msg.BlockIndex &&
-                                        peer.ActiveBlockDownloads[i].ManifestId == Msg.ManifestId)
-                                    {
-                                        peer.ActiveBlockDownloads.RemoveAt(i);
-                                        break;
-                                    }
-                                }
+                                peer.SetBlockState(Msg.ManifestId, Msg.BlockIndex, false);
                             }
                         });
                     }
 
-                });
+                    return;
+                }
+                else
+                {
+                    //Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
+
+                    ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, (bool bSuccess) => {
+
+                        Msg.Data.SetNull();
+
+                        lock (DeferredActions)
+                        {
+                            DeferredActions.Enqueue(() =>
+                            {
+                                // Mark block as complete.
+                                if (bSuccess)
+                                {
+                                    ManifestDownloadManager.MarkBlockAsComplete(Msg.ManifestId, Msg.BlockIndex);
+                                }
+
+                                // Remove active download marker for this block.
+                                Peer peer = GetPeerByConnection(Connection);
+                                if (peer != null)
+                                {
+                                    peer.RemoveActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex);
+                                }
+                            });
+                        }
+
+                    });
+                }
             }
         }
     }

@@ -77,7 +77,7 @@
             0,
             0});
             this.StorageMaxSizeTextBox.Minimum = new decimal(new int[] {
-            512,
+            1,
             0,
             0,
             0});
@@ -85,7 +85,7 @@
             this.StorageMaxSizeTextBox.Size = new System.Drawing.Size(505, 26);
             this.StorageMaxSizeTextBox.TabIndex = 20;
             this.StorageMaxSizeTextBox.Value = new decimal(new int[] {
-            512,
+            1,
             0,
             0,
             0});
@@ -98,7 +98,7 @@
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(539, 20);
             this.label2.TabIndex = 18;
-            this.label2.Text = "Maximum storage space to use in MiB, old builds will be deleted to maintain.";
+            this.label2.Text = "Maximum storage space to use in GiB, old builds will be deleted to maintain.";
             // 
             // StorageMaxSizeIcon
             // 

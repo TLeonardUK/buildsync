@@ -15,7 +15,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public List<DownloadState> States = new List<DownloadState>();
+        public List<DownloadState> States { get; set; } = new List<DownloadState>();
     }
 
     /// <summary>
@@ -27,36 +27,36 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public Guid Id;
+        public Guid Id { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public string Name;
+        public string Name { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public string VirtualPath;
+        public string VirtualPath { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public int Priority;
+        public int Priority { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public bool UpdateAutomatically;
+        public bool UpdateAutomatically { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public bool Paused;
+        public bool Paused { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        public Guid ActiveManifestId;
+        public Guid ActiveManifestId { get; set; }
     }
 }

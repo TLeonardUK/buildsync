@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
@@ -33,6 +34,12 @@ namespace BuildSync.Core.Networking
     /// 
     /// </summary>
     /// <param name="Connection"></param>
+    public delegate void ConnectFailedHandler(NetConnection Connection);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Connection"></param>
     public delegate void ClientConnectHandler(NetConnection Connection, NetConnection ClientConnection);
 
     /// <summary>
@@ -51,8 +58,8 @@ namespace BuildSync.Core.Networking
         private bool Listening = false;
         private byte[] MessageBuffer = new byte[NetMessage.HeaderSize];
         private List<NetConnection> Clients = new List<NetConnection>();
-        private Queue<byte[]> SendQueue = new Queue<byte[]>();
-        private bool Sending = false;
+
+        private bool ShouldDisconnectDueToError = false;
 
         private ulong LastKeepAliveSendTime = 0;
         private const int KeepAliveInterval = 5 * 1000;
@@ -61,7 +68,23 @@ namespace BuildSync.Core.Networking
 
         private Queue<Action> EventQueue = new Queue<Action>();
 
-        private int OutstandingAsyncCalls = 0;
+        private ConcurrentQueue<byte[]> SendQueue = new ConcurrentQueue<byte[]>();
+        private object SendQueueWakeObject = new object();
+        private long SendQueueBytes = 0;
+        private Thread SendThread;
+        private bool IsSendingThreadRunning = false;
+
+        public enum AsyncCallType
+        { 
+            Accept,
+            Recieve,
+            Send,
+            Dns,
+            Connect,
+            Count
+        }
+
+        private int[] OutstandingAsyncCalls = new int[(int)AsyncCallType.Count];
 
         /// <summary>
         /// 
@@ -117,6 +140,11 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         public event ConnectHandler OnConnect;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event ConnectFailedHandler OnConnectFailed;
 
         /// <summary>
         /// 
@@ -178,15 +206,7 @@ namespace BuildSync.Core.Networking
         {
             get
             {
-                int Size = 0;
-                lock (SendQueue)
-                {
-                    foreach (byte[] Data in SendQueue)
-                    {
-                        Size += Data.Length;
-                    }
-                }
-                return Size;
+                return (int)SendQueueBytes;
             }
         }
 
@@ -217,6 +237,47 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        private void BeginSendThread()
+        {
+            IsSendingThreadRunning = true;
+
+            if (SendThread != null)
+            {
+                EndSendThread();
+            }
+
+            SendThread = new Thread(SendThreadEntry);
+            SendThread.Start();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void EndSendThread()
+        {
+            if (SendThread != null)
+            {
+                lock (SendQueueWakeObject)
+                {
+                    IsSendingThreadRunning = false;
+                    Monitor.Pulse(SendQueueWakeObject);
+                }
+
+                SendThread.Join();
+            }
+
+            while (SendQueue.Count > 0)
+            {
+                byte[] Data = null;
+                SendQueue.TryDequeue(out Data);
+            }
+
+            SendThread = null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void Disconnect()
         {
             lock (Clients)
@@ -233,20 +294,20 @@ namespace BuildSync.Core.Networking
                 Socket.Close();
             }
 
-            lock (SendQueue)
-            {
-                SendQueue.Clear();
-                Sending = false;
-            }
+            EndSendThread();
 
             // Block while any outstanding async calls are waiting to finish.
-            while (OutstandingAsyncCalls > 0)
+            for (int i = 0; i < OutstandingAsyncCalls.Length; i++)
             {
-                Thread.Sleep(1);
+                while (OutstandingAsyncCalls[i] > 0)
+                {
+                    Thread.Sleep(1);
+                }
             }
-            
+
             Listening = false;
             Connecting = false;
+            ShouldDisconnectDueToError = false;
             Handshake = null;
 
             lock (EventQueue)
@@ -258,8 +319,41 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="CallType"></param>
+        private void RecordBeginAsyncCall(AsyncCallType CallType)
+        {
+            int NewValue = Interlocked.Increment(ref OutstandingAsyncCalls[(int)CallType]);
+            Debug.Assert(NewValue < 255);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="CallType"></param>
+        private void RecordEndAsyncCall(AsyncCallType CallType)
+        {
+            int NewValue = Interlocked.Decrement(ref OutstandingAsyncCalls[(int)CallType]);
+            Debug.Assert(NewValue >= 0);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void QueueDisconnect()
+        {
+            ShouldDisconnectDueToError = true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void Poll()
         {
+            if (ShouldDisconnectDueToError)
+            {
+                Disconnect();
+            }
+
             lock (Clients)
             {
                 foreach (NetConnection Client in Clients.ToArray())
@@ -316,8 +410,9 @@ namespace BuildSync.Core.Networking
             ListenAddress = new IPEndPoint(Ipv4Address, Port);
 
             Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 16 * 1024 * 1024);
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 16 * 1024 * 1024);
+            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 512 * 1024);
+            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 512 * 1024);
+            Socket.NoDelay = true;
 
             if (ReuseAddresses)
             {
@@ -325,12 +420,12 @@ namespace BuildSync.Core.Networking
                 Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             }
 
-            Console.WriteLine("Listening on {0} (Connectable on {1})", Address.ToString(), ListenAddress.ToString());
+            Logger.Log(LogLevel.Info, LogCategory.Transport, "Listening on {0} (Connectable on {1})", Address.ToString(), ListenAddress.ToString());
 
             Listening = true;
             try
             {
-                Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginAccept
+                RecordBeginAsyncCall(AsyncCallType.Accept);
 
                 Socket.Bind(Address);
                 Socket.Listen(128);
@@ -342,10 +437,11 @@ namespace BuildSync.Core.Networking
                     {
                         Socket ClientSocket = Socket.EndAccept(Result);
 
-                        ClientSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 16 * 1024 * 1024);
-                        ClientSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 16 * 1024 * 1024);
+                        ClientSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 512 * 1024);
+                        ClientSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 512 * 1024);
+                        ClientSocket.NoDelay = true;
 
-                        Console.WriteLine("Client connected from {0}", ClientSocket.RemoteEndPoint.ToString());
+                        Logger.Log(LogLevel.Info, LogCategory.Transport, "Client connected from {0}", ClientSocket.RemoteEndPoint.ToString());
 
                         NetConnection ClientConnection = new NetConnection(ClientSocket);
 
@@ -366,7 +462,7 @@ namespace BuildSync.Core.Networking
                         DisconnectHandler DisconnectLambda = null;
                         DisconnectLambda = (NetConnection) =>
                         {
-                            Console.WriteLine("Client disconnected.");
+                            Logger.Log(LogLevel.Info, LogCategory.Transport, "Client disconnected.");
 
                             lock (Clients)
                             {
@@ -398,17 +494,17 @@ namespace BuildSync.Core.Networking
 
                         ClientConnection.BeginClient();
 
-                        Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginAccept
+                        RecordBeginAsyncCall(AsyncCallType.Accept);
                         Socket.BeginAccept(AcceptLambda, this);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Failed to accept connection {0} with error {1}", Address.ToString(), ex.Message);
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to accept connection {0} with error: {1}", Address.ToString(), ex.Message);
                         Listening = false;
                     }
                     finally
                     {
-                        Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginAccept
+                        RecordEndAsyncCall(AsyncCallType.Accept);
                     }
                 };
 
@@ -416,8 +512,8 @@ namespace BuildSync.Core.Networking
             }
             catch (Exception ex)
             {
-                Interlocked.Decrement(ref OutstandingAsyncCalls);
-                Console.WriteLine("Failed to listen on {0} with error {1}", Address.ToString(), ex.Message);
+                RecordEndAsyncCall(AsyncCallType.Accept);
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to listen on {0} with error: {1}", Address.ToString(), ex.Message);
                 Listening = false;
             }
         }
@@ -438,7 +534,7 @@ namespace BuildSync.Core.Networking
 
             try
             {
-                Interlocked.Increment(ref OutstandingAsyncCalls); // Dns.BeginGetHostEntry
+                RecordBeginAsyncCall(AsyncCallType.Dns);
                 Dns.BeginGetHostEntry(Hostname, DnsResult =>
                 {
                     bool BegunSocketConnect = false;
@@ -456,11 +552,16 @@ namespace BuildSync.Core.Networking
                             }
                         }
 
+                        if (Address == null)
+                        {
+                            throw new Exception("Address is not valid '" + Hostname + "'.");
+                        }
+
                         Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-                        Console.WriteLine("Connecting to {0} ({1})", Address.ToString(), HostEntry.HostName);
+                        Logger.Log(LogLevel.Info, LogCategory.Transport, "Connecting to {0} ({1})", Address.ToString(), HostEntry.HostName);
 
-                        Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginConnect
+                        RecordBeginAsyncCall(AsyncCallType.Connect);
                         BegunSocketConnect = true;
                         Socket.BeginConnect(Address, Result =>
                         {
@@ -468,7 +569,7 @@ namespace BuildSync.Core.Networking
                             {
                                 Socket.EndConnect(Result);
 
-                                Console.WriteLine("Connected to {0}", Socket.RemoteEndPoint.ToString());
+                                Logger.Log(LogLevel.Info, LogCategory.Transport, "Connected to {0}", Socket.RemoteEndPoint.ToString());
 
                                 lock (EventQueue)
                                 {
@@ -480,15 +581,21 @@ namespace BuildSync.Core.Networking
                                 HandshakeMsg.Version = ProtocolVersion;
                                 Send(HandshakeMsg);
 
+                                BeginSendThread();
                                 BeginRecievingHeader();
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine("Failed to connect to {0} with error {1}", Address.ToString(), ex.Message);
+                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Address.ToString(), ex.Message);
+
+                                lock (EventQueue)
+                                {
+                                    EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                                }
                             }
                             finally
                             {
-                                Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginConnect
+                                RecordEndAsyncCall(AsyncCallType.Connect);
                                 Connecting = false;
                             }
                         },
@@ -496,25 +603,69 @@ namespace BuildSync.Core.Networking
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Failed to connect to {0} with error {1}", Hostname, ex.Message);
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Hostname, ex.Message);
                         Connecting = false;
+
+                        lock (EventQueue)
+                        {
+                            EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                        }
+
+                        if (BegunSocketConnect)
+                        {
+                            RecordEndAsyncCall(AsyncCallType.Connect);
+                        }
                     }
                     finally
                     {
-                        if (BegunSocketConnect)
-                        {
-                            Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginConnect
-                        }
-                        Interlocked.Decrement(ref OutstandingAsyncCalls); // Dns.BeginGetHostEntry
+                        RecordEndAsyncCall(AsyncCallType.Dns);
                     }
 
                 }, null);
             }
             catch (Exception ex)
             {
-                Interlocked.Decrement(ref OutstandingAsyncCalls); // Dns.BeginGetHostEntry
-                Console.WriteLine("Failed to connect to {0} with error {1}", Hostname, ex.Message);
+                lock (EventQueue)
+                {
+                    EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                }
+
+                RecordEndAsyncCall(AsyncCallType.Dns);
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Hostname, ex.Message);
                 Connecting = false;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void SendThreadEntry()
+        {
+            while (IsSendingThreadRunning)
+            {
+                byte[] SendData;
+
+                lock (SendQueueWakeObject)
+                {
+                    if (SendQueue.Count > 0)
+                    {
+                        if (!SendQueue.TryDequeue(out SendData))
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            Interlocked.Add(ref SendQueueBytes, -SendData.Length);
+                        }
+                    }
+                    else 
+                    {
+                        Monitor.Wait(SendQueueWakeObject, 1000);
+                        continue;
+                    }
+                }
+
+                SendBlock(SendData, 0, SendData.Length);
             }
         }
 
@@ -524,29 +675,21 @@ namespace BuildSync.Core.Networking
         /// <param name="Message"></param>
         public void Send(NetMessage Message)
         {
-            lock (SendQueue)
+            //Stopwatch totalstop = new Stopwatch();
+            //totalstop.Start();
+
+            byte[] Serialized = Message.ToByteArray();
+
+            SendQueue.Enqueue(Serialized);
+            Interlocked.Add(ref SendQueueBytes, Serialized.Length);
+
+            lock (SendQueueWakeObject)
             {
-                SendQueue.Enqueue(Message.ToByteArray());
+                Monitor.Pulse(SendQueueWakeObject);
             }
 
-            BeginSend();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void BeginSend()
-        {
-            lock (SendQueue)
-            {
-                if (Sending || SendQueue.Count == 0)
-                {
-                    return;
-                }
-
-                byte[] Block = SendQueue.Dequeue();
-                SendBlock(Block, 0, Block.Length);
-            }
+            //totalstop.Stop();
+            //Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to send: {0}", ((float)totalstop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
         }
 
         /// <summary>
@@ -554,58 +697,30 @@ namespace BuildSync.Core.Networking
         /// </summary>
         private void SendBlock(byte[] Block, int Offset, int Length)
         {
-            Sending = true;
+            RecordBeginAsyncCall(AsyncCallType.Send);
             try
             {
-                Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginSend
-
-                int BytesToSend = GlobalBandwidthThrottleOut.Throttle(Length);
-
-                Socket.BeginSend(Block, Offset, BytesToSend, SocketFlags.None, Result =>
+                int TotalBytesSent = 0;
+                while (TotalBytesSent < Length)
                 {
-                    lock (SendQueue)
-                    {
-                        try
-                        {
-                            int BytesSent = Socket.EndSend(Result);
-                            BandwidthStats.BytesOut(BytesSent);
-                            GlobalBandwidthStats.BytesOut(BytesSent);
+                    int BytesLeft = Length - TotalBytesSent;
+                    int BytesToSend = GlobalBandwidthThrottleOut.Throttle(BytesLeft);
 
-                            // Partial send, finish the rest.
-                            if (BytesSent < Length)
-                            {
-                                int NextChunkOffset = Offset + BytesSent;
-                                int NextChunkSize = Length - BytesSent;
-                                SendBlock(Block, NextChunkOffset, NextChunkSize);
-                            }
-                            else
-                            {
-                                Sending = false;
-                                BeginSend();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Sending = false;
+                    int BytesSent = Socket.Send(Block, Offset + TotalBytesSent, BytesToSend, SocketFlags.None);
+                    BandwidthStats.BytesOut(BytesSent);
+                    GlobalBandwidthStats.BytesOut(BytesSent);
 
-                            Console.WriteLine("Failed to send to client {0}, with error {1}", Address.ToString(), ex.Message);
-                            Disconnect();
-                        }
-                        finally
-                        {
-                            Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginSend
-                        }
-                    }
-                }, this);
+                    TotalBytesSent += BytesSent;
+                }
             }
             catch (Exception ex)
             {
-                Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginSend
-
-                Sending = false;
-
-                Console.WriteLine("Failed to begin sending to client {0} with error {1}", Address.ToString(), ex.Message);
-                Disconnect();
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to begin sending to client {0} with error: {1}", Address.ToString(), ex.Message);
+                QueueDisconnect();
+            }
+            finally
+            {
+                RecordEndAsyncCall(AsyncCallType.Send);
             }
         }
 
@@ -622,12 +737,13 @@ namespace BuildSync.Core.Networking
             // Start recieving from client
             try
             {
+                BeginSendThread();
                 BeginRecievingHeader();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Failed to begin reciving from client {0} with error {1}", Address.ToString(), ex.Message);
-                Disconnect();
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to begin reciving from client {0} with error: {1}", Address.ToString(), ex.Message);
+                QueueDisconnect();
             }
         }
 
@@ -638,12 +754,13 @@ namespace BuildSync.Core.Networking
         {
             try
             {
-                Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginReceive
+                RecordBeginAsyncCall(AsyncCallType.Recieve);
 
                 int BytesToRecv = GlobalBandwidthThrottleIn.Throttle(Size);
 
                 Socket.BeginReceive(MessageBuffer, Offset, BytesToRecv, SocketFlags.None, Result =>
                 {
+                    bool ShouldDisconnect = false;
                     try
                     {
                         int BytesRecieved = Socket.EndReceive(Result);
@@ -661,21 +778,26 @@ namespace BuildSync.Core.Networking
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Failed to recieve header from {0}, with error {1}", Address.ToString(), ex.Message);
-                        Disconnect();
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
+                        ShouldDisconnect = true;
                     }
                     finally
                     {
-                        Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginReceive
+                        RecordEndAsyncCall(AsyncCallType.Recieve);
+
+                        if (ShouldDisconnect)
+                        {
+                            QueueDisconnect();
+                        }
                     }
                 }, this);
             }
             catch (Exception ex)
             {
-                Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginReceive
+                RecordEndAsyncCall(AsyncCallType.Recieve);
 
-                Console.WriteLine("Failed to recieve header from {0}, with error {1}", Address.ToString(), ex.Message);
-                Disconnect();
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
+                QueueDisconnect();
             }
         }
 
@@ -689,8 +811,8 @@ namespace BuildSync.Core.Networking
 
             if (MessageHeader.PayloadSize > NetMessage.MaxPayloadSize)
             {
-                Console.WriteLine("Recieved message with payload above max size {0}, disconnecting", MessageHeader.PayloadSize);
-                Disconnect();
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message with payload above max size {0}, disconnecting", MessageHeader.PayloadSize);
+                QueueDisconnect();
                 return;
             }
 
@@ -703,7 +825,7 @@ namespace BuildSync.Core.Networking
             // If no payload, we have the full message.
             if (MessageHeader.PayloadSize == 0)
             {
-                ProcessMessage(MessageBuffer);
+                ProcessMessage(MessageBuffer, NetMessage.HeaderSize + MessageHeader.PayloadSize);
 
                 BeginRecievingHeader();
             }
@@ -722,7 +844,7 @@ namespace BuildSync.Core.Networking
         {
             try
             {
-                Interlocked.Increment(ref OutstandingAsyncCalls); // Socket.BeginReceive
+                RecordBeginAsyncCall(AsyncCallType.Recieve);
 
                 int BytesToRecv = GlobalBandwidthThrottleIn.Throttle(Size);
 
@@ -741,46 +863,49 @@ namespace BuildSync.Core.Networking
                             return;
                         }
 
-                        ProcessMessage(MessageBuffer);
+                        ProcessMessage(MessageBuffer, NetMessage.HeaderSize + Offset + Size);
 
                         BeginRecievingHeader();
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Failed to recieve payload from {0}, with error {1}", Address.ToString(), ex.Message);
-                        Disconnect();
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
+                        QueueDisconnect();
                     }
                     finally
                     {
-                        Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginReceive
+                        RecordEndAsyncCall(AsyncCallType.Recieve);
                     }
                 }, this);
             }
             catch (Exception ex)
             {
-                Interlocked.Decrement(ref OutstandingAsyncCalls); // Socket.BeginReceive
-                Console.WriteLine("Failed to recieve payload from {0}, with error {1}", Address.ToString(), ex.Message);
-                Disconnect();
+                RecordEndAsyncCall(AsyncCallType.Recieve);
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
+                QueueDisconnect();
             }
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private void ProcessMessage(byte[] Buffer)
+        private void ProcessMessage(byte[] Buffer, int Size = 0)
         {
+            //Stopwatch stop = new Stopwatch();
+            //stop.Start();
+
             NetMessage Message = NetMessage.FromByteArray(Buffer);
             if (Message != null)
             {
-                //Console.WriteLine("Recieved message of type {0} from {1}", Message.GetType().Name, Address.ToString());
+                //Logger.Log(LogLevel.Info, LogCategory.Transport, "Recieved message of type {0} from {1}", Message.GetType().Name, Address.ToString());
 
                 if (Message is NetMessage_Handshake)
                 {
                     Handshake = Message as NetMessage_Handshake;
                     if (Handshake.Version < ProtocolVersion)
                     {
-                        Console.WriteLine("Client has incompatible protocol version, disconnecting.", Address.ToString());
-                        Disconnect();
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Client has incompatible protocol version, disconnecting.", Address.ToString());
+                        QueueDisconnect();
                     }
                 }
                 else if (Handshake != null)
@@ -792,15 +917,18 @@ namespace BuildSync.Core.Networking
                 }
                 else
                 {
-                    Console.WriteLine("Recieved message before recieving handshake, disconnecting.", Address.ToString());
-                    Disconnect();
+                    Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message before recieving handshake, disconnecting.", Address.ToString());
+                    QueueDisconnect();
                 }
             }
             else
             {
-                Console.WriteLine("Failed to decode message, disconnecting.", Address.ToString());
-                Disconnect();
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to decode message, disconnecting.", Address.ToString());
+                QueueDisconnect();
             }
+
+            //stop.Stop();
+            //Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to process message: {0} size was {1}kb type {2}", ((float)stop.ElapsedTicks / (Stopwatch.Frequency/1000.0)), Size/1024, Message.GetType().Name);
         }
     }
 }

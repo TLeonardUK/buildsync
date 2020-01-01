@@ -22,7 +22,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public SparseStateArray BlockState;
+        public SparseStateArray BlockState = new SparseStateArray();
 
         /// <summary>
         /// 
@@ -167,7 +167,10 @@ namespace BuildSync.Core.Downloads
 
                 int RangeCount = State.BlockState.Ranges.Count;
                 serializer.Serialize(ref RangeCount);
-                serializer.Serialize(ref State.BlockState.Size);
+
+                int Size = State.BlockState.Size;
+                serializer.Serialize(ref Size);
+                State.BlockState.Size = Size;
 
                 for (int j = 0; j < RangeCount; j++)
                 {
@@ -176,9 +179,18 @@ namespace BuildSync.Core.Downloads
                         State.BlockState.Ranges.Add(new SparseStateArray.Range());
                     }
                     SparseStateArray.Range Range = State.BlockState.Ranges[j];
-                    serializer.Serialize(ref Range.Start);
-                    serializer.Serialize(ref Range.End);
-                    serializer.Serialize(ref Range.State);
+
+                    int TempStart = Range.Start;
+                    serializer.Serialize(ref TempStart);
+                    Range.Start = TempStart;
+
+                    int TempEnd = Range.End;
+                    serializer.Serialize(ref TempEnd);
+                    Range.End = TempEnd;
+
+                    bool TmpState = Range.State;
+                    serializer.Serialize(ref TmpState);
+                    Range.State = TmpState;
                 }
             }
         }
