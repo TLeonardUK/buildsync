@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Users;
 using CommandLine;
 
 namespace BuildSync.Server.Commands
@@ -16,13 +17,25 @@ namespace BuildSync.Server.Commands
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
-            string Format = "{0,-30}";
+            string Format = "{0,-30} | {1,-30}";
 
-            Logger.Log(LogLevel.Display, LogCategory.Main, Format, "Username");
-            foreach (User user in Program.Settings.Users)
+            IpcClient.Respond(string.Format(Format, "Username", "Permissions"));
+            foreach (User user in Program.UserManager.Users)
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, Format, user.Username);
+                string Permissions = "";
+                foreach (UserPermission Permission in user.Permissions)
+                {
+                    if (Permissions.Length != 0)
+                    {
+                        Permissions += ",";
+                    }
+                    Permissions += Permission.ToString();
+                }
+
+                IpcClient.Respond(string.Format(Format, user.Username, Permissions));
+
             }
+            IpcClient.Respond("");
 
             Program.SaveSettings();
         }

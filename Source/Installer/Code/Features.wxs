@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="CompanyFolder" Name="Tim Leonard">
+          <Directory Id="INSTALLLOCATION" Name="Build Sync">
+            <Merge Id="InstallerMM" SourceFile="$(var.InstallerMM.TargetPath)" DiskId="1" Language="1033"/>
+          </Directory>
+        </Directory>
+      </Directory>
+    </Directory>
+    <Feature Id="BuildSync" Title="Build Sync" Description="Installs all the files needed for Build Sync" Level="1" AllowAdvertise="no" ConfigurableDirectory="INSTALLLOCATION">
+        <MergeRef Id="InstallerMM"/>
+    </Feature>
+  </Fragment>
+</Wix>

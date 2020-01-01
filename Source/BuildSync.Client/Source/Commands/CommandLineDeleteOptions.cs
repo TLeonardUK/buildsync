@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
+using BuildSync.Core;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Users;
 using BuildSync.Core.Networking.Messages;
 
 namespace BuildSync.Client.Commands
@@ -26,27 +28,21 @@ namespace BuildSync.Client.Commands
             string NodeName = VirtualFileSystem.GetNodeName(VirtualPath);
 
             bool DeleteInProgress = false;
+            bool IsComplete = false;
 
-            Program.NetClient.OnConnectedToServer += () =>
+            if (!Program.NetClient.IsConnected)
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "Looking for build at path: {0}", VirtualPath);
-                if (!Program.NetClient.RequestBuilds(ParentPath))
-                {
-                    Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Unknown error.");
-                    Program.RequestExit();
-                }
-            };
-            Program.NetClient.OnLostConnectionToServer += () =>
+                IpcClient.Respond("FAILED: No connection to server.");
+                return;
+            }
+
+            if (!Program.NetClient.HasPermission(UserPermission.ManageBuilds))
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Lost connection to server.");
-                Program.RequestExit();
-            };
-            Program.NetClient.OnFailedToConnectToServer += () =>
-            {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Failed to connect to server ({0}:{1}).", Program.Settings.ServerHostname, Program.Settings.ServerPort);
-                Program.RequestExit();
-            };
-            Program.NetClient.OnBuildsRecieved += (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) =>
+                IpcClient.Respond("FAILED: Permission denied to manage builds.");
+                return;
+            }
+
+            BuildsRecievedHandler BuildsRecievedHandler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) =>
             {
                 if (RootPath == ParentPath && !DeleteInProgress)
                 {
@@ -58,12 +54,12 @@ namespace BuildSync.Client.Commands
                         {
                             if (Info.Guid == Guid.Empty)
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Virtual path is not a build.");
-                                Program.RequestExit();
+                                IpcClient.Respond("FAILED: Virtual path is not a build.");
+                                IsComplete = true;
                             }
                             else
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "Deleting manifest with guid: {0}", Info.Guid);
+                                IpcClient.Respond(string.Format("Deleting manifest with guid: {0}", Info.Guid));
                                 Program.NetClient.DeleteManifest(Info.Guid);
                             }
 
@@ -74,20 +70,43 @@ namespace BuildSync.Client.Commands
 
                     if (!Found)
                     {
-                        Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Build does not exist at path.");
-                        Program.RequestExit();
+                        IpcClient.Respond("FAILED: Virtual path is not a build.");
+                        IsComplete = true;
                     }
 
                     DeleteInProgress = true;
                 }
             };
-            Program.NetClient.OnManifestDeleteResultRecieved += (Guid Id) =>
+
+            ManifestDeleteResultRecievedHandler ManifestRecieveHandler = (Guid Id) =>
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "SUCCESS: Deleted manifest.");
-                Program.RequestExit();
+                IpcClient.Respond("SUCCESS: Deleted manifest.");
+                IsComplete = true;
             };
 
-            Program.PumpLoop(() => { });
+            Program.NetClient.OnBuildsRecieved += BuildsRecievedHandler;
+            Program.NetClient.OnManifestDeleteResultRecieved += ManifestRecieveHandler; 
+
+            if (!Program.NetClient.RequestBuilds(ParentPath))
+            {
+                IpcClient.Respond("FAILED: Failed to request builds for unknown reason.");
+                return;
+            }
+
+            Program.PumpLoop(() => {
+
+                if (!Program.NetClient.IsConnected)
+                {
+                    IpcClient.Respond("FAILED: Lost connection to server.");
+                    return true;
+                }
+
+                return IsComplete;
+
+            });
+
+            Program.NetClient.OnManifestDeleteResultRecieved -= ManifestRecieveHandler;
+            Program.NetClient.OnBuildsRecieved -= BuildsRecievedHandler;
         }
     }
 }

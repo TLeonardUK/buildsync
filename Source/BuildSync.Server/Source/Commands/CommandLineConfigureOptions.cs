@@ -37,7 +37,7 @@ namespace BuildSync.Server.Commands
 
             if (Property == null)
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Setting '{0}' does not exist.", Name);
+                IpcClient.Respond(string.Format("FAILED: Setting '{0}' does not exist.", Name));
                 return;
             }
 
@@ -52,7 +52,7 @@ namespace BuildSync.Server.Commands
                 int Result = 0;
                 if (!int.TryParse(Value, out Result))
                 {
-                    Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Value '{0}' is not a valid int.", Value);
+                    IpcClient.Respond(string.Format("FAILED: Value '{0}' is not a valid int.", Value));
                     return;
                 }
                 ValueToSet = Result;
@@ -62,7 +62,7 @@ namespace BuildSync.Server.Commands
                 float Result = 0;
                 if (!float.TryParse(Value, out Result))
                 {
-                    Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Value '{0}' is not a valid float.", Value);
+                    IpcClient.Respond(string.Format("FAILED: Value '{0}' is not a valid float.", Value));
                     return;
                 }
                 ValueToSet = Result;
@@ -82,7 +82,7 @@ namespace BuildSync.Server.Commands
                 {
                     if (!bool.TryParse(Value, out Result))
                     {
-                        Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Value '{0}' is not a valid bool.", Value);
+                        IpcClient.Respond(string.Format("FAILED: Value '{0}' is not a valid bool.", Value));
                         return;
                     }
                 }
@@ -103,7 +103,7 @@ namespace BuildSync.Server.Commands
                 {
                     if (!bool.TryParse(Value, out Result))
                     {
-                        Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Value '{0}' is not a valid bool.", Value);
+                        IpcClient.Respond(string.Format("FAILED: Value '{0}' is not a valid bool.", Value));
                         return;
                     }
                 }
@@ -111,14 +111,14 @@ namespace BuildSync.Server.Commands
             }
             else
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Setting '{0}' cannot be set externally.", Name);
+                IpcClient.Respond(string.Format("FAILED: Setting '{0}' cannot be set externally.", Name));
                 return;
             }
 
             // Check if we don't need to modify the setting.
             if (Property.GetValue(Program.Settings).ToString() == ValueToSet.ToString())
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Setting '{0}' already set to given value.", Name);
+                IpcClient.Respond(string.Format("FAILED: Setting '{0}' already set to given value.", Name));
                 return;
             }
 
@@ -138,12 +138,15 @@ namespace BuildSync.Server.Commands
                         {
                             case MoveStorageState.CopyingFiles:
                                 {
-                                    Logger.Log(LogLevel.Display, LogCategory.Main, "Copying: {0}", MoveTask.CurrentFile);
+                                    if (MoveTask.CurrentFile != null && MoveTask.CurrentFile.Trim().Length > 0)
+                                    {
+                                        IpcClient.Respond(string.Format("Copying: {0}", MoveTask.CurrentFile));
+                                    }
                                     break;
                                 }
                             case MoveStorageState.CleaningUpOldDirectory:
                                 {
-                                    Logger.Log(LogLevel.Display, LogCategory.Main, "Cleaning up old directory.");
+                                    IpcClient.Respond(string.Format("Cleaning up old directory."));
                                     break;
                                 }
                             case MoveStorageState.Success:
@@ -154,7 +157,7 @@ namespace BuildSync.Server.Commands
                             case MoveStorageState.Failed:
                             default:
                                 {
-                                    Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Failed to change storage directory due to disk error.");
+                                    IpcClient.Respond(string.Format("FAILED: Failed to change storage directory due to disk error."));
                                     return;
                                 }
                         }
@@ -170,7 +173,7 @@ namespace BuildSync.Server.Commands
             // Update the value.
             Property.SetValue(Program.Settings, ValueToSet);
             Program.SaveSettings();
-            Logger.Log(LogLevel.Display, LogCategory.Main, "SUCCESS: Setting '{0}' was set to '{1}'.", Name, Value);
+            IpcClient.Respond(string.Format("SUCCESS: Setting '{0}' was set to '{1}'.", Name, Value));
         }
     }
 }

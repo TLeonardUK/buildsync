@@ -11,8 +11,10 @@ using System.Runtime.InteropServices;
 using BuildSync.Core;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Users;
 using BuildSync.Server.Commands;
 using CommandLine;
+using CommandLine.Text;
 
 namespace BuildSync.Server
 {
@@ -27,6 +29,11 @@ namespace BuildSync.Server
         /// 
         /// </summary>
         public static BuildManifestRegistry BuildRegistry;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static UserManager UserManager;
 
         /// <summary>
         /// 
@@ -47,6 +54,11 @@ namespace BuildSync.Server
         /// 
         /// </summary>
         public static bool InCommandLineMode = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static bool RespondingToIpc = false;
 
         /// <summary>
         /// 
@@ -203,8 +215,15 @@ namespace BuildSync.Server
             BuildRegistry = new BuildManifestRegistry();
             BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests);
 
+            UserManager = new UserManager(Settings.Users);
+            UserManager.UsersUpdated += () =>
+            {
+                Settings.Users = UserManager.Users;
+                SaveSettings();
+            };
+
             NetServer = new BuildSyncServer();
-            NetServer.Start(Settings.ServerPort, BuildRegistry);
+            NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager);
         }
 
         /// <summary>
@@ -213,6 +232,8 @@ namespace BuildSync.Server
         public static void OnPoll()
         {
             NetServer.Poll();
+
+            PollIpcServer();
         }
 
         /// <summary>
@@ -232,23 +253,37 @@ namespace BuildSync.Server
         /// </summary>
         private static void PollIpcServer()
         {
-            string Command;
-            string[] Args;
-            if (IPCServer.Recieve(out Command, out Args))
+            if (!RespondingToIpc)
             {
-                if (Command == "RunCommand")
+                string Command;
+                string[] Args;
+                if (IPCServer.Recieve(out Command, out Args))
                 {
-                    Parser.Default.ParseArguments<CommandLineConfigureOptions, CommandLineAddUserOptions, CommandLineRemoveUserOptions, CommandLineListUsersOptions>(Args)
-                       .WithParsed<CommandLineConfigureOptions>(opts => { opts.Run(IPCServer); })
-                       .WithParsed<CommandLineAddUserOptions>(opts => { opts.Run(IPCServer); })
-                       .WithParsed<CommandLineRemoveUserOptions>(opts => { opts.Run(IPCServer); })
-                       .WithParsed<CommandLineListUsersOptions>(opts => { opts.Run(IPCServer); })
-                       .WithNotParsed((errs) => { });
-                }
-                else
-                {
-                    Console.WriteLine("Recieved unknown ipc command '{0}'.", Command);
-                    IPCServer.Respond("Unknown Command");
+                    RespondingToIpc = true;
+
+                    if (Command == "RunCommand")
+                    {
+                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved ipc command '{0} {1}'.", Command, string.Join(" ", Args));
+
+                        var parser = new Parser(with => with.HelpWriter = new CommandIPCWriter(IPCServer));
+                        var parserResult = parser.ParseArguments<CommandLineConfigureOptions, CommandLineAddUserOptions, CommandLineRemoveUserOptions, CommandLineListUsersOptions, CommandLineGrantPermissionOptions, CommandLineRevokePermissionOptions>(Args);
+                        parserResult.WithParsed<CommandLineConfigureOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineAddUserOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineRemoveUserOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineListUsersOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineGrantPermissionOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineRevokePermissionOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithNotParsed((errs) => { });
+
+                        IPCServer.EndResponse();
+                    }
+                    else
+                    {
+                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved unknown ipc command '{0}'.", Command);
+                        IPCServer.Respond("Unknown Command");
+                    }
+
+                    RespondingToIpc = false;
                 }
             }
         }

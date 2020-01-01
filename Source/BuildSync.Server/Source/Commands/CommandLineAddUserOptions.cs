@@ -19,18 +19,14 @@ namespace BuildSync.Server.Commands
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
-            if (Program.Settings.GetUser(Username) != null)
+            if (Program.UserManager.FindUser(Username) != null)
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Username '{0}' already exists.", Username);
+                IpcClient.Respond(string.Format("FAILED: Username '{0}' already exists.", Username));
             }
             else
             {
-                User NewUser = new User();
-                NewUser.Username = Username;
-
-                Program.Settings.Users.Add(NewUser);
-
-                Logger.Log(LogLevel.Display, LogCategory.Main, "SUCCESS: Added user '{0}'.", Username);
+                Program.UserManager.CreateUser(Username);
+                IpcClient.Respond(string.Format("SUCCESS: Added user '{0}'.", Username));
             }
 
             Program.SaveSettings();

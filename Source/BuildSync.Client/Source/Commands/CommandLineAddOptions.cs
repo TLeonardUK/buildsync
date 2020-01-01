@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using CommandLine;
 using BuildSync.Client.Tasks;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Users;
 
 namespace BuildSync.Client.Commands
 {
@@ -29,7 +30,19 @@ namespace BuildSync.Client.Commands
 
             if (!Directory.Exists(LocalPath))
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Path does not exists: {0}", LocalPath);
+                IpcClient.Respond("FAILED: Path does not exists: {0}");
+                return;
+            }
+
+            if (!Program.NetClient.IsConnected)
+            {
+                IpcClient.Respond("FAILED: No connection to server.");
+                return;
+            }
+
+            if (!Program.NetClient.HasPermission(UserPermission.ManageBuilds))
+            {
+                IpcClient.Respond("FAILED: Permission denied to manage builds.");
                 return;
             }
 
@@ -37,23 +50,16 @@ namespace BuildSync.Client.Commands
             BuildPublishingState OldPublisherState = BuildPublishingState.Unknown;
             int OldPublisherProgress = 0;
 
-            Program.NetClient.OnConnectedToServer += () =>
-            {
-                Publisher.Start(VirtualPath, LocalPath);
-            };
-            Program.NetClient.OnLostConnectionToServer += () =>
-            {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Lost connection to server.");
-                Program.RequestExit();
-            };
-            Program.NetClient.OnFailedToConnectToServer += () =>
-            {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Failed to connect to server ({0}:{1}).", Program.Settings.ServerHostname, Program.Settings.ServerPort);
-                Program.RequestExit();
-            };
+            Publisher.Start(VirtualPath, LocalPath);
 
             Program.PumpLoop(() =>
             {
+                if (!Program.NetClient.IsConnected)
+                {
+                    IpcClient.Respond("FAILED: Lost connection to server.");
+                    return true;
+                }
+
                 if (Publisher != null && (Publisher.State != OldPublisherState || (int)Publisher.Progress != OldPublisherProgress))
                 {
                     OldPublisherState = Publisher.State;
@@ -63,46 +69,44 @@ namespace BuildSync.Client.Commands
                     {
                         case BuildPublishingState.CopyingFiles:
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "Copying files to storage: {0}%", OldPublisherProgress);
+                                IpcClient.Respond(string.Format("Copying files to storage: {0}%", OldPublisherProgress));
                                 break;
                             }
                         case BuildPublishingState.ScanningFiles:
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "Scanning local files: {0}%", OldPublisherProgress);
+                                IpcClient.Respond(string.Format("Scanning local files: {0}%", OldPublisherProgress));
                                 break;
                             }
                         case BuildPublishingState.UploadingManifest:
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "Uploading manfiest to server.");
+                                IpcClient.Respond(string.Format("Uploading manfiest to server."));
                                 break;
                             }
                         case BuildPublishingState.FailedVirtualPathAlreadyExists:
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Build already exists at virtual path '{0}'.", VirtualPath);
-                                Program.RequestExit();
-                                break;
+                                IpcClient.Respond(string.Format("FAILED: Build already exists at virtual path '{0}'.", VirtualPath));
+                                return true;
                             }
                         case BuildPublishingState.FailedGuidAlreadyExists:
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Manifest with same GUID already exists.");
-                                Program.RequestExit();
-                                break;
+                                IpcClient.Respond(string.Format("FAILED: Manifest with same GUID already exists."));
+                                return true;
                             }
                         case BuildPublishingState.Success:
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "SUCCESS: Build added successfully.");
-                                Program.RequestExit();
-                                break;
+                                IpcClient.Respond(string.Format("SUCCESS: Build added successfully."));
+                                return true;
                             }
                         case BuildPublishingState.Failed:
                         default:
                             {
-                                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Undefined reason.");
-                                Program.RequestExit();
-                                break;
+                                IpcClient.Respond(string.Format("FAILED: Undefined reason."));
+                                return true;
                             }
                     }
                 }
+
+                return false;
             });
         }
     }

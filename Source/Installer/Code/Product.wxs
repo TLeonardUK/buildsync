@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <!-- 
+  MSIProductVersion is defined in Installer.wixproj as 0.0.1 for local desktop builds.  
+  You should pass in the MSBuild Property 'MSIProductVersion' to override it during an automated build.
+  See http://msdn.microsoft.com/en-us/library/windows/desktop/aa370859%28v=vs.85%29.aspx for information on allowable values.
+  
+  The Product@Id attribute (ProductCode Property) will be a random GUID for each build.  This is to support "Major Upgrades" where each install 
+  is a seamless uninstall/reinstall.
+  -->
+  <Product Id="*" Name="Build Sync" Language="1033" Version="$(var.MSIProductVersion)" Manufacturer="Tim Leonard" UpgradeCode="9442c09d-de9c-4187-875d-5159315f6857">
+    <Package InstallerVersion="301" Compressed="yes" InstallScope="perMachine" />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Major Upgrade Rule to disallow downgrades -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <!--Common Launch Condition-->
+    <!-- Examples at http://wixtoolset.org/documentation/manual/v3/customactions/wixnetfxextension.html -->
+    <PropertyRef Id="NETFRAMEWORK45"/>
+    <Condition Message="[ProductName] requires .NET Framework 4.7">Installed OR NETFRAMEWORK45</Condition>
+
+    <!-- Include User Interface Experience -->
+    <Icon Id="Icon.ico" SourceFile="Resources\Icon.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="Icon.ico"></Property>
+    <UIRef Id="UI"/>
+
+      <!-- Include Features and Directories Fragment -->
+    <DirectoryRef Id="INSTALLLOCATION"/>
+
+    <!-- Lauch on end-->
+    <!--<UI>
+        <UIRef Id="WixUI_Minimal" />
+        <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed</Publish>
+    </UI>
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch Build Sync" />
+    <Property Id="WixShellExecTarget" Value="[#owf1B96E4D26AFCE998D5963BF751248C09]" />
+    <CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
+    -->
+
+  </Product>
+</Wix>

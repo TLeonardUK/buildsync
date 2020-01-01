@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
+using BuildSync.Core;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Networking.Messages;
-using BuildSync.Core.Utils;
 using CommandLine;
 
 namespace BuildSync.Client.Commands
@@ -26,41 +26,62 @@ namespace BuildSync.Client.Commands
 
             if (!Program.NetClient.IsConnected)
             {
-                IpcClient.Respond("FAILED: No connection to server.", true);
+                IpcClient.Respond("FAILED: No connection to server.");
                 return;
             }
 
-            Program.NetClient.OnLostConnectionToServer += () =>
+            bool GotResults = false;
+
+            BuildsRecievedHandler BuildsRecievedHandler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) =>
             {
-                IpcClient.Respond("FAILED: Lost connection to server.", true);
+                if (GotResults)
+                {
+                    return;
+                }
 
-            };
-
-            // TODO: Handle unbinding this etc.
-
-            Program.NetClient.OnBuildsRecieved += (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) =>
-            {
                 if (RootPath == VirtualPath)
                 {
                     string Format = "{0,-30} | {1,-40} | {2,-25}";
 
-                    IpcClient.Respond(string.Format(Format, "Path", "Id", "Create Time"), false);                    
+                    IpcClient.Respond(string.Format(Format, "Path", "Id", "Create Time"));
                     foreach (NetMessage_GetBuildsResponse.BuildInfo Info in Builds)
                     {
                         if (Info.Guid == Guid.Empty)
                         {
-                            IpcClient.Respond(string.Format(Format, VirtualFileSystem.GetNodeName(Info.VirtualPath), "", ""), false);
+                            IpcClient.Respond(string.Format(Format, VirtualFileSystem.GetNodeName(Info.VirtualPath), "", ""));
                         }
                         else
                         {
-                            IpcClient.Respond(string.Format(Format, VirtualFileSystem.GetNodeName(Info.VirtualPath), Info.Guid, Info.CreateTime), false);
+                            IpcClient.Respond(string.Format(Format, VirtualFileSystem.GetNodeName(Info.VirtualPath), Info.Guid, Info.CreateTime));
                         }
                     }
-                    IpcClient.Respond("", true);
+                    IpcClient.Respond("");
+
+                    GotResults = true;
                 }
             };
 
-            Program.PumpLoop(() => { });
+            Program.NetClient.OnBuildsRecieved += BuildsRecievedHandler;
+
+            if (!Program.NetClient.RequestBuilds(VirtualPath))
+            {
+                IpcClient.Respond("FAILED: Failed to request builds for unknown reason.");
+                return;
+            }
+
+            Program.PumpLoop(() => {
+
+                if (!Program.NetClient.IsConnected)
+                {
+                    IpcClient.Respond("FAILED: Lost connection to server.");
+                    return true;
+                }
+
+                return GotResults;
+
+            });
+
+            Program.NetClient.OnBuildsRecieved -= BuildsRecievedHandler;
         }
     }
 }

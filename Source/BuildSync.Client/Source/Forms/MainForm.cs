@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Users;
 using BuildSync.Client.Controls;
 
 namespace BuildSync.Client.Forms
@@ -318,7 +319,17 @@ namespace BuildSync.Client.Forms
             }
 
             //publishBuildToolStripMenuItem.Enabled = Connected;
+            manageBuildsToolStripMenuItem.Text = "Manage Builds ...";
             manageBuildsToolStripMenuItem.Enabled = Connected;
+            if (Connected)
+            {
+                if (!Program.NetClient.HasPermission(UserPermission.ManageBuilds))
+                {
+                    manageBuildsToolStripMenuItem.Enabled = false;
+                    manageBuildsToolStripMenuItem.Text = "Manage Builds (Permission Required)";
+                }
+            }
+
             addDownloadToolStripMenuItem.Enabled = Connected;
             addDownloadToolStripMenuItem1.Enabled = Connected;
 

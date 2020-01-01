@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Users;
 using CommandLine;
 
 namespace BuildSync.Server.Commands
@@ -19,19 +20,16 @@ namespace BuildSync.Server.Commands
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
-            User ExistingUser = Program.Settings.GetUser(Username);
+            User ExistingUser = Program.UserManager.FindUser(Username);
             if (ExistingUser != null)
             {
-                Program.Settings.Users.Remove(ExistingUser);
-
-                Logger.Log(LogLevel.Display, LogCategory.Main, "SUCCESS: Removed user '{0}'.", Username);
+                Program.UserManager.DeleteUser(ExistingUser);
+                IpcClient.Respond(string.Format("SUCCESS: Removed user '{0}'.", Username));
             }
             else
             {
-                Logger.Log(LogLevel.Display, LogCategory.Main, "FAILED: Username '{0}' does not exist.", Username);
+                IpcClient.Respond(string.Format("FAILED: Username '{0}' does not exist.", Username));
             }
-
-            Program.SaveSettings();
         }
     }
 }

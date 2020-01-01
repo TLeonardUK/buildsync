@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace BuildSync.Client.Forms
@@ -40,14 +41,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void Loaded(object sender, EventArgs e)
         {
-            if (ApplicationDeployment.IsNetworkDeployed)
-            {
-                VersionLabel.Text = ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
-            }
-            else
-            {
-                VersionLabel.Text = "Internal";
-            }
+            VersionLabel.Text = Assembly.GetEntryAssembly().GetName().Version.ToString();
         }
     }
 }

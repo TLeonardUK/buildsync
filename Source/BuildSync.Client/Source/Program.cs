@@ -23,6 +23,12 @@ namespace BuildSync.Client
     /// <summary>
     /// 
     /// </summary>
+    /// <returns>True if pump loop should terminate.</returns>
+    public delegate bool PumpLoopEventHandler();
+
+    /// <summary>
+    /// 
+    /// </summary>
     public static class Program
     {
         /// <summary>
@@ -98,12 +104,12 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        private static bool Exiting = false;
+        public static bool InCommandLineMode = false;
 
         /// <summary>
         /// 
         /// </summary>
-        public static bool InCommandLineMode = false;
+        public static bool RespondingToIpc = false;
 
         /// <summary>
         /// 
@@ -444,19 +450,17 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        internal static void RequestExit()
+        internal static void PumpLoop(PumpLoopEventHandler UpdateDelegate = null)
         {
-            Exiting = true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        internal static void PumpLoop(Action UpdateDelegate = null)
-        {
-            while (!Exiting)
+            while (true)
             {
-                UpdateDelegate?.Invoke();
+                if (UpdateDelegate != null)
+                {
+                    if (UpdateDelegate.Invoke())
+                    {
+                        break;
+                    }
+                }
 
                 Program.OnPoll();
                 Application.DoEvents();
@@ -468,23 +472,36 @@ namespace BuildSync.Client
         /// </summary>
         private static void PollIpcServer()
         {
-            string Command;
-            string[] Args;
-            if (IPCServer.Recieve(out Command, out Args))
+            if (!RespondingToIpc)
             {
-                if (Command == "RunCommand")
+                string Command;
+                string[] Args;
+                if (IPCServer.Recieve(out Command, out Args))
                 {
-                    Parser.Default.ParseArguments<CommandLineAddOptions, CommandLineDeleteOptions, CommandLineListOptions, CommandLineConfigureOptions>(Args)
-                       .WithParsed<CommandLineAddOptions>(opts => { opts.Run(IPCServer); })
-                       .WithParsed<CommandLineDeleteOptions>(opts => { opts.Run(IPCServer); })
-                       .WithParsed<CommandLineListOptions>(opts => { opts.Run(IPCServer); })
-                       .WithParsed<CommandLineConfigureOptions>(opts => { opts.Run(IPCServer); })
-                       .WithNotParsed((errs) => { });
-                }
-                else
-                {
-                    Console.WriteLine("Recieved unknown ipc command '{0}'.", Command);
-                    IPCServer.Respond("Unknown Command");
+                    RespondingToIpc = true;
+
+                    if (Command == "RunCommand")
+                    {
+                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved ipc command '{0} {1}'.", Command, string.Join(" ", Args));
+
+                        var parser = new Parser(with => with.HelpWriter = new CommandIPCWriter(IPCServer));
+                        var parserResult = parser.ParseArguments<CommandLineAddOptions, CommandLineDeleteOptions, CommandLineListOptions, CommandLineConfigureOptions>(Args);
+                        parserResult.WithParsed<CommandLineAddOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineDeleteOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineListOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineConfigureOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithNotParsed((errs) => { });
+
+                        IPCServer.EndResponse();
+                    }
+                    else
+                    {
+                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved unknown ipc command '{0}'.", Command);
+
+                        IPCServer.Respond("Unknown Command");
+                    }
+
+                    RespondingToIpc = false;
                 }
             }
         }

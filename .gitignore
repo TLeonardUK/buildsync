@@ -20,6 +20,7 @@ Intermmediate/
 mono_crash.*
 
 # Build results
+Build/Deploy/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
