@@ -128,7 +128,7 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public static void Init()
         {
-            //BuildSettings.WriteDummy(@"F:\buildsync\Tests\buildsync.json");
+            //BuildSettings.WriteDummy(@"C:\Personal\buildsync\Docs\Example Launch Configs\buildsync.json");
 
             // This hack preps the script compiler so we don't have to pay any JIT
             // costs when we come to evaluate actual conditions.

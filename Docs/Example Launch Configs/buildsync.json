@@ -1,0 +1,110 @@
+{
+  "Modes": [
+    {
+      "Name": "Launch Game",
+      "Executable": "Data\\game.exe",
+      "WorkingDirectory": "Data",
+      "Condition": "Environment.GetEnvironmentVariable(\"PATH\") != null && Directory.Exists(\"C:\\\\\")",
+      "Variables": [
+        {
+          "Name": "HIDDEN_INT_TEST",
+          "DataType": "Int",
+          "FriendlyName": "Hidden Int Test",
+          "FriendlyDescription": "Should not show, condition should evaluate to false.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "false",
+          "Value": "0",
+          "Options": [],
+          "MinValue": 0,
+          "MaxValue": 100
+        },
+        {
+          "Name": "INT_TEST",
+          "DataType": "Int",
+          "FriendlyName": "Int Test",
+          "FriendlyDescription": "Test of integer variables.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "true",
+          "Value": "0",
+          "Options": [],
+          "MinValue": 0,
+          "MaxValue": 100
+        },
+        {
+          "Name": "BOOL_TEST",
+          "DataType": "Bool",
+          "FriendlyName": "Bool Test",
+          "FriendlyDescription": "Test of bool variables.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "true",
+          "Value": "true",
+          "Options": [],
+          "MinValue": -1000,
+          "MaxValue": 1000
+        },
+        {
+          "Name": "STRING_OPTIONS_TEST",
+          "DataType": "String",
+          "FriendlyName": "String Options Test",
+          "FriendlyDescription": "Test of string options variables.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "true",
+          "Value": "main",
+          "Options": [
+            "main",
+            "debug",
+            "something"
+          ],
+          "MinValue": -1000,
+          "MaxValue": 1000
+        },
+        {
+          "Name": "STRING_TEST",
+          "DataType": "String",
+          "FriendlyName": "String Test",
+          "FriendlyDescription": "Test of string variables.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "true",
+          "Value": "main",
+          "Options": [],
+          "MinValue": -1000,
+          "MaxValue": 1000
+        },
+        {
+          "Name": "FLOAT_TEST",
+          "DataType": "Float",
+          "FriendlyName": "Float Test",
+          "FriendlyDescription": "Test of float variables.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "true",
+          "Value": "0.1",
+          "Options": [],
+          "MinValue": 0.100000001,
+          "MaxValue": 1
+        }
+      ],
+      "Arguments": [
+        {
+          "Value": "-bool_test",
+          "Condition": "%BOOL_TEST%"
+        },
+        {
+          "Value": "-int_test=%INT_TEST%",
+          "Condition": "%INT_TEST% > 0"
+        },
+        {
+          "Value": "-float_test=%FLOAT_TEST%",
+          "Condition": "%FLOAT_TEST% > 0.1"
+        },
+        {
+          "Value": "-string_test=\"%STRING_TEST%\"",
+          "Condition": "\"%STRING_TEST%\" != \"\""
+        },
+        {
+          "Value": "-string_options_test=%STRING_OPTIONS_TEST%",
+          "Condition": "\"%STRING_OPTIONS_TEST%\" != \"\""
+        }
+      ]
+    }
+  ]
+}
