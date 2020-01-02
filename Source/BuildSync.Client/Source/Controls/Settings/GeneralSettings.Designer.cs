@@ -35,9 +35,10 @@
             // RunOnStartupCheckbox
             // 
             this.RunOnStartupCheckbox.AutoSize = true;
-            this.RunOnStartupCheckbox.Location = new System.Drawing.Point(24, 26);
+            this.RunOnStartupCheckbox.Location = new System.Drawing.Point(16, 17);
+            this.RunOnStartupCheckbox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.RunOnStartupCheckbox.Name = "RunOnStartupCheckbox";
-            this.RunOnStartupCheckbox.Size = new System.Drawing.Size(231, 24);
+            this.RunOnStartupCheckbox.Size = new System.Drawing.Size(156, 17);
             this.RunOnStartupCheckbox.TabIndex = 33;
             this.RunOnStartupCheckbox.Text = "Run when computer starts?";
             this.RunOnStartupCheckbox.UseVisualStyleBackColor = true;
@@ -46,9 +47,10 @@
             // MinimizeToTrayCheckbox
             // 
             this.MinimizeToTrayCheckbox.AutoSize = true;
-            this.MinimizeToTrayCheckbox.Location = new System.Drawing.Point(24, 80);
+            this.MinimizeToTrayCheckbox.Location = new System.Drawing.Point(16, 52);
+            this.MinimizeToTrayCheckbox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.MinimizeToTrayCheckbox.Name = "MinimizeToTrayCheckbox";
-            this.MinimizeToTrayCheckbox.Size = new System.Drawing.Size(216, 24);
+            this.MinimizeToTrayCheckbox.Size = new System.Drawing.Size(147, 17);
             this.MinimizeToTrayCheckbox.TabIndex = 34;
             this.MinimizeToTrayCheckbox.Text = "Minimize to tray on close?";
             this.MinimizeToTrayCheckbox.UseVisualStyleBackColor = true;
@@ -56,12 +58,12 @@
             // 
             // GeneralSettings
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.Controls.Add(this.MinimizeToTrayCheckbox);
             this.Controls.Add(this.RunOnStartupCheckbox);
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "GeneralSettings";
-            this.Size = new System.Drawing.Size(778, 125);
+            this.Size = new System.Drawing.Size(519, 81);
             this.ResumeLayout(false);
             this.PerformLayout();
 

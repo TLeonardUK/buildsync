@@ -244,6 +244,9 @@
     <EmbeddedResource Include="Controls\Settings\ServerSettings.resx">
       <DependentUpon>ServerSettings.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Controls\Settings\SettingsControlBase.resx">
+      <DependentUpon>SettingsControlBase.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\Settings\StorageSettings.resx">
       <DependentUpon>StorageSettings.cs</DependentUpon>
     </EmbeddedResource>

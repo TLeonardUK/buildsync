@@ -42,9 +42,10 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(13, 13);
+            this.label1.Location = new System.Drawing.Point(9, 8);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(277, 20);
+            this.label1.Size = new System.Drawing.Size(185, 13);
             this.label1.TabIndex = 1;
             this.label1.Text = "Remote directory to retrieve build from";
             // 
@@ -52,9 +53,10 @@
             // 
             this.addDownloadButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.addDownloadButton.Enabled = false;
-            this.addDownloadButton.Location = new System.Drawing.Point(662, 330);
+            this.addDownloadButton.Location = new System.Drawing.Point(441, 224);
+            this.addDownloadButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.addDownloadButton.Name = "addDownloadButton";
-            this.addDownloadButton.Size = new System.Drawing.Size(143, 45);
+            this.addDownloadButton.Size = new System.Drawing.Size(95, 29);
             this.addDownloadButton.TabIndex = 2;
             this.addDownloadButton.Text = "Add Download";
             this.addDownloadButton.UseVisualStyleBackColor = true;
@@ -65,17 +67,19 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(14, 317);
+            this.panel1.Location = new System.Drawing.Point(9, 216);
+            this.panel1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(791, 1);
+            this.panel1.Size = new System.Drawing.Size(527, 1);
             this.panel1.TabIndex = 3;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(429, 86);
+            this.label3.Location = new System.Drawing.Point(286, 56);
+            this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(146, 20);
+            this.label3.Size = new System.Drawing.Size(99, 13);
             this.label3.TabIndex = 8;
             this.label3.Text = "Priority of download";
             // 
@@ -84,9 +88,10 @@
             this.autoUpdateCheckBox.AutoSize = true;
             this.autoUpdateCheckBox.Checked = true;
             this.autoUpdateCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.autoUpdateCheckBox.Location = new System.Drawing.Point(433, 158);
+            this.autoUpdateCheckBox.Location = new System.Drawing.Point(289, 103);
+            this.autoUpdateCheckBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.autoUpdateCheckBox.Name = "autoUpdateCheckBox";
-            this.autoUpdateCheckBox.Size = new System.Drawing.Size(244, 24);
+            this.autoUpdateCheckBox.Size = new System.Drawing.Size(166, 17);
             this.autoUpdateCheckBox.TabIndex = 11;
             this.autoUpdateCheckBox.Text = "Automatically keep up to date";
             this.autoUpdateCheckBox.UseVisualStyleBackColor = true;
@@ -97,18 +102,20 @@
             this.priorityComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.priorityComboBox.FormattingEnabled = true;
-            this.priorityComboBox.Location = new System.Drawing.Point(433, 109);
+            this.priorityComboBox.Location = new System.Drawing.Point(289, 71);
+            this.priorityComboBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.priorityComboBox.Name = "priorityComboBox";
-            this.priorityComboBox.Size = new System.Drawing.Size(371, 28);
+            this.priorityComboBox.Size = new System.Drawing.Size(249, 21);
             this.priorityComboBox.TabIndex = 12;
             this.priorityComboBox.SelectedIndexChanged += new System.EventHandler(this.DataStateChanged);
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(429, 21);
+            this.label2.Location = new System.Drawing.Point(286, 14);
+            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(51, 20);
+            this.label2.Size = new System.Drawing.Size(35, 13);
             this.label2.TabIndex = 5;
             this.label2.Text = "Name";
             // 
@@ -116,9 +123,10 @@
             // 
             this.nameTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.nameTextBox.Location = new System.Drawing.Point(433, 44);
+            this.nameTextBox.Location = new System.Drawing.Point(289, 29);
+            this.nameTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.nameTextBox.Name = "nameTextBox";
-            this.nameTextBox.Size = new System.Drawing.Size(372, 26);
+            this.nameTextBox.Size = new System.Drawing.Size(249, 20);
             this.nameTextBox.TabIndex = 6;
             this.nameTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
             // 
@@ -126,17 +134,19 @@
             // 
             this.downloadFileSystemTree.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
-            this.downloadFileSystemTree.Location = new System.Drawing.Point(17, 44);
+            this.downloadFileSystemTree.CanSelectBuildContainers = true;
+            this.downloadFileSystemTree.Location = new System.Drawing.Point(11, 29);
+            this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1, 1, 1, 1);
             this.downloadFileSystemTree.Name = "downloadFileSystemTree";
-            this.downloadFileSystemTree.Size = new System.Drawing.Size(406, 254);
+            this.downloadFileSystemTree.SelectedPath = "";
+            this.downloadFileSystemTree.Size = new System.Drawing.Size(271, 173);
             this.downloadFileSystemTree.TabIndex = 13;
             this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
             // 
             // AddDownloadForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(817, 387);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.ClientSize = new System.Drawing.Size(549, 263);
             this.Controls.Add(this.downloadFileSystemTree);
             this.Controls.Add(this.priorityComboBox);
             this.Controls.Add(this.autoUpdateCheckBox);
@@ -147,7 +157,8 @@
             this.Controls.Add(this.addDownloadButton);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
-            this.MinimumSize = new System.Drawing.Size(839, 443);
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.MinimumSize = new System.Drawing.Size(565, 190);
             this.Name = "AddDownloadForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

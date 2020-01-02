@@ -42,10 +42,12 @@
             this.MainTreeView.ImageIndex = 0;
             this.MainTreeView.ImageList = this.TreeImageList;
             this.MainTreeView.Indent = 10;
+            this.MainTreeView.ItemHeight = 24;
             this.MainTreeView.Location = new System.Drawing.Point(0, 0);
+            this.MainTreeView.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.MainTreeView.Name = "MainTreeView";
             this.MainTreeView.SelectedImageIndex = 0;
-            this.MainTreeView.Size = new System.Drawing.Size(150, 150);
+            this.MainTreeView.Size = new System.Drawing.Size(100, 97);
             this.MainTreeView.TabIndex = 0;
             this.MainTreeView.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.OnNodeExpanded);
             this.MainTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.AfterNodeSelected);
@@ -61,10 +63,11 @@
             // 
             // DownloadFileSystemTree
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.Controls.Add(this.MainTreeView);
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "DownloadFileSystemTree";
+            this.Size = new System.Drawing.Size(100, 97);
             this.Load += new System.EventHandler(this.OnLoaded);
             this.ResumeLayout(false);
 

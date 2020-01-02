@@ -39,32 +39,36 @@
             // TaskProgressLabel
             // 
             this.TaskProgressLabel.AutoSize = true;
-            this.TaskProgressLabel.Location = new System.Drawing.Point(12, 15);
+            this.TaskProgressLabel.Location = new System.Drawing.Point(8, 10);
+            this.TaskProgressLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.TaskProgressLabel.Name = "TaskProgressLabel";
-            this.TaskProgressLabel.Size = new System.Drawing.Size(83, 20);
+            this.TaskProgressLabel.Size = new System.Drawing.Size(57, 13);
             this.TaskProgressLabel.TabIndex = 1;
             this.TaskProgressLabel.Text = "Build Sync";
             // 
             // TaskProgressBar
             // 
-            this.TaskProgressBar.Location = new System.Drawing.Point(13, 39);
+            this.TaskProgressBar.Location = new System.Drawing.Point(9, 25);
+            this.TaskProgressBar.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.TaskProgressBar.Name = "TaskProgressBar";
-            this.TaskProgressBar.Size = new System.Drawing.Size(665, 23);
+            this.TaskProgressBar.Size = new System.Drawing.Size(443, 15);
             this.TaskProgressBar.TabIndex = 2;
             // 
             // TotalProgressBar
             // 
-            this.TotalProgressBar.Location = new System.Drawing.Point(13, 100);
+            this.TotalProgressBar.Location = new System.Drawing.Point(9, 65);
+            this.TotalProgressBar.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.TotalProgressBar.Name = "TotalProgressBar";
-            this.TotalProgressBar.Size = new System.Drawing.Size(665, 23);
+            this.TotalProgressBar.Size = new System.Drawing.Size(443, 15);
             this.TotalProgressBar.TabIndex = 4;
             // 
             // TotalProgressLabel
             // 
             this.TotalProgressLabel.AutoSize = true;
-            this.TotalProgressLabel.Location = new System.Drawing.Point(12, 76);
+            this.TotalProgressLabel.Location = new System.Drawing.Point(8, 49);
+            this.TotalProgressLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.TotalProgressLabel.Name = "TotalProgressLabel";
-            this.TotalProgressLabel.Size = new System.Drawing.Size(111, 20);
+            this.TotalProgressLabel.Size = new System.Drawing.Size(75, 13);
             this.TotalProgressLabel.TabIndex = 3;
             this.TotalProgressLabel.Text = "Total Progress";
             // 
@@ -75,14 +79,14 @@
             // 
             // MoveStorageDirectoryForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(690, 145);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.ClientSize = new System.Drawing.Size(460, 94);
             this.Controls.Add(this.TotalProgressBar);
             this.Controls.Add(this.TotalProgressLabel);
             this.Controls.Add(this.TaskProgressBar);
             this.Controls.Add(this.TaskProgressLabel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "MoveStorageDirectoryForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

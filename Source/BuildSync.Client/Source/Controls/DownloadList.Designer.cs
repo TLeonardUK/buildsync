@@ -39,13 +39,12 @@
             // 
             // DownloadList
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.AutoScroll = true;
             this.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.Margin = new System.Windows.Forms.Padding(20);
+            this.Margin = new System.Windows.Forms.Padding(13, 13, 13, 13);
             this.Name = "DownloadList";
-            this.Size = new System.Drawing.Size(800, 268);
+            this.Size = new System.Drawing.Size(533, 174);
             this.ResumeLayout(false);
 
         }

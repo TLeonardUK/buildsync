@@ -53,17 +53,19 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(10, 523);
+            this.panel1.Location = new System.Drawing.Point(7, 340);
+            this.panel1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1002, 1);
+            this.panel1.Size = new System.Drawing.Size(668, 1);
             this.panel1.TabIndex = 5;
             // 
             // closeButton
             // 
             this.closeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.closeButton.Location = new System.Drawing.Point(853, 536);
+            this.closeButton.Location = new System.Drawing.Point(569, 348);
+            this.closeButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.closeButton.Name = "closeButton";
-            this.closeButton.Size = new System.Drawing.Size(160, 45);
+            this.closeButton.Size = new System.Drawing.Size(107, 29);
             this.closeButton.TabIndex = 4;
             this.closeButton.Text = "Close";
             this.closeButton.UseVisualStyleBackColor = true;
@@ -77,9 +79,10 @@
             this.groupTreeView.HideSelection = false;
             this.groupTreeView.ImageIndex = 0;
             this.groupTreeView.ImageList = this.treeImageList;
-            this.groupTreeView.Indent = 5;
+            this.groupTreeView.Indent = 45;
             this.groupTreeView.ItemHeight = 45;
             this.groupTreeView.Location = new System.Drawing.Point(0, 0);
+            this.groupTreeView.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.groupTreeView.Name = "groupTreeView";
             treeNode1.ImageIndex = 2;
             treeNode1.Name = "serverSettingsNode";
@@ -106,7 +109,7 @@
             this.groupTreeView.ShowLines = false;
             this.groupTreeView.ShowPlusMinus = false;
             this.groupTreeView.ShowRootLines = false;
-            this.groupTreeView.Size = new System.Drawing.Size(259, 506);
+            this.groupTreeView.Size = new System.Drawing.Size(158, 329);
             this.groupTreeView.TabIndex = 0;
             this.groupTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.SelectedSettingsNodeChanged);
             // 
@@ -124,7 +127,8 @@
             this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.splitContainer1.Location = new System.Drawing.Point(-5, 1);
+            this.splitContainer1.Location = new System.Drawing.Point(-3, 1);
+            this.splitContainer1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -136,8 +140,9 @@
             this.splitContainer1.Panel2.Controls.Add(this.settingsPanelContainer);
             this.splitContainer1.Panel2.Controls.Add(this.settingsGroupNameLabel);
             this.splitContainer1.Panel2.Controls.Add(this.panel2);
-            this.splitContainer1.Size = new System.Drawing.Size(1038, 506);
-            this.splitContainer1.SplitterDistance = 259;
+            this.splitContainer1.Size = new System.Drawing.Size(692, 329);
+            this.splitContainer1.SplitterDistance = 158;
+            this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 6;
             // 
             // settingsPanelContainer
@@ -146,18 +151,20 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.settingsPanelContainer.AutoScroll = true;
-            this.settingsPanelContainer.Location = new System.Drawing.Point(2, 68);
+            this.settingsPanelContainer.Location = new System.Drawing.Point(1, 44);
+            this.settingsPanelContainer.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.settingsPanelContainer.Name = "settingsPanelContainer";
-            this.settingsPanelContainer.Size = new System.Drawing.Size(765, 435);
+            this.settingsPanelContainer.Size = new System.Drawing.Size(524, 283);
             this.settingsPanelContainer.TabIndex = 2;
             // 
             // settingsGroupNameLabel
             // 
             this.settingsGroupNameLabel.AutoSize = true;
             this.settingsGroupNameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.settingsGroupNameLabel.Location = new System.Drawing.Point(2, 21);
+            this.settingsGroupNameLabel.Location = new System.Drawing.Point(1, 14);
+            this.settingsGroupNameLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.settingsGroupNameLabel.Name = "settingsGroupNameLabel";
-            this.settingsGroupNameLabel.Size = new System.Drawing.Size(147, 26);
+            this.settingsGroupNameLabel.Size = new System.Drawing.Size(104, 18);
             this.settingsGroupNameLabel.TabIndex = 0;
             this.settingsGroupNameLabel.Text = "Group Name";
             // 
@@ -166,21 +173,22 @@
             this.panel2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel2.Location = new System.Drawing.Point(22, 35);
+            this.panel2.Location = new System.Drawing.Point(15, 23);
+            this.panel2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(730, 0);
+            this.panel2.Size = new System.Drawing.Size(501, 1);
             this.panel2.TabIndex = 1;
             // 
             // PreferencesForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1025, 593);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.ClientSize = new System.Drawing.Size(687, 385);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.closeButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
-            this.MinimumSize = new System.Drawing.Size(1047, 452);
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.MinimumSize = new System.Drawing.Size(703, 307);
             this.Name = "PreferencesForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

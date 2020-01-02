@@ -47,17 +47,19 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(9, 292);
+            this.panel1.Location = new System.Drawing.Point(6, 190);
+            this.panel1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(877, 1);
+            this.panel1.Size = new System.Drawing.Size(585, 1);
             this.panel1.TabIndex = 7;
             // 
             // closeButton
             // 
             this.closeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.closeButton.Location = new System.Drawing.Point(727, 309);
+            this.closeButton.Location = new System.Drawing.Point(485, 201);
+            this.closeButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.closeButton.Name = "closeButton";
-            this.closeButton.Size = new System.Drawing.Size(160, 45);
+            this.closeButton.Size = new System.Drawing.Size(107, 29);
             this.closeButton.TabIndex = 6;
             this.closeButton.Text = "Launch";
             this.closeButton.UseVisualStyleBackColor = true;
@@ -68,7 +70,8 @@
             this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.splitContainer1.Location = new System.Drawing.Point(9, 13);
+            this.splitContainer1.Location = new System.Drawing.Point(6, 8);
+            this.splitContainer1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -78,8 +81,9 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.ModePropertyGrid);
-            this.splitContainer1.Size = new System.Drawing.Size(877, 273);
-            this.splitContainer1.SplitterDistance = 251;
+            this.splitContainer1.Size = new System.Drawing.Size(585, 177);
+            this.splitContainer1.SplitterDistance = 167;
+            this.splitContainer1.SplitterWidth = 3;
             this.splitContainer1.TabIndex = 8;
             // 
             // ModesTreeView
@@ -90,12 +94,13 @@
             this.ModesTreeView.ImageIndex = 0;
             this.ModesTreeView.ImageList = this.imageList;
             this.ModesTreeView.Location = new System.Drawing.Point(0, 0);
+            this.ModesTreeView.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.ModesTreeView.Name = "ModesTreeView";
             this.ModesTreeView.SelectedImageIndex = 0;
             this.ModesTreeView.ShowLines = false;
             this.ModesTreeView.ShowPlusMinus = false;
             this.ModesTreeView.ShowRootLines = false;
-            this.ModesTreeView.Size = new System.Drawing.Size(251, 273);
+            this.ModesTreeView.Size = new System.Drawing.Size(167, 177);
             this.ModesTreeView.TabIndex = 0;
             this.ModesTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.LaunchModeNodeSelected);
             // 
@@ -111,21 +116,22 @@
             // 
             this.ModePropertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ModePropertyGrid.Location = new System.Drawing.Point(0, 0);
+            this.ModePropertyGrid.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.ModePropertyGrid.Name = "ModePropertyGrid";
-            this.ModePropertyGrid.Size = new System.Drawing.Size(622, 273);
+            this.ModePropertyGrid.Size = new System.Drawing.Size(415, 177);
             this.ModePropertyGrid.TabIndex = 0;
             this.ModePropertyGrid.ToolbarVisible = false;
             this.ModePropertyGrid.PropertyValueChanged += new System.Windows.Forms.PropertyValueChangedEventHandler(this.PropertyValueChanged);
             // 
             // LaunchForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(899, 369);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.ClientSize = new System.Drawing.Size(599, 240);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.closeButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "LaunchForm";

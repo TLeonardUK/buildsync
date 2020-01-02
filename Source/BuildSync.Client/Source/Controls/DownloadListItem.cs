@@ -135,22 +135,22 @@ namespace BuildSync.Client.Controls
                 }
             }
 
-            Bitmap TargetIcon = null;
+            int ImageIndex = 0;
             if (LaunchType == LaunchOption.Launch)
             {
-                TargetIcon = global::BuildSync.Client.Properties.Resources.appbar_controller_xbox;
+                ImageIndex = 0;
             }
             else if (LaunchType == LaunchOption.Resume)
             {
-                TargetIcon = global::BuildSync.Client.Properties.Resources.appbar_control_play;
+                ImageIndex = 3;
             }
             else if (LaunchType == LaunchOption.Pause)
             {
-                TargetIcon = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+                ImageIndex = 4;
             }
-            if (PlayButton.Image != TargetIcon)
+            if (PlayButton.ImageIndex != ImageIndex)
             {
-                PlayButton.Image = TargetIcon;
+                PlayButton.ImageIndex = ImageIndex;
             }
 
             if (DownloadSpeedLabel.Text != DownRate)
