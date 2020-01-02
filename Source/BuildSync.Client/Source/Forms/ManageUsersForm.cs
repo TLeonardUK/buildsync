@@ -16,5 +16,30 @@ namespace BuildSync.Client.Forms
         {
             InitializeComponent();
         }
+
+        private void closeButton_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void AddUserButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RemoveUserButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void AddPermissionButton_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RemovePermissionButton_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -129,6 +129,8 @@
     <Compile Include="Networking\Messages\NetMessage_GetBuildsResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetManifestResponse.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetUsers.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetUsersResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_Handshake.cs" />
     <Compile Include="Networking\Messages\NetMessage_HandshakeResult.cs" />
     <Compile Include="Networking\Messages\NetMessage_KeepAlive.cs" />
@@ -136,6 +138,7 @@
     <Compile Include="Networking\Messages\NetMessage_PublishManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_PublishManifestResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_RelevantPeerListUpdate.cs" />
+    <Compile Include="Networking\Messages\NetMessage_SetUserPermissions.cs" />
     <Compile Include="Networking\NetCachedArray.cs" />
     <Compile Include="Networking\NetConnection.cs" />
     <Compile Include="Networking\NetMessage.cs" />
