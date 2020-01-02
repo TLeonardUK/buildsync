@@ -124,7 +124,7 @@ namespace BuildSync.Core.Utils
         {
             using (var md5 = MD5.Create())
             {
-                using (var stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.None))
                 {
                     var hash = md5.ComputeHash(stream);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();

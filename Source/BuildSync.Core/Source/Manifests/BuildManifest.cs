@@ -415,12 +415,12 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public static BuildManifest BuildFromDirectory(string RootPath, string VirtualPath, BuildManfiestProgressCallbackHandler Callback = null)
+        public static BuildManifest BuildFromDirectory(Guid NewManifestId, string RootPath, string VirtualPath, BuildManfiestProgressCallbackHandler Callback = null)
         {
             string[] Files = Directory.GetFiles(RootPath, "*", SearchOption.AllDirectories);
 
             BuildManifest Manifest = new BuildManifest();
-            Manifest.Guid = System.Guid.NewGuid();
+            Manifest.Guid = NewManifestId;
             Manifest.VirtualPath = VirtualPath;
             Manifest.BlockCount = 0;
 

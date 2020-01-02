@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Build Sync - Command Line Tools")]
-[assembly: AssemblyDescription("Tool for synchronizing application builds across a network.")]
+[assembly: AssemblyTitle("VersionUpdater")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Tim Leonard")]
-[assembly: AssemblyProduct("Build Sync")]
-[assembly: AssemblyCopyright("Copyright © Tim Leonard 2019")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("VersionUpdater")]
+[assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("b4e7fa58-db6b-4545-aaf0-5df083fc8fe0")]
+[assembly: Guid("6865d794-e7ea-46f6-94c4-440085f45d67")]
 
 // AUTO GENERATED
 [assembly: AssemblyVersion("1.0.0.33")]

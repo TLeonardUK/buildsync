@@ -38,6 +38,7 @@ namespace BuildSync.Core.Utils
 
         public class ActiveStream
         {
+            public bool CanWrite = false;
             public string Path;
             public Stream Stream;
             public ulong LastAccessed = 0;
@@ -201,7 +202,7 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <returns></returns>
-        private ActiveStream GetActiveStream(string Path, bool AllowPermissionFixes = true)
+        private ActiveStream GetActiveStream(string Path, bool AllowPermissionFixes = true, bool RequireWrite = true)
         {
             lock (ActiveStreams)
             {
@@ -209,8 +210,23 @@ namespace BuildSync.Core.Utils
                 {
                     if (Stm.Path == Path)
                     {
-                        Stm.LastAccessed = TimeUtils.Ticks;
-                        return Stm;
+                        // If we need to write to this file and we are only open for read, drain event queue and reopen.
+                        if (!Stm.CanWrite && RequireWrite)
+                        {
+                            while (Stm.ActiveOperations > 0)
+                            {
+                                Thread.Sleep(0);
+                            }
+
+                            Stm.Stream.Close();
+                            ActiveStreams.Remove(Stm);
+                            break;
+                        }
+                        else
+                        {
+                            Stm.LastAccessed = TimeUtils.Ticks;
+                            return Stm;
+                        }
                     }
                 }
 
@@ -247,12 +263,12 @@ namespace BuildSync.Core.Utils
 
                 try
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.IO, "Opening stream for async queue: {0}", Path);
+                    Logger.Log(LogLevel.Info, LogCategory.IO, "Opening stream for async queue (can write = {0}): {1}", RequireWrite, Path);
 
                     ActiveStream NewStm = new ActiveStream();
                     NewStm.LastAccessed = TimeUtils.Ticks;
                     NewStm.Path = Path;
-                    NewStm.Stream = new FileStream(Path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite, 1 * 1024 * 1024, FileOptions.Asynchronous/* | FileOptions.WriteThrough*/);
+                    NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, 1 * 1024 * 1024, FileOptions.Asynchronous/* | FileOptions.WriteThrough*/);
                     ActiveStreams.Add(NewStm);
 
                     return NewStm;
@@ -263,7 +279,7 @@ namespace BuildSync.Core.Utils
 
                     if (AllowPermissionFixes && TryFixFileAttributes(Path))
                     {
-                        return GetActiveStream(Path, false);
+                        return GetActiveStream(Path, false, RequireWrite);
                     }
                 }
             }
@@ -342,7 +358,7 @@ namespace BuildSync.Core.Utils
             ActiveStream Stm = null;
             if (Work.Type == TaskType.Write || Work.Type == TaskType.Read)
             {
-                Stm = GetActiveStream(Work.Path);
+                Stm = GetActiveStream(Work.Path, true, Work.Type == TaskType.Write);
                 if (Stm == null)
                 {
                     Work.Callback?.Invoke(false);

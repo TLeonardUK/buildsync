@@ -211,7 +211,7 @@ namespace BuildSync.Client.Controls
                             }
                         case ManifestDownloadProgressState.Initializing:
                             {
-                                SetStatus("Initializing", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
+                                SetStatus("Allocating Disk Space", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Validating:
@@ -280,7 +280,7 @@ namespace BuildSync.Client.Controls
                     StatusColor = StateColoring.Error;
                 }
 
-                SetStatus(Status, StatusColor, "Unknown", 0, false, LaunchOption.Pause, "0 kb/s", "0 kb/s");
+                SetStatus(Status, StatusColor, "Unknown", 0, false, State.Paused ? LaunchOption.Resume : LaunchOption.Pause, "0 kb/s", "0 kb/s");
             }
 
             if (SettingsButton.Enabled != Program.NetClient.IsConnected)
@@ -346,6 +346,10 @@ namespace BuildSync.Client.Controls
                             }
                     }
                 }
+            }
+            else
+            {
+                State.Paused = !State.Paused;
             }
         }
 

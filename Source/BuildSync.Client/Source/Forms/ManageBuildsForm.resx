@@ -117,4 +117,29 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <metadata name="ButtonImageList.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <data name="ButtonImageList.ImageStream" mimetype="application/x-microsoft.net.object.binary.base64">
+    <value>
+        AAEAAAD/////AQAAAAAAAAAMAgAAAFdTeXN0ZW0uV2luZG93cy5Gb3JtcywgVmVyc2lvbj00LjAuMC4w
+        LCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkFAQAAACZTeXN0
+        ZW0uV2luZG93cy5Gb3Jtcy5JbWFnZUxpc3RTdHJlYW1lcgEAAAAERGF0YQcCAgAAAAkDAAAADwMAAABm
+        AwAAAk1TRnQBSQFMAgEBAgEAARABAAEQAQABJgEAASYBAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAGY
+        AwABJgMAAQEBAAEYBQABsAFD/wD/AP8A/wD/AP8A/wD/AP8A/wD/AP8A/wD/AP8A/wD/AP8AkAADEhsA
+        A/n/AKsAAzcDZgMAA0ADZgMAAxwDZgMAA97/AKsAA8gGAAPIBgADaAYAA8H/AKsAA8gGAAPIBgADXAYA
+        A53/AKsAA9kGAAPIBgADRwYAA3L/AKsAA9kGAAPIBgADPAYAA0f/AKUAA/cDAAPnBgADyAYAAyUGAAMN
+        /wClAAPnAwAD5wYAA8gGAAMl/wCuAAPOAwAD8gP6AwADyP8AtwADrAMAA/ID+gMAA8j/ALcAA4QDAAP6
+        A/IDAAPI/wC3AANcAwAD+gPyAwADyP8AtwADJf8AxgAD+x60A77/AKIAA2j/AMYAA+L/ANUAA+0GAAMo
+        /wC9AAPWBgADAv8A/wD/AP8A/wD/AP8A/wD/AP8A/wD/AP8A/wD/AP8A/wD/APkAAUIBTQE+BwABPgMA
+        ASgDAAGYAwABJgMAAQEBAAEBBQAB+AECFgAD/wEACf8B8AoACf8B8AoACf8B8AoACf8B8AoACf8B8AoA
+        Cf8B8AoACf8B8AoACf8B8AoACf8B8AoAAv8Bxwb/AfAKAAL/AccD/wHwAQEB/wHwCgAC/wHHA/8B8AEB
+        Af8B8AoAAv8BxwP/AfIBSQH/AfAKAAL/AccD/wHyAUkB/wHwCgAC/wHHA/8B8gFJAf8B8AoAAv8BxwP/
+        AfIBSQH/AfAKAAL/AccD/wHiAUkB/wHwCgAB/wHAAQABBwL/AeIBSQH/AfAKAAH/AcABAAEHAv8B4AFJ
+        Af8B8AoAAf8BwAEAAQcC/wHgAUkB/wHwCgAC/wHHA/8B4AFJAf8B8AoAAv8BxwP/AeABSQH/AfAKAAL/
+        AccD/wHgAQEB/wHwCgAC/wHHA/8B4AEBAf8B8AoAAv8BxwP/AcABAAH/AfAKAAL/AccD/wHAAQAB/wHw
+        CgAC/wHHA/8B/gEfAf8B8AoAAv8BxwP/Af4BHwH/AfAKAAn/AfAKAAn/AfAKAAn/AfAKAAn/AfAKAAn/
+        AfAKAAn/AfAKAAn/AfAKAAn/AfAKAAn/AfAKAAn/AfAKAAs=
+</value>
+  </data>
 </root>

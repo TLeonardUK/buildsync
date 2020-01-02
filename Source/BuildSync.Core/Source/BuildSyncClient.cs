@@ -43,7 +43,7 @@ namespace BuildSync.Core
     /// 
     /// </summary>
     public delegate void ManifestDeleteResultRecievedHandler(Guid ManifestId);
-    
+
     /// <summary>
     /// 
     /// </summary>
@@ -176,7 +176,7 @@ namespace BuildSync.Core
                 for (int i = 0; i < ActiveBlockDownloads.Count; i++)
                 {
                     ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
-                    
+
                     if (Download.BlockIndex == BlockIndex &&
                         Download.ManifestId == ManifestId)
                     {
@@ -306,6 +306,15 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        public HandshakeResultType HandshakeResult
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private BlockListState LastBlockListState = null;
 
         /// <summary>
@@ -361,7 +370,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        public event FailedToConnectToServerHandler OnFailedToConnectToServer;        
+        public event FailedToConnectToServerHandler OnFailedToConnectToServer;
 
         /// <summary>
         /// 
@@ -374,12 +383,28 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        public bool IsConnecting
+        {
+            get { return Connection != null ? Connection.IsConnecting : false; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool IsReadyForData
+        {
+            get { return Connection != null ? Connection.IsReadyForData : false; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public bool InternalConnectionsDisabled = false;
 
         /// <summary>
         /// 
         /// </summary>
-        public List<UserPermission> Permissions = new List<UserPermission>();
+        public UserPermissionCollection Permissions = new UserPermissionCollection();
 
         /// <summary>
         /// 
@@ -418,6 +443,20 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        public Peer[] AllPeers
+        {
+            get
+            {
+                lock (Peers)
+                {
+                    return Peers.ToArray();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private bool InternalTrafficEnabled = true;
         public bool TrafficEnabled
         {
@@ -440,7 +479,8 @@ namespace BuildSync.Core
             Connection.OnMessageRecieved += HandleMessage;
             Connection.OnConnect += (NetConnection Connection) => { OnConnectedToServer?.Invoke(); };
             Connection.OnDisconnect += (NetConnection Connection) => { OnLostConnectionToServer?.Invoke(); };
-            Connection.OnConnectFailed += (NetConnection Connection) => { OnFailedToConnectToServer?.Invoke(); };
+            Connection.OnConnectFailed += (NetConnection Connection) => { OnFailedToConnectToServer?.Invoke(); HandshakeResult = HandshakeResultType.Unknown; };
+            Connection.OnHandshakeResult += (NetConnection Connection, HandshakeResultType ResultType) => { HandshakeResult = ResultType; };
 
             ListenConnection.OnClientConnect += PeerConnected;
         }
@@ -475,6 +515,8 @@ namespace BuildSync.Core
                 {
                     DeferredActions.Clear();
                 }
+
+                LastConnectionAttempt = 0;
             }
         }
 
@@ -528,7 +570,7 @@ namespace BuildSync.Core
             }
 
             // Periodically send our manifest block state to the server.
-            if (Connection.IsConnected)
+            if (Connection.IsReadyForData)
             {
                 if (ManifestDownloadManager.StateDirtyCount > LastManifestStateDirtyCounter)
                 {
@@ -762,16 +804,6 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="Permission"></param>
-        /// <returns></returns>
-        public bool HasPermission(UserPermission Permission)
-        {
-            return Permissions.Contains(Permission);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         private void ConnectToPeers()
         {
             if (RelevantPeerAddresses != null)
@@ -928,7 +960,7 @@ namespace BuildSync.Core
         /// <param name="Path"></param>
         public bool RequestBuilds(string Path)
         {
-            if (!Connection.IsConnected)
+            if (!Connection.IsReadyForData)
             {
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request builds, no connection to server?");
                 return false;
@@ -946,7 +978,7 @@ namespace BuildSync.Core
         /// </summary>
         public bool RequestManifest(Guid Id)
         {
-            if (!Connection.IsConnected)
+            if (!Connection.IsReadyForData)
             {
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request manifests, no connection to server?");
                 return false;
@@ -964,7 +996,7 @@ namespace BuildSync.Core
         /// </summary>
         private void SendConnectionInfo()
         {
-            if (!Connection.IsConnected)
+            if (!Connection.IsReadyForData)
             {
                 return;
             }
@@ -981,7 +1013,7 @@ namespace BuildSync.Core
         /// <param name="guid"></param>
         public bool PublishManifest(BuildManifest Manifest)
         {
-            if (!Connection.IsConnected)
+            if (!Connection.IsReadyForData)
             {
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to publish, no connection to server?");
                 return false;
@@ -1003,7 +1035,7 @@ namespace BuildSync.Core
         /// <param name="guid"></param>
         public bool DeleteManifest(Guid ManifestId)
         {
-            if (!Connection.IsConnected)
+            if (!Connection.IsReadyForData)
             {
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete, no connection to server?");
                 return false;

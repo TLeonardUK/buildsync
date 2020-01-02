@@ -28,12 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.logTextBox = new System.Windows.Forms.TextBox();
+            this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // logTextBox
             // 
             this.logTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.logTextBox.Font = new System.Drawing.Font("Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.logTextBox.Location = new System.Drawing.Point(0, 0);
             this.logTextBox.Multiline = true;
             this.logTextBox.Name = "logTextBox";
@@ -42,6 +45,11 @@
             this.logTextBox.Size = new System.Drawing.Size(989, 387);
             this.logTextBox.TabIndex = 0;
             this.logTextBox.WordWrap = false;
+            // 
+            // UpdateTimer
+            // 
+            this.UpdateTimer.Enabled = true;
+            this.UpdateTimer.Tick += new System.EventHandler(this.TimerTick);
             // 
             // ConsoleForm
             // 
@@ -65,5 +73,6 @@
         #endregion
 
         private System.Windows.Forms.TextBox logTextBox;
+        private System.Windows.Forms.Timer UpdateTimer;
     }
 }

@@ -318,40 +318,54 @@ namespace BuildSync.Core
         /// <param name="Root"></param>
         private void SendBuildsUpdate(NetConnection Connection, string RootPath)
         {
+            ClientState State = Connection.Metadata as ClientState;
+
             List<string> Children = ManifestRegistry.GetVirtualPathChildren(RootPath);
 
             NetMessage_GetBuildsResponse ResponseMsg = new NetMessage_GetBuildsResponse();
             ResponseMsg.RootPath = RootPath;
-            ResponseMsg.Builds = new NetMessage_GetBuildsResponse.BuildInfo[Children.Count];
+            List<NetMessage_GetBuildsResponse.BuildInfo> Result = new List<NetMessage_GetBuildsResponse.BuildInfo>();
 
             // Folders first.
             int Index = 0;
-            for (int i = 0; i < ResponseMsg.Builds.Length; i++)
+            for (int i = 0; i < Children.Count; i++)
             {
                 BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
                 if (Manifest == null)
                 {
-                    ResponseMsg.Builds[Index].Guid = Guid.Empty;
-                    ResponseMsg.Builds[Index].CreateTime = DateTime.UtcNow;
-                    ResponseMsg.Builds[Index].VirtualPath = Children[i];
-
-                    Index++;
+                    if (UserManager.CheckPermission(State.Username, UserPermissionType.Access, Children[i], false, true))
+                    {
+                        Result.Add(new NetMessage_GetBuildsResponse.BuildInfo()
+                        {
+                            Guid = Guid.Empty,
+                            CreateTime = DateTime.UtcNow,
+                            VirtualPath = Children[i]
+                        });
+                    }
                 }
             }
 
             // Builds second.
-            for (int i = 0; i < ResponseMsg.Builds.Length; i++)
+            if (UserManager.CheckPermission(State.Username, UserPermissionType.Access, RootPath))
             {
-                BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
-                if (Manifest != null)
+                for (int i = 0; i < Children.Count; i++)
                 {
-                    ResponseMsg.Builds[Index].Guid = Manifest.Guid;
-                    ResponseMsg.Builds[Index].CreateTime = Manifest.CreateTime;
-                    ResponseMsg.Builds[Index].VirtualPath = Children[i];
+                    BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
+                    if (Manifest != null)
+                    {
+                        Result.Add(new NetMessage_GetBuildsResponse.BuildInfo()
+                        {
+                            Guid = Manifest.Guid,
+                            CreateTime = Manifest.CreateTime,
+                            VirtualPath = Children[i]
+                        });
 
-                    Index++;
+                        Index++;
+                    }
                 }
             }
+
+            ResponseMsg.Builds = Result.ToArray();
 
             Connection.Send(ResponseMsg);
         }
@@ -383,12 +397,6 @@ namespace BuildSync.Core
                 NetMessage_PublishManifest Msg = BaseMessage as NetMessage_PublishManifest;
                 ClientState State = Connection.Metadata as ClientState;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermission.ManageBuilds))
-                {
-                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to delete build without permission.", State.Username);
-                    return;
-                }
-
                 NetMessage_PublishManifestResponse ResponseMsg = new NetMessage_PublishManifestResponse();
                 ResponseMsg.Result = PublishManifestResult.Failed;
 
@@ -399,8 +407,12 @@ namespace BuildSync.Core
                     Manifest = BuildManifest.FromByteArray(Msg.Data);
                     ResponseMsg.ManifestId = Msg.ManifestId;
 
+                    if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageBuilds, Manifest.VirtualPath))
+                    {
+                        ResponseMsg.Result = PublishManifestResult.PermissionDenied;
+                    }
                     // Check something doesn't already exist at the virtual path.
-                    if (ManifestRegistry.GetManifestByPath(Manifest.VirtualPath) != null)
+                    else if (ManifestRegistry.GetManifestByPath(Manifest.VirtualPath) != null)
                     {
                         ResponseMsg.Result = PublishManifestResult.VirtualPathAlreadyExists;
                     }
@@ -519,12 +531,6 @@ namespace BuildSync.Core
 
                 ClientState State = Connection.Metadata as ClientState;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermission.ManageBuilds))
-                {
-                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to delete build without permission.", State.Username);
-                    return;
-                }
-
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for deleting manifest: {0}", Msg.ManifestId.ToString());
 
                 try
@@ -533,6 +539,12 @@ namespace BuildSync.Core
                     if (Manifest != null)
                     {
                         string Path = Manifest.VirtualPath;
+
+                        if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageBuilds, Path))
+                        {
+                            Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to delete build without permission.", State.Username);
+                            return;
+                        }
 
                         ManifestRegistry.UnregisterManifest(Msg.ManifestId);
 

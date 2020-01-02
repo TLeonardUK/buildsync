@@ -203,11 +203,23 @@
     <Compile Include="Forms\ManageBuildsForm.Designer.cs">
       <DependentUpon>ManageBuildsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\ManageUsersForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ManageUsersForm.Designer.cs">
+      <DependentUpon>ManageUsersForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\MoveStorageDirectoryForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\MoveStorageDirectoryForm.Designer.cs">
       <DependentUpon>MoveStorageDirectoryForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\PeersForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PeersForm.Designer.cs">
+      <DependentUpon>PeersForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\PreferencesForm.cs">
       <SubType>Form</SubType>
@@ -268,8 +280,14 @@
     <EmbeddedResource Include="Forms\ManageBuildsForm.resx">
       <DependentUpon>ManageBuildsForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ManageUsersForm.resx">
+      <DependentUpon>ManageUsersForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\MoveStorageDirectoryForm.resx">
       <DependentUpon>MoveStorageDirectoryForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\PeersForm.resx">
+      <DependentUpon>PeersForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\PreferencesForm.resx">
       <DependentUpon>PreferencesForm.cs</DependentUpon>
@@ -377,5 +395,9 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy /iery "$(TargetDir)*.*" "$(SolutionDir)..\Build\Deploy"</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
 </Project>

@@ -55,6 +55,36 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        public long TotalIn
+        {
+            get
+            {
+                lock (LockObject)
+                {
+                    Update();
+                    return (long)TotalBytesRecieved;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long TotalOut
+        {
+            get
+            {
+                lock (LockObject)
+                {
+                    Update();
+                    return (long)TotalBytesSent;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Sent"></param>
         /// <returns></returns>
         public void BytesOut(long Bytes)

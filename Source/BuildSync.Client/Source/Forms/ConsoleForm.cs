@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Forms
 {
@@ -19,51 +20,43 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        public class ConsoleTextBoxRedirecter : TextWriter
+        public class TextBoxLogSink : LogSink
         {
-            private Control OutputControl;
-            private TextWriter OutputBaseWriter;
-
-            public ConsoleTextBoxRedirecter(Control control, TextWriter BaseWriter)
+            private ConsoleForm OutputForm;
+            
+            public TextBoxLogSink(ConsoleForm Form)
             {
-                OutputControl = control;
-                OutputBaseWriter = BaseWriter;
+                OutputForm = Form;
             }
 
-            public override void Write(char value)
+            public override void Close()
             {
-                if (OutputControl.IsHandleCreated)
+                // Nothing to do
+            }
+
+            public override void Log(LogLevel Level, LogCategory Category, string Message, string RawMessage)
+            {
+                lock (OutputForm.BufferLock)
                 {
-                    OutputControl.Invoke((MethodInvoker)(() =>
-                    {
-                        OutputControl.Text += value;
-                    }));
+                    OutputForm.Buffer += Message + Environment.NewLine;
                 }
-                OutputBaseWriter.Write(value);
-            }
-
-            public override void Write(string value)
-            {
-                if (OutputControl.IsHandleCreated)
-                {
-                    OutputControl.Invoke((MethodInvoker)(() =>
-                    {
-                        OutputControl.Text += value;
-                    }));
-                }
-                OutputBaseWriter.Write(value);
-            }
-
-            public override Encoding Encoding
-            {
-                get { return Encoding.Unicode; }
             }
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private TextWriter OriginalConsoleOut = null;
+        private TextBoxLogSink Sink = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        internal object BufferLock = new object();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        internal string Buffer = "";
 
         /// <summary>
         /// 
@@ -81,7 +74,7 @@ namespace BuildSync.Client.Forms
         private void Closing(object sender, FormClosingEventArgs e)
         {
             Hide();
-            Console.SetOut(OriginalConsoleOut);
+            Logger.UnregisterSink(Sink);
             e.Cancel = true;
         }
 
@@ -92,8 +85,22 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
-            OriginalConsoleOut = Console.Out;
-            Console.SetOut(new ConsoleTextBoxRedirecter(logTextBox, Console.Out));
+            Sink = new TextBoxLogSink(this);
+            Logger.RegisterSink(Sink);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void TimerTick(object sender, EventArgs e)
+        {
+            lock (BufferLock)
+            {
+                logTextBox.AppendText(Buffer);
+                Buffer = "";
+            }
         }
     }
 }

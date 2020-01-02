@@ -8,6 +8,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildSync.Server", "BuildSync.Server\Source\BuildSync.Server.csproj", "{25DB78C5-C2D2-4E46-A655-25F7B81F6886}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildSync.Core", "BuildSync.Core\Source\BuildSync.Core.csproj", "{1D25DAE9-8B10-4721-8911-789813751186}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6865D794-E7EA-46F6-94C4-440085F45D67} = {6865D794-E7EA-46F6-94C4-440085F45D67}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildSync.Client.Cmd", "BuildSync.Client.Cmd\Source\BuildSync.Client.Cmd.csproj", "{B4E7FA58-DB6B-4545-AAF0-5DF083FC8FE0}"
 EndProject
@@ -30,6 +33,8 @@ Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "Installer", "Installer\Inst
 		{25DB78C5-C2D2-4E46-A655-25F7B81F6886} = {25DB78C5-C2D2-4E46-A655-25F7B81F6886}
 		{1D25DAE9-8B10-4721-8911-789813751186} = {1D25DAE9-8B10-4721-8911-789813751186}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VersionUpdater", "VersionUpdater\Source\VersionUpdater.csproj", "{6865D794-E7EA-46F6-94C4-440085F45D67}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -121,6 +126,18 @@ Global
 		{120F9AD8-29F7-4B26-BD76-B4CA32492800}.Shipping|Any CPU.Build.0 = Release|x86
 		{120F9AD8-29F7-4B26-BD76-B4CA32492800}.Shipping|x86.ActiveCfg = Release|x86
 		{120F9AD8-29F7-4B26-BD76-B4CA32492800}.Shipping|x86.Build.0 = Release|x86
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Debug|x86.Build.0 = Debug|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Release|x86.ActiveCfg = Release|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Release|x86.Build.0 = Release|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Shipping|Any CPU.ActiveCfg = Shipping|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Shipping|Any CPU.Build.0 = Shipping|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Shipping|x86.ActiveCfg = Release|Any CPU
+		{6865D794-E7EA-46F6-94C4-440085F45D67}.Shipping|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

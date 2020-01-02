@@ -139,6 +139,12 @@ namespace BuildSync.Client.Forms
                             MessageBox.Show("Failed to publish manifest, one already exists at virtual path.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             break;
                         }
+                    case BuildPublishingState.PermissionDenied:
+                        {
+                            Publisher = null;
+                            MessageBox.Show("Failed to publish manifest, you do not have permission to publish at that virtual path.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            break;
+                        }
                     case BuildPublishingState.FailedGuidAlreadyExists:
                         {
                             Publisher = null;

@@ -40,6 +40,12 @@ namespace BuildSync.Core.Networking
     /// 
     /// </summary>
     /// <param name="Connection"></param>
+    public delegate void HandshakeFailedHandler(NetConnection Connection, HandshakeResultType ErrorType);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Connection"></param>
     public delegate void ClientConnectHandler(NetConnection Connection, NetConnection ClientConnection);
 
     /// <summary>
@@ -59,12 +65,15 @@ namespace BuildSync.Core.Networking
         private byte[] MessageBuffer = new byte[NetMessage.HeaderSize];
         private List<NetConnection> Clients = new List<NetConnection>();
 
+        private bool IsClient = false;
+
         private bool ShouldDisconnectDueToError = false;
 
         private ulong LastKeepAliveSendTime = 0;
         private const int KeepAliveInterval = 5 * 1000;
 
         private NetMessage_Handshake Handshake = null;
+        private bool HandshakeFailed = false;
 
         private Queue<Action> EventQueue = new Queue<Action>();
 
@@ -114,11 +123,6 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        public const int ProtocolVersion = 1;
-
-        /// <summary>
-        /// 
-        /// </summary>
         public IPEndPoint Address;
 
         /// <summary>
@@ -149,6 +153,11 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        public event HandshakeFailedHandler OnHandshakeResult;        
+
+        /// <summary>
+        /// 
+        /// </summary>
         public event ClientConnectHandler OnClientConnect;
 
         /// <summary>
@@ -167,6 +176,14 @@ namespace BuildSync.Core.Networking
         public bool IsConnected
         {
             get { return Socket?.Connected ?? false; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool IsReadyForData
+        {
+            get { return IsConnected && Handshake != null && !HandshakeFailed; }
         }
 
         /// <summary>
@@ -224,6 +241,7 @@ namespace BuildSync.Core.Networking
         {
             Socket = InSocket;
             Address = (IPEndPoint)Socket.RemoteEndPoint;
+            IsClient = true;
         }
 
         /// <summary>
@@ -578,7 +596,7 @@ namespace BuildSync.Core.Networking
 
                                 // Send handshake.
                                 NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
-                                HandshakeMsg.Version = ProtocolVersion;
+                                HandshakeMsg.Version = AppVersion.VersionNumber;
                                 Send(HandshakeMsg);
 
                                 BeginSendThread();
@@ -731,7 +749,7 @@ namespace BuildSync.Core.Networking
         {
             // Send handshake to client.
             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
-            HandshakeMsg.Version = ProtocolVersion;
+            HandshakeMsg.Version = AppVersion.VersionNumber;
             Send(HandshakeMsg);
 
             // Start recieving from client
@@ -899,16 +917,41 @@ namespace BuildSync.Core.Networking
             {
                 //Logger.Log(LogLevel.Info, LogCategory.Transport, "Recieved message of type {0} from {1}", Message.GetType().Name, Address.ToString());
 
-                if (Message is NetMessage_Handshake)
+                if (Message is NetMessage_HandshakeResult)
                 {
-                    Handshake = Message as NetMessage_Handshake;
-                    if (Handshake.Version < ProtocolVersion)
+                    NetMessage_HandshakeResult HandshakeResult = Message as NetMessage_HandshakeResult;
+                    Logger.Log(LogLevel.Error, LogCategory.Transport, "Client returned handshake result of type '{0}'.", HandshakeResult.ResultType.ToString());
+
+                    lock (EventQueue)
                     {
-                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Client has incompatible protocol version, disconnecting.", Address.ToString());
+                        EventQueue.Enqueue(() => { OnHandshakeResult?.Invoke(this, HandshakeResult.ResultType); });
+                    }
+
+                    // Client is responsible for the disconnect to ensure it gets message before the disconnect occurs.
+                    if (IsClient && HandshakeResult.ResultType != HandshakeResultType.Success)
+                    {
                         QueueDisconnect();
                     }
                 }
-                else if (Handshake != null)
+                else if (Message is NetMessage_Handshake)
+                {
+                    Handshake = Message as NetMessage_Handshake;
+
+                    NetMessage_HandshakeResult Response = new NetMessage_HandshakeResult();
+                    Response.ResultType = HandshakeResultType.Success;
+
+#if SHIPPING
+                    if (Handshake.Version != AppVersion.VersionNumber)
+                    {
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Client has incompatible protocol version, rejecting.", Address.ToString());
+                        Response.ResultType = HandshakeResultType.InvalidVersion;
+                        HandshakeFailed = true;
+                    }
+#endif
+
+                    Send(Response);
+                }
+                else if (Handshake != null && !HandshakeFailed)
                 {
                     lock (EventQueue)
                     {

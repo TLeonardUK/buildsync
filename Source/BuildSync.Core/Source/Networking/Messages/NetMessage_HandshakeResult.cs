@@ -1,35 +1,30 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using BuildSync.Core;
 
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
     /// 
     /// </summary>
-    public enum PublishManifestResult
-    {
-        Failed,
+    public enum HandshakeResultType
+    { 
         Success,
-        VirtualPathAlreadyExists,
-        GuidAlreadyExists,
-        PermissionDenied
+        InvalidVersion,
+        Unknown
     }
 
     /// <summary>
     /// 
     /// </summary>
-    public class NetMessage_PublishManifestResponse : NetMessage
+    public class NetMessage_HandshakeResult : NetMessage
     {
         /// <summary>
         /// 
         /// </summary>
-        public Guid ManifestId;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public PublishManifestResult Result;
+        public HandshakeResultType ResultType = HandshakeResultType.Unknown;
 
         /// <summary>
         /// 
@@ -37,8 +32,7 @@ namespace BuildSync.Core.Networking.Messages
         /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
-            serializer.Serialize(ref ManifestId);
-            serializer.SerializeEnum(ref Result);
+            serializer.SerializeEnum<HandshakeResultType>(ref ResultType);
         }
     }
 }

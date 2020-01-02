@@ -50,6 +50,7 @@
             this.adminToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageBuildsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
+            this.viewPeersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,6 +67,7 @@
             this.forceRedownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.mainDownloadList = new BuildSync.Client.Controls.DownloadList();
+            this.manageUsersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.notifyIconContextMenu.SuspendLayout();
@@ -223,7 +225,9 @@
             // 
             this.adminToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.manageBuildsToolStripMenuItem,
+            this.manageUsersToolStripMenuItem,
             this.toolStripSeparator5,
+            this.viewPeersToolStripMenuItem,
             this.viewConsoleToolStripMenuItem});
             this.adminToolStripMenuItem.Name = "adminToolStripMenuItem";
             this.adminToolStripMenuItem.Size = new System.Drawing.Size(72, 20);
@@ -232,19 +236,26 @@
             // manageBuildsToolStripMenuItem
             // 
             this.manageBuildsToolStripMenuItem.Name = "manageBuildsToolStripMenuItem";
-            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.manageBuildsToolStripMenuItem.Text = "Manage builds ...";
             this.manageBuildsToolStripMenuItem.Click += new System.EventHandler(this.ManageBuildsClicked);
             // 
             // toolStripSeparator5
             // 
             this.toolStripSeparator5.Name = "toolStripSeparator5";
-            this.toolStripSeparator5.Size = new System.Drawing.Size(161, 6);
+            this.toolStripSeparator5.Size = new System.Drawing.Size(177, 6);
+            // 
+            // viewPeersToolStripMenuItem
+            // 
+            this.viewPeersToolStripMenuItem.Name = "viewPeersToolStripMenuItem";
+            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.viewPeersToolStripMenuItem.Text = "View peers ...";
+            this.viewPeersToolStripMenuItem.Click += new System.EventHandler(this.ViewPeersClicked);
             // 
             // viewConsoleToolStripMenuItem
             // 
             this.viewConsoleToolStripMenuItem.Name = "viewConsoleToolStripMenuItem";
-            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.viewConsoleToolStripMenuItem.Text = "View console ...";
             this.viewConsoleToolStripMenuItem.Click += new System.EventHandler(this.ViewConsoleClicked);
             // 
@@ -367,6 +378,13 @@
             this.mainDownloadList.Size = new System.Drawing.Size(796, 216);
             this.mainDownloadList.TabIndex = 6;
             // 
+            // manageUsersToolStripMenuItem
+            // 
+            this.manageUsersToolStripMenuItem.Name = "manageUsersToolStripMenuItem";
+            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.manageUsersToolStripMenuItem.Text = "Manage users ...";
+            this.manageUsersToolStripMenuItem.Click += new System.EventHandler(this.ManageUsersClicked);
+            // 
             // MainForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -431,6 +449,8 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
         private System.Windows.Forms.ToolStripMenuItem forceRevalidateToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem forceRedownloadToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem viewPeersToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem manageUsersToolStripMenuItem;
     }
 }
 

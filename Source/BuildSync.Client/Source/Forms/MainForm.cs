@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BuildSync.Core.Networking;
+using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Users;
@@ -109,6 +110,16 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ManageUsersClicked(object sender, EventArgs e)
+        {
+            (new ManageUsersForm()).ShowDialog(this);
+        }
+
+        /// <summary>
         ///     Invoked when the user clicks the settings menu item.
         /// </summary>
         /// <param name="sender">Object that invoked this event.</param>
@@ -155,6 +166,17 @@ namespace BuildSync.Client.Forms
                 ConsoleOutputForm = new ConsoleForm();
                 ConsoleOutputForm.Show(this);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ViewPeersClicked(object sender, EventArgs e)
+        {
+            PeersForm form = new PeersForm();
+            form.Show(this);
         }
 
         /// <summary>
@@ -300,12 +322,34 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private void RefreshState()
         {
-            bool Connected = Program.NetClient.IsConnected;
+            bool Connected = Program.NetClient.IsReadyForData;
 
             if (!Connected)
             {
-                peerCountLabel.Text = "Unable to connect to server '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
-                peerCountLabel.ForeColor = Color.Red;
+                if (Program.NetClient.IsConnected || Program.NetClient.IsConnecting)
+                {
+                    peerCountLabel.Text = "Connecting to '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
+
+                    peerCountLabel.ForeColor = Color.DarkCyan;
+                }
+                else
+                {
+                    switch (Program.NetClient.HandshakeResult)
+                    {
+                        case HandshakeResultType.InvalidVersion:
+                            {
+                                peerCountLabel.Text = "Version is incompatible, please update application.";
+                                break;
+                            }
+                        default:
+                            {
+                                peerCountLabel.Text = "Unable to connect to server '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
+                                break;
+                            }
+                    }
+
+                    peerCountLabel.ForeColor = Color.Red;
+                }
             }
             else if (!Program.AreDownloadsAllowed())
             {
@@ -319,25 +363,51 @@ namespace BuildSync.Client.Forms
             }
 
             //publishBuildToolStripMenuItem.Enabled = Connected;
-            manageBuildsToolStripMenuItem.Text = "Manage Builds ...";
+            manageBuildsToolStripMenuItem.Text = "Manage builds ...";
             manageBuildsToolStripMenuItem.Enabled = Connected;
             if (Connected)
             {
-                if (!Program.NetClient.HasPermission(UserPermission.ManageBuilds))
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, ""))
                 {
                     manageBuildsToolStripMenuItem.Enabled = false;
-                    manageBuildsToolStripMenuItem.Text = "Manage Builds (Permission Required)";
+                    manageBuildsToolStripMenuItem.Text = "Manage builds (Permission Required)";
+                }
+            }
+
+            manageUsersToolStripMenuItem.Text = "Manage users ...";
+            manageUsersToolStripMenuItem.Enabled = Connected;
+            if (Connected)
+            {
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageUsers, ""))
+                {
+                    manageUsersToolStripMenuItem.Enabled = false;
+                    manageUsersToolStripMenuItem.Text = "Manage users (Permission Required)";
                 }
             }
 
             addDownloadToolStripMenuItem.Enabled = Connected;
             addDownloadToolStripMenuItem1.Enabled = Connected;
 
-            totalUpBandwidthLabel.Text = StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut);
-            totalDownBandwidthLabel.Text = StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn);
+            totalUpBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalOut));
+            totalDownBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalIn));
 
-            totalDiskUpBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateOut), StringUtils.FormatAsSize(Program.IOQueue.QueuedOut));
-            totalDiskDownBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateIn), StringUtils.FormatAsSize(Program.IOQueue.QueuedIn));
+            if (Program.IOQueue.QueuedOut > 0)
+            {
+                totalDiskUpBandwidthLabel.Text = string.Format("{0} (Q {1})", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateOut), StringUtils.FormatAsSize(Program.IOQueue.QueuedOut));
+            }
+            else
+            {
+                totalDiskUpBandwidthLabel.Text = string.Format("{0} ", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateOut));
+            }
+
+            if (Program.IOQueue.QueuedIn > 0)
+            {
+                totalDiskDownBandwidthLabel.Text = string.Format("{0} (Q {1})", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateIn), StringUtils.FormatAsSize(Program.IOQueue.QueuedIn));
+            }
+            else
+            {
+                totalDiskDownBandwidthLabel.Text = string.Format("{0}", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateIn));
+            }
         }
 
         #endregion

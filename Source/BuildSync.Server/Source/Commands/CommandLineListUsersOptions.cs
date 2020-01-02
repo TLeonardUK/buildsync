@@ -23,13 +23,13 @@ namespace BuildSync.Server.Commands
             foreach (User user in Program.UserManager.Users)
             {
                 string Permissions = "";
-                foreach (UserPermission Permission in user.Permissions)
+                foreach (UserPermission Permission in user.Permissions.Permissions)
                 {
                     if (Permissions.Length != 0)
                     {
                         Permissions += ",";
                     }
-                    Permissions += Permission.ToString();
+                    Permissions += Permission.Type.ToString() + "@\"" + Permission.VirtualPath + "\"";
                 }
 
                 IpcClient.Respond(string.Format(Format, user.Username, Permissions));

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using BuildSync.Core;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -10,7 +11,7 @@ namespace BuildSync.Core.Networking.Messages
     /// </summary>
     public class NetMessage_Handshake : NetMessage
     {
-        public int Version = NetConnection.ProtocolVersion;
+        public int Version = AppVersion.VersionNumber;
 
         protected override void SerializePayload(NetMessageSerializer serializer)
         {

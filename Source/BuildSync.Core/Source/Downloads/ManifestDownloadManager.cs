@@ -297,9 +297,9 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         /// <param name="Manifest"></param>
         /// <returns></returns>
-        public string GetManifestStorageDirectory(BuildManifest Manifest)
+        public string GetManifestStorageDirectory(Guid ManifestId)
         {
-            return Path.Combine(StorageRootPath, Manifest.Guid.ToString());
+            return Path.Combine(StorageRootPath, ManifestId.ToString());
         }
 
         /// <summary>

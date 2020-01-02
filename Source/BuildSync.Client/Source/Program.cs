@@ -408,7 +408,7 @@ namespace BuildSync.Client
             ManifestDownloadManager.TrafficEnabled = AreDownloadsAllowed();
 
             NetClient.Poll();
-            DownloadManager.Poll(NetClient.IsConnected);
+            DownloadManager.Poll(NetClient.IsReadyForData);
             ManifestDownloadManager.Poll();
 
             // Update save data if download states have changed recently.

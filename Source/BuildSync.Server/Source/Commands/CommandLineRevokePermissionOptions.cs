@@ -18,13 +18,16 @@ namespace BuildSync.Server.Commands
         [Value(1, MetaName = "Permission", Required = true, HelpText = "Type of permission that should be revoked.")]
         public string Permission { get; set; } = "";
 
+        [Value(2, MetaName = "Path", Required = false, HelpText = "Virtual path that permission is valid on. All decendents also have permission.")]
+        public string Path { get; set; } = "";
+
         /// <summary>
         /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
-            UserPermission PermissionType;
-            if (!Enum.TryParse<UserPermission>(Permission, out PermissionType))
+            UserPermissionType PermissionType;
+            if (!Enum.TryParse<UserPermissionType>(Permission, out PermissionType))
             {
                 IpcClient.Respond(string.Format("FAILED: Permission '{0}' is not valid.", Permission));
                 return;
@@ -37,14 +40,14 @@ namespace BuildSync.Server.Commands
             }
             else
             {
-                if (!user.Permissions.Contains(PermissionType))
+                if (!Program.UserManager.CheckPermission(Username, PermissionType, Path, true))
                 {
                     IpcClient.Respond(string.Format("FAILED: User does not have the permission."));
                     return;
                 }
 
-                Program.UserManager.RevokePermission(user, PermissionType);
-                IpcClient.Respond(string.Format("SUCCESS: Revoked user '{0}' permission '{1}'.", Username, Permission));
+                Program.UserManager.RevokePermission(user, PermissionType, Path);
+                IpcClient.Respond(string.Format("SUCCESS: Revoked user '{0}' permission '{1}' on '{2}'.", Username, Permission, Path));
             }
         }
     }

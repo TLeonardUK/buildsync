@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Windows.Forms;
+using BuildSync.Core;
 
 namespace BuildSync.Client.Forms
 {
@@ -17,7 +18,6 @@ namespace BuildSync.Client.Forms
     /// </summary>
     public partial class AboutForm : Form
     {
-
         /// <summary>
         /// 
         /// </summary>
@@ -41,7 +41,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void Loaded(object sender, EventArgs e)
         {
-            VersionLabel.Text = Assembly.GetEntryAssembly().GetName().Version.ToString();
+            VersionLabel.Text = AppVersion.VersionString;
         }
     }
 }

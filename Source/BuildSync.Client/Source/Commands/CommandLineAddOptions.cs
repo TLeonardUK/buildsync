@@ -40,7 +40,7 @@ namespace BuildSync.Client.Commands
                 return;
             }
 
-            if (!Program.NetClient.HasPermission(UserPermission.ManageBuilds))
+            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, ""))
             {
                 IpcClient.Respond("FAILED: Permission denied to manage builds.");
                 return;
@@ -85,6 +85,11 @@ namespace BuildSync.Client.Commands
                         case BuildPublishingState.FailedVirtualPathAlreadyExists:
                             {
                                 IpcClient.Respond(string.Format("FAILED: Build already exists at virtual path '{0}'.", VirtualPath));
+                                return true;
+                            }
+                        case BuildPublishingState.PermissionDenied:
+                            {
+                                IpcClient.Respond(string.Format("FAILED: Permission denied to virtual path '{0}'.", VirtualPath));
                                 return true;
                             }
                         case BuildPublishingState.FailedGuidAlreadyExists:

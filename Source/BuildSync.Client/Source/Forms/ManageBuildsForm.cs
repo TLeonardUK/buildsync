@@ -52,7 +52,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void RemoveBuildClicked(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to delete '" + downloadFileSystemTree.SelectedPath + "'.", "Delete Build", MessageBoxButtons.OK, MessageBoxIcon.Warning) == DialogResult.OK)
+            if (MessageBox.Show("Are you sure you want to delete '" + downloadFileSystemTree.SelectedPath + "'.", "Delete Build", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
                 if (!Program.NetClient.DeleteManifest(downloadFileSystemTree.SelectedManifestId))
                 {
@@ -69,6 +69,16 @@ namespace BuildSync.Client.Forms
         private void DateStateChanged(object sender, EventArgs e)
         {
             ValidateState();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CloseButtonClicked(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }

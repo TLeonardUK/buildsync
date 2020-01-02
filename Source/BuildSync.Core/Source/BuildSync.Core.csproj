@@ -130,6 +130,7 @@
     <Compile Include="Networking\Messages\NetMessage_GetManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetManifestResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_Handshake.cs" />
+    <Compile Include="Networking\Messages\NetMessage_HandshakeResult.cs" />
     <Compile Include="Networking\Messages\NetMessage_KeepAlive.cs" />
     <Compile Include="Networking\Messages\NetMessage_PermissionUpdate.cs" />
     <Compile Include="Networking\Messages\NetMessage_PublishManifest.cs" />
@@ -146,6 +147,7 @@
     <Compile Include="Utils\CommandIPC.cs" />
     <Compile Include="Utils\DynamicPropertyGrid.cs" />
     <Compile Include="Utils\FileUtils.cs" />
+    <Compile Include="Utils\HostnameCache.cs" />
     <Compile Include="Utils\Logger.cs" />
     <Compile Include="Utils\ProcessUtils.cs" />
     <Compile Include="Utils\SettingsBase.cs" />
@@ -155,6 +157,7 @@
     <Compile Include="Utils\TimeUtils.cs" />
     <Compile Include="Utils\VirtualFileSystem.cs" />
     <Compile Include="Utils\WindowUtils.cs" />
+    <Compile Include="Version.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
@@ -172,5 +175,8 @@
   </Target>
   <PropertyGroup>
     <PostBuildEvent>xcopy /iery "$(TargetDir)*.*" "$(SolutionDir)..\Build\Deploy"</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>$(SolutionDir)VersionUpdater\Intermediate\VersionUpdater\bin\$(Configuration)\VersionUpdater.exe $(SolutionDir)BuildSync.Core\Source\Version.cs $(SolutionDir)</PreBuildEvent>
   </PropertyGroup>
 </Project>
