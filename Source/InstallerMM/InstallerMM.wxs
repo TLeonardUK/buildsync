@@ -136,12 +136,6 @@
         <Component Id="owc2BE2107F9B51B79FDB1B19EA807C9C44" Guid="8c6158e8-d242-98f7-09ad-82feca6e05d9">
           <File Id="owf2BE2107F9B51B79FDB1B19EA807C9C44" Source="$(var.SourceDir)\System.Collections.Immutable.xml" KeyPath="yes" />
         </Component>
-        <Component Id="owc3E1FE2D647EAB169F10EE4B1444F67AF" Guid="b4f2ef7d-104e-f888-bafa-306ae487ba30">
-          <File Id="owf3E1FE2D647EAB169F10EE4B1444F67AF" Source="$(var.SourceDir)\System.Json.dll" KeyPath="yes" />
-        </Component>
-        <Component Id="owcDF48CDDBB54098C58BB2F88183C2226B" Guid="5980d6fa-ca9e-7c91-19ee-51280b5a811c">
-          <File Id="owfDF48CDDBB54098C58BB2F88183C2226B" Source="$(var.SourceDir)\System.Json.xml" KeyPath="yes" />
-        </Component>
         <Component Id="owcF2B199C7800AE0BBCC0001E0A61F6988" Guid="405dfe99-fffe-4059-26e0-c7d1bd0a0bed">
           <File Id="owfF2B199C7800AE0BBCC0001E0A61F6988" Source="$(var.SourceDir)\System.Memory.dll" KeyPath="yes" />
         </Component>

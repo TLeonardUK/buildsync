@@ -830,7 +830,7 @@ namespace BuildSync.Core
 
                     bool ShouldRemove = false;
 
-                    if (RelevantPeerAddresses != null)
+                    if (RelevantPeerAddresses != null && !peer.RemoteInitiated)
                     {
                         bool Exists = false;
 

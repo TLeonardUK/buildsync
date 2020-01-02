@@ -94,6 +94,8 @@ namespace BuildSync.Client.Commands
                             }
                         case BuildPublishingState.Success:
                             {
+                                Publisher.Commit();
+                                Publisher = null;
                                 IpcClient.Respond(string.Format("SUCCESS: Build added successfully."));
                                 return true;
                             }

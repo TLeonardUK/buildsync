@@ -94,7 +94,7 @@
             this.peerCountLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_people;
             this.peerCountLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
             this.peerCountLabel.Name = "peerCountLabel";
-            this.peerCountLabel.Size = new System.Drawing.Size(141, 32);
+            this.peerCountLabel.Size = new System.Drawing.Size(145, 32);
             this.peerCountLabel.Text = "3 peers connected";
             // 
             // toolStripStatusLabel4
@@ -102,7 +102,7 @@
             this.toolStripStatusLabel4.AutoSize = false;
             this.toolStripStatusLabel4.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
             this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
-            this.toolStripStatusLabel4.Size = new System.Drawing.Size(275, 32);
+            this.toolStripStatusLabel4.Size = new System.Drawing.Size(286, 32);
             this.toolStripStatusLabel4.Spring = true;
             // 
             // totalDiskDownBandwidthLabel
@@ -111,7 +111,7 @@
             this.totalDiskDownBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_disk_download;
             this.totalDiskDownBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
             this.totalDiskDownBandwidthLabel.Name = "totalDiskDownBandwidthLabel";
-            this.totalDiskDownBandwidthLabel.Size = new System.Drawing.Size(83, 32);
+            this.totalDiskDownBandwidthLabel.Size = new System.Drawing.Size(87, 32);
             this.totalDiskDownBandwidthLabel.Text = "100 kb/s";
             // 
             // totalDiskUpBandwidthLabel
@@ -120,7 +120,7 @@
             this.totalDiskUpBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_disk_upload;
             this.totalDiskUpBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
             this.totalDiskUpBandwidthLabel.Name = "totalDiskUpBandwidthLabel";
-            this.totalDiskUpBandwidthLabel.Size = new System.Drawing.Size(83, 32);
+            this.totalDiskUpBandwidthLabel.Size = new System.Drawing.Size(87, 32);
             this.totalDiskUpBandwidthLabel.Text = "501 kb/s";
             // 
             // totalDownBandwidthLabel
@@ -129,7 +129,7 @@
             this.totalDownBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_download;
             this.totalDownBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
             this.totalDownBandwidthLabel.Name = "totalDownBandwidthLabel";
-            this.totalDownBandwidthLabel.Size = new System.Drawing.Size(83, 32);
+            this.totalDownBandwidthLabel.Size = new System.Drawing.Size(87, 32);
             this.totalDownBandwidthLabel.Text = "100 kb/s";
             // 
             // totalUpBandwidthLabel
@@ -138,7 +138,7 @@
             this.totalUpBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_upload;
             this.totalUpBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
             this.totalUpBandwidthLabel.Name = "totalUpBandwidthLabel";
-            this.totalUpBandwidthLabel.Size = new System.Drawing.Size(83, 32);
+            this.totalUpBandwidthLabel.Size = new System.Drawing.Size(87, 32);
             this.totalUpBandwidthLabel.Text = "501 kb/s";
             // 
             // menuStrip
@@ -354,23 +354,25 @@
             // 
             // mainDownloadList
             // 
+            this.mainDownloadList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.mainDownloadList.AutoScroll = true;
             this.mainDownloadList.BackColor = System.Drawing.SystemColors.ControlLight;
             this.mainDownloadList.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.mainDownloadList.ContextMenuStrip = this.downloadListContextMenu;
-            this.mainDownloadList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mainDownloadList.Location = new System.Drawing.Point(0, 24);
+            this.mainDownloadList.Location = new System.Drawing.Point(-1, 23);
             this.mainDownloadList.Margin = new System.Windows.Forms.Padding(20);
             this.mainDownloadList.Name = "mainDownloadList";
-            this.mainDownloadList.Size = new System.Drawing.Size(794, 214);
+            this.mainDownloadList.Size = new System.Drawing.Size(796, 216);
             this.mainDownloadList.TabIndex = 6;
             // 
             // MainForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.ClientSize = new System.Drawing.Size(794, 264);
-            this.Controls.Add(this.mainDownloadList);
             this.Controls.Add(this.statusStrip);
+            this.Controls.Add(this.mainDownloadList);
             this.Controls.Add(this.menuStrip);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip;
