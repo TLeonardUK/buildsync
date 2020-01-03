@@ -52,14 +52,23 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ListUpdateTimerTick(object sender, EventArgs e)
         {
-            BuildSyncClient.Peer[] Peers = Program.NetClient.AllPeers;
+            BuildSyncClient.Peer[] AllPeers = Program.NetClient.AllPeers;
+
+            List<BuildSyncClient.Peer> ConnectedPeers = new List<BuildSyncClient.Peer>();
+            foreach (BuildSyncClient.Peer Peer in AllPeers)
+            {
+                if (Peer.Connection.IsConnected)
+                {
+                    ConnectedPeers.Add(Peer);
+                }
+            }
 
             // Remove old peers.
             List<ListViewItem> ItemsToRemove = new List<ListViewItem>();
             foreach (ListViewItem Item in MainListView.Items)
             {
                 BuildSyncClient.Peer ItemPeer = Item.Tag as BuildSyncClient.Peer;
-                if (!Peers.Contains(ItemPeer))
+                if (!ConnectedPeers.Contains(ItemPeer))
                 {
                     ItemsToRemove.Add(Item);
                 }
@@ -70,12 +79,12 @@ namespace BuildSync.Client.Forms
             }
 
             // Add new peers.
-            foreach (BuildSyncClient.Peer Peer in Peers)
+            foreach (BuildSyncClient.Peer Peer in ConnectedPeers)
             {
                 ListViewItem Item = null;
                 foreach (ListViewItem SubItem in MainListView.Items)
                 {
-                    BuildSyncClient.Peer ItemPeer = Item.Tag as BuildSyncClient.Peer;
+                    BuildSyncClient.Peer ItemPeer = SubItem.Tag as BuildSyncClient.Peer;
                     if (ItemPeer == Peer)
                     {
                         Item = SubItem;
@@ -86,10 +95,11 @@ namespace BuildSync.Client.Forms
                 if (Item == null)
                 {
                     Item = new ListViewItem(new string[5]);
+                    Item.Tag = Peer;
                     MainListView.Items.Add(Item);
                 }
 
-                Item.SubItems[0].Text = HostnameCache.GetHostname(Peer.Connection.Address.Address.ToString());
+                Item.SubItems[0].Text = Peer.Connection.Address == null ? "" : HostnameCache.GetHostname(Peer.Connection.Address.Address.ToString());
                 Item.SubItems[1].Text = StringUtils.FormatAsTransferRate(Peer.Connection.BandwidthStats.RateIn);
                 Item.SubItems[2].Text = StringUtils.FormatAsTransferRate(Peer.Connection.BandwidthStats.RateOut);
                 Item.SubItems[3].Text = StringUtils.FormatAsSize(Peer.Connection.BandwidthStats.TotalIn);

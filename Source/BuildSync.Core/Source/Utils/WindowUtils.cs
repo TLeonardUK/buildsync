@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Net.NetworkInformation;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
@@ -66,6 +69,24 @@ namespace BuildSync.Core.Utils
             }
 
             SetForegroundWindow(handle);
+        }
+
+        public static IPAddress GetLocalIPAddress()
+        {
+            foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (item.OperationalStatus == OperationalStatus.Up)
+                {
+                    foreach (UnicastIPAddressInformation ip in item.GetIPProperties().UnicastAddresses)
+                    {
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            return ip.Address;
+                        }
+                    }
+                }
+            }
+            return IPAddress.Any;
         }
     }
 }

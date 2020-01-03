@@ -37,6 +37,11 @@ namespace BuildSync.Core
     /// <summary>
     /// 
     /// </summary>
+    public delegate void UserListRecievedHandler(List<User> Users);
+
+    /// <summary>
+    /// 
+    /// </summary>
     public delegate void ManifestPublishResultRecievedHandler(Guid ManifestId, PublishManifestResult Result);
 
     /// <summary>
@@ -356,6 +361,11 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         public event ManifestDeleteResultRecievedHandler OnManifestDeleteResultRecieved;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event UserListRecievedHandler OnUserListRecieved;
 
         /// <summary>
         /// 
@@ -958,6 +968,63 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         /// <param name="Path"></param>
+        public bool RequestUserList()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request users, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetUsers Msg = new NetMessage_GetUsers();
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool SetUserPermissions(string Username, UserPermissionCollection Permissions)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to set user permissions, no connection to server?");
+                return false;
+            }
+
+            NetMessage_SetUserPermissions Msg = new NetMessage_SetUserPermissions();
+            Msg.Username = Username;
+            Msg.Permissions = Permissions;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool DeleteUser(string Username)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete user, no connection to server?");
+                return false;
+            }
+
+            NetMessage_DeleteUser Msg = new NetMessage_DeleteUser();
+            Msg.Username = Username;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
         public bool RequestBuilds(string Path)
         {
             if (!Connection.IsReadyForData)
@@ -1178,7 +1245,8 @@ namespace BuildSync.Core
                 Response.ManifestId = Msg.ManifestId;
                 Response.BlockIndex = Msg.BlockIndex;
 
-                ManifestDownloadManager.GetBlockData(Msg.ManifestId, Msg.BlockIndex, ref Response.Data, (bool bSuccess) => {
+                ManifestDownloadManager.GetBlockData(Msg.ManifestId, Msg.BlockIndex, ref Response.Data, (bool bSuccess) =>
+                {
 
                     lock (DeferredActions)
                     {
@@ -1187,7 +1255,7 @@ namespace BuildSync.Core
                             if (!bSuccess)
                             {
                                 ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
-                                Response.Data.SetNull(); 
+                                Response.Data.SetNull();
                             }
 
                             if (Connection.IsConnected)
@@ -1230,7 +1298,8 @@ namespace BuildSync.Core
                 {
                     //Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
 
-                    ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, (bool bSuccess) => {
+                    ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, (bool bSuccess) =>
+                    {
 
                         Msg.Data.SetNull();
 
@@ -1255,6 +1324,16 @@ namespace BuildSync.Core
 
                     });
                 }
+            }
+
+            // Recieved user list.
+            else if (BaseMessage is NetMessage_GetUsersResponse)
+            {
+                NetMessage_GetUsersResponse Msg = BaseMessage as NetMessage_GetUsersResponse;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved users list with {0} users.", Msg.Users.Count);
+
+                OnUserListRecieved?.Invoke(Msg.Users);
             }
         }
     }

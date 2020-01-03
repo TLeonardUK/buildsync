@@ -413,8 +413,10 @@ namespace BuildSync.Core.Networking
 
             Address = new IPEndPoint(IPAddress.Any, Port);
 
+            /*
             string Hostname = Dns.GetHostName();
             IPAddress[] HostAddresses = Dns.GetHostAddresses(Hostname);
+
             IPAddress Ipv4Address = IPAddress.Any;
             foreach (IPAddress Address in HostAddresses)
             {
@@ -424,8 +426,9 @@ namespace BuildSync.Core.Networking
                     break;
                 }
             }
+            */
 
-            ListenAddress = new IPEndPoint(Ipv4Address, Port);
+            ListenAddress = new IPEndPoint(WindowUtils.GetLocalIPAddress(), Port);
 
             Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 512 * 1024);

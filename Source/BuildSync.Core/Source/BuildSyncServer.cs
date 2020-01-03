@@ -560,6 +560,68 @@ namespace BuildSync.Core
                     Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to process manifest delete request due to error: {0}", ex.Message);
                 }
             }
+
+            // ------------------------------------------------------------------------------
+            // Client requested list of users
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_GetUsers)
+            {
+                NetMessage_GetUsers Msg = BaseMessage as NetMessage_GetUsers;
+
+                ClientState State = Connection.Metadata as ClientState;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to get usernames without permission.", State.Username);
+                    return;
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for user list.");
+
+                NetMessage_GetUsersResponse ResponseMsg = new NetMessage_GetUsersResponse();
+                ResponseMsg.Users = UserManager.Users;
+                Connection.Send(ResponseMsg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Client requested to set a users permissions
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_SetUserPermissions)
+            {
+                NetMessage_SetUserPermissions Msg = BaseMessage as NetMessage_SetUserPermissions;
+
+                ClientState State = Connection.Metadata as ClientState;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set user permissions without permission.", State.Username);
+                    return;
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for setting permissions of '{0}'", Msg.Username);
+
+                UserManager.SetPermissions(Msg.Username, Msg.Permissions);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Client requested to delete a user
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_DeleteUser)
+            {
+                NetMessage_DeleteUser Msg = BaseMessage as NetMessage_DeleteUser;
+
+                ClientState State = Connection.Metadata as ClientState;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to delete user without permission.", State.Username);
+                    return;
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to delete user '{0}'", Msg.Username);
+
+                UserManager.DeleteUser(Msg.Username);
+            }
         }
     }
 }

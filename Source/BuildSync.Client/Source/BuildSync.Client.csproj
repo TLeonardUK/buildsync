@@ -179,6 +179,12 @@
     <Compile Include="Forms\AddDownloadForm.Designer.cs">
       <DependentUpon>AddDownloadForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\AddPermissionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AddPermissionForm.Designer.cs">
+      <DependentUpon>AddPermissionForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\ConsoleForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -267,6 +273,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\AddDownloadForm.resx">
       <DependentUpon>AddDownloadForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\AddPermissionForm.resx">
+      <DependentUpon>AddPermissionForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ConsoleForm.resx">
       <DependentUpon>ConsoleForm.cs</DependentUpon>

@@ -38,11 +38,12 @@
             this.logTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.logTextBox.Font = new System.Drawing.Font("Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.logTextBox.Location = new System.Drawing.Point(0, 0);
+            this.logTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.logTextBox.Multiline = true;
             this.logTextBox.Name = "logTextBox";
             this.logTextBox.ReadOnly = true;
             this.logTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.logTextBox.Size = new System.Drawing.Size(989, 387);
+            this.logTextBox.Size = new System.Drawing.Size(721, 191);
             this.logTextBox.TabIndex = 0;
             this.logTextBox.WordWrap = false;
             // 
@@ -53,11 +54,12 @@
             // 
             // ConsoleForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(989, 387);
+            this.ClientSize = new System.Drawing.Size(721, 191);
             this.Controls.Add(this.logTextBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "ConsoleForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

@@ -123,6 +123,7 @@
     <Compile Include="Networking\Messages\NetMessage_ConnectionInfo.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteManifestResponse.cs" />
+    <Compile Include="Networking\Messages\NetMessage_DeleteUser.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetBlock.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetBlockResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetBuilds.cs" />
@@ -180,6 +181,6 @@
     <PostBuildEvent>xcopy /iery "$(TargetDir)*.*" "$(SolutionDir)..\Build\Deploy"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)VersionUpdater\Intermediate\VersionUpdater\bin\$(Configuration)\VersionUpdater.exe $(SolutionDir)BuildSync.Core\Source\Version.cs $(SolutionDir)</PreBuildEvent>
+    <PreBuildEvent>if $(ConfigurationName) == Shipping $(SolutionDir)VersionUpdater\Intermediate\VersionUpdater\bin\$(Configuration)\VersionUpdater.exe $(SolutionDir)BuildSync.Core\Source\Version.cs $(SolutionDir)</PreBuildEvent>
   </PropertyGroup>
 </Project>

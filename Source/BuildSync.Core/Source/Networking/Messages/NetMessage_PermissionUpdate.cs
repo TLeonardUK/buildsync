@@ -22,6 +22,10 @@ namespace BuildSync.Core.Networking.Messages
 
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
+            if (serializer.IsLoading)
+            {
+                Permissions = new UserPermissionCollection();
+            }
             Permissions.Serialize(serializer);
         }
     }

@@ -321,7 +321,24 @@ namespace BuildSync.Core.Users
 
             Logger.Log(LogLevel.Info, LogCategory.Users, "Deleted user '{0}'", user.Username);
 
+            PermissionsUpdated?.Invoke(user);
             UsersUpdated?.Invoke();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public void DeleteUser(string Username)
+        {
+            User user = FindUser(Username);
+            if (user == null)
+            {
+                return;
+            }
+
+            DeleteUser(user);
         }
 
         /// <summary>
@@ -378,6 +395,24 @@ namespace BuildSync.Core.Users
             }
 
             return CheckPermission(user, Permission, Path, IgnoreInheritedPermissions, AllowIfHavePermissionToSubPath);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <param name="Permissions"></param>
+        /// <returns></returns>
+        public bool SetPermissions(string Username, UserPermissionCollection Permissions)
+        {
+            User user = GetOrCreateUser(Username);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.Permissions = Permissions;
+            return true;
         }
     }
 }
