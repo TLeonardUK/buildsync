@@ -131,6 +131,7 @@ namespace BuildSync.Core.Downloads
 
             // Look through children and return latest.
             List<VirtualFileSystemNode> Children = BuildFileSystem.GetChildren(VirtualPath);
+            VirtualFileSystemNode NewestChild = null;
             foreach (VirtualFileSystemNode Child in Children)
             {
                 if (Child.Metadata != null)
@@ -138,13 +139,22 @@ namespace BuildSync.Core.Downloads
                     Guid ManifestId = (Guid)Child.Metadata;
                     if (ManifestId != Guid.Empty)
                     {
-                        return ManifestId;
+                        if (NewestChild == null || NewestChild.CreateTime < Child.CreateTime)
+                        {
+                            NewestChild = Child;
+                        }
                     }
                 }
             }
 
-            // This is not a valid virtual path, or no builds are contained in it at the moment ...
-            return Guid.Empty;
+            if (NewestChild != null)
+            {
+                return (Guid)NewestChild.Metadata;
+            }
+            else
+            {
+                return Guid.Empty;
+            }
         }
 
         /// <summary>

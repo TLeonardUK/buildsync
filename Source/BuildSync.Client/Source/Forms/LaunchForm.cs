@@ -67,7 +67,7 @@ namespace BuildSync.Client.Forms
                 return;
             }
 
-            if (!File.Exists(WorkingDir))
+            if (!Directory.Exists(WorkingDir))
             {
                 MessageBox.Show("Could not find working directory, expected at: " + WorkingDir, "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
