@@ -11,6 +11,14 @@ namespace BuildSync.Core.Networking.Messages
     /// </summary>
     public class NetMessage_GetBlockResponse : NetMessage
     {
+        public override bool DoesRecieverHandleCleanup
+        {
+            get
+            {
+                return true;
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>

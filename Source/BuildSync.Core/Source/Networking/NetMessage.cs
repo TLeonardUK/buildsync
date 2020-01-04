@@ -17,6 +17,14 @@ namespace BuildSync.Core.Networking
         public int Id = 0;
         public int PayloadSize = 0;
 
+        public virtual bool DoesRecieverHandleCleanup
+        {
+            get
+            {
+                return false;
+            }
+        }
+
         private static Dictionary<int, Type> MessageTypes = new Dictionary<int, Type>();
 
         public void ReadHeader(byte[] Buffer)

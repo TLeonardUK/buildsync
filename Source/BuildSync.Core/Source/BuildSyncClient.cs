@@ -1393,6 +1393,8 @@ namespace BuildSync.Core
                         });
                     }
 
+                    Msg.Cleanup();
+
                     return;
                 }
                 else
@@ -1406,7 +1408,7 @@ namespace BuildSync.Core
 
                     ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, (bool bSuccess) =>
                     {
-                        Msg.Data.SetNull();
+                        Msg.Cleanup();
 
                         lock (DeferredActions)
                         {

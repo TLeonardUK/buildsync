@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 namespace BuildSync.Core.Networking
 {
     /// <summary>
-    /// 
+    ///     WARNING: Make sure you understand the alloc/release pattern for this class when recieved in netmessages, missues
+    ///              will result in hard to find leaks and memory stomping as the buffers are recycled.
     /// </summary>
     public class NetCachedArray
     {
@@ -103,11 +104,6 @@ namespace BuildSync.Core.Networking
                 ReleaseBuffer(Data);
                 Data = null;
             }
-        }
-
-        ~NetCachedArray()
-        {
-            SetNull();
         }
     }
 }

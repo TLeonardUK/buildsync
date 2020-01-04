@@ -514,24 +514,32 @@ namespace BuildSync.Core.Downloads
                     {
                         if (InitializeTask == null)
                         {
-                            InitializeTask = Task.Run(() =>
+                            if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
+                            { 
+                                InitializeTask = Task.Run(() =>
+                                {
+                                    try
+                                    {
+                                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Initializing directory: {0}", State.LocalFolder);
+                                        State.Manifest.InitializeDirectory(State.LocalFolder);
+                                        ChangeState(State, ManifestDownloadProgressState.Downloading);
+                                    }
+                                    catch (Exception Ex)
+                                    {
+                                        ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
+                                        Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to intialize directory with error: {0}", Ex.Message);
+                                    }
+                                    finally
+                                    {
+                                        InitializeTask = null;
+                                    }
+                                });
+                            }
+                            else
                             {
-                                try
-                                {
-                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Initializing directory: {0}", State.LocalFolder);
-                                    State.Manifest.InitializeDirectory(State.LocalFolder);
-                                    ChangeState(State, ManifestDownloadProgressState.Downloading);
-                                }
-                                catch (Exception Ex)
-                                {
-                                    ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
-                                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to intialize directory with error: {0}", Ex.Message);
-                                }
-                                finally
-                                {
-                                    InitializeTask = null;
-                                }
-                            });
+                                ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
+                                Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to initialize, unable to close all streams to directory.");
+                            }
                         }
 
                         break;
@@ -605,6 +613,11 @@ namespace BuildSync.Core.Downloads
                                         ValidationTask = null;
                                     }
                                 });
+                            }
+                            else
+                            {
+                                ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
+                                Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to validate, unable to close all streams to directory.");
                             }
                         }
 

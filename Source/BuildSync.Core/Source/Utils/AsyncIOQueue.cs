@@ -380,6 +380,8 @@ namespace BuildSync.Core.Utils
                 {
                     try
                     {
+                        Console.WriteLine("####### WRITING[offset={0} size={1}, stream={2}] {3}", Work.Offset, Work.Size, Stm.Stream.ToString(), Work.Path);
+
                         // TODO: Lock?
                         Stm.Stream.Seek(Work.Offset, SeekOrigin.Begin);
                         Stm.Stream.BeginWrite(Work.Data, 0, (int)Work.Size, Result =>
@@ -516,6 +518,8 @@ namespace BuildSync.Core.Utils
         public void Write(string InPath, long InOffset, long InSize, byte[] InData, IOCompleteCallbackHandler InCallback)
         {
             Interlocked.Add(ref InternalQueuedIn, InSize);
+            Console.WriteLine("####### START WRITE[offset={0} size={1}] {2}", InOffset, InSize, InPath);
+
             TaskQueue.Enqueue(new Task { Type = TaskType.Write, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
             WakeThread();
         }

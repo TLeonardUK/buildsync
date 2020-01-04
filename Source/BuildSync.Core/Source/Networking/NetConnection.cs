@@ -1048,7 +1048,10 @@ namespace BuildSync.Core.Networking
                     {
                         EventQueue.Enqueue(() => { 
                             OnMessageRecieved?.Invoke(this, Message);
-                            Message.Cleanup();
+                            if (!Message.DoesRecieverHandleCleanup)
+                            {
+                                Message.Cleanup();
+                            }
                         });
                     }
                 }
