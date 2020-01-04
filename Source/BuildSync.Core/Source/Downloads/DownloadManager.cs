@@ -46,6 +46,11 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        private bool bHadConnection = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="InManifestDownloader"></param>
         /// <param name="Config"></param>
         public void Start(ManifestDownloadManager InManifestDownloader, DownloadStateCollection ResumeStateCollection, VirtualFileSystem FileSystem)
@@ -160,9 +165,23 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        public void ForceRefresh()
+        {
+            BuildFileSystem.ForceRefresh();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void Poll(bool bHasConnection)
         {
             List<Guid> ActiveManifestIds = new List<Guid>();
+
+            if (bHasConnection && !bHadConnection)
+            {
+                ForceRefresh();
+            }
+            bHadConnection = bHasConnection;
 
             foreach (DownloadState State in StateCollection.States)
             {

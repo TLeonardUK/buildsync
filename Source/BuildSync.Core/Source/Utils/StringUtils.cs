@@ -10,6 +10,7 @@ namespace BuildSync.Core.Utils
     public static class StringUtils
     {
         public static string[] RatePrefixes = new string[] { "bits", "Kb", "Mb", "Gb", "Tb" };
+        public static string[] RatePrefixesBytes = new string[] { "bytes", "KB", "MB", "GB", "TB" };
         public static string[] SizePrefixes = new string[] { "bytes", "KB", "MB", "GB", "TB" };
 
         /// <summary>
@@ -17,16 +18,17 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="Rate"></param>
         /// <returns></returns>
-        public static string FormatAsTransferRate(long RateBytes)
+        public static string FormatAsTransferRate(long RateBytes, bool AsBits = false)
         {
-            double Result = RateBytes * 8; // This converst 
+            string[] Prefixes = AsBits ? RatePrefixes : RatePrefixesBytes;
+            double Result = AsBits ? RateBytes * 8 : RateBytes;
             int PrefixIndex = 0;
-            while (Result > 1024 && PrefixIndex < RatePrefixes.Length - 1)
+            while (Result > 1024 && PrefixIndex < Prefixes.Length - 1)
             {
                 Result /= 1024;
                 PrefixIndex++;
             }
-            return string.Format("{0:0.##} {1}/s", Result, RatePrefixes[PrefixIndex]);
+            return string.Format("{0:0.##} {1}/s", Result, Prefixes[PrefixIndex]);
         }
 
         /// <summary>

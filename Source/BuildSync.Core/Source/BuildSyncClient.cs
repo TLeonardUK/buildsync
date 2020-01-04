@@ -2,6 +2,7 @@
 using System.Net;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
@@ -18,6 +19,13 @@ namespace BuildSync.Core
     /// <param name="Connection"></param>
     /// <param name="Message"></param>
     public delegate void BuildsRecievedHandler(string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Connection"></param>
+    /// <param name="Message"></param>
+    public delegate void PermissionsUpdatedHandler();
 
     /// <summary>
     /// 
@@ -107,15 +115,28 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
+            public float BlockRecieveLatency = 0.0f;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public float AverageBlockSize = 0.0f;
+
+            /// <summary>
+            /// 
+            /// </summary>
             /// <param name=""></param>
             /// <returns></returns>
             public bool IsDownloadingBlock(ManifestPendingDownloadBlock Block)
             {
-                foreach (ManifestPendingDownloadBlock Download in ActiveBlockDownloads)
+                lock (ActiveBlockDownloads)
                 {
-                    if (Download.BlockIndex == Block.BlockIndex && Download.ManifestId == Block.ManifestId)
+                    foreach (ManifestPendingDownloadBlock Download in ActiveBlockDownloads)
                     {
-                        return true;
+                        if (Download.BlockIndex == Block.BlockIndex && Download.ManifestId == Block.ManifestId)
+                        {
+                            return true;
+                        }
                     }
                 }
                 return false;
@@ -159,16 +180,60 @@ namespace BuildSync.Core
             /// </summary>
             public void PruneTimeoutDownloads()
             {
-                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                lock (ActiveBlockDownloads)
                 {
-                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
-
-                    ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
-                    if (Elapsed > BlockDownloadTimeout)
+                    for (int i = 0; i < ActiveBlockDownloads.Count; i++)
                     {
-                        ActiveBlockDownloadSize -= Download.Size;
-                        ActiveBlockDownloads.RemoveAt(i);
-                        i--;
+                        ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                        ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+                        if (Elapsed > BlockDownloadTimeout)
+                        {
+                            if (!Download.Recieved)
+                            {
+                                ActiveBlockDownloadSize -= Download.Size;
+
+                                Download.Recieved = true;
+                                ActiveBlockDownloads[i] = Download;
+                            }
+
+                            ActiveBlockDownloads.RemoveAt(i);
+                            i--;
+                        }
+                    }
+                }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="ManifestId"></param>
+            /// <param name="BlockIndex"></param>
+            public void MarkActiveBlockDownloadAsRecieved(Guid ManifestId, int BlockIndex)
+            {
+                lock (ActiveBlockDownloads)
+                {
+                    for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                    {
+                        ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                        if (Download.BlockIndex == BlockIndex &&
+                            Download.ManifestId == ManifestId)
+                        {
+                            if (!Download.Recieved)
+                            {
+                                ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+                                BlockRecieveLatency = (BlockRecieveLatency * 0.85f) + (Elapsed * 0.15f);
+                                AverageBlockSize = (AverageBlockSize * 0.85f) + (Download.Size * 0.15f);
+
+                                ActiveBlockDownloadSize -= Download.Size;
+
+                                Download.Recieved = true;
+                                ActiveBlockDownloads[i] = Download;
+                            }
+
+                            break;
+                        }
                     }
                 }
             }
@@ -178,16 +243,28 @@ namespace BuildSync.Core
             /// </summary>
             public void RemoveActiveBlockDownload(Guid ManifestId, int BlockIndex)
             {
-                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                lock (ActiveBlockDownloads)
                 {
-                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
-
-                    if (Download.BlockIndex == BlockIndex &&
-                        Download.ManifestId == ManifestId)
+                    for (int i = 0; i < ActiveBlockDownloads.Count; i++)
                     {
-                        ActiveBlockDownloadSize -= Download.Size;
-                        ActiveBlockDownloads.RemoveAt(i);
-                        break;
+                        ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                        if (Download.BlockIndex == BlockIndex &&
+                            Download.ManifestId == ManifestId)
+                        {
+                            if (!Download.Recieved)
+                            {
+                                ActiveBlockDownloadSize -= Download.Size;
+
+                                Download.Recieved = true;
+                                ActiveBlockDownloads[i] = Download;
+                            }
+
+                            //Console.WriteLine("Removing (for block {0} in manifest {1}) of size {2} total queued {3}.", Download.ManifestId, Download.BlockIndex, Download.Size, ActiveBlockDownloadSize);
+
+                            ActiveBlockDownloads.RemoveAt(i);
+                            break;
+                        }
                     }
                 }
             }
@@ -198,8 +275,11 @@ namespace BuildSync.Core
             /// <param name="Block"></param>
             public void AddActiveBlockDownload(ManifestPendingDownloadBlock Block)
             {
-                ActiveBlockDownloadSize += Block.Size;
-                ActiveBlockDownloads.Add(Block);
+                lock (ActiveBlockDownloads)
+                {
+                    ActiveBlockDownloadSize += Block.Size;
+                    ActiveBlockDownloads.Add(Block);
+                }
             }
         };
 
@@ -231,7 +311,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private const int ConcurrentBlockDownloadBytesLimit = 4 * 1024 * 1024; // 4mb of queued data? Seems unlikely we would read faster than this.
+        private const int TargetMillisecondsOfDataInFlight = 500;
 
         /// <summary>
         /// 
@@ -351,6 +431,11 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         public event BuildsRecievedHandler OnBuildsRecieved;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event PermissionsUpdatedHandler OnPermissionsUpdated;
 
         /// <summary>
         /// 
@@ -745,7 +830,22 @@ namespace BuildSync.Core
                     {
                         Peer peer = Peers[(j + PeerCycleIndex) % Peers.Count];
 
-                        if (peer.ActiveBlockDownloadSize + BlockSize <= ConcurrentBlockDownloadBytesLimit && peer.HasBlock(Item))
+                        // Calculate a rough idea for how many bytes we should have in flight at a given time.
+                        long MaxInFlightBytes = 0;
+                        if (peer.BlockRecieveLatency < 5 || peer.AverageBlockSize < 1024)
+                        {
+                            MaxInFlightBytes = 1 * 1024 * 1024;
+                        }
+                        else
+                        {
+                            MaxInFlightBytes = (long)((TargetMillisecondsOfDataInFlight / peer.BlockRecieveLatency) * peer.AverageBlockSize);
+                        }
+                        
+                        //Console.WriteLine("Target:{0} ({1} mb) Actual:{2} ({3} mb) TotalDownloads:{4}", MaxInFlightBytes, MaxInFlightBytes / 1024.0f / 1024.0f, peer.ActiveBlockDownloadSize, peer.ActiveBlockDownloadSize / 1024.0f / 1024.0f, peer.ActiveBlockDownloads.Count);
+
+                        // TODO: Take disk queue into account.
+
+                        if ((peer.ActiveBlockDownloadSize + BlockSize <= MaxInFlightBytes || BlockSize > MaxInFlightBytes) && peer.HasBlock(Item))
                         {
                             NetMessage_GetBlock Msg = new NetMessage_GetBlock();
                             Msg.ManifestId = Item.ManifestId;
@@ -1199,6 +1299,7 @@ namespace BuildSync.Core
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved permissions update.");
 
                 Permissions = Msg.Permissions;
+                OnPermissionsUpdated?.Invoke();
             }
 
             // Server is sending us a manifest we previously requested.
@@ -1297,10 +1398,14 @@ namespace BuildSync.Core
                 else
                 {
                     //Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
+                    Peer peer = GetPeerByConnection(Connection);
+                    if (peer != null)
+                    {
+                        peer.MarkActiveBlockDownloadAsRecieved(Msg.ManifestId, Msg.BlockIndex);
+                    }
 
                     ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, (bool bSuccess) =>
                     {
-
                         Msg.Data.SetNull();
 
                         lock (DeferredActions)
@@ -1314,11 +1419,7 @@ namespace BuildSync.Core
                                 }
 
                                 // Remove active download marker for this block.
-                                Peer peer = GetPeerByConnection(Connection);
-                                if (peer != null)
-                                {
-                                    peer.RemoveActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex);
-                                }
+                                peer.RemoveActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex);
                             });
                         }
 

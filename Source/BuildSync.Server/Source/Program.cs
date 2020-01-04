@@ -212,6 +212,8 @@ namespace BuildSync.Server
         /// </summary>
         public static void SaveSettings()
         {
+            Logger.Log(LogLevel.Info, LogCategory.Main, "Saving settings.");
+
             Settings.Save(SettingsPath);
         }
 
@@ -227,6 +229,11 @@ namespace BuildSync.Server
 
             UserManager = new UserManager(Settings.Users);
             UserManager.UsersUpdated += () =>
+            {
+                Settings.Users = UserManager.Users;
+                SaveSettings();
+            };
+            UserManager.PermissionsUpdated += (User user) =>
             {
                 Settings.Users = UserManager.Users;
                 SaveSettings();

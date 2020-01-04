@@ -95,7 +95,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public long BlockSize = 512 * 1024;
+        public long BlockSize = 1024 * 1024;
 
         /// <summary>
         /// 

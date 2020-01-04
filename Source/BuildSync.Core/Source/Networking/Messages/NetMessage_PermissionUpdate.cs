@@ -15,11 +15,6 @@ namespace BuildSync.Core.Networking.Messages
         /// </summary>
         public UserPermissionCollection Permissions = new UserPermissionCollection();
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public NetCachedArray Data = new NetCachedArray();
-
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             if (serializer.IsLoading)

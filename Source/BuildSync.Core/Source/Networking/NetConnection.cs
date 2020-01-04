@@ -62,7 +62,6 @@ namespace BuildSync.Core.Networking
         private Socket Socket;
         private bool Connecting = false;
         private bool Listening = false;
-        private byte[] MessageBuffer = new byte[NetMessage.HeaderSize];
         private List<NetConnection> Clients = new List<NetConnection>();
 
         private bool IsClient = false;
@@ -70,18 +69,33 @@ namespace BuildSync.Core.Networking
         private bool ShouldDisconnectDueToError = false;
 
         private ulong LastKeepAliveSendTime = 0;
-        private const int KeepAliveInterval = 5 * 1000;
+        private const int KeepAliveInterval = 30 * 1000;
 
         private NetMessage_Handshake Handshake = null;
         private bool HandshakeFailed = false;
 
         private Queue<Action> EventQueue = new Queue<Action>();
 
-        private ConcurrentQueue<byte[]> SendQueue = new ConcurrentQueue<byte[]>();
+        public struct MessageQueueEntry
+        {
+            public byte[] Data;
+            public int BufferSize;
+        }
+
+        private ConcurrentQueue<MessageQueueEntry> SendQueue = new ConcurrentQueue<MessageQueueEntry>();
         private object SendQueueWakeObject = new object();
         private long SendQueueBytes = 0;
         private Thread SendThread;
         private bool IsSendingThreadRunning = false;
+
+        private BlockingCollection<MessageQueueEntry> ProcessBufferQueue = null;
+        private Thread ProcessThread;
+
+        private static ConcurrentBag<byte[]> MessageBuffers = new ConcurrentBag<byte[]>();
+        private static int MessageBufferCount = 0;
+        private const int MaxMessageBuffers = 32;
+
+        private NetMessage MessageHeaderTempStorage = new NetMessage();
 
         public enum AsyncCallType
         { 
@@ -259,13 +273,18 @@ namespace BuildSync.Core.Networking
         {
             IsSendingThreadRunning = true;
 
-            if (SendThread != null)
+            if (SendThread != null || ProcessThread != null)
             {
                 EndSendThread();
             }
 
             SendThread = new Thread(SendThreadEntry);
             SendThread.Start();
+
+            ProcessBufferQueue = new BlockingCollection<MessageQueueEntry>();
+
+            ProcessThread = new Thread(ProcessThreadEntry);
+            ProcessThread.Start();
         }
 
         /// <summary>
@@ -284,13 +303,38 @@ namespace BuildSync.Core.Networking
                 SendThread.Join();
             }
 
-            while (SendQueue.Count > 0)
+            if (ProcessThread != null)
             {
-                byte[] Data = null;
-                SendQueue.TryDequeue(out Data);
+                ProcessBufferQueue.CompleteAdding();
+                ProcessThread.Join();
             }
 
+            while (SendQueue.Count > 0)
+            {
+                MessageQueueEntry Data;
+                SendQueue.TryDequeue(out Data);
+                ReleaseMessageBuffer(Data.Data);
+            }
+
+            ProcessBufferQueue = null;
             SendThread = null;
+            ProcessThread = null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void ProcessThreadEntry()
+        {
+            while (!ProcessBufferQueue.IsAddingCompleted)
+            {
+                MessageQueueEntry Data;
+                if (ProcessBufferQueue.TryTake(out Data, 1000))
+                {
+                    ProcessMessage(Data.Data, Data.BufferSize);
+                    ReleaseMessageBuffer(Data.Data);
+                }
+            }
         }
 
         /// <summary>
@@ -664,7 +708,7 @@ namespace BuildSync.Core.Networking
         {
             while (IsSendingThreadRunning)
             {
-                byte[] SendData;
+                MessageQueueEntry SendData;
 
                 lock (SendQueueWakeObject)
                 {
@@ -676,7 +720,7 @@ namespace BuildSync.Core.Networking
                         }
                         else
                         {
-                            Interlocked.Add(ref SendQueueBytes, -SendData.Length);
+                            Interlocked.Add(ref SendQueueBytes, -SendData.BufferSize);
                         }
                     }
                     else 
@@ -686,7 +730,7 @@ namespace BuildSync.Core.Networking
                     }
                 }
 
-                SendBlock(SendData, 0, SendData.Length);
+                SendBlock(SendData.Data, 0, SendData.BufferSize);
             }
         }
 
@@ -699,18 +743,21 @@ namespace BuildSync.Core.Networking
             //Stopwatch totalstop = new Stopwatch();
             //totalstop.Start();
 
-            byte[] Serialized = Message.ToByteArray();
+            byte[] Serialized = AllocMessageBuffer();
+            int BufferLength = Message.ToByteArray(ref Serialized);
 
-            SendQueue.Enqueue(Serialized);
-            Interlocked.Add(ref SendQueueBytes, Serialized.Length);
+            Message.Cleanup();
+
+            //totalstop.Stop();
+            //Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to serialize message: {0} size was {1}kb type {2}", ((float)totalstop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)), BufferLength / 1024, Message.GetType().Name);
+
+            SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength });
+            Interlocked.Add(ref SendQueueBytes, BufferLength);
 
             lock (SendQueueWakeObject)
             {
                 Monitor.Pulse(SendQueueWakeObject);
             }
-
-            //totalstop.Stop();
-            //Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to send: {0}", ((float)totalstop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
         }
 
         /// <summary>
@@ -733,6 +780,7 @@ namespace BuildSync.Core.Networking
 
                     TotalBytesSent += BytesSent;
                 }
+
             }
             catch (Exception ex)
             {
@@ -742,6 +790,7 @@ namespace BuildSync.Core.Networking
             finally
             {
                 RecordEndAsyncCall(AsyncCallType.Send);
+                ReleaseMessageBuffer(Block);
             }
         }
 
@@ -773,6 +822,8 @@ namespace BuildSync.Core.Networking
         /// </summary>
         private void BeginRecievingHeader(int Offset = 0, int Size = NetMessage.HeaderSize)
         {
+            byte[] MessageBuffer = AllocMessageBuffer();
+
             try
             {
                 RecordBeginAsyncCall(AsyncCallType.Recieve);
@@ -791,15 +842,17 @@ namespace BuildSync.Core.Networking
 
                         if (BytesRecieved < Size)
                         {
+                            ReleaseMessageBuffer(MessageBuffer);
                             BeginRecievingHeader(Offset + BytesRecieved, Size - BytesRecieved);
                             return;
                         }
 
-                        BeginRecievingPayload();
+                        BeginRecievingPayload(MessageBuffer);
                     }
                     catch (Exception ex)
                     {
                         Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
+                        ReleaseMessageBuffer(MessageBuffer);
                         ShouldDisconnect = true;
                     }
                     finally
@@ -815,6 +868,8 @@ namespace BuildSync.Core.Networking
             }
             catch (Exception ex)
             {
+                ReleaseMessageBuffer(MessageBuffer);
+
                 RecordEndAsyncCall(AsyncCallType.Recieve);
 
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
@@ -825,34 +880,34 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        private void BeginRecievingPayload()
+        private void BeginRecievingPayload(byte[] MessageBuffer)
         {
-            NetMessage MessageHeader = new NetMessage();
-            MessageHeader.ReadHeader(MessageBuffer);
+            MessageHeaderTempStorage.ReadHeader(MessageBuffer);
 
-            if (MessageHeader.PayloadSize > NetMessage.MaxPayloadSize)
+            int TotalSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize;
+
+            if (TotalSize > NetMessage.HeaderSize + NetMessage.MaxPayloadSize)
             {
-                Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message with payload above max size {0}, disconnecting", MessageHeader.PayloadSize);
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message with payload above max size {0}, disconnecting", MessageHeaderTempStorage.PayloadSize);
+                ReleaseMessageBuffer(MessageBuffer);
                 QueueDisconnect();
                 return;
             }
 
-            // Make sure buffer has enough space.
-            if (MessageBuffer.Length < NetMessage.HeaderSize + MessageHeader.PayloadSize)
+            if (MessageBuffer.Length < TotalSize)
             {
-                Array.Resize(ref MessageBuffer, NetMessage.HeaderSize + MessageHeader.PayloadSize);
+                Array.Resize(ref MessageBuffer, TotalSize);
             }
 
             // If no payload, we have the full message.
-            if (MessageHeader.PayloadSize == 0)
+            if (MessageHeaderTempStorage.PayloadSize == 0)
             {
-                ProcessMessage(MessageBuffer, NetMessage.HeaderSize + MessageHeader.PayloadSize);
-
+                ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer,  BufferSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize });
                 BeginRecievingHeader();
             }
             else
             {
-                BeginRecievingPayloadWithOffset(0, MessageHeader.PayloadSize);
+                BeginRecievingPayloadWithOffset(MessageBuffer, 0, MessageHeaderTempStorage.PayloadSize);
             }
         }
 
@@ -861,7 +916,7 @@ namespace BuildSync.Core.Networking
         /// </summary>
         /// <param name="Offset"></param>
         /// <param name="Size"></param>
-        private void BeginRecievingPayloadWithOffset(int Offset, int Size)
+        private void BeginRecievingPayloadWithOffset(byte[] MessageBuffer, int Offset, int Size)
         {
             try
             {
@@ -880,17 +935,18 @@ namespace BuildSync.Core.Networking
 
                         if (BytesRecieved < Size)
                         {
-                            BeginRecievingPayloadWithOffset(Offset + BytesRecieved, Size - BytesRecieved);
+                            BeginRecievingPayloadWithOffset(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved);
                             return;
                         }
 
-                        ProcessMessage(MessageBuffer, NetMessage.HeaderSize + Offset + Size);
+                        ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size });
 
                         BeginRecievingHeader();
                     }
                     catch (Exception ex)
                     {
                         Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
+                        ReleaseMessageBuffer(MessageBuffer);
                         QueueDisconnect();
                     }
                     finally
@@ -901,6 +957,8 @@ namespace BuildSync.Core.Networking
             }
             catch (Exception ex)
             {
+                ReleaseMessageBuffer(MessageBuffer);
+
                 RecordEndAsyncCall(AsyncCallType.Recieve);
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
                 QueueDisconnect();
@@ -910,15 +968,44 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        /// <returns></returns>
+        private byte[] AllocMessageBuffer()
+        {
+            byte[] Serialized = null;
+            while (MessageBuffers.Count > 0 || MessageBufferCount == MaxMessageBuffers)
+            {
+                if (MessageBuffers.TryTake(out Serialized))
+                {
+                    return Serialized;
+                }
+            }
+
+            Serialized = new byte[2 * 1024 * 1024];
+            Interlocked.Increment(ref MessageBufferCount);
+            Logger.Log(LogLevel.Info, LogCategory.Transport, "Allocating new message buffer, now a total of {0} buffers ({1} in queue).", MessageBufferCount, MessageBuffers.Count);
+            return Serialized;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Buffer"></param>
+        private void ReleaseMessageBuffer(byte[] Buffer)
+        {
+            MessageBuffers.Add(Buffer);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private void ProcessMessage(byte[] Buffer, int Size = 0)
         {
-            //Stopwatch stop = new Stopwatch();
-            //stop.Start();
-
             NetMessage Message = NetMessage.FromByteArray(Buffer);
             if (Message != null)
             {
                 //Logger.Log(LogLevel.Info, LogCategory.Transport, "Recieved message of type {0} from {1}", Message.GetType().Name, Address.ToString());
+
+                bool CleanupHandled = false;
 
                 if (Message is NetMessage_HandshakeResult)
                 {
@@ -956,9 +1043,13 @@ namespace BuildSync.Core.Networking
                 }
                 else if (Handshake != null && !HandshakeFailed)
                 {
+                    CleanupHandled = true;
                     lock (EventQueue)
                     {
-                        EventQueue.Enqueue(() => { OnMessageRecieved?.Invoke(this, Message); });
+                        EventQueue.Enqueue(() => { 
+                            OnMessageRecieved?.Invoke(this, Message);
+                            Message.Cleanup();
+                        });
                     }
                 }
                 else
@@ -966,15 +1057,17 @@ namespace BuildSync.Core.Networking
                     Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message before recieving handshake, disconnecting.", Address.ToString());
                     QueueDisconnect();
                 }
+
+                if (!CleanupHandled)
+                {
+                    Message.Cleanup();
+                }
             }
             else
             {
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to decode message, disconnecting.", Address.ToString());
                 QueueDisconnect();
             }
-
-            //stop.Stop();
-            //Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to process message: {0} size was {1}kb type {2}", ((float)stop.ElapsedTicks / (Stopwatch.Frequency/1000.0)), Size/1024, Message.GetType().Name);
         }
     }
 }

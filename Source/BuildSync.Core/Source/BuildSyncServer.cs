@@ -246,6 +246,10 @@ namespace BuildSync.Core
                 {
                     continue;
                 }
+                if (ClientState.PeerConnectionAddress == null)
+                {
+                    continue;
+                }
 
                 if (ClientState.BlockState.HasAnyBlocksNeeded(ForClientState.BlockState))
                 {
@@ -490,6 +494,16 @@ namespace BuildSync.Core
                 {
                     State.Username = Msg.Username;
                     State.PermissionsNeedUpdate = true;
+                }
+                // Dirty all peer states to force an address update (todo: this is shit we should only update relevant peers).
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ClientState SubState = ClientConnection.Metadata as ClientState;
+                        SubState.RelevantPeerAddressesNeedUpdate = true;
+                    }
                 }
 
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Clients username was updated to: " + State.Username);

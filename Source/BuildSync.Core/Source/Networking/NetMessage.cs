@@ -12,7 +12,7 @@ namespace BuildSync.Core.Networking
     public class NetMessage
     {
         public const int HeaderSize = 8;
-        public const int MaxPayloadSize = 128 * 1024 * 1024;
+        public const int MaxPayloadSize = (100 * 1024 * 1024);
 
         public int Id = 0;
         public int PayloadSize = 0;
@@ -31,6 +31,11 @@ namespace BuildSync.Core.Networking
             writer.Write(PayloadSize);
         }
 
+        internal virtual void Cleanup()
+        {
+            // Implement in derived class.
+        }
+
         protected virtual void SerializePayload(NetMessageSerializer reader)
         {
             // Implement in derived class.
@@ -38,32 +43,40 @@ namespace BuildSync.Core.Networking
 
         public static void LoadMessageTypes()
         {
-            MessageTypes.Clear();
-
-            foreach (Assembly Assembly in AppDomain.CurrentDomain.GetAssemblies())
+            lock (MessageTypes)
             {
-                try
+                if (MessageTypes.Count > 0)
                 {
-                    foreach (Type Type in Assembly.GetTypes())
-                    {
-                        if (typeof(NetMessage).IsAssignableFrom(Type))
-                        {
-                            MessageTypes.Add(Type.Name.GetHashCode(), Type);
-                        }
-                    }
-
+                    return;
                 }
-                catch (ReflectionTypeLoadException)
+                MessageTypes.Clear();
+
+                foreach (Assembly Assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    // Skip this assembly, for some reason any runtime generated (via dynamic complilation) assemblies
-                    // cannot have their types examined.
+                    try
+                    {
+                        foreach (Type Type in Assembly.GetTypes())
+                        {
+                            if (typeof(NetMessage).IsAssignableFrom(Type))
+                            {
+                                MessageTypes.Add(Type.Name.GetHashCode(), Type);
+                            }
+                        }
+
+                    }
+                    catch (ReflectionTypeLoadException)
+                    {
+                        // Skip this assembly, for some reason any runtime generated (via dynamic complilation) assemblies
+                        // cannot have their types examined.
+                    }
                 }
             }
         }
 
-        public byte[] ToByteArray()
+        public int ToByteArray(ref byte[] Output)
         {
-            MemoryStream dataStream = new MemoryStream();
+            ExpandableMemoryStream dataStream = new ExpandableMemoryStream(Output);
+            //MemoryStream dataStream = new MemoryStream(Output);
             BinaryWriter dataWriter = new BinaryWriter(dataStream);
 
             dataStream.Seek(HeaderSize, SeekOrigin.Begin);
@@ -79,7 +92,8 @@ namespace BuildSync.Core.Networking
             dataWriter.Close();
             dataStream.Close();
 
-            return dataStream.ToArray();
+            Output = dataStream.GetBuffer();
+            return HeaderSize + PayloadSize;
         }
 
         public static NetMessage FromByteArray(byte[] Buffer)

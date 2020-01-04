@@ -412,6 +412,9 @@ namespace BuildSync.Core.Users
             }
 
             user.Permissions = Permissions;
+
+            PermissionsUpdated?.Invoke(user);
+
             return true;
         }
     }

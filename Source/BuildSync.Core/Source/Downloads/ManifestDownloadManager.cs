@@ -56,6 +56,8 @@ namespace BuildSync.Core.Downloads
 
         public ulong TimeStarted;
         public long Size;
+
+        public bool Recieved;
     }
 
     /// <summary>
@@ -139,7 +141,9 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        private const int IdealDownloadQueueSize = 100;
+        private const int IdealDownloadQueueSizeBytes = 250 * 1024 * 1024;
+
+        private const int MaxDownloadQueueItems = 500;
 
         /// <summary>
         /// 
@@ -1055,7 +1059,8 @@ namespace BuildSync.Core.Downloads
             // To do this we go through each manifest in priority order. The higher the priority the more blocks they get to add to the queue.
             // Keep going until queue is at max size.
             DownloadQueue = new List<ManifestPendingDownloadBlock>();
-            while (DownloadQueue.Count < IdealDownloadQueueSize)
+            long TotalSize = 0;
+            while (TotalSize < IdealDownloadQueueSizeBytes && DownloadQueue.Count < MaxDownloadQueueItems)
             {
                 bool BlocksAdded = false;
 
@@ -1068,6 +1073,8 @@ namespace BuildSync.Core.Downloads
 
                         DownloadQueue.Add(new ManifestPendingDownloadBlock { BlockIndex = Block.RangeStart, ManifestId = Queue.ManifestId });
                         BlocksAdded = true;
+
+                        TotalSize += Block.Size;
 
                         Block.RangeStart++;
                         if (Block.RangeStart > Block.RangeEnd)

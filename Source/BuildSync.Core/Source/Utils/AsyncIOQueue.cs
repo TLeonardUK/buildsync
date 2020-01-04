@@ -253,7 +253,7 @@ namespace BuildSync.Core.Utils
                     }
                     else
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.IO, "Closing stream for async queue (as we have reached maximum stream count): {0}", OldestStream.Path);
+                        Logger.Log(LogLevel.Verbose, LogCategory.IO, "Closing stream for async queue (as we have reached maximum stream count): {0}", OldestStream.Path);
 
                         OldestStream.Stream.Close();
 
@@ -263,7 +263,7 @@ namespace BuildSync.Core.Utils
 
                 try
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.IO, "Opening stream for async queue (can write = {0}): {1}", RequireWrite, Path);
+                    Logger.Log(LogLevel.Verbose, LogCategory.IO, "Opening stream for async queue (can write = {0}): {1}", RequireWrite, Path);
 
                     ActiveStream NewStm = new ActiveStream();
                     NewStm.LastAccessed = TimeUtils.Ticks;
@@ -301,7 +301,7 @@ namespace BuildSync.Core.Utils
                     ulong Elapsed = TimeUtils.Ticks - Stm.LastAccessed;
                     if (Elapsed > MaxStreamAge && Stm.ActiveOperations == 0)
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.IO, "Closing stream for async queue: {0}", Stm.Path);
+                        Logger.Log(LogLevel.Verbose, LogCategory.IO, "Closing stream for async queue: {0}", Stm.Path);
 
                         Stm.Stream.Close();
 
@@ -400,7 +400,7 @@ namespace BuildSync.Core.Utils
                             }
                             finally
                             {
-                                Interlocked.Add(ref InternalQueuedOut, -Work.Size);
+                                Interlocked.Add(ref InternalQueuedIn, -Work.Size);
                                 Interlocked.Decrement(ref Stm.ActiveOperations);
                             }
 
@@ -411,7 +411,7 @@ namespace BuildSync.Core.Utils
                         Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to write to file {0} with error: {1}", Stm.Path, Ex.Message);
 
                         Work.Callback?.Invoke(false);
-                        Interlocked.Add(ref InternalQueuedOut, -Work.Size);
+                        Interlocked.Add(ref InternalQueuedIn, -Work.Size);
                         Interlocked.Decrement(ref Stm.ActiveOperations);
                     }
                 }
@@ -515,7 +515,7 @@ namespace BuildSync.Core.Utils
         /// <param name="Size"></param>
         public void Write(string InPath, long InOffset, long InSize, byte[] InData, IOCompleteCallbackHandler InCallback)
         {
-            Interlocked.Add(ref InternalQueuedOut, InSize);
+            Interlocked.Add(ref InternalQueuedIn, InSize);
             TaskQueue.Enqueue(new Task { Type = TaskType.Write, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
             WakeThread();
         }
@@ -528,7 +528,7 @@ namespace BuildSync.Core.Utils
         /// <param name="Size"></param>
         public void Read(string InPath, long InOffset, long InSize, byte[] InData, IOCompleteCallbackHandler InCallback)
         {
-            Interlocked.Add(ref InternalQueuedIn, InSize);
+            Interlocked.Add(ref InternalQueuedOut, InSize);
             TaskQueue.Enqueue(new Task { Type = TaskType.Read, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
             WakeThread();
         }

@@ -1,0 +1,15 @@
+Microsoft HTML Help Compiler 4.74.8702
+
+Compiling f:\buildsync\Docs\Chm\Docs.chm
+
+Html\Overview.html
+
+Compile time: 0 minutes, 0 seconds
+2	Topics
+1	Local link
+0	Internet links
+0	Graphics
+
+
+Created f:\buildsync\Docs\Chm\Docs.chm, 10,926 bytes
+Compression increased file by 9,283 bytes.

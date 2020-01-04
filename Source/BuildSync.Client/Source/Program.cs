@@ -327,6 +327,11 @@ namespace BuildSync.Client
 
             // Setup the virtual file system we will store our available builds in.
             BuildFileSystem = new VirtualFileSystem();
+            NetClient.OnPermissionsUpdated += () =>
+            {
+                BuildFileSystem.ForceRefresh();
+                DownloadManager.ForceRefresh();
+            };
             NetClient.OnConnectedToServer += () =>
             {
                 BuildFileSystem.ForceRefresh();
