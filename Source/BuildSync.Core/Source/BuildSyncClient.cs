@@ -207,6 +207,17 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
+            /// <param name="Block"></param>
+            private void UpdateLatency(ManifestPendingDownloadBlock Download)
+            {
+                ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+                BlockRecieveLatency = (BlockRecieveLatency * 0.5f) + (Elapsed * 0.5f);
+                AverageBlockSize = (AverageBlockSize * 0.5f) + (Download.Size * 0.5f);
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
             /// <param name="ManifestId"></param>
             /// <param name="BlockIndex"></param>
             public void MarkActiveBlockDownloadAsRecieved(Guid ManifestId, int BlockIndex)
@@ -222,12 +233,8 @@ namespace BuildSync.Core
                         {
                             if (!Download.Recieved)
                             {
-                                ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
-                                BlockRecieveLatency = (BlockRecieveLatency * 0.85f) + (Elapsed * 0.15f);
-                                AverageBlockSize = (AverageBlockSize * 0.85f) + (Download.Size * 0.15f);
-
+                                UpdateLatency(Download);
                                 ActiveBlockDownloadSize -= Download.Size;
-
                                 Download.Recieved = true;
                                 ActiveBlockDownloads[i] = Download;
                             }
@@ -254,8 +261,8 @@ namespace BuildSync.Core
                         {
                             if (!Download.Recieved)
                             {
+                                UpdateLatency(Download);
                                 ActiveBlockDownloadSize -= Download.Size;
-
                                 Download.Recieved = true;
                                 ActiveBlockDownloads[i] = Download;
                             }
@@ -578,6 +585,10 @@ namespace BuildSync.Core
             Connection.OnHandshakeResult += (NetConnection Connection, HandshakeResultType ResultType) => { HandshakeResult = ResultType; };
 
             ListenConnection.OnClientConnect += PeerConnected;
+
+            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 164);
+            MemoryPool.PreallocateBuffers(4 * 1024 * 1024, 8); // CRC'ing buffers.
+            NetConnection.PreallocateBuffers(32);
         }
 
         /// <summary>
@@ -814,11 +825,8 @@ namespace BuildSync.Core
                     }
 
                     // Get block information so we know if its small enough to add to any peers queue.
-                    long BlockOffset = 0;
-                    long BlockSize = 0;
-                    BuildManifestFileInfo FileInfo = null;
-
-                    if (!ManifestDownloadManager.GetBlockInfo(Item.ManifestId, Item.BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
+                    BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
+                    if (!ManifestDownloadManager.GetBlockInfo(Item.ManifestId, Item.BlockIndex, ref BlockInfo))
                     {
                         continue;
                     }
@@ -834,18 +842,18 @@ namespace BuildSync.Core
                         long MaxInFlightBytes = 0;
                         if (peer.BlockRecieveLatency < 5 || peer.AverageBlockSize < 1024)
                         {
-                            MaxInFlightBytes = 1 * 1024 * 1024;
+                            MaxInFlightBytes = BuildManifest.BlockSize;
                         }
                         else
                         {
-                            MaxInFlightBytes = (long)((TargetMillisecondsOfDataInFlight / peer.BlockRecieveLatency) * peer.AverageBlockSize);
+                            MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMillisecondsOfDataInFlight / peer.BlockRecieveLatency) * peer.AverageBlockSize));
                         }
                         
-                        //Console.WriteLine("Target:{0} ({1} mb) Actual:{2} ({3} mb) TotalDownloads:{4}", MaxInFlightBytes, MaxInFlightBytes / 1024.0f / 1024.0f, peer.ActiveBlockDownloadSize, peer.ActiveBlockDownloadSize / 1024.0f / 1024.0f, peer.ActiveBlockDownloads.Count);
+                        //Console.WriteLine("Target:{0} ({1} mb) Latency:{2} BlockSize:{3} Actual:{4} ({5} mb) TotalDownloads:{4}", MaxInFlightBytes, MaxInFlightBytes / 1024.0f / 1024.0f, peer.BlockRecieveLatency, peer.AverageBlockSize, peer.ActiveBlockDownloadSize, peer.ActiveBlockDownloadSize / 1024.0f / 1024.0f, peer.ActiveBlockDownloads.Count);
 
                         // TODO: Take disk queue into account.
 
-                        if ((peer.ActiveBlockDownloadSize + BlockSize <= MaxInFlightBytes || BlockSize > MaxInFlightBytes) && peer.HasBlock(Item))
+                        if ((peer.ActiveBlockDownloadSize + BlockInfo.TotalSize <= MaxInFlightBytes || BlockInfo.TotalSize > MaxInFlightBytes) && peer.HasBlock(Item))
                         {
                             NetMessage_GetBlock Msg = new NetMessage_GetBlock();
                             Msg.ManifestId = Item.ManifestId;
@@ -853,7 +861,7 @@ namespace BuildSync.Core
                             peer.Connection.Send(Msg);
 
                             Item.TimeStarted = TimeUtils.Ticks;
-                            Item.Size = BlockSize;
+                            Item.Size = BlockInfo.TotalSize;
 
                             peer.AddActiveBlockDownload(Item);
 
@@ -1403,7 +1411,7 @@ namespace BuildSync.Core
                     Peer peer = GetPeerByConnection(Connection);
                     if (peer != null)
                     {
-                        peer.MarkActiveBlockDownloadAsRecieved(Msg.ManifestId, Msg.BlockIndex);
+                        //peer.MarkActiveBlockDownloadAsRecieved(Msg.ManifestId, Msg.BlockIndex);
                     }
 
                     ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, (bool bSuccess) =>

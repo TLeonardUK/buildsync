@@ -583,6 +583,67 @@ namespace BuildSync.Core.Networking
             }
         }
 
+        public void ConnectToIP(IPEndPoint EndPoint)
+        {
+            try
+            {
+                Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                Logger.Log(LogLevel.Info, LogCategory.Transport, "Connecting to {0}", Address.ToString());
+
+                RecordBeginAsyncCall(AsyncCallType.Connect);
+                Socket.BeginConnect(Address, Result =>
+                {
+                    try
+                    {
+                        Socket.EndConnect(Result);
+
+                        Logger.Log(LogLevel.Info, LogCategory.Transport, "Connected to {0}", Socket.RemoteEndPoint.ToString());
+
+                        lock (EventQueue)
+                        {
+                            EventQueue.Enqueue(() => { OnConnect?.Invoke(this); });
+                        }
+
+                        // Send handshake.
+                        NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
+                        HandshakeMsg.Version = AppVersion.VersionNumber;
+                        Send(HandshakeMsg);
+
+                        BeginSendThread();
+                        BeginRecievingHeader();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Address.ToString(), ex.Message);
+
+                        lock (EventQueue)
+                        {
+                            EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                        }
+                    }
+                    finally
+                    {
+                        RecordEndAsyncCall(AsyncCallType.Connect);
+                        Connecting = false;
+                    }
+                },
+                this);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", EndPoint.ToString(), ex.Message);
+                Connecting = false;
+
+                lock (EventQueue)
+                {
+                    EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                }
+
+                RecordEndAsyncCall(AsyncCallType.Connect);
+            }
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -599,94 +660,55 @@ namespace BuildSync.Core.Networking
 
             try
             {
-                RecordBeginAsyncCall(AsyncCallType.Dns);
-                Dns.BeginGetHostEntry(Hostname, DnsResult =>
+                // If its already an IP, no need to do a hostname lookup.
+                IPAddress HostnameAddress;
+                if (IPAddress.TryParse(Hostname, out HostnameAddress))
                 {
-                    bool BegunSocketConnect = false;
-
-                    try
+                    Address = new IPEndPoint(HostnameAddress, Port);
+                    ConnectToIP(Address);
+                }
+                else
+                {
+                    RecordBeginAsyncCall(AsyncCallType.Dns);
+                    Dns.BeginGetHostEntry(Hostname, DnsResult =>
                     {
-                        IPHostEntry HostEntry = Dns.EndGetHostEntry(DnsResult);
-
-                        foreach (IPAddress address in HostEntry.AddressList)
+                        try
                         {
-                            if (address.AddressFamily == AddressFamily.InterNetwork ||
-                                address.AddressFamily == AddressFamily.InterNetworkV6)
+                            IPHostEntry HostEntry = Dns.EndGetHostEntry(DnsResult);
+
+                            foreach (IPAddress address in HostEntry.AddressList)
                             {
-                                Address = new IPEndPoint(address, Port);
-                            }
-                        }
-
-                        if (Address == null)
-                        {
-                            throw new Exception("Address is not valid '" + Hostname + "'.");
-                        }
-
-                        Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                        Logger.Log(LogLevel.Info, LogCategory.Transport, "Connecting to {0} ({1})", Address.ToString(), HostEntry.HostName);
-
-                        RecordBeginAsyncCall(AsyncCallType.Connect);
-                        BegunSocketConnect = true;
-                        Socket.BeginConnect(Address, Result =>
-                        {
-                            try
-                            {
-                                Socket.EndConnect(Result);
-
-                                Logger.Log(LogLevel.Info, LogCategory.Transport, "Connected to {0}", Socket.RemoteEndPoint.ToString());
-
-                                lock (EventQueue)
+                                if (address.AddressFamily == AddressFamily.InterNetwork ||
+                                    address.AddressFamily == AddressFamily.InterNetworkV6)
                                 {
-                                    EventQueue.Enqueue(() => { OnConnect?.Invoke(this); });
-                                }
-
-                                // Send handshake.
-                                NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
-                                HandshakeMsg.Version = AppVersion.VersionNumber;
-                                Send(HandshakeMsg);
-
-                                BeginSendThread();
-                                BeginRecievingHeader();
-                            }
-                            catch (Exception ex)
-                            {
-                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Address.ToString(), ex.Message);
-
-                                lock (EventQueue)
-                                {
-                                    EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                                    Address = new IPEndPoint(address, Port);
                                 }
                             }
-                            finally
+
+                            if (Address == null)
                             {
-                                RecordEndAsyncCall(AsyncCallType.Connect);
-                                Connecting = false;
+                                throw new Exception("Address is not valid '" + Hostname + "'.");
                             }
-                        },
-                        this);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Hostname, ex.Message);
-                        Connecting = false;
 
-                        lock (EventQueue)
+                            ConnectToIP(Address);
+                        }
+                        catch (Exception ex)
                         {
-                            EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Hostname, ex.Message);
+                            Connecting = false;
+
+                            lock (EventQueue)
+                            {
+                                EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                            }
+                        }
+                        finally
+                        {
+                            RecordEndAsyncCall(AsyncCallType.Dns);
                         }
 
-                        if (BegunSocketConnect)
-                        {
-                            RecordEndAsyncCall(AsyncCallType.Connect);
-                        }
-                    }
-                    finally
-                    {
-                        RecordEndAsyncCall(AsyncCallType.Dns);
-                    }
-
-                }, null);
+                    }, null);
+                }
             }
             catch (Exception ex)
             {
@@ -968,6 +990,19 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        public static void PreallocateBuffers(int Count)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                byte[] Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                Interlocked.Increment(ref MessageBufferCount);
+                MessageBuffers.Add(Serialized);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <returns></returns>
         private byte[] AllocMessageBuffer()
         {
@@ -980,9 +1015,9 @@ namespace BuildSync.Core.Networking
                 }
             }
 
-            Serialized = new byte[2 * 1024 * 1024];
+            Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
             Interlocked.Increment(ref MessageBufferCount);
-            Logger.Log(LogLevel.Info, LogCategory.Transport, "Allocating new message buffer, now a total of {0} buffers ({1} in queue).", MessageBufferCount, MessageBuffers.Count);
+            Logger.Log(LogLevel.Info, LogCategory.Transport, "Dynamically allocating new message buffer, now a total of {0} buffers ({1} in queue).", MessageBufferCount, MessageBuffers.Count);
             return Serialized;
         }
 

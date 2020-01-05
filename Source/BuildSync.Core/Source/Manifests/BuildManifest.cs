@@ -53,7 +53,7 @@ namespace BuildSync.Core.Manifests
     /// <summary>
     /// 
     /// </summary>
-    public struct BuildManifestBlockInfo
+    public struct BuildManifestSubBlockInfo
     {
         /// <summary>
         /// 
@@ -63,12 +63,33 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public long Offset;
+        public long FileOffset;
 
         /// <summary>
         /// 
         /// </summary>
-        public long Size;
+        public long FileSize;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long OffsetInBlock;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public struct BuildManifestBlockInfo
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<BuildManifestSubBlockInfo> SubBlocks;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long TotalSize;
     }
 
     /// <summary>
@@ -95,7 +116,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public long BlockSize = 1024 * 1024;
+        public static long BlockSize = 1 * 1024 * 1024;
 
         /// <summary>
         /// 
@@ -143,7 +164,13 @@ namespace BuildSync.Core.Manifests
             BlockInfo = new BuildManifestBlockInfo[BlockCount];
             FilesByPath = new Dictionary<string, BuildManifestFileInfo>();
 
+            // Make a list of all possible sub-blocks.
+
+
+            // Take largest sub-block, then fill remaining space with other blocks.
+
             int BlockIndex = 0;
+            long TotalBlockSize = 0;
             foreach (BuildManifestFileInfo FileInfo in Files)
             {
                 long FileOffset = 0;
@@ -152,17 +179,32 @@ namespace BuildSync.Core.Manifests
 
                 while (true)
                 {
-                    long BytesRemaining = (FileInfo.Size - FileOffset);
-                    long BytesBlock = Math.Min(BytesRemaining, BlockSize);
+                    long BytesLeftInBlock = (BlockSize - BlockInfo[BlockIndex].TotalSize);
 
-                    BlockInfo[BlockIndex].File = FileInfo;
-                    BlockInfo[BlockIndex].Offset = FileOffset;
-                    BlockInfo[BlockIndex].Size = BytesBlock;
+                    long BytesLeftInFile = (FileInfo.Size - FileOffset);
+                    long BytesInSubBlock = Math.Min(BytesLeftInFile, BytesLeftInBlock);
 
+                    BuildManifestSubBlockInfo SubBlock;
+                    SubBlock.File = FileInfo;
+                    SubBlock.FileOffset = FileOffset;
+                    SubBlock.FileSize = BytesInSubBlock;
+                    SubBlock.OffsetInBlock = BlockInfo[BlockIndex].TotalSize;
+
+                    if (BlockInfo[BlockIndex].SubBlocks == null)
+                    {
+                        BlockInfo[BlockIndex].SubBlocks = new List<BuildManifestSubBlockInfo>();
+                    }
+                    BlockInfo[BlockIndex].SubBlocks.Add(SubBlock);
+                    BlockInfo[BlockIndex].TotalSize += BytesInSubBlock;
+                    TotalBlockSize += BytesInSubBlock;
                     FileInfo.LastBlockIndex = BlockIndex;
 
-                    BlockIndex++;
-                    FileOffset += BlockSize;
+                    if (BlockInfo[BlockIndex].TotalSize >= BlockSize)
+                    {
+                        BlockIndex++;
+                    }
+
+                    FileOffset += BytesInSubBlock;
 
                     // Got to end of this file, onto the next one.
                     if (FileOffset >= FileInfo.Size)
@@ -179,6 +221,8 @@ namespace BuildSync.Core.Manifests
                 TotalSize += FileInfo.Size;
                 FilesByPath.Add(FileInfo.Path, FileInfo);
             }
+
+            Console.WriteLine("Blocks:{0}/{1} Size:{2}/{3}", BlockIndex, BlockCount, TotalBlockSize, TotalSize);
         }
 
         /// <summary>
@@ -193,7 +237,7 @@ namespace BuildSync.Core.Manifests
             {
                 if (Blocks.Get(i))
                 {
-                    Result += BlockInfo[i].Size;
+                    Result += BlockInfo[i].TotalSize;
                 }
             }
 
@@ -205,18 +249,6 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public void DebugCheck()
         {
-            /*for (int i = 0; i < BlockCount; i++)
-            {*/
-                BuildManifestFileInfo FileInfo = new BuildManifestFileInfo();
-                long BlockOffset = 0;
-                long BlockSize = 0;
-                GetBlockInfo((int)(BlockCount - 1), ref FileInfo, ref BlockOffset, ref BlockSize);
-            //}
-
-            for (int i = 0; i < Files.Count; i++)
-            {
-                GetFileBlocks(Files[i].Path);
-            }
         }
 
         /// <summary>
@@ -263,19 +295,14 @@ namespace BuildSync.Core.Manifests
         /// <param name="Offset"></param>
         /// <param name="Size"></param>
         /// <returns></returns>
-        public bool GetBlockInfo(int Index, ref BuildManifestFileInfo File, ref long Offset, ref long Size)
+        public bool GetBlockInfo(int Index, ref BuildManifestBlockInfo Info)
         {
             if (Index < 0 || Index >= BlockCount)
             {
                 throw new ArgumentOutOfRangeException("Index", "Block index out of range.");
             }
 
-            BuildManifestBlockInfo Block = BlockInfo[Index];
-
-            File = Block.File;
-            Offset = Block.Offset;
-            Size = Block.Size;
-
+            Info = BlockInfo[Index];
             return true;
         }
 
@@ -304,6 +331,7 @@ namespace BuildSync.Core.Manifests
 
                 using (FileStream Stream = File.OpenWrite(FilePath))
                 {
+                    Stream.SetLength(FileInfo.Size);
                     /*
                     for (int Offset = 0; Offset < FileInfo.Size; Offset += WriteChunkSize)
                     {
@@ -312,11 +340,11 @@ namespace BuildSync.Core.Manifests
                         Stream.Write(ChunkArray, 0, (int)ChunkSize);
                     }
                     */
-                    if (FileInfo.Size > 0)
+                    /*if (FileInfo.Size > 0)
                     {
                         Stream.Seek(FileInfo.Size - 1, SeekOrigin.Begin);
                         Stream.Write(ChunkArray, 0, 1);
-                    }
+                    }*/
                 }
             }
         }
@@ -324,49 +352,17 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="RootPath"></param>
-        /// <param name="BlockIndex"></param>
-        /// <param name="Data"></param>
-        public void StoreBlock(string RootPath, int BlockIndex, byte[] Data)
-        {
-            BuildManifestFileInfo FileInfo = null;
-            long BlockOffset = 0;
-            long BlockSize = 0;
-
-            GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize);
-
-            string FilePath = Path.Combine(RootPath, FileInfo.Path);
-
-            if (File.Exists(FilePath))
-            {
-                throw new ArgumentOutOfRangeException("RootPath", "File to store block in does not exists. File system may have been modified externally?");
-            }
-
-            if (Data.Length < BlockSize)
-            {
-                throw new ArgumentOutOfRangeException("Data", "Data is smaller than the expected size of the block.");
-            }
-
-            using (FileStream Stream = File.OpenWrite(FilePath))
-            {
-                Stream.Seek(BlockOffset, SeekOrigin.Begin);
-                Stream.Write(Data, 0, (int)BlockSize);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<string> Validate(string RootPath)
+        public List<string> Validate(string RootPath, BandwidthTracker Tracker)
         {
             List<string> FailedFiles = new List<string>();
 
-            List<Task> FileTasks = new List<Task>();
+            int TaskCount = Environment.ProcessorCount * 16;
+            Task[] FileTasks = new Task[TaskCount];
             int FileCounter = 0;
 
-            for (int i = 0; i < Environment.ProcessorCount; i++)
+            for (int i = 0; i < TaskCount; i++)
             {
-                FileTasks.Add(Task.Run(() =>
+                FileTasks[i] = (Task.Run(() =>
                 {
                     while (true)
                     {
@@ -390,7 +386,7 @@ namespace BuildSync.Core.Manifests
                             }
                         }
 
-                        string Checksum = FileUtils.GetChecksum(FilePath);
+                        string Checksum = FileUtils.GetChecksum(FilePath, Tracker);
                         if (FileInfo.Checksum != Checksum)
                         {
                             Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File '" + FilePath + "' has an invalid checksum (got {0} expected {1}), file system may have been modified externally.", Checksum, FileInfo.Checksum);
@@ -404,11 +400,8 @@ namespace BuildSync.Core.Manifests
                 }));
             }
 
-            foreach (Task task in FileTasks)
-            {
-                task.Wait();
-            }
-           
+            Task.WaitAll(FileTasks);
+
             return FailedFiles;
         }
 
@@ -417,12 +410,22 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public static BuildManifest BuildFromDirectory(Guid NewManifestId, string RootPath, string VirtualPath, BuildManfiestProgressCallbackHandler Callback = null)
         {
-            string[] Files = Directory.GetFiles(RootPath, "*", SearchOption.AllDirectories);
+            string[] FileNames = Directory.GetFiles(RootPath, "*", SearchOption.AllDirectories);
+            FileInfo[] FileInfos = new FileInfo[FileNames.Length];
+            long TotalSize = 0;
+            for (int i = 0; i < FileNames.Length; i++)
+            {
+                FileInfos[i] = new FileInfo(FileNames[i]);
+                TotalSize += FileInfos[i].Length;
+            }
+
+            // Order files by size so they fit into sub-blocks more optimally.
+            Array.Sort(FileInfos, (Item1, Item2) => Item1.Length.CompareTo(Item2.Length));
 
             BuildManifest Manifest = new BuildManifest();
             Manifest.Guid = NewManifestId;
             Manifest.VirtualPath = VirtualPath;
-            Manifest.BlockCount = 0;
+            Manifest.BlockCount = Math.Max(1, (TotalSize + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize);
 
             List<Task> FileTasks = new List<Task>();
             int FileCounter = 0;
@@ -434,34 +437,31 @@ namespace BuildSync.Core.Manifests
                     while (true)
                     {
                         int FileIndex = Interlocked.Increment(ref FileCounter) - 1;
-                        if (FileIndex >= Files.Length)
+                        if (FileIndex >= FileInfos.Length)
                         {
                             break;
                         }
 
-                        string SubFile = Files[FileIndex];
+                        FileInfo SubFileInfo = FileInfos[FileIndex];
+                        string SubFile = SubFileInfo.FullName;
                         string RelativePath = SubFile.Substring(RootPath.Length).Trim('\\', '/');
 
                         if (Callback != null)
                         {
                             lock (Callback)
                             {
-                                Callback(RelativePath, ((float)FileIndex / (float)Files.Length) * 100);
+                                Callback(RelativePath, ((float)FileIndex / (float)FileInfos.Length) * 100);
                             }
                         }
 
                         BuildManifestFileInfo ManifestFileInfo = new BuildManifestFileInfo();
                         ManifestFileInfo.Path = RelativePath;
                         ManifestFileInfo.Size = (new FileInfo(SubFile)).Length;
-                        ManifestFileInfo.Checksum = FileUtils.GetChecksum(SubFile);
+                        ManifestFileInfo.Checksum = FileUtils.GetChecksum(SubFile, null);
                         lock (Manifest)
                         {
                             Manifest.Files.Add(ManifestFileInfo);
                         }
-
-                        long FileBlockCount = Math.Max(1, (ManifestFileInfo.Size + (Manifest.BlockSize - 1)) / Manifest.BlockSize);
-                        //Logger.Log(LogLevel.Info, LogCategory.Manifest, "File[{0}] Size={1} Blocks={2}", ManifestFileInfo.Path, ManifestFileInfo.Size, FileBlockCount);
-                        Interlocked.Add(ref Manifest.BlockCount, FileBlockCount);
                     }
                 }));
             }

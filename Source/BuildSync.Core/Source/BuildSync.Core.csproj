@@ -149,11 +149,13 @@
     <Compile Include="Utils\AsyncIOQueue.cs" />
     <Compile Include="Utils\BandwidthTracker.cs" />
     <Compile Include="Utils\CommandIPC.cs" />
+    <Compile Include="Utils\Crc32.cs" />
     <Compile Include="Utils\DynamicPropertyGrid.cs" />
     <Compile Include="Utils\ExapandableMemoryStream.cs" />
     <Compile Include="Utils\FileUtils.cs" />
     <Compile Include="Utils\HostnameCache.cs" />
     <Compile Include="Utils\Logger.cs" />
+    <Compile Include="Utils\MemoryPool.cs" />
     <Compile Include="Utils\ProcessUtils.cs" />
     <Compile Include="Utils\SettingsBase.cs" />
     <Compile Include="Utils\SingleGlobalInstance.cs" />

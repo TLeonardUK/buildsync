@@ -51,7 +51,7 @@ namespace BuildSync.Core.Utils
         /// <param name="append"></param>
         /// <returns></returns>
         public static byte[] WriteToArray<T>(T objectToWrite)
-        {             
+        {
             using (MemoryStream stream = new MemoryStream())
             {
                 var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
@@ -106,13 +106,13 @@ namespace BuildSync.Core.Utils
             byte[] Data = File.ReadAllBytes(filePath);
             return ReadFromArray<T>(Data);
 
-/*
- *          using (Stream stream = File.Open(filePath, FileMode.Open))
-            {
-                var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                return (T)binaryFormatter.Deserialize(stream);
-            }
-            */
+            /*
+             *          using (Stream stream = File.Open(filePath, FileMode.Open))
+                        {
+                            var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                            return (T)binaryFormatter.Deserialize(stream);
+                        }
+                        */
         }
 
         /// <summary>
@@ -120,13 +120,23 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="FilePath"></param>
         /// <returns></returns>
-        public static string GetChecksum(string FilePath)
+        public static string GetChecksum(string FilePath, BandwidthTracker Tracker)
         {
+            /*
             using (var md5 = MD5.Create())
             {
                 using (var stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.None))
                 {
                     var hash = md5.ComputeHash(stream);
+                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                }
+            }*/
+
+            using (Crc32 crc = new Crc32())
+            {
+                using (var stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    var hash = crc.ComputeLargeStreamHash(stream, Tracker);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                 }
             }

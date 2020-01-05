@@ -2,8 +2,10 @@
 using BuildSync.Core.Networking;
 using BuildSync.Core.Utils;
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BuildSync.Core.Downloads
@@ -141,9 +143,12 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        private const int IdealDownloadQueueSizeBytes = 250 * 1024 * 1024;
+        private const int IdealDownloadQueueSizeBytes = 100 * 1024 * 1024;
 
-        private const int MaxDownloadQueueItems = 500;
+        /// <summary>
+        /// 
+        /// </summary>
+        private const int MaxDownloadQueueItems = 200; 
 
         /// <summary>
         /// 
@@ -223,7 +228,7 @@ namespace BuildSync.Core.Downloads
         public BlockListState GetBlockListState(bool ReturnEmptyIfTrafficDisabled = true)
         {
             BlockListState Result = new BlockListState();
-            
+
             if (ReturnEmptyIfTrafficDisabled && !TrafficEnabled)
             {
                 Result.States = new ManifestBlockListState[0];
@@ -515,7 +520,7 @@ namespace BuildSync.Core.Downloads
                         if (InitializeTask == null)
                         {
                             if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
-                            { 
+                            {
                                 InitializeTask = Task.Run(() =>
                                 {
                                     try
@@ -588,7 +593,7 @@ namespace BuildSync.Core.Downloads
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
-                                        List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder);
+                                        List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder, IOQueue.BandwidthStats);
                                         if (FailedFiles.Count == 0)
                                         {
                                             ChangeState(State, ManifestDownloadProgressState.Complete);
@@ -700,7 +705,7 @@ namespace BuildSync.Core.Downloads
                 {
                     if (!State.Active)
                     {
-                        DeletionCandidates.Add(State); 
+                        DeletionCandidates.Add(State);
                     }
                 }
 
@@ -779,7 +784,7 @@ namespace BuildSync.Core.Downloads
         /// <param name="ManifestId"></param>
         /// <param name="BlockIndex"></param>
         /// <param name="Data"></param>
-        public bool GetBlockInfo(Guid ManifestId, int BlockIndex, ref BuildManifestFileInfo FileInfo, ref long BlockOffset, ref long BlockSize)
+        public bool GetBlockInfo(Guid ManifestId, int BlockIndex, ref BuildManifestBlockInfo BlockInfo)
         {
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State == null)
@@ -788,13 +793,22 @@ namespace BuildSync.Core.Downloads
                 return false;
             }
 
-            if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
+            if (!State.Manifest.GetBlockInfo(BlockIndex, ref BlockInfo))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for invalid block info.");
                 return false;
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public class BlockIOState
+        {
+            public int SubBlocksRemaining = 0;
+            public bool WasSuccess = false;
         }
 
         /// <summary>
@@ -812,11 +826,8 @@ namespace BuildSync.Core.Downloads
                 return false;
             }
 
-            long BlockOffset = 0;
-            long BlockSize = 0;
-            BuildManifestFileInfo FileInfo = null;
-
-            if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
+            BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
+            if (!State.Manifest.GetBlockInfo(BlockIndex, ref BlockInfo))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for invalid block info.");
                 return false;
@@ -829,17 +840,34 @@ namespace BuildSync.Core.Downloads
                 return false;
             }
 
-            string LocalFile = Path.Combine(State.LocalFolder, FileInfo.Path);
-            Data.Resize((int)BlockSize);
-            IOQueue.Read(LocalFile, BlockOffset, BlockSize, Data.Data, (bool bSuccess) =>
-            {
-                if (bSuccess)
-                {
-                    State.BandwidthStats.BytesOut(BlockSize);
-                }
+            BlockIOState WriteState = new BlockIOState();
+            WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
+            WriteState.WasSuccess = true;
 
-                Callback?.Invoke(bSuccess);
-            });
+            Data.Resize((int)BlockInfo.TotalSize);
+
+            for (int i = 0; i < BlockInfo.SubBlocks.Count; i++)
+            {
+                BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
+
+                string LocalFile = Path.Combine(State.LocalFolder, SubBlockInfo.File.Path);
+                IOQueue.Read(LocalFile, SubBlockInfo.FileOffset, SubBlockInfo.FileSize, Data.Data, SubBlockInfo.OffsetInBlock, (bool bSuccess) =>
+                {
+                    if (bSuccess)
+                    {
+                        State.BandwidthStats.BytesOut(SubBlockInfo.FileSize);
+                    }
+                    else
+                    {
+                        WriteState.WasSuccess = false;
+                    }
+
+                    if (Interlocked.Decrement(ref WriteState.SubBlocksRemaining) == 0)
+                    {
+                        Callback?.Invoke(WriteState.WasSuccess);
+                    }
+                });
+            }
 
             return true;
         }
@@ -859,18 +887,15 @@ namespace BuildSync.Core.Downloads
                 return false;
             }
 
-            long BlockOffset = 0;
-            long BlockSize = 0;
-            BuildManifestFileInfo FileInfo = null;
-
-            if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
+            BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
+            if (!State.Manifest.GetBlockInfo(BlockIndex, ref BlockInfo))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block which we don't have info for.");
                 return false;
             }
 
             // Ensure data is valid.
-            if (Data.Length != BlockSize)
+            if (Data.Length != BlockInfo.TotalSize)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to write block with smaller than expected data.");
                 return false;
@@ -883,18 +908,32 @@ namespace BuildSync.Core.Downloads
                 return false;
             }
 
-            // Ensure the file exists locally.
-            string LocalFile = Path.Combine(State.LocalFolder, FileInfo.Path);
-            IOQueue.Write(LocalFile, BlockOffset, BlockSize, Data.Data, (bool bSuccess) =>
+            BlockIOState WriteState = new BlockIOState();
+            WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
+            WriteState.WasSuccess = true;
+
+            for (int i = 0; i < BlockInfo.SubBlocks.Count; i++)
             {
-                if (bSuccess)
+                BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
+
+                string LocalFile = Path.Combine(State.LocalFolder, SubBlockInfo.File.Path);
+                IOQueue.Write(LocalFile, SubBlockInfo.FileOffset, SubBlockInfo.FileSize, Data.Data, SubBlockInfo.OffsetInBlock, (bool bSuccess) =>
                 {
-                    State.BandwidthStats.BytesIn(Data.Length);
-                }
+                    if (bSuccess)
+                    {
+                        State.BandwidthStats.BytesIn(SubBlockInfo.FileSize);
+                    }
+                    else
+                    {
+                        WriteState.WasSuccess = false;
+                    }
 
-                Callback?.Invoke(bSuccess);
-            });
-
+                    if (Interlocked.Decrement(ref WriteState.SubBlocksRemaining) == 0)
+                    {
+                        Callback?.Invoke(WriteState.WasSuccess);
+                    }
+                });
+            }
             return false;
         }
 
@@ -911,11 +950,8 @@ namespace BuildSync.Core.Downloads
                 return;
             }
 
-            long BlockOffset = 0;
-            long BlockSize = 0;
-            BuildManifestFileInfo FileInfo = null;
-
-            if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
+            BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
+            if (!State.Manifest.GetBlockInfo(BlockIndex, ref BlockInfo))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block which we don't have info for.");
                 return;
@@ -965,11 +1001,8 @@ namespace BuildSync.Core.Downloads
                 return;
             }
 
-            long BlockOffset = 0;
-            long BlockSize = 0;
-            BuildManifestFileInfo FileInfo = null;
-
-            if (!State.Manifest.GetBlockInfo(BlockIndex, ref FileInfo, ref BlockOffset, ref BlockSize))
+            BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
+            if (!State.Manifest.GetBlockInfo(BlockIndex, ref BlockInfo))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to unset block which we don't have info for.");
                 return;
@@ -1072,6 +1105,8 @@ namespace BuildSync.Core.Downloads
             // To do this we go through each manifest in priority order. The higher the priority the more blocks they get to add to the queue.
             // Keep going until queue is at max size.
             DownloadQueue = new List<ManifestPendingDownloadBlock>();
+
+            BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
             long TotalSize = 0;
             while (TotalSize < IdealDownloadQueueSizeBytes && DownloadQueue.Count < MaxDownloadQueueItems)
             {
@@ -1087,7 +1122,10 @@ namespace BuildSync.Core.Downloads
                         DownloadQueue.Add(new ManifestPendingDownloadBlock { BlockIndex = Block.RangeStart, ManifestId = Queue.ManifestId });
                         BlocksAdded = true;
 
-                        TotalSize += Block.Size;
+                        bool Result = GetBlockInfo(Queue.ManifestId, Block.RangeStart, ref BlockInfo);
+                        Debug.Assert(Result == true);
+
+                        TotalSize += BlockInfo.TotalSize;
 
                         Block.RangeStart++;
                         if (Block.RangeStart > Block.RangeEnd)

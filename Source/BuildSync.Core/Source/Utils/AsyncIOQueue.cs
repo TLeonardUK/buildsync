@@ -32,6 +32,7 @@ namespace BuildSync.Core.Utils
             public string Path;
             public long Offset;
             public long Size;
+            public long DataOffset;
             public byte[] Data;
             public IOCompleteCallbackHandler Callback;
         }
@@ -51,7 +52,9 @@ namespace BuildSync.Core.Utils
         private object WakeObject = new object();
 
         private const int MaxStreamAge = 10 * 1000;
-        private const int MaxStreams = 100;
+        private const int MaxStreams = 16;
+        private const int StreamBufferSize = 256 * 1024;
+        private const int StreamMaxConcurrentOps = 8;
 
         private List<ActiveStream> ActiveStreams = new List<ActiveStream>();
 
@@ -268,7 +271,7 @@ namespace BuildSync.Core.Utils
                     ActiveStream NewStm = new ActiveStream();
                     NewStm.LastAccessed = TimeUtils.Ticks;
                     NewStm.Path = Path;
-                    NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, 1 * 1024 * 1024, FileOptions.Asynchronous/* | FileOptions.WriteThrough*/);
+                    NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous/* | FileOptions.WriteThrough*/);
                     ActiveStreams.Add(NewStm);
 
                     return NewStm;
@@ -364,27 +367,26 @@ namespace BuildSync.Core.Utils
                     Work.Callback?.Invoke(false);
                     return true;
                 }
-
-                Interlocked.Increment(ref Stm.ActiveOperations);
             }
 
-            // Limit to one operation per stream (not sure if this is neccessary with async?)
-            if (Stm != null && Stm.ActiveOperations > 0)
+            // Limit number of ops per stream.
+            if (Stm != null && Stm.ActiveOperations >= StreamMaxConcurrentOps)
             {
-//                return false;
+                return false;
             }
 
             if (Work.Type == TaskType.Write)
             {
+                Interlocked.Increment(ref Stm.ActiveOperations);
                 lock (Stm)
                 {
                     try
                     {
-                        Console.WriteLine("####### WRITING[offset={0} size={1}, stream={2}] {3}", Work.Offset, Work.Size, Stm.Stream.ToString(), Work.Path);
+                        //Console.WriteLine("####### WRITING[offset={0} size={1}, stream={2}] {3}", Work.Offset, Work.Size, Stm.Stream.ToString(), Work.Path);
 
                         // TODO: Lock?
                         Stm.Stream.Seek(Work.Offset, SeekOrigin.Begin);
-                        Stm.Stream.BeginWrite(Work.Data, 0, (int)Work.Size, Result =>
+                        Stm.Stream.BeginWrite(Work.Data, (int)Work.DataOffset, (int)Work.Size, Result =>
                         {
 
                             try
@@ -420,6 +422,7 @@ namespace BuildSync.Core.Utils
             }
             else if (Work.Type == TaskType.Read)
             {
+                Interlocked.Increment(ref Stm.ActiveOperations);
                 ReadWithOffset(Stm, Work, 0);
             }
             else if (Work.Type == TaskType.DeleteDir)
@@ -456,7 +459,7 @@ namespace BuildSync.Core.Utils
                 try
                 {
                     Stm.Stream.Seek(Work.Offset + Offset, SeekOrigin.Begin);
-                    Stm.Stream.BeginRead(Work.Data, Offset, (int)Work.Size - Offset, Result =>
+                    Stm.Stream.BeginRead(Work.Data, (int)Work.DataOffset + Offset, (int)Work.Size - Offset, Result =>
                     {
 
                         try
@@ -480,7 +483,7 @@ namespace BuildSync.Core.Utils
                         }
                         finally
                         {
-                            Interlocked.Add(ref InternalQueuedIn, -Work.Size);
+                            Interlocked.Add(ref InternalQueuedOut, -Work.Size);
                             Interlocked.Decrement(ref Stm.ActiveOperations);
                         }
 
@@ -491,7 +494,7 @@ namespace BuildSync.Core.Utils
                     Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to read to file {0} with error: {1}", Stm.Path, Ex.Message);
 
                     Work.Callback?.Invoke(false);
-                    Interlocked.Add(ref InternalQueuedIn, -Work.Size);
+                    Interlocked.Add(ref InternalQueuedOut, -Work.Size);
                     Interlocked.Decrement(ref Stm.ActiveOperations);
                 }
             }
@@ -515,12 +518,12 @@ namespace BuildSync.Core.Utils
         /// <param name="Path"></param>
         /// <param name="Offset"></param>
         /// <param name="Size"></param>
-        public void Write(string InPath, long InOffset, long InSize, byte[] InData, IOCompleteCallbackHandler InCallback)
+        public void Write(string InPath, long InOffset, long InSize, byte[] InData, long InDataOffset, IOCompleteCallbackHandler InCallback)
         {
             Interlocked.Add(ref InternalQueuedIn, InSize);
-            Console.WriteLine("####### START WRITE[offset={0} size={1}] {2}", InOffset, InSize, InPath);
+            //Console.WriteLine("####### START WRITE[offset={0} size={1}] {2}", InOffset, InSize, InPath);
 
-            TaskQueue.Enqueue(new Task { Type = TaskType.Write, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
+            TaskQueue.Enqueue(new Task { Type = TaskType.Write, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, DataOffset = InDataOffset, Callback = InCallback });
             WakeThread();
         }
 
@@ -530,10 +533,10 @@ namespace BuildSync.Core.Utils
         /// <param name="Path"></param>
         /// <param name="Offset"></param>
         /// <param name="Size"></param>
-        public void Read(string InPath, long InOffset, long InSize, byte[] InData, IOCompleteCallbackHandler InCallback)
+        public void Read(string InPath, long InOffset, long InSize, byte[] InData, long InDataOffset, IOCompleteCallbackHandler InCallback)
         {
             Interlocked.Add(ref InternalQueuedOut, InSize);
-            TaskQueue.Enqueue(new Task { Type = TaskType.Read, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, Callback = InCallback });
+            TaskQueue.Enqueue(new Task { Type = TaskType.Read, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, DataOffset = InDataOffset, Callback = InCallback });
             WakeThread();
         }
     }

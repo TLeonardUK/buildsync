@@ -114,8 +114,15 @@ namespace BuildSync.Core.Downloads
         {
             get
             {
-                float BlocksRetrieved = BlockStates.Count(true);
-                return BlocksRetrieved / BlockStates.Size;
+                if (BlockStates == null || BlockStates.Size == 0)
+                {
+                    return 0;
+                }
+                else
+                {
+                    float BlocksRetrieved = BlockStates.Count(true);
+                    return BlocksRetrieved / BlockStates.Size;
+                }
             }
         }
 
