@@ -583,6 +583,10 @@ namespace BuildSync.Core.Networking
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="EndPoint"></param>
         public void ConnectToIP(IPEndPoint EndPoint)
         {
             try

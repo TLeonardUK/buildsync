@@ -164,11 +164,86 @@ namespace BuildSync.Core.Manifests
             BlockInfo = new BuildManifestBlockInfo[BlockCount];
             FilesByPath = new Dictionary<string, BuildManifestFileInfo>();
 
-            // Make a list of all possible sub-blocks.
+            // Try and add in optimal block packing format.
+            //Console.WriteLine("======================================== CACHING BLOCK INFO ================================");
+            long BlockIndex = 0;
+            long TotalBlockSize = 0;
+            for (int fi = 0; fi < Files.Count; )
+            {
+                BuildManifestFileInfo Info = Files[fi];
+                Info.FirstBlockIndex = (int)BlockIndex;
+                fi++;
 
+                long BlockCount = (Info.Size + (BlockSize - 1)) / BlockSize;
+                long BytesRemaining = BlockSize - (Info.Size % BlockSize);
 
-            // Take largest sub-block, then fill remaining space with other blocks.
+                //Console.WriteLine("Block[{0}] {1}", BlockIndex, Info.Path);
 
+                // Fill info for all the "full blocks" for this file.
+                long Total = 0;
+                for (int i = 0; i < BlockCount; i++)
+                {
+                    BuildManifestSubBlockInfo SubBlock;
+                    SubBlock.File = Info;
+                    SubBlock.FileOffset = i * BlockSize;
+                    SubBlock.FileSize = Math.Min(BlockSize, Info.Size - SubBlock.FileOffset);
+                    SubBlock.OffsetInBlock = 0;
+
+                    Debug.Assert(SubBlock.FileOffset + SubBlock.FileSize <= Info.Size);
+
+                    if (BlockInfo[BlockIndex].SubBlocks == null)
+                    {
+                        BlockInfo[BlockIndex].SubBlocks = new List<BuildManifestSubBlockInfo>();
+                    }
+                    BlockInfo[BlockIndex].SubBlocks.Add(SubBlock);
+                    BlockInfo[BlockIndex].TotalSize += SubBlock.FileSize;
+
+                    TotalBlockSize += SubBlock.FileSize;
+
+                    Total += SubBlock.FileSize;
+
+                    BlockIndex++;
+                }
+                Debug.Assert(Total == Info.Size);
+                
+                Info.LastBlockIndex = (int)BlockIndex -  1;
+
+                int LastBlockIndex = Info.LastBlockIndex;
+
+                // Fill remaining space with blocks.
+                while (BytesRemaining > 0 && fi < Files.Count)
+                {
+                    BuildManifestFileInfo NextInfo = Files[fi];
+                    if (NextInfo.Size > BytesRemaining)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        if (NextInfo.Size > 0)
+                        {
+                            BuildManifestSubBlockInfo SubBlock;
+                            SubBlock.File = NextInfo;
+                            SubBlock.FileOffset = 0;
+                            SubBlock.FileSize = NextInfo.Size;
+                            SubBlock.OffsetInBlock = BlockInfo[LastBlockIndex].TotalSize;
+                            BlockInfo[LastBlockIndex].SubBlocks.Add(SubBlock);
+                            BlockInfo[LastBlockIndex].TotalSize += SubBlock.FileSize;
+
+                            //Console.WriteLine("\tSubblock[{0}] {1}", BlockIndex, SubBlock.File.Path);
+                        }
+
+                        NextInfo.FirstBlockIndex = (int)BlockIndex - 1;
+                        NextInfo.LastBlockIndex = (int)BlockIndex - 1;
+
+                        TotalBlockSize += NextInfo.Size;
+                        BytesRemaining -= NextInfo.Size;
+                        fi++;
+                    }
+                }
+            }
+
+            /*
             int BlockIndex = 0;
             long TotalBlockSize = 0;
             foreach (BuildManifestFileInfo FileInfo in Files)
@@ -213,6 +288,7 @@ namespace BuildSync.Core.Manifests
                     }
                 }                
             }
+            */
 
             // Calcualte total size.
             TotalSize = 0;
@@ -221,8 +297,6 @@ namespace BuildSync.Core.Manifests
                 TotalSize += FileInfo.Size;
                 FilesByPath.Add(FileInfo.Path, FileInfo);
             }
-
-            Console.WriteLine("Blocks:{0}/{1} Size:{2}/{3}", BlockIndex, BlockCount, TotalBlockSize, TotalSize);
         }
 
         /// <summary>
@@ -411,24 +485,68 @@ namespace BuildSync.Core.Manifests
         public static BuildManifest BuildFromDirectory(Guid NewManifestId, string RootPath, string VirtualPath, BuildManfiestProgressCallbackHandler Callback = null)
         {
             string[] FileNames = Directory.GetFiles(RootPath, "*", SearchOption.AllDirectories);
-            FileInfo[] FileInfos = new FileInfo[FileNames.Length];
             long TotalSize = 0;
+
+            // Try and order in the most efficient packing order.
+            List<FileInfo> RemainingFiles = new List<FileInfo>();
+            List<FileInfo> OrderedList = new List<FileInfo>();
+
             for (int i = 0; i < FileNames.Length; i++)
             {
-                FileInfos[i] = new FileInfo(FileNames[i]);
-                TotalSize += FileInfos[i].Length;
+                FileInfo Info = new FileInfo(FileNames[i]);
+                RemainingFiles.Add(Info);
+                TotalSize += Info.Length;
             }
 
-            // Order files by size so they fit into sub-blocks more optimally.
-            Array.Sort(FileInfos, (Item1, Item2) => Item1.Length.CompareTo(Item2.Length));
+            // Order main list from largest to smallest.
+            RemainingFiles.Sort((Item1, Item2) => -Item1.Length.CompareTo(Item2.Length));
+
+            // Try and add in optimal block packing format.
+            long BlockIndex = 0;
+            while (RemainingFiles.Count > 0)
+            {
+                FileInfo Info = RemainingFiles[0];
+                RemainingFiles.RemoveAt(0);
+                OrderedList.Add(Info);
+                //Console.WriteLine("Block[{0}] {1}", BlockIndex, Info.Name);
+
+                long BlockCount = (Info.Length + (BlockSize - 1)) / BlockSize;
+                long BytesRemaining = BlockSize - (Info.Length % BlockSize);
+                BlockIndex += BlockCount;
+
+                // Try and fit some smaller files into the remaining block space.
+                for (int i = 0; i < RemainingFiles.Count && BytesRemaining > 0; i++)
+                {
+                    FileInfo PotentialFile = RemainingFiles[i];
+                    if (PotentialFile.Length <= BytesRemaining)
+                    {
+                        BytesRemaining -= PotentialFile.Length;
+
+                        //Console.WriteLine("\tSubblock[{0}] {1}", BlockIndex, PotentialFile.Name);
+
+                        RemainingFiles.RemoveAt(i);
+                        OrderedList.Add(PotentialFile);
+                        i--;
+                        continue;
+                    }
+                }
+            }
+
+            // Our final list!
+            FileInfo[] FileInfos = OrderedList.ToArray();
 
             BuildManifest Manifest = new BuildManifest();
             Manifest.Guid = NewManifestId;
             Manifest.VirtualPath = VirtualPath;
-            Manifest.BlockCount = Math.Max(1, (TotalSize + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize);
+            Manifest.BlockCount = BlockIndex;
 
             List<Task> FileTasks = new List<Task>();
             int FileCounter = 0;
+
+            for (int i = 0; i < FileInfos.Length; i++)
+            {
+                Manifest.Files.Add(new BuildManifestFileInfo());
+            }
 
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
@@ -460,7 +578,7 @@ namespace BuildSync.Core.Manifests
                         ManifestFileInfo.Checksum = FileUtils.GetChecksum(SubFile, null);
                         lock (Manifest)
                         {
-                            Manifest.Files.Add(ManifestFileInfo);
+                            Manifest.Files[FileIndex] = ManifestFileInfo;
                         }
                     }
                 }));
