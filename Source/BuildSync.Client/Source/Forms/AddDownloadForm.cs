@@ -110,6 +110,8 @@ namespace BuildSync.Client.Forms
                 priorityComboBox.SelectedIndex = EditState.Priority;
                 autoUpdateCheckBox.Checked = EditState.UpdateAutomatically;
                 downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
+                deviceTextBox.Text = EditState.InstallDeviceName;
+                downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
                 addDownloadButton.Text = "Save Changes";
             }
         }

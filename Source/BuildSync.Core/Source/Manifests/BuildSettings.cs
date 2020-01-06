@@ -70,6 +70,7 @@ namespace BuildSync.Core.Manifests
         public string Executable { get; set; } = "";
         public string WorkingDirectory { get; set; } = "";
         public string Arguments { get; set; } = "";
+        public bool IgnoreErrors { get; set; } = false;
 
         /// <summary>
         /// 
@@ -182,7 +183,7 @@ namespace BuildSync.Core.Manifests
 #if SHIPPING
             if (!File.Exists(ExePath))
             {
-                ResultMessage = "Could not find executable, expected to be located at: " + ExePath,;
+                ResultMessage = "Could not find executable, expected to be located at: " + ExePath;
                 return false;
             }
 
@@ -195,19 +196,39 @@ namespace BuildSync.Core.Manifests
 
             string Arguments = BuildSettings.ExpandArguments(Step.Arguments, Variables);
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "Executing: {0} {1}", ExePath, Arguments);
+
             try
             {
                 ProcessStartInfo StartInfo = new ProcessStartInfo();
                 StartInfo.FileName = ExePath;
                 StartInfo.WorkingDirectory = WorkingDir;
                 StartInfo.Arguments = Arguments;
+                StartInfo.RedirectStandardOutput = true;
+                StartInfo.RedirectStandardError = true;
+                StartInfo.UseShellExecute = false;
+                StartInfo.CreateNoWindow = true;
 
-                Process proc = Process.Start(StartInfo);
-                proc.WaitForExit();
+                Process process = Process.Start(StartInfo);
 
-                if (proc.ExitCode != 0)
+                process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
                 {
-                    ResultMessage = "Install process exited with error code " + proc.ExitCode;
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data);
+                };
+
+                process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data);
+                };
+
+                process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
+
+                process.WaitForExit();
+
+                if (process.ExitCode != 0 && !Step.IgnoreErrors)
+                {
+                    ResultMessage = "Install process exited with error code " + process.ExitCode;
                     return false;
                 }
             }
@@ -246,9 +267,12 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public bool Launch(string LocalFolder, ref string ResultMessage)
         {
-            if (InstallSteps.Count == 0)
+            if (InstallSteps.Count != 0)
             {
-                return true;
+                if (!Install(LocalFolder, ref ResultMessage))
+                {
+                    return false;
+                }
             }
 
             string ExePath = BuildSettings.ExpandArguments(Executable, Variables);
@@ -295,13 +319,34 @@ namespace BuildSync.Core.Manifests
                 return false;
             }
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "Executing: {0} {1}", ExePath, CompiledArguments);
+
             try
             {
                 ProcessStartInfo StartInfo = new ProcessStartInfo();
                 StartInfo.FileName = ExePath;
                 StartInfo.WorkingDirectory = WorkingDir;
                 StartInfo.Arguments = CompiledArguments;
-                Process.Start(StartInfo);
+                //StartInfo.RedirectStandardOutput = true;
+                //StartInfo.RedirectStandardError = true;
+                StartInfo.UseShellExecute = false;
+                StartInfo.CreateNoWindow = true;
+
+                Process process = Process.Start(StartInfo);
+                //process.WaitForExit();
+
+                /*process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data);
+                };
+
+                process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data);
+                };
+
+                process.BeginErrorReadLine();
+                process.BeginOutputReadLine();*/
             }
             catch (Exception Ex)
             {
@@ -310,6 +355,11 @@ namespace BuildSync.Core.Manifests
             }
 
             return true;
+        }
+
+        private void ProcessOutputRecieved(object sender, DataReceivedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 

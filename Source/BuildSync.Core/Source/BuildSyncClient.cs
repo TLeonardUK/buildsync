@@ -115,12 +115,12 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
-            public float BlockRecieveLatency = 0.0f;
+            public RollingAverage BlockRecieveLatency = new RollingAverage(100);
 
             /// <summary>
             /// 
             /// </summary>
-            public float AverageBlockSize = 0.0f;
+            public RollingAverage AverageBlockSize = new RollingAverage(100);
 
             /// <summary>
             /// 
@@ -211,8 +211,8 @@ namespace BuildSync.Core
             private void UpdateLatency(ManifestPendingDownloadBlock Download)
             {
                 ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
-                BlockRecieveLatency = (BlockRecieveLatency * 0.5f) + (Elapsed * 0.5f);
-                AverageBlockSize = (AverageBlockSize * 0.5f) + (Download.Size * 0.5f);
+                BlockRecieveLatency.Add(Elapsed);
+                AverageBlockSize.Add(Download.Size);
             }
 
             /// <summary>
@@ -318,7 +318,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private const int TargetMillisecondsOfDataInFlight = 500;
+        private const int TargetMillisecondsOfDataInFlight = 3000;
 
         /// <summary>
         /// 
@@ -839,17 +839,20 @@ namespace BuildSync.Core
                         Peer peer = Peers[(j + PeerCycleIndex) % Peers.Count];
 
                         // Calculate a rough idea for how many bytes we should have in flight at a given time.
+                        double BlockRecieveLatency = peer.BlockRecieveLatency.Get();
+                        double AverageBlockSize = peer.AverageBlockSize.Get();
+
                         long MaxInFlightBytes = 0;
-                        if (peer.BlockRecieveLatency < 5 || peer.AverageBlockSize < 1024)
+                        if (BlockRecieveLatency < 5 || AverageBlockSize < 1024)
                         {
                             MaxInFlightBytes = BuildManifest.BlockSize;
                         }
                         else
                         {
-                            MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMillisecondsOfDataInFlight / peer.BlockRecieveLatency) * peer.AverageBlockSize));
+                            MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMillisecondsOfDataInFlight / BlockRecieveLatency) * AverageBlockSize));
                         }
                         
-                        //Console.WriteLine("Target:{0} ({1} mb) Latency:{2} BlockSize:{3} Actual:{4} ({5} mb) TotalDownloads:{4}", MaxInFlightBytes, MaxInFlightBytes / 1024.0f / 1024.0f, peer.BlockRecieveLatency, peer.AverageBlockSize, peer.ActiveBlockDownloadSize, peer.ActiveBlockDownloadSize / 1024.0f / 1024.0f, peer.ActiveBlockDownloads.Count);
+                        //Console.WriteLine("Target:{0} ({1} mb) Latency:{2} BlockSize:{3} Actual:{4} ({5} mb) TotalDownloads:{6}", MaxInFlightBytes, MaxInFlightBytes / 1024.0f / 1024.0f, BlockRecieveLatency, AverageBlockSize, peer.ActiveBlockDownloadSize, peer.ActiveBlockDownloadSize / 1024.0f / 1024.0f, peer.ActiveBlockDownloads.Count);
 
                         // TODO: Take disk queue into account.
 

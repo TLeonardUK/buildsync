@@ -22,6 +22,9 @@ namespace BuildSync.Core.Utils
         private double BandwidthSent = 0;
         private double BandwidthRecieved = 0;
 
+        private RollingAverage AverageSent = new RollingAverage(30);
+        private RollingAverage AverageRecieved = new RollingAverage(30);
+
         /// <summary>
         /// 
         /// </summary>
@@ -129,8 +132,11 @@ namespace BuildSync.Core.Utils
 
                 double Delta = Elapsed / 1000.0;
 
-                BandwidthSent = (BandwidthSent * 0.5) + ((Sent * Delta) * 0.5);
-                BandwidthRecieved = (BandwidthRecieved * 0.5) + ((Recieved * Delta) * 0.5);
+                AverageSent.Add(Sent * Delta);
+                AverageRecieved.Add(Recieved* Delta);
+
+                BandwidthSent = AverageSent.Get();// (BandwidthSent * 0.5) + ((Sent * Delta) * 0.5);
+                BandwidthRecieved = AverageRecieved.Get();// (BandwidthRecieved * 0.5) + ((Recieved * Delta) * 0.5);
 
                 BandwidthTimeStartBytesSent = TotalBytesSent;
                 BandwidthTimeStartBytesRecieved = TotalBytesRecieved;

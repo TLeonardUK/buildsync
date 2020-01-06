@@ -157,6 +157,7 @@
     <Compile Include="Utils\Logger.cs" />
     <Compile Include="Utils\MemoryPool.cs" />
     <Compile Include="Utils\ProcessUtils.cs" />
+    <Compile Include="Utils\RollingAverage.cs" />
     <Compile Include="Utils\SettingsBase.cs" />
     <Compile Include="Utils\SingleGlobalInstance.cs" />
     <Compile Include="Utils\SparseStateArray.cs" />

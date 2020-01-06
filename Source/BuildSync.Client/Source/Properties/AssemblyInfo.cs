@@ -23,6 +23,6 @@ using System.Runtime.InteropServices;
 [assembly: Guid("5a0c8258-43c2-4d63-b457-f235855b362f")]
 
 // AUTO GENERATED
-[assembly: AssemblyVersion("1.0.0.42")]
-[assembly: AssemblyFileVersion("1.0.0.42")]
+[assembly: AssemblyVersion("1.0.0.46")]
+[assembly: AssemblyFileVersion("1.0.0.46")]
 // END AUTO GENERATED

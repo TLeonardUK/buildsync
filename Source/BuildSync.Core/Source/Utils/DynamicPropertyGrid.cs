@@ -504,7 +504,10 @@ namespace BuildSync.Core.Utils
             for (int i = 0; i < this.Count; i++)
             {
                 DynamicPropertyGridProperty prop = (DynamicPropertyGridProperty)this[i];
-                NewProperties[i] = new DynamicPropertyGridPropertyDescriptor(ref prop, Attributes);
+                if (prop.Name.Length > 0)
+                {
+                    NewProperties[i] = new DynamicPropertyGridPropertyDescriptor(ref prop, Attributes);
+                }
             }
             return new PropertyDescriptorCollection(NewProperties);
         }
