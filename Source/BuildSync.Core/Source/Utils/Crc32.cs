@@ -5,6 +5,12 @@ using System.Security.Cryptography;
 
 namespace BuildSync.Core.Utils
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="BytesProcessed"></param>
+    public delegate void ChecksumProgressEventHandler(long BytesProcessed);
+
     // Based on: https://github.com/damieng/DamienGKit/blob/master/CSharp/DamienG.Library/Security/Cryptography/Crc32.cs
     /// <summary>
     /// Implements a 32-bit CRC hash algorithm compatible with Zip etc.
@@ -62,17 +68,22 @@ namespace BuildSync.Core.Utils
 
         public static UInt32 Compute(byte[] buffer)
         {
-            return Compute(DefaultSeed, buffer);
+            return Compute(buffer, buffer.Length);
         }
 
-        public static UInt32 Compute(UInt32 seed, byte[] buffer)
+        public static UInt32 Compute(byte[] buffer, int Length)
         {
-            return Compute(DefaultPolynomial, seed, buffer);
+            return Compute(DefaultSeed, buffer, Length);
         }
 
-        public static UInt32 Compute(UInt32 polynomial, UInt32 seed, byte[] buffer)
+        public static UInt32 Compute(UInt32 seed, byte[] buffer, int Length)
         {
-            return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, buffer.Length);
+            return Compute(DefaultPolynomial, seed, buffer, Length);
+        }
+
+        public static UInt32 Compute(UInt32 polynomial, UInt32 seed, byte[] buffer, int Length)
+        {
+            return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, Length);
         }
 
         static UInt32[] InitializeTable(UInt32 polynomial)
@@ -120,7 +131,7 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <param name="Algo"></param>
-        public byte[] ComputeLargeStreamHash(Stream Stream, BandwidthTracker Tracker)
+        public byte[] ComputeLargeStreamHash(Stream Stream, BandwidthTracker Tracker, ChecksumProgressEventHandler Callback)
         {
             // Buffer size optimized for reading massive files.
             const int BufferSize = 4 * 1024 * 1024;
@@ -132,6 +143,11 @@ namespace BuildSync.Core.Utils
                 if (bytesRead > 0)
                 {
                     HashCore(buffer, 0, bytesRead);
+
+                    if (Callback != null)
+                    {
+                        Callback?.Invoke(bytesRead);
+                    }
 
                     if (Tracker != null)
                     {

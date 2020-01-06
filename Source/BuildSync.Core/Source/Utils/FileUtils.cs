@@ -120,7 +120,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="FilePath"></param>
         /// <returns></returns>
-        public static string GetChecksum(string FilePath, BandwidthTracker Tracker)
+        public static string GetChecksum(string FilePath, BandwidthTracker Tracker, ChecksumProgressEventHandler Callback = null)
         {
             /*
             using (var md5 = MD5.Create())
@@ -136,7 +136,7 @@ namespace BuildSync.Core.Utils
             {
                 using (var stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.None))
                 {
-                    var hash = crc.ComputeLargeStreamHash(stream, Tracker);
+                    var hash = crc.ComputeLargeStreamHash(stream, Tracker, Callback);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                 }
             }

@@ -19,6 +19,18 @@ namespace BuildSync.Core.Manifests
     /// <summary>
     /// 
     /// </summary>
+    /// <param name="BytesProcessed"></param>
+    public delegate void BuildManfiestValidateProgressCallbackHandler(float OverallProgress);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="BytesProcessed"></param>
+    public delegate void BuildManfiestInitProgressCallbackHandler(float Progress);
+
+    /// <summary>
+    /// 
+    /// </summary>
     [Serializable]
     public class BuildManifestFileInfo
     {
@@ -127,6 +139,11 @@ namespace BuildSync.Core.Manifests
         /// 
         /// </summary>
         public List<BuildManifestFileInfo> Files = new List<BuildManifestFileInfo>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public uint[] BlockChecksums = null;
 
         /// <summary>
         /// 
@@ -383,9 +400,49 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public void InitializeDirectory(string RootPath)
+        /// <param name="Index"></param>
+        /// <returns></returns>
+        public byte[] GetBlockData(int Index, string RootPath, AsyncIOQueue IOQueue)
         {
-            const int WriteChunkSize = 1 * 1024 * 1024;
+            if (Index < 0 || Index >= BlockCount)
+            {
+                throw new ArgumentOutOfRangeException("Index", "Block index out of range.");
+            }
+
+            BuildManifestBlockInfo Info = BlockInfo[Index];
+            byte[] Data = new byte[Info.TotalSize];
+
+            ManualResetEvent CompleteEvent = new ManualResetEvent(false);
+            int QueuedReads = Info.SubBlocks.Count;
+
+            foreach (BuildManifestSubBlockInfo SubBlock in Info.SubBlocks)
+            {
+                string PathName = Path.Combine(RootPath, SubBlock.File.Path);
+                IOQueue.Read(PathName, SubBlock.FileOffset, SubBlock.FileSize, Data, SubBlock.OffsetInBlock, (bool bSuccess) =>
+                {
+                    if (!bSuccess)
+                    {
+                        throw new IOException("Failed to read data for block from file: "+PathName+".");
+                    }
+
+                    if (Interlocked.Decrement(ref QueuedReads) == 0)
+                    {
+                        CompleteEvent.Set();
+                    }
+                });
+            }
+
+            CompleteEvent.WaitOne();
+
+            return Data;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void InitializeDirectory(string RootPath, BuildManfiestInitProgressCallbackHandler Callback = null)
+        {
+            const int WriteChunkSize = 16 * 1024 * 1024;
             byte[] ChunkArray = new byte[WriteChunkSize];
             byte[] ChunkPattern = { 0xDE, 0xAD, 0xBE, 0xEF };
 
@@ -394,6 +451,13 @@ namespace BuildSync.Core.Manifests
                 ChunkArray[i] = ChunkPattern[i % ChunkPattern.Length];
             }
 
+            long TotalBytes = 0;
+            foreach (BuildManifestFileInfo FileInfo in Files)
+            {
+                TotalBytes += FileInfo.Size;
+            }
+
+            long BytesWritten = 0;
             foreach (BuildManifestFileInfo FileInfo in Files)
             {
                 string FilePath = Path.Combine(RootPath, FileInfo.Path);
@@ -405,20 +469,16 @@ namespace BuildSync.Core.Manifests
 
                 using (FileStream Stream = File.OpenWrite(FilePath))
                 {
-                    Stream.SetLength(FileInfo.Size);
-                    /*
-                    for (int Offset = 0; Offset < FileInfo.Size; Offset += WriteChunkSize)
+                    long BytesRemaining = FileInfo.Size;
+                    while (BytesRemaining > 0)
                     {
-                        long BytesRemaining = FileInfo.Size - Offset;
-                        long ChunkSize = Math.Min(WriteChunkSize, BytesRemaining);
-                        Stream.Write(ChunkArray, 0, (int)ChunkSize);
+                        long Size = Math.Min(BytesRemaining, WriteChunkSize);
+                        Stream.Write(ChunkArray, 0, (int)Size);
+                        BytesWritten += Size;
+                        BytesRemaining -= Size;
+
+                        Callback?.Invoke((float)BytesWritten / (float)TotalBytes);
                     }
-                    */
-                    /*if (FileInfo.Size > 0)
-                    {
-                        Stream.Seek(FileInfo.Size - 1, SeekOrigin.Begin);
-                        Stream.Write(ChunkArray, 0, 1);
-                    }*/
                 }
             }
         }
@@ -426,13 +486,15 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public List<string> Validate(string RootPath, BandwidthTracker Tracker)
+        public List<string> Validate(string RootPath, BandwidthTracker Tracker, BuildManfiestValidateProgressCallbackHandler Callback = null)
         {
             List<string> FailedFiles = new List<string>();
 
-            int TaskCount = Environment.ProcessorCount * 16;
+            int TaskCount = Environment.ProcessorCount;
             Task[] FileTasks = new Task[TaskCount];
             int FileCounter = 0;
+
+            long BytesValidated = 0;
 
             for (int i = 0; i < TaskCount; i++)
             {
@@ -460,7 +522,17 @@ namespace BuildSync.Core.Manifests
                             }
                         }
 
-                        string Checksum = FileUtils.GetChecksum(FilePath, Tracker);
+                        string Checksum = FileUtils.GetChecksum(FilePath, Tracker, (long BytesProcessed) =>
+                        {
+                            Interlocked.Add(ref BytesValidated, BytesProcessed);
+
+                            float Progress = (float)BytesValidated / (float)TotalSize;
+                            if (Callback != null)
+                            {
+                                Callback?.Invoke(Progress);
+                            }
+                        });
+
                         if (FileInfo.Checksum != Checksum)
                         {
                             Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File '" + FilePath + "' has an invalid checksum (got {0} expected {1}), file system may have been modified externally.", Checksum, FileInfo.Checksum);
@@ -482,7 +554,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public static BuildManifest BuildFromDirectory(Guid NewManifestId, string RootPath, string VirtualPath, BuildManfiestProgressCallbackHandler Callback = null)
+        public static BuildManifest BuildFromDirectory(Guid NewManifestId, string RootPath, string VirtualPath, AsyncIOQueue IOQueue, BuildManfiestProgressCallbackHandler Callback = null)
         {
             string[] FileNames = Directory.GetFiles(RootPath, "*", SearchOption.AllDirectories);
             long TotalSize = 0;
@@ -539,9 +611,11 @@ namespace BuildSync.Core.Manifests
             Manifest.Guid = NewManifestId;
             Manifest.VirtualPath = VirtualPath;
             Manifest.BlockCount = BlockIndex;
+            Manifest.BlockChecksums = new uint[Manifest.BlockCount];
 
-            List<Task> FileTasks = new List<Task>();
+            List<Task> ChecksumTasks = new List<Task>();
             int FileCounter = 0;
+            int BlockCounter = 0;
 
             for (int i = 0; i < FileInfos.Length; i++)
             {
@@ -550,7 +624,7 @@ namespace BuildSync.Core.Manifests
 
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
-                FileTasks.Add(Task.Run(() =>
+                ChecksumTasks.Add(Task.Run(() =>
                 {
                     while (true)
                     {
@@ -568,7 +642,8 @@ namespace BuildSync.Core.Manifests
                         {
                             lock (Callback)
                             {
-                                Callback(RelativePath, ((float)FileIndex / (float)FileInfos.Length) * 100);
+                                float Progress = (float)(FileCounter + BlockCounter) / (float)(FileInfos.Length + Manifest.BlockCount);
+                                Callback(RelativePath, Progress * 100);
                             }
                         }
 
@@ -584,13 +659,49 @@ namespace BuildSync.Core.Manifests
                 }));
             }
 
-            foreach (Task task in FileTasks)
+            foreach (Task task in ChecksumTasks)
             {
                 task.Wait();
             }
+            ChecksumTasks.Clear();
 
+            // Calculate which data goes in eahc block.
             Manifest.CacheBlockInfo();
             Manifest.DebugCheck();
+
+            // Calculate checksum for each individual block.
+            for (int i = 0; i < Environment.ProcessorCount; i++)
+            {
+                ChecksumTasks.Add(Task.Run(() =>
+                {
+                    while (true)
+                    {
+                        int CalculateBlockIndex = Interlocked.Increment(ref BlockCounter) - 1;
+                        if (CalculateBlockIndex >= Manifest.BlockCount)
+                        {
+                            break;
+                        }
+
+                        byte[] Data = Manifest.GetBlockData(CalculateBlockIndex, RootPath, IOQueue);
+
+                        Manifest.BlockChecksums[CalculateBlockIndex] = Crc32.Compute(Data);
+
+                        if (Callback != null)
+                        {
+                            lock (Callback)
+                            {
+                                float Progress = (float)(FileCounter + BlockCounter) / (float)(FileInfos.Length + Manifest.BlockCount);
+                                Callback("Checksuming blocks", Progress * 100);
+                            }
+                        }
+                    }
+                }));
+            }
+
+            foreach (Task task in ChecksumTasks)
+            {
+                task.Wait();
+            }
 
             return Manifest;
         }

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BuildSync.Client.Forms;
 
 namespace BuildSync.Client.Controls.Settings
 {
@@ -79,6 +80,23 @@ namespace BuildSync.Client.Controls.Settings
         private void StateChanged(object sender, EventArgs e)
         {
             UpdateValidityState();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FindServerClicked(object sender, EventArgs e)
+        {
+            FindServerForm form = new FindServerForm();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                ServerHostnameTextBox.Text = form.SelectedHostname;
+                ServerPortTextBox.Value = form.SelectedPort;
+
+                UpdateValidityState();
+            }
         }
     }
 }

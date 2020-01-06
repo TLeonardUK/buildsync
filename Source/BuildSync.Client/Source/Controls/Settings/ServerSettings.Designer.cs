@@ -51,7 +51,7 @@
             // ServerHostnameTextBox
             // 
             this.ServerHostnameTextBox.Location = new System.Drawing.Point(54, 42);
-            this.ServerHostnameTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.ServerHostnameTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.ServerHostnameTextBox.Name = "ServerHostnameTextBox";
             this.ServerHostnameTextBox.Size = new System.Drawing.Size(338, 20);
             this.ServerHostnameTextBox.TabIndex = 11;
@@ -69,14 +69,14 @@
             // 
             // savePathBrowseButton
             // 
-            this.savePathBrowseButton.Enabled = false;
             this.savePathBrowseButton.Location = new System.Drawing.Point(403, 36);
-            this.savePathBrowseButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.savePathBrowseButton.Margin = new System.Windows.Forms.Padding(2);
             this.savePathBrowseButton.Name = "savePathBrowseButton";
             this.savePathBrowseButton.Size = new System.Drawing.Size(93, 27);
             this.savePathBrowseButton.TabIndex = 12;
             this.savePathBrowseButton.Text = "Search Network";
             this.savePathBrowseButton.UseVisualStyleBackColor = true;
+            this.savePathBrowseButton.Click += new System.EventHandler(this.FindServerClicked);
             // 
             // label2
             // 
@@ -91,7 +91,7 @@
             // ServerPortTextBox
             // 
             this.ServerPortTextBox.Location = new System.Drawing.Point(54, 104);
-            this.ServerPortTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.ServerPortTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.ServerPortTextBox.Maximum = new decimal(new int[] {
             65534,
             0,
@@ -116,7 +116,7 @@
             // 
             this.ServerPortIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
             this.ServerPortIcon.Location = new System.Drawing.Point(14, 96);
-            this.ServerPortIcon.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.ServerPortIcon.Margin = new System.Windows.Forms.Padding(2);
             this.ServerPortIcon.Name = "ServerPortIcon";
             this.ServerPortIcon.Size = new System.Drawing.Size(32, 31);
             this.ServerPortIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -127,7 +127,7 @@
             // 
             this.ServerHostnameIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
             this.ServerHostnameIcon.Location = new System.Drawing.Point(14, 34);
-            this.ServerHostnameIcon.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.ServerHostnameIcon.Margin = new System.Windows.Forms.Padding(2);
             this.ServerHostnameIcon.Name = "ServerHostnameIcon";
             this.ServerHostnameIcon.Size = new System.Drawing.Size(32, 31);
             this.ServerHostnameIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -137,7 +137,7 @@
             // PeerPortRangeStartBox
             // 
             this.PeerPortRangeStartBox.Location = new System.Drawing.Point(54, 165);
-            this.PeerPortRangeStartBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PeerPortRangeStartBox.Margin = new System.Windows.Forms.Padding(2);
             this.PeerPortRangeStartBox.Maximum = new decimal(new int[] {
             65534,
             0,
@@ -162,7 +162,7 @@
             // 
             this.PeerPortRangeIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
             this.PeerPortRangeIcon.Location = new System.Drawing.Point(14, 157);
-            this.PeerPortRangeIcon.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PeerPortRangeIcon.Margin = new System.Windows.Forms.Padding(2);
             this.PeerPortRangeIcon.Name = "PeerPortRangeIcon";
             this.PeerPortRangeIcon.Size = new System.Drawing.Size(32, 31);
             this.PeerPortRangeIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -182,7 +182,7 @@
             // PeerPortRangeEndBox
             // 
             this.PeerPortRangeEndBox.Location = new System.Drawing.Point(149, 165);
-            this.PeerPortRangeEndBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PeerPortRangeEndBox.Margin = new System.Windows.Forms.Padding(2);
             this.PeerPortRangeEndBox.Maximum = new decimal(new int[] {
             65534,
             0,
@@ -228,7 +228,7 @@
             this.Controls.Add(this.savePathBrowseButton);
             this.Controls.Add(this.ServerHostnameTextBox);
             this.Controls.Add(this.label1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "ServerSettings";
             this.Size = new System.Drawing.Size(519, 203);
             ((System.ComponentModel.ISupportInitialize)(this.ServerPortTextBox)).EndInit();

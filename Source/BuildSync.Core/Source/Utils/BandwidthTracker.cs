@@ -22,8 +22,8 @@ namespace BuildSync.Core.Utils
         private double BandwidthSent = 0;
         private double BandwidthRecieved = 0;
 
-        private RollingAverage AverageSent = new RollingAverage(30);
-        private RollingAverage AverageRecieved = new RollingAverage(30);
+        private RollingAverage AverageSent = new RollingAverage(10);
+        private RollingAverage AverageRecieved = new RollingAverage(10);
 
         /// <summary>
         /// 

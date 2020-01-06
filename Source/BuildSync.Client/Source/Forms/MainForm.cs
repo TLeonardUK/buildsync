@@ -180,6 +180,17 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ViewManifestsClicked(object sender, EventArgs e)
+        {
+            ManifestsForm form = new ManifestsForm();
+            form.Show(this);
+        }
+
+        /// <summary>
         ///     Invoked when the user clicks the notify icon
         /// </summary>
         /// <param name="sender">Object that invoked this event.</param>

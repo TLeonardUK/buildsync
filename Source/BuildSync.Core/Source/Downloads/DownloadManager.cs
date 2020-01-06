@@ -238,8 +238,6 @@ namespace BuildSync.Core.Downloads
                 {
                     // Start downloading this manifest.
                     ManifestDownloader.StartDownload(State.ActiveManifestId, State.Priority);
-
-                    Downloader.InstallOnComplete = false;
                 }
             }
 

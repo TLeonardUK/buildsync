@@ -443,6 +443,8 @@ namespace BuildSync.Client
         /// </summary>
         public static void OnStop()
         {
+            SaveSettings(true);
+
             if (NetClient != null)
             {
                 NetClient.Disconnect();

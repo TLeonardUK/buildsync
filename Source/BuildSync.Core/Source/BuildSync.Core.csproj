@@ -142,6 +142,7 @@
     <Compile Include="Networking\Messages\NetMessage_SetUserPermissions.cs" />
     <Compile Include="Networking\NetCachedArray.cs" />
     <Compile Include="Networking\NetConnection.cs" />
+    <Compile Include="Networking\NetDiscovery.cs" />
     <Compile Include="Networking\NetMessage.cs" />
     <Compile Include="Networking\NetMessageSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

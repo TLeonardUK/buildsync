@@ -131,7 +131,7 @@ namespace BuildSync.Client.Controls
 
                 if (ProgressBar.Value != (int)Progress)
                 {
-                    ProgressBar.Value = (int)Progress;
+                    ProgressBar.Value = Math.Max(0, Math.Min(100, (int)Progress));
                 }
             }
 
@@ -216,12 +216,12 @@ namespace BuildSync.Client.Controls
                             }
                         case ManifestDownloadProgressState.Initializing:
                             {
-                                SetStatus("Allocating Disk Space", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
+                                SetStatus("Allocating Disk Space", StateColoring.Info, Downloader.Manifest.VirtualPath, Downloader.InitializeProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Validating:
                             {
-                                SetStatus("Validating", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
+                                SetStatus("Validating", StateColoring.Info, Downloader.Manifest.VirtualPath, Downloader.ValidateProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Installing:

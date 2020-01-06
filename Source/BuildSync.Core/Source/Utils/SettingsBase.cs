@@ -30,6 +30,11 @@ namespace BuildSync.Core.Utils
                     Directory.CreateDirectory(DirPath);
                 }
 
+                if (File.Exists(FullFilePath))
+                {
+                    File.Copy(FullFilePath, FullFilePath + ".backup", true);
+                }
+
                 using (TextWriter TextWriter = new StreamWriter(FullFilePath))
                 {
                     JsonSerializerOptions Options = new JsonSerializerOptions
@@ -69,6 +74,8 @@ namespace BuildSync.Core.Utils
             bool Result = false;
             SaveItem = new T();
 
+            string BackupPath = FullFilePath + ".backup";
+
             try
             {
                 JsonSerializerOptions Options = new JsonSerializerOptions
@@ -82,6 +89,11 @@ namespace BuildSync.Core.Utils
                 if (SaveItem != null)
                 {
                     Result = true;
+
+                    if (File.Exists(BackupPath))
+                    {
+                        File.Delete(BackupPath);
+                    }
                 }
 
                 //using (TextReader TextReader = new StreamReader(FullFilePath))
@@ -98,6 +110,15 @@ namespace BuildSync.Core.Utils
             catch (Exception Ex)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Failed to load '{0}' with error: {1}", FullFilePath, Ex.Message);
+
+                // Try and load backup.
+                if (File.Exists(BackupPath))
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "Backup setings file found '{0}', attempting to load.", BackupPath);
+
+                    Result = Load(BackupPath, out SaveItem);
+                    File.Delete(BackupPath);
+                }
             }
             return Result;
         }

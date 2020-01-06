@@ -161,9 +161,9 @@
             this.autoInstallCheckBox.Location = new System.Drawing.Point(289, 124);
             this.autoInstallCheckBox.Margin = new System.Windows.Forms.Padding(2);
             this.autoInstallCheckBox.Name = "autoInstallCheckBox";
-            this.autoInstallCheckBox.Size = new System.Drawing.Size(77, 17);
+            this.autoInstallCheckBox.Size = new System.Drawing.Size(117, 17);
             this.autoInstallCheckBox.TabIndex = 14;
-            this.autoInstallCheckBox.Text = "Auto install";
+            this.autoInstallCheckBox.Text = "Automatically install";
             this.autoInstallCheckBox.UseVisualStyleBackColor = true;
             this.autoInstallCheckBox.CheckedChanged += new System.EventHandler(this.DataStateChanged);
             // 
@@ -174,7 +174,6 @@
             this.deviceTextBox.Location = new System.Drawing.Point(289, 161);
             this.deviceTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.deviceTextBox.Name = "deviceTextBox";
-            this.deviceTextBox.ReadOnly = true;
             this.deviceTextBox.Size = new System.Drawing.Size(295, 20);
             this.deviceTextBox.TabIndex = 16;
             this.deviceTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
@@ -185,9 +184,9 @@
             this.label4.Location = new System.Drawing.Point(286, 146);
             this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(117, 13);
+            this.label4.Size = new System.Drawing.Size(256, 13);
             this.label4.TabIndex = 15;
-            this.label4.Text = "Install Device Name/IP";
+            this.label4.Text = "Device name or ip to use when installing and running";
             // 
             // label5
             // 

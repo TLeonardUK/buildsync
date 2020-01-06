@@ -114,10 +114,13 @@ namespace BuildSync.Client.Tasks
                     }
 
                     // Build manifest from directory.
-                    Manifest = BuildManifest.BuildFromDirectory(NewManifestId, LocalFolder, VirtualPath, (string InFile, float InProgress) =>
+                    Manifest = BuildManifest.BuildFromDirectory(NewManifestId, LocalFolder, VirtualPath, Program.IOQueue, (string InFile, float InProgress) =>
                     {
                         Progress = 50.0f + (InProgress * 0.5f);
-                        CurrentFile = InFile;
+                        if (InFile.Length > 0)
+                        {
+                            CurrentFile = InFile;
+                        }
                     });
 
                     ManualResetEvent PublishCompleteEvent = new ManualResetEvent(false);

@@ -30,7 +30,9 @@ namespace BuildSync.Core.Users
     {
         public UserPermissionType Type { get; set; } = UserPermissionType.Unknown;
 
+        [JsonIgnore]
         public string[] VirtualPathSplit { get; private set; } = new string[0]; 
+
         private string InternalVirtualPath = "";
         public string VirtualPath
         {

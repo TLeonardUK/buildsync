@@ -70,6 +70,11 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private NetDiscoveryServer NetDiscoveryServer = new NetDiscoveryServer();
+
+        /// <summary>
+        /// 
+        /// </summary>
         public BuildSyncServer()
         {
             ListenConnection.OnClientMessageRecieved += HandleMessage;
@@ -271,6 +276,10 @@ namespace BuildSync.Core
         {
             ListenConnection.BeginListen(ServerPort);
             LastListenAttempt = TimeUtils.Ticks;
+
+            NetDiscoveryServer.ResponseData.Name = Dns.GetHostName();
+            NetDiscoveryServer.ResponseData.Address = ListenConnection.ListenAddress.Address.ToString();
+            NetDiscoveryServer.ResponseData.Port = ListenConnection.ListenAddress.Port;
         }
 
         /// <summary>

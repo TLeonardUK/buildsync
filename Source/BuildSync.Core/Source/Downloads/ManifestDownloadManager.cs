@@ -1,4 +1,6 @@
-﻿using BuildSync.Core.Manifests;
+﻿//#define CHECKSUM_EACH_BLOCK
+
+using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Utils;
 using System;
@@ -109,21 +111,6 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        private Task InitializeTask = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private Task ValidationTask = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private Task InstallTask = null;        
-
-        /// <summary>
-        /// 
-        /// </summary>
         private string StorageRootPath = "";
 
         /// <summary>
@@ -153,7 +140,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        private const int MaxDownloadQueueItems = 200; 
+        private const int MaxDownloadQueueItems = 200;
 
         /// <summary>
         /// 
@@ -200,7 +187,7 @@ namespace BuildSync.Core.Downloads
         {
             get;
             private set;
-        }        
+        }
 
         /// <summary>
         /// 
@@ -352,6 +339,8 @@ namespace BuildSync.Core.Downloads
             // We have everything.
             State.BlockStates.Resize((int)Manifest.BlockCount);
             State.BlockStates.SetAll(Available);
+
+            StoreFileCompletedStates(State);
 
             Logger.Log(LogLevel.Info, LogCategory.Manifest, "Added local download of manifest: {0}", Manifest.Guid.ToString());
             StateCollection.States.Add(State);
@@ -564,6 +553,25 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         /// <param name="State"></param>
+        private void StoreFileCompletedStates(ManifestDownloadState State)
+        {
+            // Store timestamps of files so we can determine if someone has modified the files after our validation.
+            State.FileCompletedStates.Clear();
+            foreach (BuildManifestFileInfo FileInfo in State.Manifest.Files)
+            {
+                string LocalPath = Path.Combine(State.LocalFolder, FileInfo.Path);
+
+                ManifestFileCompletedState CompletedState = new ManifestFileCompletedState();
+                CompletedState.Path = FileInfo.Path;
+                CompletedState.ModifiedTimestampOnCompleted = GetFileLastWriteTime(LocalPath);
+                State.FileCompletedStates.Add(CompletedState);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
         private void PollDownload(ManifestDownloadState State)
         {
             if (State.Paused)
@@ -602,16 +610,19 @@ namespace BuildSync.Core.Downloads
                 // Create all the files in the directory.
                 case ManifestDownloadProgressState.Initializing:
                     {
-                        if (InitializeTask == null)
+                        if (State.InitializeTask == null)
                         {
                             if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
                             {
-                                InitializeTask = Task.Run(() =>
+                                State.InitializeTask = Task.Run(() =>
                                 {
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Initializing directory: {0}", State.LocalFolder);
-                                        State.Manifest.InitializeDirectory(State.LocalFolder);
+                                        State.Manifest.InitializeDirectory(State.LocalFolder, (float Progress) =>
+                                        {
+                                            State.InitializeProgress = Progress;
+                                        });
                                         ChangeState(State, ManifestDownloadProgressState.Downloading);
                                     }
                                     catch (Exception Ex)
@@ -621,7 +632,7 @@ namespace BuildSync.Core.Downloads
                                     }
                                     finally
                                     {
-                                        InitializeTask = null;
+                                        State.InitializeTask = null;
                                     }
                                 });
                             }
@@ -646,9 +657,9 @@ namespace BuildSync.Core.Downloads
                 // Installing all launch modes on device.
                 case ManifestDownloadProgressState.Installing:
                     {
-                        if (InstallTask == null)
+                        if (State.InstallTask == null)
                         {
-                            InstallTask = Task.Run(() =>
+                            State.InstallTask = Task.Run(() =>
                             {
                                 try
                                 {
@@ -663,7 +674,7 @@ namespace BuildSync.Core.Downloads
                                 }
                                 finally
                                 {
-                                    InstallTask = null;
+                                    State.InstallTask = null;
                                 }
                             });
                         }
@@ -704,17 +715,19 @@ namespace BuildSync.Core.Downloads
                 // Check all the file checksums match, if any fail, requeue all their blocks.
                 case ManifestDownloadProgressState.Validating:
                     {
-                        if (ValidationTask == null)
+                        if (State.ValidationTask == null)
                         {
                             // Close all async io streams to the download we are working on.
                             if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
                             {
-                                ValidationTask = Task.Run(() =>
+                                State.ValidationTask = Task.Run(() =>
                                 {
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
-                                        List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder, IOQueue.BandwidthStats);
+                                        List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder, IOQueue.BandwidthStats, (float Progress) => {
+                                            State.ValidateProgress = Progress; 
+                                        });
                                         if (FailedFiles.Count == 0)
                                         {
                                             if (State.InstallOnComplete)
@@ -725,6 +738,8 @@ namespace BuildSync.Core.Downloads
                                             {
                                                 ChangeState(State, ManifestDownloadProgressState.Complete);
                                             }
+
+                                            StoreFileCompletedStates(State);
                                         }
                                         else
                                         {
@@ -743,7 +758,7 @@ namespace BuildSync.Core.Downloads
                                     }
                                     finally
                                     {
-                                        ValidationTask = null;
+                                        State.ValidationTask = null;
                                     }
                                 });
                             }
@@ -764,6 +779,52 @@ namespace BuildSync.Core.Downloads
                         ChangeState(State, ManifestDownloadProgressState.Downloading);
                         break;
                     }
+            }
+        }
+
+        private struct LastFileWriteTimeCacheEntry
+        {
+            public DateTime LastModified;
+            public ulong LastCacheUpdate;
+        }
+
+        private Dictionary<string, LastFileWriteTimeCacheEntry> LastFileWriteCache = new Dictionary<string, LastFileWriteTimeCacheEntry>();
+        private const int MaxLastFileWriteCacheEntryDuration = 5 * 1000;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        /// <returns></returns>
+        private DateTime GetFileLastWriteTime(string Path)
+        {
+            lock (LastFileWriteCache)
+            {
+                ulong time = TimeUtils.Ticks;
+                if (LastFileWriteCache.ContainsKey(Path))
+                {
+                    if (time - LastFileWriteCache[Path].LastCacheUpdate > MaxLastFileWriteCacheEntryDuration)
+                    {
+                        LastFileWriteCache.Remove(Path);
+                    }
+                    else
+                    {
+                        return LastFileWriteCache[Path].LastModified;
+                    }
+                }
+
+                FileInfo Info = new FileInfo(Path);
+                if (!Info.Exists)
+                {
+                    return DateTime.UtcNow;
+                }
+
+                LastFileWriteTimeCacheEntry Entry;
+                Entry.LastModified = Info.LastWriteTimeUtc;
+                Entry.LastCacheUpdate = time;
+                LastFileWriteCache.Add(Path, Entry);
+
+                return Entry.LastModified;
             }
         }
 
@@ -985,6 +1046,8 @@ namespace BuildSync.Core.Downloads
 
             Data.Resize((int)BlockInfo.TotalSize);
 
+            byte[] DataBuffer = Data.Data;
+
             for (int i = 0; i < BlockInfo.SubBlocks.Count; i++)
             {
                 BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
@@ -1001,8 +1064,33 @@ namespace BuildSync.Core.Downloads
                         WriteState.WasSuccess = false;
                     }
 
+                    // Check file has not been modified since completed.
+                    foreach (ManifestFileCompletedState CompletedState in State.FileCompletedStates)
+                    {
+                        if (SubBlockInfo.File.Path == CompletedState.Path)
+                        {
+                            if (GetFileLastWriteTime(LocalFile) != CompletedState.ModifiedTimestampOnCompleted)
+                            {
+                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed as has been modified since it was downloaded, failed to get block data.", BlockIndex, ManifestId.ToString());
+                                WriteState.WasSuccess = false;
+                            }
+                        }
+                    }
+
                     if (Interlocked.Decrement(ref WriteState.SubBlocksRemaining) == 0)
                     {
+                        // Checksum block to make sure nobody has balls it up.
+#if CHECKSUM_EACH_BLOCK
+                        if (State.Manifest.BlockChecksums != null)
+                        {
+                            if (Crc32.Compute(DataBuffer, (int)BlockInfo.TotalSize) != State.Manifest.BlockChecksums[BlockIndex])
+                            {
+                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum, failed to get block data.", BlockIndex, ManifestId.ToString());
+                                WriteState.WasSuccess = false;
+                            }
+                        }
+#endif
+
                         Callback?.Invoke(WriteState.WasSuccess);
                     }
                 });

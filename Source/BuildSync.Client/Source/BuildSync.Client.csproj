@@ -191,6 +191,12 @@
     <Compile Include="Forms\ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\FindServerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FindServerForm.Designer.cs">
+      <DependentUpon>FindServerForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\LaunchForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -214,6 +220,12 @@
     </Compile>
     <Compile Include="Forms\ManageUsersForm.Designer.cs">
       <DependentUpon>ManageUsersForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ManifestsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ManifestsForm.Designer.cs">
+      <DependentUpon>ManifestsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\ProgressForm.cs">
       <SubType>Form</SubType>
@@ -286,6 +298,9 @@
     <EmbeddedResource Include="Forms\ConsoleForm.resx">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FindServerForm.resx">
+      <DependentUpon>FindServerForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\LaunchForm.resx">
       <DependentUpon>LaunchForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -297,6 +312,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ManageUsersForm.resx">
       <DependentUpon>ManageUsersForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ManifestsForm.resx">
+      <DependentUpon>ManifestsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ProgressForm.resx">
       <DependentUpon>ProgressForm.cs</DependentUpon>

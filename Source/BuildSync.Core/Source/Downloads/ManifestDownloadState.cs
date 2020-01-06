@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml.Serialization;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
 
@@ -20,6 +21,16 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         public List<ManifestDownloadState> States { get; set; } = new List<ManifestDownloadState>();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [Serializable]
+    public class ManifestFileCompletedState
+    {
+        public string Path { get; set; } = "";
+        public DateTime ModifiedTimestampOnCompleted { get; set; }
     }
 
     /// <summary>
@@ -93,6 +104,11 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        public List<ManifestFileCompletedState> FileCompletedStates { get; set; } = new List<ManifestFileCompletedState>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         [NonSerialized]
         public ulong LastManifestRequestTime = 0;
 
@@ -107,6 +123,36 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         [NonSerialized]
         public BandwidthTracker BandwidthStats = new BandwidthTracker();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal Task InitializeTask = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal Task ValidationTask = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal Task InstallTask = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonIgnore]
+        public float ValidateProgress { get; internal set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonIgnore]
+        public float InitializeProgress { get; internal set; }
 
         /// <summary>
         /// 

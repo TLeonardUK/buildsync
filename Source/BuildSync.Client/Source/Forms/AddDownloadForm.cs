@@ -75,7 +75,6 @@ namespace BuildSync.Client.Forms
                 nameTextBox.Text.Trim().Length > 3 &&
                 priorityComboBox.SelectedIndex >= 0
             );
-            deviceTextBox.ReadOnly = !autoInstallCheckBox.Checked;
         }
 
         /// <summary>
