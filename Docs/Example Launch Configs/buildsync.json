@@ -5,6 +5,13 @@
       "Executable": "Data\\game.exe",
       "WorkingDirectory": "Data",
       "Condition": "Environment.GetEnvironmentVariable(\"PATH\") != null && Directory.Exists(\"C:\\\\\")",
+      "InstallSteps": [
+        {
+          "Executable": "C:\\Windows\\system32\\cmd.exe",
+          "WorkingDirectory": "C:\\",
+          "Arguments": "pause"
+        }
+      ],
       "Variables": [
         {
           "Name": "HIDDEN_INT_TEST",

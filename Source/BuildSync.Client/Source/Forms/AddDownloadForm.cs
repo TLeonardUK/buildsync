@@ -43,6 +43,8 @@ namespace BuildSync.Client.Forms
                 EditState.Name = nameTextBox.Text;
                 EditState.Priority = priorityComboBox.SelectedIndex;
                 EditState.UpdateAutomatically = autoUpdateCheckBox.Checked;
+                EditState.InstallAutomatically = autoInstallCheckBox.Checked;
+                EditState.InstallDeviceName = deviceTextBox.Text;
                 EditState.VirtualPath = downloadFileSystemTree.SelectedPath;
             }
             else
@@ -51,7 +53,9 @@ namespace BuildSync.Client.Forms
                     nameTextBox.Text,
                     downloadFileSystemTree.SelectedPath,
                     priorityComboBox.SelectedIndex,
-                    autoUpdateCheckBox.Checked
+                    autoUpdateCheckBox.Checked,
+                    autoInstallCheckBox.Checked,
+                    deviceTextBox.Text
                 );
             }
 
@@ -71,6 +75,7 @@ namespace BuildSync.Client.Forms
                 nameTextBox.Text.Trim().Length > 3 &&
                 priorityComboBox.SelectedIndex >= 0
             );
+            deviceTextBox.ReadOnly = !autoInstallCheckBox.Checked;
         }
 
         /// <summary>

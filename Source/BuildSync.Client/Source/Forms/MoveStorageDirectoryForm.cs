@@ -259,6 +259,11 @@ namespace BuildSync.Client.Forms
                         Message = "Waiting for download validation to finish.";
                         break;
                     }
+                case MoveStorageState.WaitingForDownloadInstallToFinish:
+                    {
+                        Message = "Waiting for download install to finish.";
+                        break;
+                    }                    
                 case MoveStorageState.CopyingFiles:
                     {
                         Message = "Copying: " + MoveTask.CurrentFile;

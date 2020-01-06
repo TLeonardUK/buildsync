@@ -17,6 +17,7 @@ namespace BuildSync.Client.Tasks
         WaitingForIOQueueToDrain,
         WaitingForDownloadInitToFinish,
         WaitingForDownloadValidationToFinish,
+        WaitingForDownloadInstallToFinish,
         CopyingFiles,
         CleaningUpOldDirectory,
         FailedDiskError,
@@ -108,6 +109,13 @@ namespace BuildSync.Client.Tasks
                     State = MoveStorageState.WaitingForDownloadValidationToFinish;
                     Progress = 0;
                     while (Program.ManifestDownloadManager.DownloadValidationInProgress)
+                    {
+                        Thread.Sleep(1);
+                    }
+
+                    State = MoveStorageState.WaitingForDownloadInstallToFinish;
+                    Progress = 0;
+                    while (Program.ManifestDownloadManager.DownloadInstallInProgress)
                     {
                         Thread.Sleep(1);
                     }

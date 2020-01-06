@@ -49,6 +49,7 @@
             this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.adminToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageBuildsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.manageUsersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.viewPeersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -67,7 +68,7 @@
             this.forceRedownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.mainDownloadList = new BuildSync.Client.Controls.DownloadList();
-            this.manageUsersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.forceReinstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.notifyIconContextMenu.SuspendLayout();
@@ -236,26 +237,33 @@
             // manageBuildsToolStripMenuItem
             // 
             this.manageBuildsToolStripMenuItem.Name = "manageBuildsToolStripMenuItem";
-            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.manageBuildsToolStripMenuItem.Text = "Manage builds ...";
             this.manageBuildsToolStripMenuItem.Click += new System.EventHandler(this.ManageBuildsClicked);
+            // 
+            // manageUsersToolStripMenuItem
+            // 
+            this.manageUsersToolStripMenuItem.Name = "manageUsersToolStripMenuItem";
+            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.manageUsersToolStripMenuItem.Text = "Manage users ...";
+            this.manageUsersToolStripMenuItem.Click += new System.EventHandler(this.ManageUsersClicked);
             // 
             // toolStripSeparator5
             // 
             this.toolStripSeparator5.Name = "toolStripSeparator5";
-            this.toolStripSeparator5.Size = new System.Drawing.Size(177, 6);
+            this.toolStripSeparator5.Size = new System.Drawing.Size(161, 6);
             // 
             // viewPeersToolStripMenuItem
             // 
             this.viewPeersToolStripMenuItem.Name = "viewPeersToolStripMenuItem";
-            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.viewPeersToolStripMenuItem.Text = "View peers ...";
             this.viewPeersToolStripMenuItem.Click += new System.EventHandler(this.ViewPeersClicked);
             // 
             // viewConsoleToolStripMenuItem
             // 
             this.viewConsoleToolStripMenuItem.Name = "viewConsoleToolStripMenuItem";
-            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.viewConsoleToolStripMenuItem.Text = "View console ...";
             this.viewConsoleToolStripMenuItem.Click += new System.EventHandler(this.ViewConsoleClicked);
             // 
@@ -326,9 +334,10 @@
             this.addDownloadToolStripMenuItem1,
             this.toolStripSeparator6,
             this.forceRevalidateToolStripMenuItem,
-            this.forceRedownloadToolStripMenuItem});
+            this.forceRedownloadToolStripMenuItem,
+            this.forceReinstallToolStripMenuItem});
             this.downloadListContextMenu.Name = "downloadListContextMenu";
-            this.downloadListContextMenu.Size = new System.Drawing.Size(185, 76);
+            this.downloadListContextMenu.Size = new System.Drawing.Size(185, 120);
             this.downloadListContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.DownloadListContextMenuShowing);
             // 
             // addDownloadToolStripMenuItem1
@@ -378,12 +387,12 @@
             this.mainDownloadList.Size = new System.Drawing.Size(796, 216);
             this.mainDownloadList.TabIndex = 6;
             // 
-            // manageUsersToolStripMenuItem
+            // forceReinstallToolStripMenuItem
             // 
-            this.manageUsersToolStripMenuItem.Name = "manageUsersToolStripMenuItem";
-            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.manageUsersToolStripMenuItem.Text = "Manage users ...";
-            this.manageUsersToolStripMenuItem.Click += new System.EventHandler(this.ManageUsersClicked);
+            this.forceReinstallToolStripMenuItem.Name = "forceReinstallToolStripMenuItem";
+            this.forceReinstallToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.forceReinstallToolStripMenuItem.Text = "Force Reinstall ...";
+            this.forceReinstallToolStripMenuItem.Click += new System.EventHandler(this.ForceReinstallClicked);
             // 
             // MainForm
             // 
@@ -451,6 +460,7 @@
         private System.Windows.Forms.ToolStripMenuItem forceRedownloadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewPeersToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageUsersToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem forceReinstallToolStripMenuItem;
     }
 }
 

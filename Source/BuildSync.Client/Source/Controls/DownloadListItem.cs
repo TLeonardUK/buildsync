@@ -193,6 +193,11 @@ namespace BuildSync.Client.Controls
                                 SetStatus("Validation Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Resume, UpRate, DownRate);
                                 break;
                             }
+                        case ManifestDownloadProgressState.InstallFailed:
+                            {
+                                SetStatus("Install Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Resume, UpRate, DownRate);
+                                break;
+                            }
                         default:
                             {
                                 SetStatus("-", StateColoring.Info, (Downloader.Manifest == null ? "-" : Downloader.Manifest.VirtualPath), Downloader.Progress * 100, true, LaunchOption.Resume, UpRate, DownRate);
@@ -217,6 +222,11 @@ namespace BuildSync.Client.Controls
                         case ManifestDownloadProgressState.Validating:
                             {
                                 SetStatus("Validating", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
+                                break;
+                            }
+                        case ManifestDownloadProgressState.Installing:
+                            {
+                                SetStatus("Installing", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Downloading:
@@ -336,6 +346,7 @@ namespace BuildSync.Client.Controls
                             {
                                 LaunchForm Form = new LaunchForm();
                                 Form.Downloader = Downloader;
+                                Form.DownloadState = State;
                                 Form.ShowDialog();
                                 break;
                             }

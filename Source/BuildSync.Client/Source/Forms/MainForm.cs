@@ -277,6 +277,7 @@ namespace BuildSync.Client.Forms
             ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
             if (Downloader != null)
             {
+                ContextMenuDownloadItem.State.Paused = false;
                 Program.ManifestDownloadManager.ValidateDownload(Downloader.ManifestId);
             }
         }
@@ -291,7 +292,23 @@ namespace BuildSync.Client.Forms
             ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
             if (Downloader != null)
             {
+                ContextMenuDownloadItem.State.Paused = false;
                 Program.ManifestDownloadManager.RestartDownload(Downloader.ManifestId);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ForceReinstallClicked(object sender, EventArgs e)
+        {
+            ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
+            if (Downloader != null)
+            {
+                ContextMenuDownloadItem.State.Paused = false;
+                Program.ManifestDownloadManager.InstallDownload(Downloader.ManifestId);
             }
         }
 
@@ -307,13 +324,15 @@ namespace BuildSync.Client.Forms
             {
                 ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
 
-                forceRedownloadToolStripMenuItem.Enabled = true;
-                forceRevalidateToolStripMenuItem.Enabled = (Downloader != null && Downloader.State == ManifestDownloadProgressState.Complete);
+                forceRedownloadToolStripMenuItem.Enabled = (Downloader != null && Downloader.State != ManifestDownloadProgressState.Validating && Downloader.State != ManifestDownloadProgressState.Initializing && Downloader.State != ManifestDownloadProgressState.Installing);
+                forceRevalidateToolStripMenuItem.Enabled = (Downloader != null && (Downloader.State == ManifestDownloadProgressState.Complete || Downloader.State == ManifestDownloadProgressState.ValidationFailed));
+                forceReinstallToolStripMenuItem.Enabled = (Downloader != null && (Downloader.State == ManifestDownloadProgressState.Complete || Downloader.State == ManifestDownloadProgressState.InstallFailed));
             }
             else
             {
                 forceRedownloadToolStripMenuItem.Enabled = false;
                 forceRevalidateToolStripMenuItem.Enabled = false;
+                forceReinstallToolStripMenuItem.Enabled = false;
             }
         }
 

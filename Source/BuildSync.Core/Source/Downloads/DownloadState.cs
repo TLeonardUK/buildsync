@@ -52,7 +52,22 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        public bool InstallAutomatically { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string InstallDeviceName { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public bool Paused { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool Installed { get; set; }
 
         /// <summary>
         /// 

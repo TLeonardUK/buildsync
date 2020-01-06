@@ -34,7 +34,9 @@ namespace BuildSync.Core.Downloads
         Complete,
         Validating,
         InitializeFailed,
-        ValidationFailed
+        ValidationFailed,
+        Installing,
+        InstallFailed,
     }
 
     /// <summary>
@@ -105,6 +107,21 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         [NonSerialized]
         public BandwidthTracker BandwidthStats = new BandwidthTracker();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool InstallOnComplete = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string InstallDeviceName = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool Installed = false;
 
         /// <summary>
         /// 

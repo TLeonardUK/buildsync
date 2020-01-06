@@ -65,12 +65,31 @@ namespace BuildSync.Core.Manifests
     }
 
     [Serializable]
+    public class BuildInstallStep
+    {
+        public string Executable { get; set; } = "";
+        public string WorkingDirectory { get; set; } = "";
+        public string Arguments { get; set; } = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public BuildInstallStep ShallowClone()
+        {
+            return (BuildInstallStep)this.MemberwiseClone();
+        }
+    }
+
+    [Serializable]
     public class BuildLaunchMode
     {
         public string Name { get; set; } = "";
         public string Executable { get; set; } = "";
         public string WorkingDirectory { get; set; } = "";
         public string Condition { get; set; } = "";
+
+        public List<BuildInstallStep> InstallSteps { get; set; } = new List<BuildInstallStep>();
 
         public List<BuildLaunchVariable> Variables { get; set; } = new List<BuildLaunchVariable>();
         public List<BuildLaunchArgument> Arguments { get; set; } = new List<BuildLaunchArgument>();
@@ -91,6 +110,11 @@ namespace BuildSync.Core.Manifests
             foreach (BuildLaunchArgument argument in Arguments)
             {
                 other.Arguments.Add(argument.ShallowClone());
+            }
+            other.InstallSteps = new List<BuildInstallStep>();
+            foreach (BuildInstallStep argument in InstallSteps)
+            {
+                other.InstallSteps.Add(argument.ShallowClone());
             }
             return other;
         }
@@ -116,6 +140,177 @@ namespace BuildSync.Core.Manifests
             }
             return Result;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void AddStringVariable(string Name, string Value)
+        {
+            BuildLaunchVariable Variable = new BuildLaunchVariable();
+            Variable.Condition = "true";
+            Variable.ConditionResult = true;
+            Variable.DataType = BuildLaunchVariableDataType.String;
+            Variable.Name = Name;
+            Variable.Value = Value;
+            Variables.Add(Variable);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool InstallStep(string LocalFolder, ref string ResultMessage, BuildInstallStep Step)
+        {
+            string ExePath = BuildSettings.ExpandArguments(Step.Executable, Variables);
+            if (!Path.IsPathRooted(ExePath))
+            {
+                ExePath = Path.Combine(LocalFolder, ExePath);
+            }
+
+            string WorkingDir = BuildSettings.ExpandArguments(Step.WorkingDirectory, Variables);
+            if (WorkingDir.Length == 0)
+            {
+                WorkingDir = Path.GetDirectoryName(ExePath);
+            }
+            else
+            {
+                if (!Path.IsPathRooted(WorkingDir))
+                {
+                    WorkingDir = Path.Combine(LocalFolder, WorkingDir);
+                }
+            }
+
+#if SHIPPING
+            if (!File.Exists(ExePath))
+            {
+                ResultMessage = "Could not find executable, expected to be located at: " + ExePath,;
+                return false;
+            }
+
+            if (!Directory.Exists(WorkingDir))
+            {
+                ResultMessage = "Could not find working directory, expected at: " + WorkingDir;
+                return false;
+            }
+#endif
+
+            string Arguments = BuildSettings.ExpandArguments(Step.Arguments, Variables);
+
+            try
+            {
+                ProcessStartInfo StartInfo = new ProcessStartInfo();
+                StartInfo.FileName = ExePath;
+                StartInfo.WorkingDirectory = WorkingDir;
+                StartInfo.Arguments = Arguments;
+
+                Process proc = Process.Start(StartInfo);
+                proc.WaitForExit();
+
+                if (proc.ExitCode != 0)
+                {
+                    ResultMessage = "Install process exited with error code " + proc.ExitCode;
+                    return false;
+                }
+            }
+            catch (Exception Ex)
+            {
+                ResultMessage = "Install process exited with error: " + Ex.Message;
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool Install(string LocalFolder, ref string ResultMessage)
+        {
+            if (InstallSteps.Count == 0)
+            {
+                return true;
+            }
+
+            foreach (BuildInstallStep Step in InstallSteps)
+            {
+                if (!InstallStep(LocalFolder, ref ResultMessage, Step))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool Launch(string LocalFolder, ref string ResultMessage)
+        {
+            if (InstallSteps.Count == 0)
+            {
+                return true;
+            }
+
+            string ExePath = BuildSettings.ExpandArguments(Executable, Variables);
+            if (!Path.IsPathRooted(ExePath))
+            {
+                ExePath = Path.Combine(LocalFolder, ExePath);
+            }
+
+            string WorkingDir = BuildSettings.ExpandArguments(WorkingDirectory, Variables);
+            if (WorkingDir.Length == 0)
+            {
+                WorkingDir = Path.GetDirectoryName(ExePath);
+            }
+            else
+            {
+                if (!Path.IsPathRooted(WorkingDir))
+                {
+                    WorkingDir = Path.Combine(LocalFolder, WorkingDir);
+                }
+            }
+
+#if SHIPPING
+            if (!File.Exists(ExePath))
+            {
+                ResultMessage = "Could not find executable, expected to be located at: " + ExePath;
+                return false;
+            }
+
+            if (!Directory.Exists(WorkingDir))
+            {
+                ResultMessage = "Could not find working directory, expected at: " + WorkingDir;
+                return false;
+            }
+#endif
+
+            string CompiledArguments = "";
+            try
+            {
+                CompiledArguments = CompileArguments();
+            }
+            catch (InvalidOperationException Ex)
+            {
+                ResultMessage = "Error encountered while evaluating launch settings:\n\n" + Ex.Message;
+                return false;
+            }
+
+            try
+            {
+                ProcessStartInfo StartInfo = new ProcessStartInfo();
+                StartInfo.FileName = ExePath;
+                StartInfo.WorkingDirectory = WorkingDir;
+                StartInfo.Arguments = CompiledArguments;
+                Process.Start(StartInfo);
+            }
+            catch (Exception Ex)
+            {
+                ResultMessage = "Failed to start executable with error:\n\n" + Ex.Message;
+                return false;
+            }
+
+            return true;
+        }
     }
 
     [Serializable]
@@ -128,7 +323,7 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public static void Init()
         {
-            //BuildSettings.WriteDummy(@"C:\Personal\buildsync\Docs\Example Launch Configs\buildsync.json");
+            //BuildSettings.WriteDummy(@"F:\buildsync\Docs\Example Launch Configs\buildsync.json");
 
             // This hack preps the script compiler so we don't have to pay any JIT
             // costs when we come to evaluate actual conditions.
@@ -159,6 +354,13 @@ namespace BuildSync.Core.Manifests
             Mode.Arguments.Add(new BuildLaunchArgument { Value= "-float_test=%FLOAT_TEST%", Condition="%FLOAT_TEST% > 0.1" });
             Mode.Arguments.Add(new BuildLaunchArgument { Value= "-string_test=\"%STRING_TEST%\"", Condition="\"%STRING_TEST%\" != \"\"" });
             Mode.Arguments.Add(new BuildLaunchArgument { Value= "-string_options_test=%STRING_OPTIONS_TEST%", Condition="\"%STRING_OPTIONS_TEST%\" != \"\"" });
+
+            BuildInstallStep Step = new BuildInstallStep();
+            Step.Executable = "exepath";
+            Step.Arguments = "args";
+            Step.WorkingDirectory = "workingdir";
+            Mode.InstallSteps.Add(Step);
+
             Settings.Modes.Add(Mode);
 
             Stopwatch watch = new Stopwatch();
@@ -229,7 +431,7 @@ namespace BuildSync.Core.Manifests
         /// <param name="Value"></param>
         /// <param name="Variables"></param>
         /// <returns></returns>
-        internal static string ExpandArguments(string Value, List<BuildLaunchVariable> Variables)
+        public static string ExpandArguments(string Value, List<BuildLaunchVariable> Variables)
         {
             Dictionary<string, string> Replacements = new Dictionary<string, string>();
 
@@ -297,6 +499,7 @@ namespace BuildSync.Core.Manifests
                 if (Evaluate(Mode.Condition, null))
                 {
                     BuildLaunchMode NewMode = Mode.DeepClone();
+
                     foreach (BuildLaunchVariable Var in NewMode.Variables)
                     {
                         Var.ConditionResult = Evaluate(Var.Condition, null);

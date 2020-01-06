@@ -23,6 +23,7 @@ namespace BuildSync.Client.Forms
     public partial class LaunchForm : Form
     {
         public ManifestDownloadState Downloader;
+        public DownloadState DownloadState;
 
         private BuildSettings Settings;
 
@@ -38,68 +39,45 @@ namespace BuildSync.Client.Forms
         /// 
         /// </summary>
         /// <param name=""></param>
-        private void Launch(BuildLaunchMode Mode)
+        private bool Install(BuildLaunchMode Mode)
         {
-            string ExePath = Mode.Executable;
-            if (!Path.IsPathRooted(ExePath))
+            string ResultMessage = "";
+            bool Success = true;
+
+            Task work = Task.Run(() =>
             {
-                ExePath = Path.Combine(Downloader.LocalFolder, ExePath);
+                Success = Mode.Install(Downloader.LocalFolder, ref ResultMessage);
+            });
+
+            ProgressForm form = new ProgressForm(work);
+            form.ShowDialog();
+
+            if (!Success)
+            {
+                MessageBox.Show("Failed to start install executable with error:\n\n" + ResultMessage, "Install Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            string WorkingDir = Mode.WorkingDirectory;
-            if (WorkingDir.Length == 0)
+            return Success;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name=""></param>
+        private void Launch(BuildLaunchMode Mode)
+        {
+            if (!Downloader.Installed)
             {
-                WorkingDir = Path.GetDirectoryName(ExePath);
-            }
-            else
-            {
-                if (!Path.IsPathRooted(WorkingDir))
+                if (!Install(Mode))
                 {
-                    WorkingDir = Path.Combine(Downloader.LocalFolder, WorkingDir);
+                    return;
                 }
             }
 
-#if SHIPPING
-            if (!File.Exists(ExePath))
+            string ResultMessage = "";
+            if (!Mode.Launch(Downloader.LocalFolder, ref ResultMessage))
             {
-                MessageBox.Show("Could not find executable, expected to be located at: " + ExePath, "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
-            }
-
-            if (!Directory.Exists(WorkingDir))
-            {
-                MessageBox.Show("Could not find working directory, expected at: " + WorkingDir, "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
-            }
-#endif
-
-            string CompiledArguments = "";
-            try
-            { 
-                CompiledArguments = Mode.CompileArguments();
-            }
-            catch (InvalidOperationException Ex)
-            {
-                MessageBox.Show("Error encountered while evaluating launch settings:\n\n" + Ex.Message, "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
-            }
-
-            try
-            {
-                ProcessStartInfo StartInfo = new ProcessStartInfo();
-                StartInfo.FileName = ExePath;
-                StartInfo.WorkingDirectory = WorkingDir;
-                StartInfo.Arguments = CompiledArguments;
-                Process.Start(StartInfo);
-            }
-            catch (Exception Ex)
-            {
-                MessageBox.Show("Failed to start executable with error:\n\n" + Ex.Message, "Launch Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
+                MessageBox.Show(ResultMessage, "Launch Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             Close();
@@ -131,6 +109,13 @@ namespace BuildSync.Client.Forms
             try
             {
                 Modes = Settings.Compile();
+
+                // Add various internal variables to pass in bits of info.
+                foreach (BuildLaunchMode Mode in Modes)
+                {
+                    Mode.AddStringVariable("INSTALL_DEVICE_NAME", DownloadState.InstallDeviceName);
+                    Mode.AddStringVariable("BUILD_DIR", Downloader.LocalFolder);
+                }
             }
             catch (InvalidOperationException Ex)
             {

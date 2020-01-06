@@ -88,7 +88,7 @@ namespace BuildSync.Core.Downloads
         /// <param name="VirtualPath"></param>
         /// <param name="Priority"></param>
         /// <param name="KeepUpToDate"></param>
-        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, bool AutomaticallyUpdate)
+        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName)
         {
             DownloadState State = new DownloadState();
             State.Id = Guid.NewGuid();
@@ -96,6 +96,8 @@ namespace BuildSync.Core.Downloads
             State.VirtualPath = VirtualPath;
             State.Priority = Priority;
             State.UpdateAutomatically = AutomaticallyUpdate;
+            State.InstallAutomatically = AutomaticallyInstall;
+            State.InstallDeviceName = InstallDeviceName;
 
             StateCollection.States.Add(State);
             AreStatesDirty = true;
@@ -229,11 +231,15 @@ namespace BuildSync.Core.Downloads
 
                     // Hackily change the priority - should change this to a SetDownloadPriority method.
                     Downloader.Priority = State.Priority;
+                    Downloader.InstallOnComplete = State.InstallAutomatically;
+                    Downloader.InstallDeviceName = State.InstallDeviceName;
                 }
                 else
                 {
                     // Start downloading this manifest.
                     ManifestDownloader.StartDownload(State.ActiveManifestId, State.Priority);
+
+                    Downloader.InstallOnComplete = false;
                 }
             }
 

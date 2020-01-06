@@ -119,6 +119,11 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        private Task InstallTask = null;        
+
+        /// <summary>
+        /// 
+        /// </summary>
         private string StorageRootPath = "";
 
         /// <summary>
@@ -187,6 +192,15 @@ namespace BuildSync.Core.Downloads
             get;
             private set;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool DownloadInstallInProgress
+        {
+            get;
+            private set;
+        }        
 
         /// <summary>
         /// 
@@ -427,6 +441,31 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         /// <param name="Manifest"></param>
+        /// <param name="Priority"></param>
+        public void InstallDownload(Guid ManifestId)
+        {
+            ManifestDownloadState State = GetDownload(ManifestId);
+            if (State == null)
+            {
+                return;
+            }
+
+            if (State.State != ManifestDownloadProgressState.Complete)
+            {
+                return;
+            }
+
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing download of manifest: {0}", ManifestId.ToString());
+            State.Paused = false;
+            State.State = ManifestDownloadProgressState.Installing;
+
+            StateDirtyCount++;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Manifest"></param>
         public void PauseDownload(Guid ManifestId)
         {
             ManifestDownloadState State = GetDownload(ManifestId);
@@ -473,6 +512,52 @@ namespace BuildSync.Core.Downloads
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        private void PerformInstallation(ManifestDownloadState State)
+        {
+            string ConfigFilePath = Path.Combine(State.LocalFolder, "buildsync.json");
+            if (!File.Exists(ConfigFilePath))
+            {
+                return;
+            }
+
+            BuildSettings Settings;
+            if (!BuildSettings.Load<BuildSettings>(ConfigFilePath, out Settings))
+            {
+                throw new Exception("The included buildsync.json file could not be loaded, it may be malformed.");
+            }
+
+            List<BuildLaunchMode> Modes;
+            try
+            {
+                Modes = Settings.Compile();
+
+                // Add various internal variables to pass in bits of info.
+                foreach (BuildLaunchMode Mode in Modes)
+                {
+                    Mode.AddStringVariable("INSTALL_DEVICE_NAME", State.InstallDeviceName);
+                    Mode.AddStringVariable("BUILD_DIR", State.LocalFolder);
+                }
+            }
+            catch (InvalidOperationException Ex)
+            {
+                throw new Exception("Error encountered while evaluating launch settings:\n\n" + Ex.Message);
+            }
+
+            // Install each mode.
+            foreach (BuildLaunchMode Mode in Modes)
+            {
+                string ErrorMessage = "";
+                if (!Mode.Install(State.LocalFolder, ref ErrorMessage))
+                {
+                    throw new Exception("Error encountered while evaluating installing:\n\n" + ErrorMessage);
+                }
+            }
         }
 
         /// <summary>
@@ -558,6 +643,42 @@ namespace BuildSync.Core.Downloads
                         break;
                     }
 
+                // Installing all launch modes on device.
+                case ManifestDownloadProgressState.Installing:
+                    {
+                        if (InstallTask == null)
+                        {
+                            InstallTask = Task.Run(() =>
+                            {
+                                try
+                                {
+                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0} directory: {1}", State.InstallDeviceName, State.LocalFolder);
+                                    PerformInstallation(State);
+                                    ChangeState(State, ManifestDownloadProgressState.Complete);
+                                }
+                                catch (Exception Ex)
+                                {
+                                    ChangeState(State, ManifestDownloadProgressState.InstallFailed, true);
+                                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to install with error: {0}", Ex.Message);
+                                }
+                                finally
+                                {
+                                    InstallTask = null;
+                                }
+                            });
+                        }
+
+                        break;
+                    }
+
+                // Restarting from an install failure, try again.
+                case ManifestDownloadProgressState.InstallFailed:
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying install after resume from error.");
+                        ChangeState(State, ManifestDownloadProgressState.Installing);
+                        break;
+                    }
+
                 // Get downloading them blocks.
                 case ManifestDownloadProgressState.Downloading:
                     {
@@ -596,7 +717,14 @@ namespace BuildSync.Core.Downloads
                                         List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder, IOQueue.BandwidthStats);
                                         if (FailedFiles.Count == 0)
                                         {
-                                            ChangeState(State, ManifestDownloadProgressState.Complete);
+                                            if (State.InstallOnComplete)
+                                            {
+                                                ChangeState(State, ManifestDownloadProgressState.Installing);
+                                            }
+                                            else
+                                            {
+                                                ChangeState(State, ManifestDownloadProgressState.Complete);
+                                            }
                                         }
                                         else
                                         {
@@ -653,6 +781,11 @@ namespace BuildSync.Core.Downloads
                 State.Paused = true;
                 OnDownloadError?.Invoke(State.ManifestId);
             }
+
+            if (NewState != ManifestDownloadProgressState.Complete)
+            {
+                State.Installed = false;
+            }
         }
 
         /// <summary>
@@ -662,6 +795,7 @@ namespace BuildSync.Core.Downloads
         {
             bool AnyValidating = false;
             bool AnyInitialising = false;
+            bool AnyInstalling = false;
 
             foreach (ManifestDownloadState State in StateCollection.States)
             {
@@ -675,10 +809,15 @@ namespace BuildSync.Core.Downloads
                 {
                     AnyValidating = true;
                 }
+                else if (State.State == ManifestDownloadProgressState.Installing)
+                {
+                    AnyInstalling = true;
+                }
             }
 
             DownloadInitializationInProgress = AnyInitialising;
             DownloadValidationInProgress = AnyValidating;
+            DownloadInstallInProgress = AnyInstalling;
 
             PruneDiskSpace();
         }
