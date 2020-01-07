@@ -114,6 +114,16 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
+        private void ViewHelpClickled(object sender, EventArgs e)
+        {
+            MessageBox.Show("Ask tim, no docs made yet ...", "Help", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ManageUsersClicked(object sender, EventArgs e)
         {
             (new ManageUsersForm()).ShowDialog(this);

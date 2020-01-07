@@ -398,6 +398,11 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private bool DisableReconnect = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public HandshakeResultType HandshakeResult
         {
             get;
@@ -582,7 +587,13 @@ namespace BuildSync.Core
             Connection.OnConnect += (NetConnection Connection) => { OnConnectedToServer?.Invoke(); };
             Connection.OnDisconnect += (NetConnection Connection) => { OnLostConnectionToServer?.Invoke(); };
             Connection.OnConnectFailed += (NetConnection Connection) => { OnFailedToConnectToServer?.Invoke(); HandshakeResult = HandshakeResultType.Unknown; };
-            Connection.OnHandshakeResult += (NetConnection Connection, HandshakeResultType ResultType) => { HandshakeResult = ResultType; };
+            Connection.OnHandshakeResult += (NetConnection Connection, HandshakeResultType ResultType) => { 
+                HandshakeResult = ResultType;
+                if (ResultType == HandshakeResultType.InvalidVersion)
+                {
+                    DisableReconnect = true;
+                }
+            };
 
             ListenConnection.OnClientConnect += PeerConnected;
 
@@ -653,7 +664,7 @@ namespace BuildSync.Core
             if (Started)
             {
                 // Reconnect?
-                if (!Connection.IsConnected && !Connection.IsConnecting && !InternalConnectionsDisabled)
+                if (!Connection.IsConnected && !Connection.IsConnecting && !InternalConnectionsDisabled && !DisableReconnect)
                 {
                     ulong ElapsedTime = TimeUtils.Ticks - LastConnectionAttempt;
                     if (ElapsedTime > ConnectionAttemptInterval)
@@ -664,7 +675,7 @@ namespace BuildSync.Core
                 }
 
                 // Reattempt to create listen server?
-                if (!ListenConnection.IsListening && !InternalConnectionsDisabled)
+                if (!ListenConnection.IsListening && !InternalConnectionsDisabled && !DisableReconnect)
                 {
                     ulong ElapsedTime = TimeUtils.Ticks - LastListenAttempt;
                     if (ElapsedTime > ListenAttemptInterval)
@@ -1267,7 +1278,7 @@ namespace BuildSync.Core
             {
                 NetMessage_GetBuildsResponse Msg = BaseMessage as NetMessage_GetBuildsResponse;
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved builds in folder: {0}", Msg.RootPath);
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved builds in folder: {0}", Msg.RootPath);
 
                 OnBuildsRecieved?.Invoke(Msg.RootPath, Msg.Builds);
             }
@@ -1335,7 +1346,7 @@ namespace BuildSync.Core
             {
                 NetMessage_BlockListUpdate Msg = BaseMessage as NetMessage_BlockListUpdate;
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block list update from: {0}", Connection.Address.ToString());
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved block list update from: {0}", Connection.Address.ToString());
 
                 Peer peer = GetPeerByConnection(Connection);
                 if (peer != null)

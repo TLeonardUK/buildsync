@@ -191,18 +191,18 @@ namespace BuildSync.Core
                             }
                         }
 
-                        Logger.Log(LogLevel.Info, LogCategory.Peers, "----- Peer Relevant Addresses -----");
-                        Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer: {0}", State.PeerConnectionAddress == null ? "Unknown" : State.PeerConnectionAddress.ToString());
+                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "----- Peer Relevant Addresses -----");
+                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer: {0}", State.PeerConnectionAddress == null ? "Unknown" : State.PeerConnectionAddress.ToString());
                         if (NewPeers.Count > 0)
                         {
                             for (int i = 0; i < NewPeers.Count; i++)
                             {
-                                Logger.Log(LogLevel.Info, LogCategory.Peers, "[{0}] {1}", i, NewPeers[i].ToString());
+                                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "[{0}] {1}", i, NewPeers[i].ToString());
                             }
                         }
                         else
                         {
-                            Logger.Log(LogLevel.Info, LogCategory.Peers, "\tNo Relevant Peers");
+                            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tNo Relevant Peers");
                         }
 
                         // Send it!
@@ -299,7 +299,7 @@ namespace BuildSync.Core
         {
             List<NetConnection> Clients = ListenConnection.AllClients;
 
-            Logger.Log(LogLevel.Info, LogCategory.Peers, "=======================");
+            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "=======================");
             foreach (NetConnection Connection in Clients)
             {
                 if (Connection.Metadata == null)
@@ -313,16 +313,16 @@ namespace BuildSync.Core
                     continue;
                 }
 
-                Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer[{0}]", ClientState.PeerConnectionAddress == null ? "Unknown" : ClientState.PeerConnectionAddress.ToString());
+                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer[{0}]", ClientState.PeerConnectionAddress == null ? "Unknown" : ClientState.PeerConnectionAddress.ToString());
                 for (int i = 0; i < ClientState.BlockState.States.Length; i++)
                 {
                     ManifestBlockListState State = ClientState.BlockState.States[i];
-                    Logger.Log(LogLevel.Info, LogCategory.Peers, "\tManifest[{0}] Id={1} Active={2}", i, State.Id.ToString(), State.IsActive);
+                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tManifest[{0}] Id={1} Active={2}", i, State.Id.ToString(), State.IsActive);
                     if (State.BlockState.Ranges != null)
                     {
                         for (int j = 0; j < State.BlockState.Ranges.Count; j++)
                         {
-                            Logger.Log(LogLevel.Info, LogCategory.Peers, "\t\tRegion[{0}] Start={1} End={2} Active={3}", j, State.BlockState.Ranges[j].Start, State.BlockState.Ranges[j].End, State.BlockState.Ranges[j].State);
+                            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\t\tRegion[{0}] Start={1} End={2} Active={3}", j, State.BlockState.Ranges[j].Start, State.BlockState.Ranges[j].End, State.BlockState.Ranges[j].State);
                         }
                     }
                 }
@@ -401,7 +401,7 @@ namespace BuildSync.Core
             {
                 NetMessage_GetBuilds Msg = BaseMessage as NetMessage_GetBuilds;
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for builds in folder: {0}", Msg.RootPath);
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved request for builds in folder: {0}", Msg.RootPath);
 
                 SendBuildsUpdate(Connection, Msg.RootPath);
             }
@@ -469,12 +469,12 @@ namespace BuildSync.Core
 
                 if (State.BlockState != null)
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block list update from client, applying as patch ({0} states).", Msg.BlockState.States.Length);
+                    Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved block list update from client, applying as patch ({0} states).", Msg.BlockState.States.Length);
                     State.BlockState = Msg.BlockState;// State.BlockState.ApplyDelta(Msg.BlockState);
                 }
                 else
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block list update from client, applying as new state ({0} states).", Msg.BlockState.States.Length);
+                    Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved block list update from client, applying as new state ({0} states).", Msg.BlockState.States.Length);
                     State.BlockState = Msg.BlockState;
                 }
 

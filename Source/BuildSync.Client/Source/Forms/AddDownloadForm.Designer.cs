@@ -38,7 +38,6 @@
             this.priorityComboBox = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.nameTextBox = new System.Windows.Forms.TextBox();
-            this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
             this.autoInstallCheckBox = new System.Windows.Forms.CheckBox();
             this.deviceTextBox = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
@@ -47,6 +46,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
+            this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
             this.SuspendLayout();
             // 
             // label1
@@ -140,24 +140,9 @@
             this.nameTextBox.TabIndex = 6;
             this.nameTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
             // 
-            // downloadFileSystemTree
-            // 
-            this.downloadFileSystemTree.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.downloadFileSystemTree.CanSelectBuildContainers = true;
-            this.downloadFileSystemTree.Location = new System.Drawing.Point(12, 29);
-            this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1);
-            this.downloadFileSystemTree.Name = "downloadFileSystemTree";
-            this.downloadFileSystemTree.SelectedPath = "";
-            this.downloadFileSystemTree.Size = new System.Drawing.Size(271, 240);
-            this.downloadFileSystemTree.TabIndex = 13;
-            this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
-            // 
             // autoInstallCheckBox
             // 
             this.autoInstallCheckBox.AutoSize = true;
-            this.autoInstallCheckBox.Checked = true;
-            this.autoInstallCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             this.autoInstallCheckBox.Location = new System.Drawing.Point(289, 124);
             this.autoInstallCheckBox.Margin = new System.Windows.Forms.Padding(2);
             this.autoInstallCheckBox.Name = "autoInstallCheckBox";
@@ -246,6 +231,19 @@
             this.label8.TabIndex = 20;
             this.label8.Text = "This is an individual build, selecting it will always download that specific buil" +
     "d.\r\n";
+            // 
+            // downloadFileSystemTree
+            // 
+            this.downloadFileSystemTree.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.downloadFileSystemTree.CanSelectBuildContainers = true;
+            this.downloadFileSystemTree.Location = new System.Drawing.Point(12, 29);
+            this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1);
+            this.downloadFileSystemTree.Name = "downloadFileSystemTree";
+            this.downloadFileSystemTree.SelectedPath = "";
+            this.downloadFileSystemTree.Size = new System.Drawing.Size(271, 240);
+            this.downloadFileSystemTree.TabIndex = 13;
+            this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
             // 
             // AddDownloadForm
             // 

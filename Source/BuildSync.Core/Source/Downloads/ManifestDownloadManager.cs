@@ -547,6 +547,8 @@ namespace BuildSync.Core.Downloads
                     throw new Exception("Error encountered while evaluating installing:\n\n" + ErrorMessage);
                 }
             }
+
+            State.Installed = true;
         }
 
         /// <summary>

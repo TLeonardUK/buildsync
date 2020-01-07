@@ -36,6 +36,7 @@ namespace BuildSync.Client
 #else
         public bool MinimizeToTrayOnClose { get; set; } = false;
 #endif
+        public bool AlwaysRunInstallBeforeLaunching { get; set; } = true;
         public bool RunOnStartup { get; set; } = true;
 
         public const int MaxLaunchSettings = 10;

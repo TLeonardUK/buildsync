@@ -47,6 +47,10 @@ namespace BuildSync.Client.Forms
             Task work = Task.Run(() =>
             {
                 Success = Mode.Install(Downloader.LocalFolder, ref ResultMessage);
+                if (Success)
+                {
+                    Downloader.Installed = true;
+                }
             });
 
             ProgressForm form = new ProgressForm(work);
@@ -66,7 +70,7 @@ namespace BuildSync.Client.Forms
         /// <param name=""></param>
         private void Launch(BuildLaunchMode Mode)
         {
-            if (!Downloader.Installed)
+            if (!Downloader.Installed || Program.Settings.AlwaysRunInstallBeforeLaunching)
             {
                 if (!Install(Mode))
                 {
