@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="430448c7-4772-455e-8bd0-b0518d947bba" revisionNumber="1">
+  <developerHowToDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+
+    <introduction>
+      <para>Setting up is straight forward, after installation through the msi installer, open BuildSync.Client.exe which is the main application used by end developers.</para>
+    </introduction>
+
+    <procedure>
+      <title>Setup Steps</title>
+      <steps class="ordered">
+        <step>
+          <content>
+            <para>The first time you open the application it will ask if you want to setup your, select <ui>Yes</ui> or go to <ui>Preferences</ui> in the <ui>File</ui> menu.</para>
+          </content>
+        </step>
+        <step>
+          <content>
+              <para>In the preferences window that appears, select the <ui>Server</ui> category and click the <ui>Search Network</ui> option.</para>
+              <mediaLink><image placement="center" xlink:href="search_network"/></mediaLink>
+              <para>This window will scan your local area network for available servers. Select the appropriate one and click <ui>Use Server</ui>. If no servers show in the list you can enter the hostname or IP directly on the server settings page.</para>
+              <para>Once done the client should connect to the server and the status bar will show the number of peers rather than an error message. If an error message is still displayed, check the ip and port of the server and that it is running and connectible.</para>
+              <mediaLink><image placement="center" xlink:href="client"/></mediaLink>
+          </content>
+        </step>
+        <step>
+            <content>
+                <para>After setting up the connection to the server you may wish to change where the tool will store files, by default it saves it to the C drive in LocalAppData. You can do this through the storage settings page.</para>
+                <mediaLink><image placement="center" xlink:href="storage_settings"/></mediaLink>
+                <alert class="caution">The tool will automatically delete builds to keep storage utilization under the maximum configured on this page. To avoid loosing or redownloading builds, make sure you have set a storage limit high enough to store every download you want access to simultaneously.</alert>
+            </content>
+        </step>
+      </steps>
+    </procedure>
+      
+    <relatedTopics>
+    </relatedTopics>
+  </developerHowToDocument>
+</topic>

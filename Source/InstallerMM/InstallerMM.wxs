@@ -20,6 +20,9 @@
         <Component Id="owc7C48FBECBD7C5A083E49831811149457" Guid="4f6f6760-d28a-d349-5500-1e66e7bf7bbb">
           <File Id="owf7C48FBECBD7C5A083E49831811149457" Source="$(var.SourceDir)\BuildSync.Client.Cmd.pdb" KeyPath="yes" />
         </Component>
+          <Component Id="owc7C48FBEBBD7C5A083E49831811149457" Guid="4f6f6760-d28a-d349-5500-1e66e7bf7bbC">
+              <File Id="owc7C48FBEBBD7C5A083E49831811149457" Source="$(var.SourceDir)\Docs\Build Sync Help.chm" KeyPath="yes" />
+          </Component>
         <Component Id="owc1B96E4D26AFCE998D5963BF751248C09" Guid="30795a00-58cf-d9f2-1eff-593f1e781cfa">
           <File Id="owf1B96E4D26AFCE998D5963BF751248C09" Source="$(var.SourceDir)\BuildSync.Client.exe" KeyPath="yes" >
             <Shortcut Id="scAF4A07C53560668BDB7F0CCC9D792775" Name="Build Sync (Client)" Directory="DesktopFolder" />

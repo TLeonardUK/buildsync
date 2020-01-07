@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="8e364b92-402a-495e-92c6-a05414ade9ca" revisionNumber="1">
+  <developerHowToDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+
+    <introduction>
+        <para>These steps will guide you through adding a download to the client. Please ensure the client is fully connected to the server before trying this as it will not be available otherwise.</para>
+    </introduction>
+
+    <procedure>
+      <title>Adding a download</title>
+      <steps class="ordered">
+        <step>
+          <content>
+            <para>
+                Right click on on the tool and click <ui>Add Download</ui>, optionally this command can be accessed from the <ui>File</ui> menu.
+            </para>
+            <mediaLink><image placement="center" xlink:href="add_download"/></mediaLink>
+              <para>
+                  The tree view on the left shows the virtual folder structure the server maintains for builds. The item selected in here determines what is downloaded. If a folder containing builds (known as a "build container") is selected then tool will always download the latest build contained in it. If an individual build is selected then only that one will be downloaded.
+              </para>
+            <alert class="note">If the folder list is empty its likely the server maintainer needs to grant you permission to view builds.</alert>
+            <alert class="note">The <ui>Automatically keep up to date</ui> will automatically download the newest build in the selected build container when it is published.</alert>
+            <alert class="note">The <ui>Automatically install</ui> will automatically run the install steps in the build configuration (See <link xlink:href="22ddb329-8476-4aec-9c69-5fb743c0787b"/>) when a download completes.</alert>
+            <alert class="note">The <ui>Device name</ui> is the hostname or ip of the device that the build will install and run on when launched. For example when launching a console build this would be the devkit IP.</alert>
+          </content>
+        </step>
+        <step>
+          <content>
+            <para>Click <ui>Add Download</ui> and your new download should now appear in the UI list.</para>
+          </content>
+          <mediaLink><image placement="center" xlink:href="download_ui"/></mediaLink>
+          <content>
+            <para>The new download can be paused/resumed, deleted or it's settings changed by clicking the button on the left.</para>
+          </content>
+        </step>
+        <step>
+          <content>
+            <para>Once a download has completed the pause button will change into a gamepad button. Clicking this will launch the downloaded build.</para>
+            <para>If any additional options are defined in the build configuration file an additional window will be displayed allowing the user to select the launch mode and configure it's options, this can be used for launching with special parameters (such as windowed modes, debug modes, etc).</para>
+          </content>
+          <mediaLink><image placement="center" xlink:href="launch_ui"/></mediaLink>
+        </step>
+      </steps>
+      <!-- <conclusion>Optional conclusion</conclusion> -->
+    </procedure>
+
+    <!-- <codeExample>Optional code example</codeExample> -->
+
+    <!-- <buildInstructions>Optional instructions for building a
+         code example.</buildInstructions> -->
+
+    <!-- <robustProgramming>Optional discussion of error handling and other
+         issues related to writing solid code.</robustProgramming> -->
+
+    <!-- <security>Optional discussion of security issues.</security> -->
+
+    <relatedTopics>
+      <!-- One or more of the following:
+           - A local link
+           - An external link
+           - A code entity reference
+
+      <link xlink:href="Other Topic's ID">Link text</link>
+      <externalLink>
+          <linkText>Link text</linkText>
+          <linkAlternateText>Optional alternate link text</linkAlternateText>
+          <linkUri>URI</linkUri>
+      </externalLink>
+      <codeEntityReference>API member ID</codeEntityReference>
+
+      Examples:
+
+      <link xlink:href="00e97994-e9e6-46e0-b420-5be86b2f8278">Some other topic</link>
+
+      <externalLink>
+          <linkText>SHFB on GitHub</linkText>
+          <linkAlternateText>Go to GitHub</linkAlternateText>
+          <linkUri>https://GitHub.com/EWSoftware/SHFB</linkUri>
+      </externalLink>
+
+      <codeEntityReference>T:TestDoc.TestClass</codeEntityReference>
+      <codeEntityReference>P:TestDoc.TestClass.SomeProperty</codeEntityReference>
+      <codeEntityReference>M:TestDoc.TestClass.#ctor</codeEntityReference>
+      <codeEntityReference>M:TestDoc.TestClass.#ctor(System.String,System.Int32)</codeEntityReference>
+      <codeEntityReference>M:TestDoc.TestClass.ToString</codeEntityReference>
+      <codeEntityReference>M:TestDoc.TestClass.FirstMethod</codeEntityReference>
+      <codeEntityReference>M:TestDoc.TestClass.SecondMethod(System.Int32,System.String)</codeEntityReference>
+      -->
+    </relatedTopics>
+  </developerHowToDocument>
+</topic>

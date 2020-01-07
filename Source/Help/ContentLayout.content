@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Topics>
+  <Topic id="70fa8d35-f362-4780-b9e3-fd7ff1b3b347" visible="True" isDefault="true" title="Build Sync Overview" />
+  <Topic id="3366190b-9a19-42c6-ac81-eeb871a1627b" visible="True" noFile="true" isExpanded="true" title="Client Application">
+    <Topic id="430448c7-4772-455e-8bd0-b0518d947bba" visible="True" title="Setting up the client" />
+    <Topic id="8e364b92-402a-495e-92c6-a05414ade9ca" visible="True" title="Adding a download" />
+    <Topic id="e17c4df3-45fb-4e15-9674-7961de48fd78" visible="True" title="Managing users" />
+    <Topic id="e17c4df3-45fb-4e15-9674-7961de48fd79" visible="True" title="Managing builds" />
+    <Topic id="7f503a6e-151c-45ec-a926-66f568d1f7ca" visible="True" title="Using the command line">
+      <Topic id="5e70557d-ea9f-48ef-a9a1-6cf359f8022e" visible="True" title="Add" />
+      <Topic id="0484f425-f20d-40a8-8095-bb5e66a91d51" visible="True" title="Delete" />
+      <Topic id="a15f6810-9138-458d-ba60-0736f08bdc46" visible="True" title="List" />
+      <Topic id="7679ff92-a598-423f-a355-6da24a209257" visible="True" title="Configure" />
+    </Topic>
+  </Topic>
+  <Topic id="285156ed-01f1-44ff-8120-f04243c706d2" visible="True" noFile="true" isExpanded="true" title="Server Application">
+    <Topic id="7ec222ea-e029-4c7f-ac3a-c5477721719c" visible="True" title="Setting up the server" />
+    <Topic id="22ddb329-8476-4aec-9c69-5fb743c0787b" visible="True" />
+    <Topic id="17314223-f8c3-49c8-8bcc-e3eced59189f" visible="True" isExpanded="true" title="Using the command line">
+      <Topic id="e1c33ec0-1a5a-4668-adb6-9256d66cbbd9" visible="True" title="AddUser" />
+      <Topic id="1fa52e1f-ffcc-4961-8524-dc102ec3d932" visible="True" title="RemoveUser" />
+      <Topic id="0a49ac74-71b7-4ff5-8e69-ff6eda426219" visible="True" title="GrantPermission" />
+      <Topic id="3603e29f-db1a-4a14-8ccd-26fde2548296" visible="True" title="RevokePermission" />
+      <Topic id="fe5d13c4-9fb0-4b23-84c3-f8f6a123e614" visible="True" title="ListUsers" />
+      <Topic id="766942e6-1de2-43dd-9742-94533830da81" visible="True" title="Configure" />
+    </Topic>
+  </Topic>
+  <Topic id="e6402f0d-0e44-48f7-899c-897ccefd9565" visible="True" isSelected="true" title="Frequently Asked Questions" />
+</Topics>

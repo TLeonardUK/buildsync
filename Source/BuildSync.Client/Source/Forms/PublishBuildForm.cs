@@ -114,7 +114,7 @@ namespace BuildSync.Client.Forms
         {
             if (Publisher != null)
             {
-                PublishProgressBar.Value = (int)Publisher.Progress;
+                PublishProgressBar.Value = Math.Max(0, Math.Min(100, (int)Publisher.Progress));
 
                 switch (Publisher.State)
                 {

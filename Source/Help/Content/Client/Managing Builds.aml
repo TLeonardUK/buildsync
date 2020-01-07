@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="e17c4df3-45fb-4e15-9674-7961de48fd79" revisionNumber="1">
+  <developerHowToDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+
+    <introduction>
+      <para>If you have been granted the <ui>ManageBuilds</ui> or <ui>ManageUsers</ui> by the server maintainer you will be able to administer user or builds through the client UI. This behaves the same as on the server, read <link xlink:href="cb2b7a61-b4be-4674-90bc-4fc6d6c3ce1e"/> for more detailed information.</para>
+    </introduction>
+
+    <procedure>
+      <title>Managing users</title>
+      <steps class="ordered">
+        <step>
+          <content>
+            <para>First step</para>
+          </content>
+        </step>
+        <step>
+          <content>
+            <para>Second step</para>
+          </content>
+        </step>
+      </steps>
+    </procedure>
+      
+    <procedure>
+      <title>Managing builds</title>
+      <steps class="ordered">
+        <step>
+          <content>
+            <para>First step</para>
+          </content>
+        </step>
+        <step>
+          <content>
+            <para>Second step</para>
+          </content>
+        </step>
+      </steps>
+    </procedure>
+
+    <relatedTopics>
+      <link xlink:href="cb2b7a61-b4be-4674-90bc-4fc6d6c3ce1e"/>
+    </relatedTopics>
+  </developerHowToDocument>
+</topic>

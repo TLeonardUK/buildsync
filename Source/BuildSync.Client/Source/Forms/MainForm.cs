@@ -1,8 +1,10 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -116,7 +118,26 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewHelpClickled(object sender, EventArgs e)
         {
-            MessageBox.Show("Ask tim, no docs made yet ...", "Help", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            string ExePath = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+            while (true)
+            {
+                string HelpDocs = Path.Combine(ExePath, "Docs/Build Sync Help.chm");
+                Console.WriteLine("Trying: {0}", HelpDocs);
+                if (File.Exists(HelpDocs))
+                {
+                    Process.Start(HelpDocs);
+                    break;
+                }
+                else
+                {
+                    ExePath = Path.GetDirectoryName(ExePath);
+                    if (ExePath == null || !ExePath.Contains('\\') && !ExePath.Contains('/'))
+                    {
+                        MessageBox.Show("Failed to find help chm file, installation may be corrupt.", "Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
+                }
+            }
         }
 
         /// <summary>
