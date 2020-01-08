@@ -4,91 +4,139 @@
     xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
     xmlns:xlink="http://www.w3.org/1999/xlink">
 
-    <!--
-    <summary>
-      <para>Optional summary abstract</para>
-    </summary>
-    -->
 
-    <!-- NOTE: This is similar to the API reference documentation which is
-         produced by the reference build.  You should probably just use that
-         instead of this. -->
     <introduction>
-      <!-- Uncomment this to generate an outline of the section and sub-section
-           titles.  Specify a numeric value as the inner text to limit it to
-           a specific number of sub-topics when creating the outline.  Specify
-           zero (0) to limit it to top-level sections only.  -->
-      <!-- <autoOutline /> -->
-
-      <para>Required introduction</para>
+      <para>Modifies and applies a configuration property of the client.</para>
     </introduction>
-
-    <syntaxSection>
-      <sections>
-        <section>
-          <title>Syntax section title</title>
-          <content>
-            <para>Syntax content</para>
-          </content>
-        </section>
-      </sections>
-      <legacySyntax>
-        <parameterReference>Parameter reference</parameterReference>
-      </legacySyntax>
-    </syntaxSection>
-
-    <!-- <parameters>Optional parameters info</parameters> -->
-    <!-- <returnValue>Optional return value info</returnValue> -->
-    <!-- <exceptions>Optional exception info</exceptions> -->
-    <!-- <languageReferenceRemarks>Optional language reference remarks</languageReferenceRemarks> -->
-    <!-- <codeExample>Optional code example</codeExample> -->
-    <!-- <dotNetFrameworkEquivalent>Optional .NET Framework equivalent info</dotNetFrameworkEquivalent> -->
-    <!-- <requirements>Optional requirements info</requirements> -->
-
-    <!-- Add one or more top-level section elements.  These are collapsible.
-         If using <autoOutline />, add an address attribute to identify
-         it so that it can be jumped to with a hyperlink. -->
-    <section address="Section1">
-      <title>Optional section title</title>
-      <content>
-        <!-- Uncomment this to create a sub-section outline
-        <autoOutline /> -->
-        <para>Add one or more sections with content</para>
+    
+    <section>
+      <title>Usage</title>
+      <content>      
+        <code language="bat" title="Command Line">BuildSync.Client.Cmd.exe configure Name Value</code>
       </content>
     </section>
-
-    <relatedTopics>
-      <!-- One or more of the following:
-           - A local link
-           - An external link
-           - A code entity reference
-
-      <link xlink:href="Other Topic's ID">Link text</link>
-      <externalLink>
-          <linkText>Link text</linkText>
-          <linkAlternateText>Optional alternate link text</linkAlternateText>
-          <linkUri>URI</linkUri>
-      </externalLink>
-      <codeEntityReference>API member ID</codeEntityReference>
-
-      Examples:
-
-      <link xlink:href="00e97994-e9e6-46e0-b420-5be86b2f8278">Some other topic</link>
-
-      <externalLink>
-          <linkText>SHFB on GitHub</linkText>
-          <linkAlternateText>Go to GitHub</linkAlternateText>
-          <linkUri>https://GitHub.com/EWSoftware/SHFB</linkUri>
-      </externalLink>
-
-      <codeEntityReference>T:TestDoc.TestClass</codeEntityReference>
-      <codeEntityReference>P:TestDoc.TestClass.SomeProperty</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.#ctor</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.#ctor(System.String,System.Int32)</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.ToString</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.FirstMethod</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.SecondMethod(System.Int32,System.String)</codeEntityReference>
-      -->
-    </relatedTopics>
+    
+    <section>
+      <title>Parameters</title>
+      <content>      
+        <table>
+          <tableHeader>
+            <row>
+              <entry><para>Parameter</para></entry>
+              <entry><para>Description</para></entry>
+            </row>
+          </tableHeader>
+          <row>
+              <entry><para>Name</para></entry>
+              <entry>
+                <para>Name of the configuration property that should be changed.</para>
+                <para>Property should be one of the following:</para>
+                
+                <table>
+                  <tableHeader>
+                    <row>
+                      <entry><para>Parameter</para></entry>
+                      <entry><para>Data Type</para></entry>
+                      <entry><para>Description</para></entry>
+                    </row>
+                  </tableHeader>
+                  <row>
+                      <entry><para>ServerHostname</para></entry>
+                      <entry><para>String</para></entry>
+                      <entry><para>IP or hostname of the coordination server to connect to.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>ServerPort</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>Port to communicate with the coordination server on.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>StoragePath</para></entry>
+                      <entry><para>String</para></entry>
+                      <entry><para>Path on the local file system to where builds and their associated metadata should be stored.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>BandwidthMaxUp</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>Maximum bandwidth in bytes per second that can be uploaded to other clients.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>BandwidthMaxDown</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>Maximum bandwidth in bytes per second that can be downloaded to this client.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>BandwidthStartTimeHour</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>Start hour during which uploads and downloads can occur. 0 for all settings allows traffic at any time.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>BandwidthStartTimeMinute</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>Start minute during which uploads and downloads can occur. 0 for all settings allows traffic at any time.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>BandwidthEndTimeHour</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>End hour during which uploads and downloads can occur. 0 for all settings allows traffic at any time.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>BandwidthEndTimeMinute</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>End minute during which uploads and downloads can occur. 0 for all settings allows traffic at any time.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>ClientPortRangeMin</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>Start of the port range that should be used when trying to listen for connections from other clients for peer-to-peer build exchange.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>ClientPortRangeMax</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>End of the port range that should be used when trying to listen for connections from other clients for peer-to-peer build exchange.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>MinimizeToTrayOnClose</para></entry>
+                      <entry><para>Boolean</para></entry>
+                      <entry><para>If the client should fully close or just minimize to the system tray when the user closes it's window.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>AlwaysRunInstallBeforeLaunching</para></entry>
+                      <entry><para>Boolean</para></entry>
+                      <entry><para>If build install steps should always be run before launching. This should only be disabled for non-incremetal installs.</para></entry>
+                  </row>
+                  <row>
+                      <entry><para>RunOnStartup</para></entry>
+                      <entry><para>Boolean</para></entry>
+                      <entry><para>If the client should automatically start when the user logs in.</para></entry>
+                  </row>
+                </table>
+                
+              </entry>
+          </row>
+          <row>
+              <entry><para>Value</para></entry>
+              <entry><para>Value to change configuration property to.</para></entry>
+          </row>
+        </table>
+      </content>
+    </section>
+    
+    <section>
+      <title>Example Output</title>
+      <content>  
+        <code language="none">
+        SUCCESS: Setting 'ServerHostname' was set to 'localhost'.
+        </code>
+      </content>
+    </section>
+     
+    <section>
+      <title>Exit Code</title>
+      <content>  
+        <para>0 on success, 1 on failure.</para>   
+      </content>
+    </section>
+ 
   </developerReferenceWithSyntaxDocument>
 </topic>

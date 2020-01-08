@@ -4,44 +4,40 @@
     xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
     xmlns:xlink="http://www.w3.org/1999/xlink">
 
+
     <introduction>
-      <para>If you have been granted the <ui>ManageBuilds</ui> or <ui>ManageUsers</ui> by the server maintainer you will be able to administer user or builds through the client UI. This behaves the same as on the server, read <link xlink:href="cb2b7a61-b4be-4674-90bc-4fc6d6c3ce1e"/> for more detailed information.</para>
+      <para>If you have been granted the <ui>ManageBuilds</ui> permission by the server maintainer you will be able to add or remove builds within paths you have permission in.</para>
     </introduction>
 
-    <procedure>
-      <title>Managing users</title>
-      <steps class="ordered">
-        <step>
-          <content>
-            <para>First step</para>
-          </content>
-        </step>
-        <step>
-          <content>
-            <para>Second step</para>
-          </content>
-        </step>
-      </steps>
-    </procedure>
-      
     <procedure>
       <title>Managing builds</title>
       <steps class="ordered">
         <step>
           <content>
-            <para>First step</para>
+            <para>You can manage users by clicking the <ui>Manage Builds</ui> option in the <ui>Advanced</ui> menu. If the menu item is disabled, you have not been granted permission to manage builds.</para>
+          </content>
+          <mediaLink><image placement="center" xlink:href="manage_builds"/></mediaLink>
+        </step>
+        <step>
+          <content>
+            <para>The tree view you see shows the build file system that you have access to. You can use the buttons in the top-right to add and remove builds as appropriate.</para>
+            <alert class="note">You will only see parts of the build file system that you have <ui>Access</ui> permission for. See <link xlink:href="e17c4df3-45fb-4e15-9674-7961de48fd78"/> for details.</alert>
+            <alert class="note">Generally builds should not be deleted, the server and clients will automatically maintain storage space for builds.</alert>
           </content>
         </step>
         <step>
           <content>
-            <para>Second step</para>
+            <para>Clicking add build will show this window:</para>
+            <mediaLink><image placement="center" xlink:href="add_builds"/></mediaLink>
+            <para>The <ui>Virtual Path</ui> is the path to the build in the build file system, paths are in the format "Folder/Folder/Container/BuildName".</para>
+            <para>The <ui>Local Path</ui> is the root of the build data on the local machine that you wish to add.</para>
+            <alert class="caution">Once processing is started to publish the build, it should not be interrupted, and can take a extensive amount of time for large builds.</alert>
           </content>
         </step>
       </steps>
     </procedure>
 
     <relatedTopics>
-      <link xlink:href="cb2b7a61-b4be-4674-90bc-4fc6d6c3ce1e"/>
     </relatedTopics>
   </developerHowToDocument>
 </topic>

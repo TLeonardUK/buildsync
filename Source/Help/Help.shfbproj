@@ -73,29 +73,29 @@
     <ComponentConfigurations>
       <ComponentConfig id="Syntax Component" enabled="True" xmlns="">
         <component id="Syntax Component">
-  <syntax input="/document/reference" output="/document/syntax" renderReferenceLinks="false" />
-  <generators>
+          <syntax input="/document/reference" output="/document/syntax" renderReferenceLinks="false" />
+          <generators>
     {@SyntaxFilters}
 </generators>
-  <containerElement name="codeSnippetGroup" addNoExampleTabs="true" includeOnSingleSnippets="false" groupingEnabled="{@CodeSnippetGrouping}" />
-  <configurations>
-    <generator id="C#" />
-    <generator id="Visual Basic">
-      <includeLineContinuation value="false" />
-    </generator>
-    <generator id="Visual Basic Usage">
-      <includeLineContinuation value="false" />
-    </generator>
-    <generator id="Managed C++" />
-    <generator id="F#" />
-    <generator id="J#" />
-    <generator id="JScript" />
-    <generator id="JavaScript" />
-    <generator id="XAML Usage" />
-    <generator id="ASP.NET" />
-    <generator id="X#" />
-  </configurations>
-</component>
+          <containerElement name="codeSnippetGroup" addNoExampleTabs="true" includeOnSingleSnippets="false" groupingEnabled="{@CodeSnippetGrouping}" />
+          <configurations>
+            <generator id="C#" />
+            <generator id="Visual Basic">
+              <includeLineContinuation value="false" />
+            </generator>
+            <generator id="Visual Basic Usage">
+              <includeLineContinuation value="false" />
+            </generator>
+            <generator id="Managed C++" />
+            <generator id="F#" />
+            <generator id="J#" />
+            <generator id="JScript" />
+            <generator id="JavaScript" />
+            <generator id="XAML Usage" />
+            <generator id="ASP.NET" />
+            <generator id="X#" />
+          </configurations>
+        </component>
       </ComponentConfig>
     </ComponentConfigurations>
   </PropertyGroup>
@@ -155,6 +155,11 @@
     <Content Include="icons\Help.png" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="media\add_builds.png">
+      <ImageId>add_builds</ImageId>
+      <AlternateText>add builds</AlternateText>
+      <CopyToMedia>True</CopyToMedia>
+    </Image>
     <Image Include="media\add_download.png">
       <ImageId>add_download</ImageId>
       <AlternateText>add download</AlternateText>
@@ -173,6 +178,17 @@
     <Image Include="media\launch_ui.png">
       <ImageId>launch_ui</ImageId>
       <AlternateText>launch ui</AlternateText>
+      <CopyToMedia>True</CopyToMedia>
+    </Image>
+    <Image Include="media\manage_builds.png">
+      <ImageId>manage_builds</ImageId>
+      <AlternateText>manage builds</AlternateText>
+      <CopyToMedia>True</CopyToMedia>
+    </Image>
+    <Image Include="media\manage_users.png">
+      <ImageId>manage_users</ImageId>
+      <AlternateText>manage users</AlternateText>
+      <CopyToMedia>True</CopyToMedia>
     </Image>
     <Image Include="media\search_network.png">
       <ImageId>search_network</ImageId>

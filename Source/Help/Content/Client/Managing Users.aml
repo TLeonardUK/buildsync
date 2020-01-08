@@ -5,7 +5,7 @@
     xmlns:xlink="http://www.w3.org/1999/xlink">
 
     <introduction>
-      <para>If you have been granted the <ui>ManageBuilds</ui> or <ui>ManageUsers</ui> by the server maintainer you will be able to administer user or builds through the client UI. This behaves the same as on the server, read <link xlink:href="cb2b7a61-b4be-4674-90bc-4fc6d6c3ce1e"/> for more detailed information.</para>
+      <para>If you have been granted the <ui>ManageUsers</ui> permission by the server maintainer you will be able to modify the list of users who are able to access builds, along with the permissions they have.</para>
     </introduction>
 
     <procedure>
@@ -13,35 +13,49 @@
       <steps class="ordered">
         <step>
           <content>
-            <para>First step</para>
+            <para>You can manage users by clicking the <ui>Manage Users</ui> option in the <ui>Advanced</ui> menu. If the menu item is disabled, you have not been granted permission to manage users.</para>
+          </content>
+          <mediaLink><image placement="center" xlink:href="manage_users"/></mediaLink>
+          <alert class="note">If you are the first user to connect to the server, your permissions need to be configured through the server command line. See <link xlink:href="7ec222ea-e029-4c7f-ac3a-c5477721719c"/> for details.</alert>
+        </step>
+        <step>
+          <content>
+            <para>On this window the left panel shows the list of all users who have accounts on the server, the right panel shows all the permissions the selected user has been granted.</para>
+            <alert class="note">User accounts are automatically created the first time a user connects to the server.</alert>
+            <para>The top two buttons will allow you to add and delete users respectively. Usernames should always be declared in their fully qualified form (eg. DOMAIN\User, PC-NAME\User, etc).</para>
           </content>
         </step>
         <step>
           <content>
-            <para>Second step</para>
-          </content>
-        </step>
-      </steps>
-    </procedure>
-      
-    <procedure>
-      <title>Managing builds</title>
-      <steps class="ordered">
-        <step>
-          <content>
-            <para>First step</para>
-          </content>
-        </step>
-        <step>
-          <content>
-            <para>Second step</para>
+            <para>Once a user has been created or selected, the buttons on the right panel can be used, they allow adding and removing permissions respectively.</para>
+            <para>Permissions are granted for specific paths into the build file system. Permissions are recursive, users will be able to view all builds in sub paths below the one given. Granting a permission without a path will give the user permission over the entire build file system.</para>
+            <para>The following are the main permissions that can be granted.</para>
+            <table>
+              <tableHeader>
+                <row>
+                  <entry><para>Permission Type</para></entry>
+                  <entry><para>Description</para></entry>
+                </row>
+              </tableHeader>
+              <row>
+                  <entry><para>ManageUsers</para></entry>
+                  <entry><para>This permission allows users to create or delete users as well as granting or revoking permissions to them.</para></entry>
+              </row>
+              <row>
+                  <entry><para>ManageBuilds</para></entry>
+                  <entry><para>This permission allows users to add or delete builds within the specified path in the build file system.</para></entry>
+              </row>
+              <row>
+                  <entry><para>Access</para></entry>
+                  <entry><para>This permission allows users to view and download builds within the specified path in the build file system.</para></entry>
+              </row>
+            </table>
           </content>
         </step>
       </steps>
     </procedure>
 
     <relatedTopics>
-      <link xlink:href="cb2b7a61-b4be-4674-90bc-4fc6d6c3ce1e"/>
     </relatedTopics>
   </developerHowToDocument>
 </topic>

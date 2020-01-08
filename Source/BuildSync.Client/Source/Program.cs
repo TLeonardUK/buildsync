@@ -341,7 +341,11 @@ namespace BuildSync.Client
                 List<VirtualFileSystemInsertChild> NewChildren = new List<VirtualFileSystemInsertChild>();
                 foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
                 {
-                    NewChildren.Add(new VirtualFileSystemInsertChild { VirtualPath = Build.VirtualPath, Metadata = Build.Guid });
+                    NewChildren.Add(new VirtualFileSystemInsertChild { 
+                        VirtualPath = Build.VirtualPath,
+                        CreateTime = Build.Guid == Guid.Empty ? DateTime.UtcNow : Build.CreateTime,
+                        Metadata = Build.Guid,
+                    });
                 }
                 BuildFileSystem.ReconcileChildren(RootPath, NewChildren);
             };
