@@ -64,7 +64,7 @@
             this.ClientSize = new System.Drawing.Size(460, 55);
             this.Controls.Add(this.TaskProgressBar);
             this.Controls.Add(this.TaskProgressLabel);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "ProgressForm";
             this.ShowIcon = false;

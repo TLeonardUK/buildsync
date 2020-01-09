@@ -19,6 +19,11 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        public string Id { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public string Name { get; set; }
 
         /// <summary>
@@ -63,8 +68,9 @@ namespace BuildSync.Core.Utils
         /// <param name="InValue"></param>
         /// <param name="InReadOnly"></param>
         /// <param name="InVisible"></param>
-        public DynamicPropertyGridProperty(string InName, string InDescription, string InCategory, object InValue, object InDefaultValue, bool InReadOnly, bool InVisible)
+        public DynamicPropertyGridProperty(string InId, string InName, string InDescription, string InCategory, object InValue, object InDefaultValue, bool InReadOnly, bool InVisible)
         {
+            Id = InId;
             Name = InName;
             Description = InDescription;
             Category = InCategory;
@@ -121,8 +127,8 @@ namespace BuildSync.Core.Utils
         /// <param name="InValue"></param>
         /// <param name="InReadOnly"></param>
         /// <param name="InVisible"></param>
-        public DynamicPropertyGridRangedProperty(string InName, string InDescription, string InCategory, object InValue, object InDefaultValue, bool InReadOnly, bool InVisible, float InMinValue, float InMaxValue)
-            : base(InName, InDescription, InCategory, InValue, InDefaultValue, InReadOnly, InVisible)
+        public DynamicPropertyGridRangedProperty(string InId, string InName, string InDescription, string InCategory, object InValue, object InDefaultValue, bool InReadOnly, bool InVisible, float InMinValue, float InMaxValue)
+            : base(InId, InName, InDescription, InCategory, InValue, InDefaultValue, InReadOnly, InVisible)
         {
             MinValue = InMinValue;
             MaxValue = InMaxValue;
@@ -147,8 +153,8 @@ namespace BuildSync.Core.Utils
         /// <param name="InValue"></param>
         /// <param name="InReadOnly"></param>
         /// <param name="InVisible"></param>
-        public DynamicPropertyGridOptionsProperty(string InName, string InDescription, string InCategory, object InValue, object InDefaultValue, bool InReadOnly, bool InVisible, List<string> InOptions)
-            : base(InName, InDescription, InCategory, InValue, InDefaultValue, InReadOnly, InVisible)
+        public DynamicPropertyGridOptionsProperty(string InId, string InName, string InDescription, string InCategory, object InValue, object InDefaultValue, bool InReadOnly, bool InVisible, List<string> InOptions)
+            : base(InId, InName, InDescription, InCategory, InValue, InDefaultValue, InReadOnly, InVisible)
         {
             Options = InOptions;
             Value = InValue;
@@ -363,11 +369,11 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <param name="Name"></param>
-        public void Remove(string Name)
+        public void Remove(string Id)
         {
             foreach (DynamicPropertyGridProperty prop in base.List)
             {
-                if (prop.Name == Name)
+                if (prop.Id == Id)
                 {
                     base.List.Remove(prop);
                     return;
@@ -379,11 +385,11 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <param name="Name"></param>
-        public DynamicPropertyGridProperty Find(string Name)
+        public DynamicPropertyGridProperty Find(string Id)
         {
             foreach (DynamicPropertyGridProperty prop in base.List)
             {
-                if (prop.Name == Name)
+                if (prop.Id == Id)
                 {
                     return prop;
                 }

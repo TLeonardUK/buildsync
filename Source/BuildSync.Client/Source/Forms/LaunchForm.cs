@@ -190,7 +190,7 @@ namespace BuildSync.Client.Forms
             DynamicPropertyGridObject GridObj = new DynamicPropertyGridObject();
             foreach (BuildLaunchVariable Var in Mode.Variables)
             {
-                if (StoredSettings != null)
+                if (StoredSettings != null && !Var.Internal)
                 {
                     if (StoredSettings.Values.ContainsKey(Var.Name))
                     {
@@ -206,11 +206,11 @@ namespace BuildSync.Client.Forms
                             {
                                 if (Var.Options.Count == 0)
                                 {
-                                    GridObj.Add(new DynamicPropertyGridProperty(Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Var.Value, Var.Value, false, true));
+                                    GridObj.Add(new DynamicPropertyGridProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Var.Value, Var.Value, false, true));
                                 }
                                 else
                                 {
-                                    GridObj.Add(new DynamicPropertyGridOptionsProperty(Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Var.Value, Var.Value, false, true, Var.Options));
+                                    GridObj.Add(new DynamicPropertyGridOptionsProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Var.Value, Var.Value, false, true, Var.Options));
                                 }
 
                                 break;
@@ -220,7 +220,7 @@ namespace BuildSync.Client.Forms
                                 float Value = 0.0f;
                                 float.TryParse(Var.Value, out Value);
 
-                                GridObj.Add(new DynamicPropertyGridRangedProperty(Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true, Var.MinValue, Var.MaxValue));
+                                GridObj.Add(new DynamicPropertyGridRangedProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true, Var.MinValue, Var.MaxValue));
 
                                 break;
                             }
@@ -229,7 +229,7 @@ namespace BuildSync.Client.Forms
                                 int Value = 0;
                                 int.TryParse(Var.Value, out Value);
 
-                                GridObj.Add(new DynamicPropertyGridRangedProperty(Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true, Var.MinValue, Var.MaxValue));
+                                GridObj.Add(new DynamicPropertyGridRangedProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true, Var.MinValue, Var.MaxValue));
 
                                 break;
                             }
@@ -238,7 +238,7 @@ namespace BuildSync.Client.Forms
                                 bool Value = false;
                                 bool.TryParse(Var.Value, out Value);
 
-                                GridObj.Add(new DynamicPropertyGridProperty(Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true));
+                                GridObj.Add(new DynamicPropertyGridProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true));
 
                                 break;
                             }
@@ -282,7 +282,7 @@ namespace BuildSync.Client.Forms
             {
                 if (Var.ConditionResult)
                 {
-                    DynamicPropertyGridProperty Property = GridObj.Find(Var.FriendlyName);
+                    DynamicPropertyGridProperty Property = GridObj.Find(Var.Name);
                     if (Property == null)
                     {
                         continue;

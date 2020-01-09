@@ -353,7 +353,17 @@ namespace BuildSync.Core.Networking
             if (Socket != null)
             {
                 //Socket.Disconnect(true);
-                Socket.Close();
+                try
+                {
+                    Socket.Shutdown(SocketShutdown.Both);
+                }
+                catch (Exception Ex)
+                {
+                }
+                finally
+                {
+                    Socket.Close();
+                }
             }
 
             EndSendThread();

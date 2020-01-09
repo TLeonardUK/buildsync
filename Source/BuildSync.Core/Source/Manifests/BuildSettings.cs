@@ -37,6 +37,7 @@ namespace BuildSync.Core.Manifests
         public float MaxValue { get; set; } =  1000;
 
         public bool ConditionResult = false;
+        public bool Internal = false;
 
         /// <summary>
         /// 
@@ -153,6 +154,7 @@ namespace BuildSync.Core.Manifests
             Variable.DataType = BuildLaunchVariableDataType.String;
             Variable.Name = Name;
             Variable.Value = Value;
+            Variable.Internal = true;
             Variables.Add(Variable);
         }
 
@@ -267,13 +269,14 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public bool Launch(string LocalFolder, ref string ResultMessage)
         {
-            if (InstallSteps.Count != 0)
+            // This is now done in launch dialog or manifest downloader.
+            /*if (InstallSteps.Count != 0)
             {
                 if (!Install(LocalFolder, ref ResultMessage))
                 {
                     return false;
                 }
-            }
+            }*/
 
             string ExePath = BuildSettings.ExpandArguments(Executable, Variables);
             if (!Path.IsPathRooted(ExePath))
