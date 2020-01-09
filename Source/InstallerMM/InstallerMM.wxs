@@ -8,17 +8,11 @@
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" />
       <Directory Id="MergeRedirectFolder">
-        <Component Id="owcEA424B4981766297DE1F4115C39EDB8C" Guid="d601e02a-9210-31f9-4850-8f9cdc413999">
-          <File Id="owfEA424B4981766297DE1F4115C39EDB8C" Source="$(var.SourceDir)\BuildSync.Client.application" KeyPath="yes" />
-        </Component>
         <Component Id="owcFEEF4EC13D5829AA1F4B665E68798E5C" Guid="3c9b1fb9-0ed3-e2da-167a-aeff34952dfa">
           <File Id="owfFEEF4EC13D5829AA1F4B665E68798E5C" Source="$(var.SourceDir)\BuildSync.Client.Cmd.exe" KeyPath="yes" />
         </Component>
         <Component Id="owc7D5E409F2BB983EA5B925AB057F52F2F" Guid="b0cd99a7-095f-842b-6517-ddf9af515a71">
           <File Id="owf7D5E409F2BB983EA5B925AB057F52F2F" Source="$(var.SourceDir)\BuildSync.Client.Cmd.exe.config" KeyPath="yes" />
-        </Component>
-        <Component Id="owc7C48FBECBD7C5A083E49831811149457" Guid="4f6f6760-d28a-d349-5500-1e66e7bf7bbb">
-          <File Id="owf7C48FBECBD7C5A083E49831811149457" Source="$(var.SourceDir)\BuildSync.Client.Cmd.pdb" KeyPath="yes" />
         </Component>
           <Component Id="owc7C48FBEBBD7C5A083E49831811149457" Guid="4f6f6760-d28a-d349-5500-1e66e7bf7bbC">
               <File Id="owc7C48FBEBBD7C5A083E49831811149457" Source="$(var.SourceDir)\Docs\Build Sync Help.chm" KeyPath="yes" />
@@ -31,20 +25,11 @@
         <Component Id="owc9BB463B1F8F906D27A30B388377138B8" Guid="f0969d65-cc8f-4e12-82b5-be9b021845dc">
           <File Id="owf9BB463B1F8F906D27A30B388377138B8" Source="$(var.SourceDir)\BuildSync.Client.exe.config" KeyPath="yes" />
         </Component>
-        <Component Id="owc0225A6C446FE22AE6EE741FD93351319" Guid="bd7f06c2-8cb7-d941-5775-af5d6ff7dee7">
-          <File Id="owf0225A6C446FE22AE6EE741FD93351319" Source="$(var.SourceDir)\BuildSync.Client.exe.manifest" KeyPath="yes" />
-        </Component>
-        <Component Id="owc83166ABDB925BC8DC20CCBA3E69561FD" Guid="2000bd39-dd63-911d-ff1c-9bbac98f01f2">
-          <File Id="owf83166ABDB925BC8DC20CCBA3E69561FD" Source="$(var.SourceDir)\BuildSync.Client.pdb" KeyPath="yes" />
-        </Component>
         <Component Id="owcA954F0ABAFC68DC6BDA64AB56F6A51DC" Guid="60bdccde-74fe-5335-e7e8-63a91d015daa">
           <File Id="owfA954F0ABAFC68DC6BDA64AB56F6A51DC" Source="$(var.SourceDir)\BuildSync.Core.dll" KeyPath="yes" />
         </Component>
         <Component Id="owc8E8933F72D50DF875C1EC5ABAE733433" Guid="f3c8e205-eda2-3c59-a7bb-93a0c5629ac7">
           <File Id="owf8E8933F72D50DF875C1EC5ABAE733433" Source="$(var.SourceDir)\BuildSync.Core.dll.config" KeyPath="yes" />
-        </Component>
-        <Component Id="owcC503390F8FDF919B1E48E0A9C2AFE537" Guid="3a06de75-4a09-6923-3c1b-e611e2305469">
-          <File Id="owfC503390F8FDF919B1E48E0A9C2AFE537" Source="$(var.SourceDir)\BuildSync.Core.pdb" KeyPath="yes" />
         </Component>
         <Component Id="owcFF89076139A91810B698F6713D52ECCF" Guid="6de247f0-8a9b-0dbc-a624-238458871eb1">
           <File Id="owfFF89076139A91810B698F6713D52ECCF" Source="$(var.SourceDir)\BuildSync.Server.Cmd.exe" KeyPath="yes" />
@@ -52,17 +37,11 @@
         <Component Id="owcBC12B9BC1D5449E869E8E4D2BD2B7B4E" Guid="a6512f74-bd06-6a2f-b79a-8ba6f730d3f0">
           <File Id="owfBC12B9BC1D5449E869E8E4D2BD2B7B4E" Source="$(var.SourceDir)\BuildSync.Server.Cmd.exe.config" KeyPath="yes" />
         </Component>
-        <Component Id="owc1779CF145B7744628A42F0F942B6B1E8" Guid="c0aa9064-7232-0373-d630-82bdd423a066">
-          <File Id="owf1779CF145B7744628A42F0F942B6B1E8" Source="$(var.SourceDir)\BuildSync.Server.Cmd.pdb" KeyPath="yes" />
-        </Component>
         <Component Id="owc98B6A1E1E750BCA3CC33A027DE6DC471" Guid="6d0d8eb7-aea2-ef51-b08c-9755695188be">
           <File Id="owf98B6A1E1E750BCA3CC33A027DE6DC471" Source="$(var.SourceDir)\BuildSync.Server.exe" KeyPath="yes" />
         </Component>
         <Component Id="owc8E6D480EBF8E2E304795EDCB349DD37B" Guid="2eb1c63e-1243-a985-cfe2-559525145a92">
           <File Id="owf8E6D480EBF8E2E304795EDCB349DD37B" Source="$(var.SourceDir)\BuildSync.Server.exe.config" KeyPath="yes" />
-        </Component>
-        <Component Id="owcCE692448242BF6ECF3AF856ECCC1BCA5" Guid="fa4c046d-52d5-7f11-6ddb-93bc4c8a5e74">
-          <File Id="owfCE692448242BF6ECF3AF856ECCC1BCA5" Source="$(var.SourceDir)\BuildSync.Server.pdb" KeyPath="yes" />
         </Component>
         <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA334E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb75d">
           <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA334E" Source="$(var.SourceDir)\CommandLine.dll" KeyPath="yes" />
@@ -79,14 +58,8 @@
         <Component Id="owcBED5500FCECB7551175681E93EC9B191" Guid="e84e4591-8227-e9c2-b052-dc4583553c9a">
           <File Id="owfBED5500FCECB7551175681E93EC9B191" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.CSharp.dll" KeyPath="yes" />
         </Component>
-        <Component Id="owc319FEF975D029606AF56ADFEF65F7BD6" Guid="d33ccbd4-0765-ec8a-6296-b75e13fb2c35">
-          <File Id="owf319FEF975D029606AF56ADFEF65F7BD6" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.CSharp.pdb" KeyPath="yes" />
-        </Component>
         <Component Id="owcD48DD5DDA2BA4C83F4A98D4BE87BA462" Guid="effc6a72-2186-a73f-ee7f-c05c95de6c6e">
           <File Id="owfD48DD5DDA2BA4C83F4A98D4BE87BA462" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.CSharp.Scripting.dll" KeyPath="yes" />
-        </Component>
-        <Component Id="owc67EA44C93E3C0ADBEB7D7436B8C33049" Guid="23ce1cd1-249b-ebc0-a398-32ed42d97254">
-          <File Id="owf67EA44C93E3C0ADBEB7D7436B8C33049" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.CSharp.Scripting.pdb" KeyPath="yes" />
         </Component>
         <Component Id="owcE42CADDAA89913340273F8A79CF6488F" Guid="fba8d0f3-719f-a774-8fd4-f7114653e076">
           <File Id="owfE42CADDAA89913340273F8A79CF6488F" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.CSharp.Scripting.xml" KeyPath="yes" />
@@ -97,14 +70,8 @@
         <Component Id="owcDC0782CCA5E596145FD1FDFB67EDC2AF" Guid="8bfcc8b6-6693-60fe-2af9-d0e34ab6f421">
           <File Id="owfDC0782CCA5E596145FD1FDFB67EDC2AF" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.dll" KeyPath="yes" />
         </Component>
-        <Component Id="owcB7C955549ABEFBB8F60D1FB6FAFBC089" Guid="d0ec5a3c-5535-36aa-89ea-da3ad4a480a3">
-          <File Id="owfB7C955549ABEFBB8F60D1FB6FAFBC089" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.pdb" KeyPath="yes" />
-        </Component>
         <Component Id="owcB9CA98C685BDD7D3E9DD3EBD5C5A3B84" Guid="434ec6c6-a47b-5321-63d1-6d30a2f8a9bf">
           <File Id="owfB9CA98C685BDD7D3E9DD3EBD5C5A3B84" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.Scripting.dll" KeyPath="yes" />
-        </Component>
-        <Component Id="owcBDCBD686FD5C08A75C02613D99D059A5" Guid="1d063cd2-203b-2741-1a7e-a68047f09ee4">
-          <File Id="owfBDCBD686FD5C08A75C02613D99D059A5" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.Scripting.pdb" KeyPath="yes" />
         </Component>
         <Component Id="owc9EF4B8010A209BF3C070F8B98A4A1DEF" Guid="bc492e51-c743-bc85-7405-0b963f1f920e">
           <File Id="owf9EF4B8010A209BF3C070F8B98A4A1DEF" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.Scripting.xml" KeyPath="yes" />

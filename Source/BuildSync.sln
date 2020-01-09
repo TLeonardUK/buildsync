@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildSync.Client", "BuildSync.Client\Source\BuildSync.Client.csproj", "{5A0C8258-43C2-4D63-B457-F235855B362F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5E5398A3-5B45-41EC-9267-C3274DA1617D} = {5E5398A3-5B45-41EC-9267-C3274DA1617D}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuildSync.Server", "BuildSync.Server\Source\BuildSync.Server.csproj", "{25DB78C5-C2D2-4E46-A655-25F7B81F6886}"
 EndProject

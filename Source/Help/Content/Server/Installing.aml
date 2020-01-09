@@ -4,103 +4,57 @@
     xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
     xmlns:xlink="http://www.w3.org/1999/xlink">
 
-    <!--
-    <summary>
-      <para>Optional summary abstract</para>
-    </summary>
-    -->
-
     <introduction>
-      <!-- Uncomment this to generate an outline of the section and sub-section
-           titles.  Specify a numeric value as the inner text to limit it to
-           a specific number of sub-topics when creating the outline.  Specify
-           zero (0) to limit it to top-level sections only.  -->
-      <!-- <autoOutline /> -->
-
-      <para>Required introduction</para>
+      <para>Setting up is straight forward, after installation through the msi installer, open BuildSync.Server.exe which is the main server application.</para>
     </introduction>
 
-    <!-- <prerequisites><content>Optional prerequisites info</content></prerequisites> -->
-
-    <!-- One or more procedure or section with procedure -->
     <procedure>
-      <title>Procedure title</title>
+      <title>Setup Steps</title>
       <steps class="ordered">
         <step>
           <content>
-            <para>First step</para>
+            <para>Run BuildSync.Server.exe from the installation directory (by default <localUri>C:\Program Files (x86)\Tim Leonard\Build Sync</localUri>), on first run the server will register itself to run on startup.</para>
           </content>
         </step>
         <step>
           <content>
-            <para>Second step</para>
+              <para>By default the server stores build manifests in LocalAppData, it's suggested you change this to a relatively large SSD. This can be done by running the following command in the installation directory:</para>
+              <content>      
+                <code language="bat" title="Command Line">BuildSync.Server.Cmd.exe configure StoragePath C:\MyStoragePath\</code>
+              </content>
+              <para>See <link xlink:href="766942e6-1de2-43dd-9742-94533830da81"/> for further information on configuring server settings.</para>              
           </content>
         </step>
+        <step>
+            <content>
+              <para>By default the server has no users configured, so while its possible to connect to it, it's not possible for anyone to manage users or builds. To create a new admin user, run the following command and supply an appropriate user account in fully-qualified format.</para>
+              <content>      
+                <code language="bat" title="Command Line">BuildSync.Server.Cmd.exe adduser My-Domain\Username</code>
+              </content>
+              <para>See <link xlink:href="e1c33ec0-1a5a-4668-adb6-9256d66cbbd9"/> for further information on this command.</para>              
+            </content>
+        </step>
+        <step>
+            <content>
+              <para>Your new user now needs to be granted global permissions to manage builds, users and access the entire build file system. You can do it by running the following three commands:</para>
+              <content>      
+                <code language="bat" title="Command Line">BuildSync.Server.Cmd.exe grantpermission My-Domain\Username ManageUsers</code>
+                <code language="bat" title="Command Line">BuildSync.Server.Cmd.exe grantpermission My-Domain\Username ManageBuilds</code>
+                <code language="bat" title="Command Line">BuildSync.Server.Cmd.exe grantpermission My-Domain\Username Accesss</code>
+              </content>
+              <para>See <link xlink:href="0a49ac74-71b7-4ff5-8e69-ff6eda426219"/> for further information on this command.</para>              
+            </content>
+        </step>
+        <step>
+            <content>
+              <para>At this point you should be able to connect to the server from a client and manage users and builds directly through the user interface. See <link xlink:href="430448c7-4772-455e-8bd0-b0518d947bba"/> to setup a client.</para>
+              <para>Generally there is little need to use the server command line after this point. However it's worth reading the documentation on the client's command line as its likely to be used to add builds via some form of CI (Jenkins, TeamCity, etc). See <link xlink:href="7f503a6e-151c-45ec-a926-66f568d1f7ca"/> for the client's command line documentation.</para>
+            </content>
+        </step>
       </steps>
-      <!-- <conclusion>Optional conclusion</conclusion> -->
     </procedure>
-
-    <!-- Optional additional procedure or section with procedure -->
-    <section address="Section1">
-      <title>Optional section title</title>
-      <content>
-        <procedure>
-          <title>Procedure #2</title>
-          <steps class="ordered">
-            <step>
-              <content>
-                <para>First step</para>
-              </content>
-            </step>
-            <step>
-              <content>
-                <para>Second step</para>
-              </content>
-            </step>
-          </steps>
-          <!-- <conclusion>Optional conclusion</conclusion> -->
-        </procedure>
-      </content>
-    </section>
-
-    <!-- Optional next steps info
-    <nextSteps>
-      <content><para>Next steps info goes here</para></content>
-    </nextSteps>
-    -->
-
+      
     <relatedTopics>
-      <!-- One or more of the following:
-           - A local link
-           - An external link
-           - A code entity reference
-
-      <link xlink:href="Other Topic's ID">Link text</link>
-      <externalLink>
-          <linkText>Link text</linkText>
-          <linkAlternateText>Optional alternate link text</linkAlternateText>
-          <linkUri>URI</linkUri>
-      </externalLink>
-      <codeEntityReference>API member ID</codeEntityReference>
-
-      Examples:
-
-      <link xlink:href="00e97994-e9e6-46e0-b420-5be86b2f8278">Some other topic</link>
-
-      <externalLink>
-          <linkText>SHFB on GitHub</linkText>
-          <linkAlternateText>Go to GitHub</linkAlternateText>
-          <linkUri>https://GitHub.com/EWSoftware/SHFB</linkUri>
-      </externalLink>
-
-      <codeEntityReference>T:TestDoc.TestClass</codeEntityReference>
-      <codeEntityReference>P:TestDoc.TestClass.SomeProperty</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.#ctor</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.#ctor(System.String,System.Int32)</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.ToString</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.FirstMethod</codeEntityReference>
-      <codeEntityReference>M:TestDoc.TestClass.SecondMethod(System.Int32,System.String)</codeEntityReference>
-      -->
     </relatedTopics>
   </developerWalkthroughDocument>
 </topic>

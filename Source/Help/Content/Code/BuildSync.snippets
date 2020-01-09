@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<examples>
+  <item id="BuildJson#Mode">
+    <sampleCode language="JScript">
+        {
+            "Name": String,
+            "Executable": String,
+            "WorkingDirectory": String [Optional],
+            "Condition": String [Optional],
+            "InstallSteps": Array.of(InstallStep) [Optional],
+            "Variables": Array.of(Variable) [Optional],
+            "Arguments": Array.of(Argument) [Optional],
+        }        
+    </sampleCode>
+  </item>
+  <item id="BuildJson#InstallStep">
+    <sampleCode language="JScript">
+        {
+            "Executable": String,
+            "WorkingDirectory": String [Optional],
+            "Arguments": String
+        }        
+    </sampleCode>
+  </item>
+  <item id="BuildJson#Variable">
+    <sampleCode language="JScript">
+        {
+            "Name": String,
+            "DataType": Enum(String, Int, Float, Bool),
+            "FriendlyName": String,
+            "FriendlyDescription": String [Optional],
+            "FriendlyCategory": String [Optional],
+            "Condition": String [Optional],
+            "Value": String,
+            "Options": Array.of(String),
+            "MinValue": Float,
+            "MaxValue": Float
+        }        
+    </sampleCode>
+  </item>
+  <item id="BuildJson#Argument">
+    <sampleCode language="JScript">
+        {
+            "Value": String,
+            "Condition": String [Optional]
+        }        
+    </sampleCode>
+  </item>
+  <item id="BuildJson#MainExample">
+    <sampleCode language="JScript">
+{
+  "Modes": [
+    {
+      "Name": "Launch Game",
+      "Executable": "%MY_SDK_ROOT%/run-package.exe",
+      "WorkingDirectory": "",
+      "Condition": "Environment.GetEnvironmentVariable(\"MY_SDK_ROOT\") != null",
+      "InstallSteps": [
+        {
+          "Executable": "%MY_SDK_ROOT%/install-package.exe",
+          "WorkingDirectory": "",
+          "Arguments": "%BUILD_DIR%/console-package.pkg"
+        }
+      ],
+      "Variables": [
+        {
+          "Name": "USE_WINDOWED_MODE",
+          "DataType": "Bool",
+          "FriendlyName": "Launch in windowed mode?",
+          "FriendlyDescription": "Causes the game to launch in windowed rather than fullscreen.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "true",
+          "Value": "false",
+          "Options": [],
+          "MinValue": -1000,
+          "MaxValue": 1000
+        },
+        {
+          "Name": "CONTROLLER_INDEX",
+          "DataType": "Int",
+          "FriendlyName": "Controller index to use",
+          "FriendlyDescription": "If multiple controllers are installed the one with the given index will be given focus in the game.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "true",
+          "Value": "0",
+          "MinValue": 0,
+          "MaxValue": 4
+        },
+        {
+          "Name": "START_MAP",
+          "DataType": "String",
+          "FriendlyName": "Launch into map",
+          "FriendlyDescription": "If set this is the map that will be loaded directly into, bypassing menu screens.",
+          "FriendlyCategory": "Launch Settings",
+          "Condition": "true",
+          "Value": "",
+          "Options": [
+            "",
+            "traversal_sandbox",
+            "player_gym",
+            "final_boss"
+          ]
+        }
+      ],
+      "Arguments": [
+        {
+          "Value": "%BUILD_DIR%/console-package.pkg",
+          "Condition": "true"
+        },
+        {
+          "Value": "-windowed -resx=1280 -resy=720",
+          "Condition": "%USE_WINDOWED_MODE%"
+        },
+        {
+          "Value": "-start_map=%STRING_OPTIONS_TEST%",
+          "Condition": "\"%START_MAP%\" != \"\""
+        },
+        {
+          "Value": "-controller_index=%CONTROLLER_INDEX%",
+          "Condition": "%CONTROLLER_INDEX% > 0"
+        }
+      ]
+    }
+  ]
+}
+    </sampleCode>
+  </item>
+</examples>
+

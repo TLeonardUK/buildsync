@@ -10,7 +10,7 @@
       <para><code language="bat" title="Command Line">BuildSync.Server.Cmd.exe --help</code></para>
       <alert class="note">The command line tool forwards operations through to the server through a windows pipe. As such the server must be running locally for the command line tool to be used.</alert>           
     </introduction>
-
+      
     <relatedTopics>
     </relatedTopics>
   </developerReferenceWithSyntaxDocument>

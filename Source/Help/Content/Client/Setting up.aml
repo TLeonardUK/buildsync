@@ -13,6 +13,11 @@
       <steps class="ordered">
         <step>
           <content>
+            <para>Run BuildSync.Client.exe from the installation directory (by default <localUri>C:\Program Files (x86)\Tim Leonard\Build Sync</localUri>).</para>
+          </content>
+        </step>
+        <step>
+          <content>
             <para>The first time you open the application it will ask if you want to setup your, select <ui>Yes</ui> or go to <ui>Preferences</ui> in the <ui>File</ui> menu.</para>
           </content>
         </step>
