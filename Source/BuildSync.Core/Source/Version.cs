@@ -13,7 +13,7 @@ namespace BuildSync.Core
         public static int PatchVersion = 0;
 
         // AUTO GENERATION
-        public static int BuildVersion = 62;
+        public static int BuildVersion = 69;
         // END AUTO GENERATION
 
         public static int VersionNumber = (MajorVersion * 100000000) + (MinorVersion * 1000000) + (PatchVersion * 10000) + BuildVersion;

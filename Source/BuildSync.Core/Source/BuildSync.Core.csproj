@@ -116,10 +116,13 @@
     <Compile Include="Downloads\DownloadState.cs" />
     <Compile Include="Downloads\ManifestDownloadManager.cs" />
     <Compile Include="Downloads\ManifestDownloadState.cs" />
+    <Compile Include="Licensing\License.cs" />
+    <Compile Include="Licensing\LicenseManager.cs" />
     <Compile Include="Manifests\BuildManifest.cs" />
     <Compile Include="Manifests\BuildManifestRegistry.cs" />
     <Compile Include="Manifests\BuildSettings.cs" />
     <Compile Include="Networking\BandwidthThrottler.cs" />
+    <Compile Include="Networking\Messages\NetMessage_ApplyLicense.cs" />
     <Compile Include="Networking\Messages\NetMessage_BlockListUpdate.cs" />
     <Compile Include="Networking\Messages\NetMessage_ConnectionInfo.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteManifest.cs" />
@@ -129,6 +132,8 @@
     <Compile Include="Networking\Messages\NetMessage_GetBlockResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetBuilds.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetBuildsResponse.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetLicenseInfo.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetLicenseInfoResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetManifestResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetUsers.cs" />
@@ -175,11 +180,13 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="Resources\public.cer" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.6\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\..\packages\Microsoft.CodeAnalysis.Analyzers.2.9.6\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
   </Target>

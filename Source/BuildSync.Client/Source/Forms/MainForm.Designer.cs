@@ -56,6 +56,8 @@
             this.viewManifestsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpTopicsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
+            this.viewLicenseMenuToolstrip = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
@@ -282,6 +284,8 @@
             // 
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.helpTopicsToolStripMenuItem,
+            this.toolStripSeparator8,
+            this.viewLicenseMenuToolstrip,
             this.toolStripSeparator7,
             this.aboutToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
@@ -294,6 +298,18 @@
             this.helpTopicsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.helpTopicsToolStripMenuItem.Text = "View help ...";
             this.helpTopicsToolStripMenuItem.Click += new System.EventHandler(this.ViewHelpClickled);
+            // 
+            // toolStripSeparator8
+            // 
+            this.toolStripSeparator8.Name = "toolStripSeparator8";
+            this.toolStripSeparator8.Size = new System.Drawing.Size(177, 6);
+            // 
+            // viewLicenseMenuToolstrip
+            // 
+            this.viewLicenseMenuToolstrip.Name = "viewLicenseMenuToolstrip";
+            this.viewLicenseMenuToolstrip.Size = new System.Drawing.Size(180, 22);
+            this.viewLicenseMenuToolstrip.Text = "View license ...";
+            this.viewLicenseMenuToolstrip.Click += new System.EventHandler(this.ViewLicenseClicked);
             // 
             // toolStripSeparator7
             // 
@@ -489,6 +505,8 @@
         private System.Windows.Forms.ToolStripMenuItem helpTopicsToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator7;
         private System.Windows.Forms.ToolStripMenuItem viewManifestsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
+        private System.Windows.Forms.ToolStripMenuItem viewLicenseMenuToolstrip;
     }
 }
 

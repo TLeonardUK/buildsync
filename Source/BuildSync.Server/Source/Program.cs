@@ -12,6 +12,7 @@ using BuildSync.Core;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Users;
+using BuildSync.Core.Licensing;
 using BuildSync.Server.Commands;
 using CommandLine;
 using CommandLine.Text;
@@ -64,6 +65,11 @@ namespace BuildSync.Server
         /// 
         /// </summary>
         public static CommandIPC IPCServer = new CommandIPC("buildsync-server", false);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static LicenseManager LicenseMgr;
 
         #region Unmanaged Functions
 
@@ -227,6 +233,9 @@ namespace BuildSync.Server
             BuildRegistry = new BuildManifestRegistry();
             BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests);
 
+            LicenseMgr = new LicenseManager();
+            LicenseMgr.Start(Path.Combine(AppDataDir, "License.dat"));
+
             UserManager = new UserManager(Settings.Users);
             UserManager.UsersUpdated += () =>
             {
@@ -240,7 +249,7 @@ namespace BuildSync.Server
             };
 
             NetServer = new BuildSyncServer();
-            NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager);
+            NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager, LicenseMgr);
         }
 
         /// <summary>
@@ -249,6 +258,9 @@ namespace BuildSync.Server
         public static void OnPoll()
         {
             NetServer.Poll();
+            LicenseMgr.Poll();
+
+            NetServer.MaxConnectedClients = LicenseMgr.ActiveLicense.MaxSeats;
 
             PollIpcServer();
         }
@@ -283,13 +295,14 @@ namespace BuildSync.Server
                         Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved ipc command '{0} {1}'.", Command, string.Join(" ", Args));
 
                         var parser = new Parser(with => with.HelpWriter = new CommandIPCWriter(IPCServer));
-                        var parserResult = parser.ParseArguments<CommandLineConfigureOptions, CommandLineAddUserOptions, CommandLineRemoveUserOptions, CommandLineListUsersOptions, CommandLineGrantPermissionOptions, CommandLineRevokePermissionOptions>(Args);
+                        var parserResult = parser.ParseArguments<CommandLineConfigureOptions, CommandLineAddUserOptions, CommandLineRemoveUserOptions, CommandLineListUsersOptions, CommandLineGrantPermissionOptions, CommandLineRevokePermissionOptions, CommandLineApplyLicenseOptions>(Args);
                         parserResult.WithParsed<CommandLineConfigureOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineAddUserOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineRemoveUserOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineListUsersOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineGrantPermissionOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineRevokePermissionOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineApplyLicenseOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithNotParsed((errs) => { });
 
                         IPCServer.EndResponse();

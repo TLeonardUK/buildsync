@@ -116,6 +116,16 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
+        private void ViewLicenseClicked(object sender, EventArgs e)
+        {
+            (new LicenseForm()).ShowDialog(this);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ViewHelpClickled(object sender, EventArgs e)
         {
             string ExePath = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
@@ -402,6 +412,11 @@ namespace BuildSync.Client.Forms
                                 peerCountLabel.Text = "Version is incompatible, please update application.";
                                 break;
                             }
+                        case HandshakeResultType.MaxSeatsExceeded:
+                            {
+                                peerCountLabel.Text = "Server has run out of seat licenses.";
+                                break;
+                            }
                         default:
                             {
                                 peerCountLabel.Text = "Unable to connect to server '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
@@ -448,6 +463,8 @@ namespace BuildSync.Client.Forms
 
             addDownloadToolStripMenuItem.Enabled = Connected;
             addDownloadToolStripMenuItem1.Enabled = Connected;
+
+            viewLicenseMenuToolstrip.Enabled = Connected;
 
             totalUpBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalOut));
             totalDownBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalIn));

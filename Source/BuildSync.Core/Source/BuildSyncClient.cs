@@ -10,6 +10,7 @@ using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Users;
+using BuildSync.Core.Licensing;
 
 namespace BuildSync.Core
 {
@@ -46,6 +47,11 @@ namespace BuildSync.Core
     /// 
     /// </summary>
     public delegate void UserListRecievedHandler(List<User> Users);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public delegate void LicenseInfoRecievedHandler(License LicenseInfo);    
 
     /// <summary>
     /// 
@@ -308,7 +314,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private const int ConnectionAttemptInterval = 10 * 1000;
+        private const int ConnectionAttemptInterval = 60 * 1000;
 
         /// <summary>
         /// 
@@ -463,6 +469,11 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         public event UserListRecievedHandler OnUserListRecieved;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event LicenseInfoRecievedHandler OnLicenseInfoRecieved;
 
         /// <summary>
         /// 
@@ -1108,6 +1119,43 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         /// <param name="Path"></param>
+        public bool RequestLicenseInfo()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request license info, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetLicenseInfo Msg = new NetMessage_GetLicenseInfo();
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool RequestApplyLicense(License license)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to apply license, no connection to server?");
+                return false;
+            }
+
+            NetMessage_ApplyLicense Msg = new NetMessage_ApplyLicense();
+            Msg.License = license;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
         public bool SetUserPermissions(string Username, UserPermissionCollection Permissions)
         {
             if (!Connection.IsReadyForData)
@@ -1459,6 +1507,16 @@ namespace BuildSync.Core
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved users list with {0} users.", Msg.Users.Count);
 
                 OnUserListRecieved?.Invoke(Msg.Users);
+            }
+
+            // Receive license info,
+            else if (BaseMessage is NetMessage_GetLicenseInfoResponse)
+            {
+                NetMessage_GetLicenseInfoResponse Msg = BaseMessage as NetMessage_GetLicenseInfoResponse;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved license info.");
+
+                OnLicenseInfoRecieved?.Invoke(Msg.License);
             }
         }
     }

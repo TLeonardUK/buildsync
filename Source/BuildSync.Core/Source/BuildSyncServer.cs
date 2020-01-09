@@ -8,6 +8,7 @@ using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Users;
+using BuildSync.Core.Licensing;
 
 namespace BuildSync.Core
 {
@@ -70,7 +71,17 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private LicenseManager LicenseManager = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private NetDiscoveryServer NetDiscoveryServer = new NetDiscoveryServer();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int MaxConnectedClients = 0;
 
         /// <summary>
         /// 
@@ -99,11 +110,13 @@ namespace BuildSync.Core
         /// </summary>
         /// <param name="Hostname"></param>
         /// <param name="Port"></param>
-        public void Start(int Port, BuildManifestRegistry BuildManifest, UserManager InUserManager)
+        public void Start(int Port, BuildManifestRegistry BuildManifest, UserManager InUserManager, LicenseManager InLicenseManager)
         {
             ServerPort = Port;
             Started = true;
             ManifestRegistry = BuildManifest;
+
+            LicenseManager = InLicenseManager;
 
             UserManager = InUserManager;
             UserManager.PermissionsUpdated += (User user) =>
@@ -142,6 +155,8 @@ namespace BuildSync.Core
             }
 
             // Go through each client, send them a list of peers that has blocks they are interested in.
+            ListenConnection.MaxConnectedClients = MaxConnectedClients;
+
             List<NetConnection> Clients = ListenConnection.AllClients;
             foreach (NetConnection Connection in Clients)
             {
@@ -648,6 +663,34 @@ namespace BuildSync.Core
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to delete user '{0}'", Msg.Username);
 
                 UserManager.DeleteUser(Msg.Username);
+            }
+
+            // ------------------------------------------------------------------------------
+            // License info requested.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_GetLicenseInfo)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for license info.");
+
+                NetMessage_GetLicenseInfoResponse ResponseMsg = new NetMessage_GetLicenseInfoResponse();
+                ResponseMsg.License = LicenseManager.ActiveLicense;
+                Connection.Send(ResponseMsg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Applying license requested.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_ApplyLicense)
+            {
+                NetMessage_ApplyLicense Msg = BaseMessage as NetMessage_ApplyLicense;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to apply license.");
+
+                LicenseManager.Apply(Msg.License);
+
+                NetMessage_GetLicenseInfoResponse ResponseMsg = new NetMessage_GetLicenseInfoResponse();
+                ResponseMsg.License = LicenseManager.ActiveLicense;
+                Connection.Send(ResponseMsg);
             }
         }
     }

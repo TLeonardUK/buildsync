@@ -82,6 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\CommandLineAddUserOptions.cs" />
+    <Compile Include="Commands\CommandLineApplyLicenseOptions.cs" />
     <Compile Include="Commands\CommandLineConfigureOptions.cs" />
     <Compile Include="Commands\CommandLineGrantPermissionOptions.cs" />
     <Compile Include="Commands\CommandLineListUsersOptions.cs" />

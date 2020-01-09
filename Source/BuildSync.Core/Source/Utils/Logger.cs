@@ -31,7 +31,8 @@ namespace BuildSync.Core.Utils
         Transport,
         Peers,
         IO,
-        Users
+        Users,
+        Licensing
     }
 
     /// <summary>

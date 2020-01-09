@@ -67,12 +67,14 @@ namespace BuildSync.Core.Networking
         private bool IsClient = false;
 
         private bool ShouldDisconnectDueToError = false;
+        private ulong DisconnectTimeout = 0;
 
         private ulong LastKeepAliveSendTime = 0;
         private const int KeepAliveInterval = 30 * 1000;
 
         private NetMessage_Handshake Handshake = null;
         private bool HandshakeFailed = false;
+        private bool HandshakeFinished = false;
 
         private Queue<Action> EventQueue = new Queue<Action>();
 
@@ -94,6 +96,8 @@ namespace BuildSync.Core.Networking
         private static ConcurrentBag<byte[]> MessageBuffers = new ConcurrentBag<byte[]>();
         private static int MessageBufferCount = 0;
         private const int MaxMessageBuffers = 32;
+
+        private ulong MaxClientsExceededPurgeTime = 0;
 
         private NetMessage MessageHeaderTempStorage = new NetMessage();
 
@@ -137,12 +141,22 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        public int MaxConnectedClients = int.MaxValue;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public IPEndPoint Address;
 
         /// <summary>
         /// 
         /// </summary>
         public IPEndPoint ListenAddress;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public NetConnection ParentConnection = null;
 
         /// <summary>
         /// 
@@ -197,7 +211,7 @@ namespace BuildSync.Core.Networking
         /// </summary>
         public bool IsReadyForData
         {
-            get { return IsConnected && Handshake != null && !HandshakeFailed; }
+            get { return IsConnected && Handshake != null && !HandshakeFailed && HandshakeFinished; }
         }
 
         /// <summary>
@@ -251,11 +265,12 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        public NetConnection(Socket InSocket)
+        public NetConnection(Socket InSocket, NetConnection InParent)
         {
             Socket = InSocket;
             Address = (IPEndPoint)Socket.RemoteEndPoint;
             IsClient = true;
+            ParentConnection = InParent;
         }
 
         /// <summary>
@@ -352,10 +367,10 @@ namespace BuildSync.Core.Networking
 
             if (Socket != null)
             {
-                //Socket.Disconnect(true);
                 try
                 {
                     Socket.Shutdown(SocketShutdown.Both);
+                    //Socket.Disconnect(true);
                 }
                 catch (Exception Ex)
                 {
@@ -380,6 +395,7 @@ namespace BuildSync.Core.Networking
             Listening = false;
             Connecting = false;
             ShouldDisconnectDueToError = false;
+            HandshakeFinished = false;
             Handshake = null;
 
             lock (EventQueue)
@@ -411,9 +427,13 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        private void QueueDisconnect()
+        private void QueueDisconnect(ulong Timeout = 0)
         {
-            ShouldDisconnectDueToError = true;
+            if (!ShouldDisconnectDueToError)
+            {
+                ShouldDisconnectDueToError = true;
+                DisconnectTimeout = TimeUtils.Ticks + Timeout;
+            }
         }
 
         /// <summary>
@@ -421,17 +441,36 @@ namespace BuildSync.Core.Networking
         /// </summary>
         public void Poll()
         {
-            if (ShouldDisconnectDueToError)
+            if (ShouldDisconnectDueToError && TimeUtils.Ticks > DisconnectTimeout)
             {
                 Disconnect();
+                ShouldDisconnectDueToError = false;
             }
 
             lock (Clients)
             {
-                foreach (NetConnection Client in Clients.ToArray())
+                NetConnection[] ClientArray = Clients.ToArray();
+
+                foreach (NetConnection Client in ClientArray)
                 {
                     Client.Poll();
                 }
+
+                // Disconnect clients if we go over max allowed.
+                if (ClientArray.Length <= MaxConnectedClients)
+                {
+                    MaxClientsExceededPurgeTime = TimeUtils.Ticks;
+                }
+
+                // Give a grace period incase one of the connections is in the middle of disconnecting or handshaking.
+                /*if (MaxClientsExceededPurgeTime - TimeUtils.Ticks > 1000)
+                {
+                    if (ClientArray.Length > 0 && ClientArray.Length > MaxConnectedClients)
+                    {
+                        Logger.Log(LogLevel.Warning, LogCategory.Licensing, "Disconnecting user as at maximum connected clients.");
+                        //ClientArray[0].Disconnect();
+                    }
+                }*/
             }
 
             if (IsConnected && !IsListening && Handshake != null)
@@ -518,7 +557,7 @@ namespace BuildSync.Core.Networking
 
                         Logger.Log(LogLevel.Info, LogCategory.Transport, "Client connected from {0}", ClientSocket.RemoteEndPoint.ToString());
 
-                        NetConnection ClientConnection = new NetConnection(ClientSocket);
+                        NetConnection ClientConnection = new NetConnection(ClientSocket, this);
 
                         // Handle messages from this client.
                         MessageRecievedHandler MessageRecievedLambda = null;
@@ -599,6 +638,10 @@ namespace BuildSync.Core.Networking
         /// <param name="EndPoint"></param>
         public void ConnectToIP(IPEndPoint EndPoint)
         {
+            HandshakeFailed = false;
+            HandshakeFinished = false;
+            Handshake = null;
+
             try
             {
                 Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -1067,15 +1110,16 @@ namespace BuildSync.Core.Networking
                     }
 
                     // Client is responsible for the disconnect to ensure it gets message before the disconnect occurs.
-                    if (IsClient && HandshakeResult.ResultType != HandshakeResultType.Success)
+                    if (HandshakeResult.ResultType != HandshakeResultType.Success)
                     {
-                        QueueDisconnect();
+                        QueueDisconnect(200ul);
                     }
+
+                    HandshakeFailed = (HandshakeResult.ResultType != HandshakeResultType.Success);
+                    HandshakeFinished = true;
                 }
                 else if (Message is NetMessage_Handshake)
                 {
-                    Handshake = Message as NetMessage_Handshake;
-
                     NetMessage_HandshakeResult Response = new NetMessage_HandshakeResult();
                     Response.ResultType = HandshakeResultType.Success;
 
@@ -1087,6 +1131,25 @@ namespace BuildSync.Core.Networking
                         HandshakeFailed = true;
                     }
 #endif
+
+                    if (ParentConnection != null && ParentConnection.Clients.Count > ParentConnection.MaxConnectedClients)
+                    {
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Exceeded maximum seats, rejecting client connection..", Address.ToString());
+                        Response.ResultType = HandshakeResultType.MaxSeatsExceeded;
+                        HandshakeFailed = true;
+                    }
+
+                    if (ParentConnection != null)
+                    {
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Current seats used {0} of {1}.", ParentConnection.Clients.Count, ParentConnection.MaxConnectedClients);
+                    }
+
+                    if (Response.ResultType != HandshakeResultType.Success)
+                    {
+                        QueueDisconnect(200ul);
+                    }
+
+                    Handshake = Message as NetMessage_Handshake;
 
                     Send(Response);
                 }
@@ -1106,7 +1169,7 @@ namespace BuildSync.Core.Networking
                 }
                 else
                 {
-                    Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message before recieving handshake, disconnecting.", Address.ToString());
+                    Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message (type: {0}) before recieving handshake, disconnecting.", Message.GetType().Name, Address.ToString());
                     QueueDisconnect();
                 }
 

@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="4e5aa09d-c818-440d-9417-d7900a0787e0" revisionNumber="1">
+  <developerReferenceWithSyntaxDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+      
+    <introduction>
+      <para>Licensing for this software is on a per-seat basis. A seat is consumed by each concurrent connection to the server.</para>
+      <para>An indefinite trial license is provided by default that allows up to 4 seats. This can be used for commerical purposes by small teams, or for evaluation of the software.</para>        
+    </introduction>
+
+    <section>
+      <title>Applying a license</title>
+      <content>      
+        <para>Applying a license can either be done through the client UI, by opening the <ui>View license</ui> window in the <ui>Help</ui> menu and clicking the <ui>Apply License</ui> button.</para>
+        <para>You can also apply a license using the server's command line, see <link xlink:href="365abd3d-b639-4fa3-9dfa-d29590ec2ee5"/> for further information.</para>
+      </content>
+    </section>      
+      
+    <section>
+      <title>Purchasing a license</title>
+      <content>      
+          <para>You can purchase a license by contacting <ui>me@timleonard.uk</ui>. Licenses are negotiable and can be purchased for indefinite use or on a per year basis. Bulk discounts are available.</para>
+      </content>
+    </section>
+      
+  </developerReferenceWithSyntaxDocument>
+</topic>

@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="365abd3d-b639-4fa3-9dfa-d29590ec2ee5" revisionNumber="1">
+  <developerReferenceWithoutSyntaxDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+      
+    <introduction>
+      <para>Applies a license file to the server.</para>
+    </introduction>
+    
+    <section>
+      <title>Usage</title>
+      <content>      
+        <code language="bat" title="Command Line">BuildSync.Server.Cmd.exe applylicense FilePath</code>
+      </content>
+    </section>
+    
+    <section>
+      <title>Parameters</title>
+      <content>      
+        <table>
+          <tableHeader>
+            <row>
+              <entry><para>Parameter</para></entry>
+              <entry><para>Description</para></entry>
+            </row>
+          </tableHeader>
+          <row>
+              <entry><para>FilePath</para></entry>
+              <entry><para>Path on the local machine of the license file to apply.</para></entry>
+          </row>
+        </table>
+      </content>
+    </section>
+    
+    <section>
+      <title>Example Output</title>
+      <content>  
+        <code language="none">
+        SUCCESS: Applied license for '3' seats which is licensed to 'MyCompany'.
+        </code>
+      </content>
+    </section>
+     
+    <section>
+      <title>Exit Code</title>
+      <content>  
+        <para>0 on success, 1 on failure.</para>   
+      </content>
+    </section>
+
+  </developerReferenceWithoutSyntaxDocument>
+</topic>

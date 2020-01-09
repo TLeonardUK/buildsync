@@ -13,6 +13,7 @@ namespace BuildSync.Core.Networking.Messages
     { 
         Success,
         InvalidVersion,
+        MaxSeatsExceeded,
         Unknown
     }
 

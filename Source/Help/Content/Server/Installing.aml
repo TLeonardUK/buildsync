@@ -47,6 +47,15 @@
         </step>
         <step>
             <content>
+              <para>If you have a license file at this point you can apply it to the server using the following command.</para>
+              <content>      
+                <code language="bat" title="Command Line">BuildSync.Server.Cmd.exe applyserver C:\Path\To\My\License.dat</code>
+              </content>
+              <para>See <link xlink:href="4e5aa09d-c818-440d-9417-d7900a0787e0"/> for further information on licensing.</para>              
+            </content>
+        </step>
+        <step>
+            <content>
               <para>At this point you should be able to connect to the server from a client and manage users and builds directly through the user interface. See <link xlink:href="430448c7-4772-455e-8bd0-b0518d947bba"/> to setup a client.</para>
               <para>Generally there is little need to use the server command line after this point. However it's worth reading the documentation on the client's command line as its likely to be used to add builds via some form of CI (Jenkins, TeamCity, etc). See <link xlink:href="7f503a6e-151c-45ec-a926-66f568d1f7ca"/> for the client's command line documentation.</para>
             </content>
