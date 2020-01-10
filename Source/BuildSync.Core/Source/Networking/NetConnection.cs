@@ -1120,11 +1120,13 @@ namespace BuildSync.Core.Networking
                 }
                 else if (Message is NetMessage_Handshake)
                 {
+                    NetMessage_Handshake Msg = Message as NetMessage_Handshake;
+
                     NetMessage_HandshakeResult Response = new NetMessage_HandshakeResult();
                     Response.ResultType = HandshakeResultType.Success;
 
 #if SHIPPING
-                    if (Handshake.Version != AppVersion.VersionNumber)
+                    if (Msg.Version != AppVersion.VersionNumber)
                     {
                         Logger.Log(LogLevel.Error, LogCategory.Transport, "Client has incompatible protocol version, rejecting.", Address.ToString());
                         Response.ResultType = HandshakeResultType.InvalidVersion;

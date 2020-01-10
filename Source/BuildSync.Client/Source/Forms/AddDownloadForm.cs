@@ -107,8 +107,8 @@ namespace BuildSync.Client.Forms
                 Text = "Edit Download";
                 nameTextBox.Text = EditState.Name;
                 priorityComboBox.SelectedIndex = EditState.Priority;
-                autoUpdateCheckBox.Checked = EditState.UpdateAutomatically;
-                downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
+                autoUpdateCheckBox.Checked = EditState.UpdateAutomatically;                
+                autoInstallCheckBox.Checked = EditState.InstallAutomatically;
                 deviceTextBox.Text = EditState.InstallDeviceName;
                 downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
                 addDownloadButton.Text = "Save Changes";
