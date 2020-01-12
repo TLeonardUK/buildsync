@@ -189,7 +189,9 @@ namespace BuildSync.Client.Forms
                 }
 
                 autoUpdateCheckBox.Checked = EditState.UpdateAutomatically;
+                autoInstallCheckBox.Checked = EditState.InstallAutomatically;
                 downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
+
                 deviceTextBox.Text = EditState.InstallDeviceName;
                 downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
                 addDownloadButton.Text = "Save Changes";
