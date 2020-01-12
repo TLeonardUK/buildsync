@@ -14,7 +14,9 @@ using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
-using BuildSync.Core.Utils;
+using BuildSync.Core.Scm;
+using BuildSync.Core.Scm.Perforce;
+using BuildSync.Core.Scm.Git;
 using BuildSync.Client.Commands;
 using CommandLine;
 
@@ -65,6 +67,11 @@ namespace BuildSync.Client
         /// 
         /// </summary>
         public static VirtualFileSystem BuildFileSystem;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static ScmManager ScmManager;
 
         /// <summary>
         /// 
@@ -291,6 +298,71 @@ namespace BuildSync.Client
                 SaveSettings();
             }
 
+            // Add SCM Providers.
+            foreach (ScmWorkspaceSettings ScmSettings in Settings.ScmWorkspaces)
+            {
+                // Check if a provider already exists for this.
+                bool Exists = false;
+                foreach (IScmProvider Provider in ScmManager.Providers)
+                {
+                    if (Provider.Server == ScmSettings.Server && 
+                        Provider.Username == ScmSettings.Username && 
+                        Provider.Password == ScmSettings.Password &&
+                        FileUtils.NormalizePath(Provider.Root) == FileUtils.NormalizePath(ScmSettings.Location))
+                    {
+                        Exists = true;
+                        break;
+                    }
+                }
+
+                if (Exists)
+                {
+                    continue;
+                }
+
+                // Add new provider.
+                switch (ScmSettings.ProviderType)
+                {
+                    case ScmProviderType.Perforce:
+                        {
+                            ScmManager.AddProvider(new PerforceScmProvider(ScmSettings.Server, ScmSettings.Username, ScmSettings.Password, ScmSettings.Location));
+                            break;
+                        }
+                    case ScmProviderType.Git:
+                        {
+                            ScmManager.AddProvider(new GitScmProvider(ScmSettings.Server, ScmSettings.Username, ScmSettings.Password, ScmSettings.Location));
+                            break;
+                        }
+                    default:
+                        {
+                            Debug.Assert(false);
+                            break;
+                        }
+                }
+            }
+
+            // Remove old providers.
+            foreach (IScmProvider Provider in ScmManager.Providers.ToArray())
+            {
+                bool Exists = false;
+                foreach (ScmWorkspaceSettings ScmSettings in Settings.ScmWorkspaces)
+                {
+                    if (Provider.Server == ScmSettings.Server && 
+                        Provider.Username == ScmSettings.Username && 
+                        Provider.Password == ScmSettings.Password &&
+                        FileUtils.NormalizePath(Provider.Root) == FileUtils.NormalizePath(ScmSettings.Location))
+                    {
+                        Exists = true;
+                        break;
+                    }
+                }
+
+                if (!Exists)
+                {
+                    ScmManager.RemoveProvider(Provider);
+                }
+            }
+
             // Bandwidth settings.
             NetConnection.GlobalBandwidthThrottleIn.MaxRate = Settings.BandwidthMaxDown;
             NetConnection.GlobalBandwidthThrottleOut.MaxRate = Settings.BandwidthMaxUp;
@@ -304,6 +376,8 @@ namespace BuildSync.Client
         /// </summary>
         public static void OnStart()
         {
+            ScmManager = new ScmManager();
+
             InitSettings();
 
             IOQueue = new AsyncIOQueue();
@@ -370,7 +444,8 @@ namespace BuildSync.Client
             DownloadManager.Start(
                 ManifestDownloadManager,
                 Settings.DownloadStates,
-                BuildFileSystem
+                BuildFileSystem,
+                ScmManager
             );
         }
 
@@ -416,6 +491,7 @@ namespace BuildSync.Client
             NetClient.TrafficEnabled = AreDownloadsAllowed();
             ManifestDownloadManager.TrafficEnabled = AreDownloadsAllowed();
 
+            ScmManager.Poll();
             NetClient.Poll();
             DownloadManager.Poll(NetClient.IsReadyForData);
             ManifestDownloadManager.Poll();

@@ -102,6 +102,12 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        [Browsable(true)]
+        public event EventHandler OnDateUpdated;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private void SelectNextPath()
         {
             while (PathsToSelect.Count > 0)
@@ -217,6 +223,8 @@ namespace BuildSync.Client.Controls
                     }
 
                     SelectNextPath();
+
+                    OnDateUpdated?.Invoke(this, null);
 
                 }));
 

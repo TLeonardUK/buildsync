@@ -33,6 +33,7 @@ namespace BuildSync.Client.Forms
             this.AddSettingsPanel<GeneralSettings>("generalSettingsNode");
             this.AddSettingsPanel<StorageSettings>("storageSettingsNode");
             this.AddSettingsPanel<BandwidthSettings>("bandwidthSettingsNode");
+            this.AddSettingsPanel<ScmSettings>("scmSettingsNode");
 
             this.groupTreeView.ExpandAll();
             this.groupTreeView.SelectedNode = this.groupTreeView.Nodes[0];
@@ -107,6 +108,11 @@ namespace BuildSync.Client.Forms
         {
             Program.SaveSettings();
             Program.ApplySettings();
+        }
+
+        private void splitContainer1_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+
         }
     }
 }

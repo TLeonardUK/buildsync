@@ -907,7 +907,10 @@ namespace BuildSync.Core.Downloads
                 {
                     if (!State.Active)
                     {
-                        DeletionCandidates.Add(State);
+                        if (!FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder))
+                        {
+                            DeletionCandidates.Add(State);
+                        }
                     }
                 }
 

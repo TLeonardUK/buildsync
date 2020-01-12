@@ -69,11 +69,11 @@
             this.downloadListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addDownloadToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
-            this.forceRevalidateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceRedownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceReinstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.mainDownloadList = new BuildSync.Client.Controls.DownloadList();
+            this.forceRevalidateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.notifyIconContextMenu.SuspendLayout();
@@ -243,40 +243,40 @@
             // manageBuildsToolStripMenuItem
             // 
             this.manageBuildsToolStripMenuItem.Name = "manageBuildsToolStripMenuItem";
-            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.manageBuildsToolStripMenuItem.Text = "Manage builds ...";
             this.manageBuildsToolStripMenuItem.Click += new System.EventHandler(this.ManageBuildsClicked);
             // 
             // manageUsersToolStripMenuItem
             // 
             this.manageUsersToolStripMenuItem.Name = "manageUsersToolStripMenuItem";
-            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.manageUsersToolStripMenuItem.Text = "Manage users ...";
             this.manageUsersToolStripMenuItem.Click += new System.EventHandler(this.ManageUsersClicked);
             // 
             // toolStripSeparator5
             // 
             this.toolStripSeparator5.Name = "toolStripSeparator5";
-            this.toolStripSeparator5.Size = new System.Drawing.Size(162, 6);
+            this.toolStripSeparator5.Size = new System.Drawing.Size(177, 6);
             // 
             // viewPeersToolStripMenuItem
             // 
             this.viewPeersToolStripMenuItem.Name = "viewPeersToolStripMenuItem";
-            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.viewPeersToolStripMenuItem.Text = "View peers ...";
             this.viewPeersToolStripMenuItem.Click += new System.EventHandler(this.ViewPeersClicked);
             // 
             // viewConsoleToolStripMenuItem
             // 
             this.viewConsoleToolStripMenuItem.Name = "viewConsoleToolStripMenuItem";
-            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.viewConsoleToolStripMenuItem.Text = "View console ...";
             this.viewConsoleToolStripMenuItem.Click += new System.EventHandler(this.ViewConsoleClicked);
             // 
             // viewManifestsToolStripMenuItem
             // 
             this.viewManifestsToolStripMenuItem.Name = "viewManifestsToolStripMenuItem";
-            this.viewManifestsToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            this.viewManifestsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.viewManifestsToolStripMenuItem.Text = "View manifests ...";
             this.viewManifestsToolStripMenuItem.Click += new System.EventHandler(this.ViewManifestsClicked);
             // 
@@ -374,9 +374,9 @@
             this.downloadListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addDownloadToolStripMenuItem1,
             this.toolStripSeparator6,
-            this.forceRevalidateToolStripMenuItem,
             this.forceRedownloadToolStripMenuItem,
-            this.forceReinstallToolStripMenuItem});
+            this.forceReinstallToolStripMenuItem,
+            this.forceRevalidateToolStripMenuItem});
             this.downloadListContextMenu.Name = "downloadListContextMenu";
             this.downloadListContextMenu.Size = new System.Drawing.Size(185, 98);
             this.downloadListContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.DownloadListContextMenuShowing);
@@ -392,13 +392,6 @@
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(181, 6);
-            // 
-            // forceRevalidateToolStripMenuItem
-            // 
-            this.forceRevalidateToolStripMenuItem.Name = "forceRevalidateToolStripMenuItem";
-            this.forceRevalidateToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-            this.forceRevalidateToolStripMenuItem.Text = "Force Revalidate ...";
-            this.forceRevalidateToolStripMenuItem.Click += new System.EventHandler(this.ForceRevalidateClicked);
             // 
             // forceRedownloadToolStripMenuItem
             // 
@@ -434,6 +427,13 @@
             this.mainDownloadList.Name = "mainDownloadList";
             this.mainDownloadList.Size = new System.Drawing.Size(796, 216);
             this.mainDownloadList.TabIndex = 6;
+            // 
+            // forceRevalidateToolStripMenuItem
+            // 
+            this.forceRevalidateToolStripMenuItem.Name = "forceRevalidateToolStripMenuItem";
+            this.forceRevalidateToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.forceRevalidateToolStripMenuItem.Text = "Force Revalidate ...";
+            this.forceRevalidateToolStripMenuItem.Click += new System.EventHandler(this.ForceRevalidateClicked);
             // 
             // MainForm
             // 
@@ -497,7 +497,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
         private System.Windows.Forms.ToolStripMenuItem viewConsoleToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
-        private System.Windows.Forms.ToolStripMenuItem forceRevalidateToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem forceRedownloadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewPeersToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageUsersToolStripMenuItem;
@@ -507,6 +506,7 @@
         private System.Windows.Forms.ToolStripMenuItem viewManifestsToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
         private System.Windows.Forms.ToolStripMenuItem viewLicenseMenuToolstrip;
+        private System.Windows.Forms.ToolStripMenuItem forceRevalidateToolStripMenuItem;
     }
 }
 

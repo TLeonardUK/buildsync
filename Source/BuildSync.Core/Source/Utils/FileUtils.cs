@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
+using System.Diagnostics;
 
 namespace BuildSync.Core.Utils
 {
@@ -172,6 +173,36 @@ namespace BuildSync.Core.Utils
             {
                 Logger.Log(LogLevel.Error, LogCategory.IO, "Unable to delete directory {0} with error: {1}", DirPath, Ex.Message);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static string NormalizePath(string path)
+        {
+            return Path.GetFullPath(new Uri(path).LocalPath)
+                       .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                       .ToUpperInvariant();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="DirPath"></param>
+        public static bool AnyRunningProcessesInDirectory(string DirPath)
+        {
+            DirPath = NormalizePath(DirPath);
+            foreach (Process proc in Process.GetProcesses())
+            {
+                string File = NormalizePath(proc.MainModule.FileName);
+                if (File.ToLower().StartsWith(DirPath))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

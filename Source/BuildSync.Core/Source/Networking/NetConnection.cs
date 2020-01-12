@@ -294,11 +294,13 @@ namespace BuildSync.Core.Networking
             }
 
             SendThread = new Thread(SendThreadEntry);
+            SendThread.Name = "Net Send (" + Address.ToString() + ")";
             SendThread.Start();
 
             ProcessBufferQueue = new BlockingCollection<MessageQueueEntry>();
 
             ProcessThread = new Thread(ProcessThreadEntry);
+            ProcessThread.Name = "Net Process (" + Address.ToString() + ")";
             ProcessThread.Start();
         }
 

@@ -1,8 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Scm;
 
 namespace BuildSync.Core.Downloads
 {
@@ -24,7 +27,17 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        public ScmManager ScmManager = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private ManifestDownloadManager ManifestDownloader;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private FileCache FileContentsCache = new FileCache();
 
         /// <summary>
         /// 
@@ -53,10 +66,12 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         /// <param name="InManifestDownloader"></param>
         /// <param name="Config"></param>
-        public void Start(ManifestDownloadManager InManifestDownloader, DownloadStateCollection ResumeStateCollection, VirtualFileSystem FileSystem)
+        public void Start(ManifestDownloadManager InManifestDownloader, DownloadStateCollection ResumeStateCollection, VirtualFileSystem FileSystem, ScmManager InScmManager)
         {
             ManifestDownloader = InManifestDownloader;
             ManifestDownloader.OnDownloadError += DownloadError;
+
+            ScmManager = InScmManager;
 
             StateCollection = ResumeStateCollection;
             BuildFileSystem = FileSystem;
@@ -88,7 +103,7 @@ namespace BuildSync.Core.Downloads
         /// <param name="VirtualPath"></param>
         /// <param name="Priority"></param>
         /// <param name="KeepUpToDate"></param>
-        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName)
+        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, BuildSelectionRule Rule, BuildSelectionFilter Filter, string SelectionFilterFilePath, string ScmWorkspaceLocation, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName)
         {
             DownloadState State = new DownloadState();
             State.Id = Guid.NewGuid();
@@ -98,6 +113,10 @@ namespace BuildSync.Core.Downloads
             State.UpdateAutomatically = AutomaticallyUpdate;
             State.InstallAutomatically = AutomaticallyInstall;
             State.InstallDeviceName = InstallDeviceName;
+            State.SelectionRule = Rule;
+            State.SelectionFilter = Filter;
+            State.SelectionFilterFilePath = SelectionFilterFilePath;
+            State.ScmWorkspaceLocation = ScmWorkspaceLocation;
 
             StateCollection.States.Add(State);
             AreStatesDirty = true;
@@ -112,6 +131,198 @@ namespace BuildSync.Core.Downloads
         {
             StateCollection.States.Remove(State);
             AreStatesDirty = false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <returns></returns>
+        public Guid GetTargetManifestForState(DownloadState State)
+        {
+            string VirtualPath = State.VirtualPath;
+
+            VirtualFileSystemNode Node = BuildFileSystem.GetNodeByPath(VirtualPath);
+            if (Node == null)
+            {
+                return Guid.Empty;
+            }
+
+
+            // Node is a build in and of itself, use its id.
+            if (Node.Metadata != null)
+            {
+                Guid ManifestId = (Guid)Node.Metadata;
+                if (ManifestId != Guid.Empty)
+                {
+                    return ManifestId;
+                }
+            }
+
+            List<VirtualFileSystemNode> Children = BuildFileSystem.GetChildren(VirtualPath);
+            VirtualFileSystemNode SelectedChild = null;
+
+            List<VirtualFileSystemNode> BuildChildren = new List<VirtualFileSystemNode>();
+            foreach (VirtualFileSystemNode Child in Children)
+            {
+                if (Child.Metadata != null)
+                {
+                    Guid ManifestId = (Guid)Child.Metadata;
+                    if (ManifestId != Guid.Empty)
+                    {
+                        BuildChildren.Add(Child);
+                    }
+                }
+            }
+
+            List<VirtualFileSystemNode> FilteredChildren = new List<VirtualFileSystemNode>();
+            switch (State.SelectionFilter)
+            {         
+                case BuildSelectionFilter.None:
+                    {
+                        FilteredChildren = BuildChildren;
+                        break;
+                    }
+                case BuildSelectionFilter.BuildTimeBeforeScmSyncTime:
+                    {
+                        IScmProvider Workspace = ScmManager.GetProvider(State.ScmWorkspaceLocation);
+                        if (Workspace != null)
+                        {
+                            DateTime ScmSyncTime = Workspace.GetSyncTime();
+                            if (ScmSyncTime != DateTime.MinValue)
+                            {
+                                foreach (VirtualFileSystemNode Child in BuildChildren)
+                                {
+                                    if (Child.CreateTime <= ScmSyncTime)
+                                    {
+                                        FilteredChildren.Add(Child);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                case BuildSelectionFilter.BuildTimeAfterScmSyncTime:
+                    {
+                        IScmProvider Workspace = ScmManager.GetProvider(State.ScmWorkspaceLocation);
+                        if (Workspace != null)
+                        {
+                            DateTime ScmSyncTime = Workspace.GetSyncTime();
+                            if (ScmSyncTime != DateTime.MinValue)
+                            {
+                                foreach (VirtualFileSystemNode Child in BuildChildren)
+                                {
+                                    if (Child.CreateTime >= ScmSyncTime)
+                                    {
+                                        FilteredChildren.Add(Child);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                case BuildSelectionFilter.BuildNameBelowFileContents:
+                    {
+                        string FilePath = Path.Combine(State.ScmWorkspaceLocation, State.SelectionFilterFilePath);
+                        string FileContents = FileContentsCache.Get(FilePath);
+
+                        int Value = 0;
+                        if (int.TryParse(FileContents, out Value))
+                        {
+                            foreach (VirtualFileSystemNode Child in BuildChildren)
+                            {
+                                int ChildValue = 0;
+                                if (int.TryParse(Child.Name, out ChildValue))
+                                {
+                                    if (Value <= ChildValue)
+                                    {
+                                        FilteredChildren.Add(Child);
+                                    }
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                case BuildSelectionFilter.BuildNameAboveFileContents:
+                    {
+                        string FilePath = Path.Combine(State.ScmWorkspaceLocation, State.SelectionFilterFilePath);
+                        string FileContents = FileContentsCache.Get(FilePath);
+
+                        int Value = 0;
+                        if (int.TryParse(FileContents, out Value))
+                        {
+                            foreach (VirtualFileSystemNode Child in BuildChildren)
+                            {
+                                int ChildValue = 0;
+                                if (int.TryParse(Child.Name, out ChildValue))
+                                {
+                                    if (Value >= ChildValue)
+                                    {
+                                        FilteredChildren.Add(Child);
+                                    }
+                                }
+                            }
+                        }
+
+                        break;
+                    }
+                case BuildSelectionFilter.BuildNameEqualsFileContents:
+                    {
+                        string FilePath = Path.Combine(State.ScmWorkspaceLocation, State.SelectionFilterFilePath);
+                        string FileContents = FileContentsCache.Get(FilePath);
+
+                        foreach (VirtualFileSystemNode Child in BuildChildren)
+                        {
+                            if (FileContents == Child.Name)
+                            {
+                                FilteredChildren.Add(Child);
+                            }
+                        }
+
+                        break;
+                    }
+                default:
+                    {
+                        Debug.Assert(false);
+                        break;
+                    }
+            }
+
+            switch (State.SelectionRule)
+            {
+                case BuildSelectionRule.Newest:
+                    {
+                        foreach (VirtualFileSystemNode Child in FilteredChildren)
+                        {
+                            if (SelectedChild == null || SelectedChild.CreateTime < Child.CreateTime)
+                            {
+                                SelectedChild = Child;
+                            }
+                        }
+                        break;
+                    }
+                case BuildSelectionRule.Oldest:
+                    {
+                        foreach (VirtualFileSystemNode Child in FilteredChildren)
+                        {
+                            if (SelectedChild == null || SelectedChild.CreateTime > Child.CreateTime)
+                            {
+                                SelectedChild = Child;
+                            }
+                        }
+                        break;
+                    }
+            }
+
+            if (SelectedChild != null)
+            {
+                return (Guid)SelectedChild.Metadata;
+            }
+            else
+            {
+                return Guid.Empty;
+            }
         }
 
         /// <summary>
@@ -187,19 +398,25 @@ namespace BuildSync.Core.Downloads
 
             foreach (DownloadState State in StateCollection.States)
             {
+                bool UpdateManifestId = true;
+
                 // If not set to auto update and we already have a completed download, do nothing else.
                 if (!State.UpdateAutomatically && State.ActiveManifestId != Guid.Empty)
                 {
                     ManifestDownloadState OldVersionDownloader = ManifestDownloader.GetDownload(State.ActiveManifestId);
                     if (OldVersionDownloader != null && OldVersionDownloader.State == ManifestDownloadProgressState.Complete)
                     {
-                        continue;
+                        UpdateManifestId = false;
                     }
                 }
 
-                if (bHasConnection)
+                if (bHasConnection && UpdateManifestId)
                 {
-                    State.ActiveManifestId = GetTargetManifestForVirtualPath(State.VirtualPath);
+                    Guid NewManifestId = GetTargetManifestForState(State);
+                    if (NewManifestId != Guid.Empty)
+                    {
+                        State.ActiveManifestId = NewManifestId;
+                    }
                 }
 
                 if (State.ActiveManifestId == Guid.Empty)
