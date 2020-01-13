@@ -18,12 +18,16 @@
             </para>
             <mediaLink><image placement="center" xlink:href="add_download"/></mediaLink>
               <para>
-                  The tree view on the left shows the virtual folder structure the server maintains for builds. The item selected in here determines what is downloaded. If a folder containing builds (known as a "build container") is selected then tool will always download the latest build contained in it. If an individual build is selected then only that one will be downloaded.
+                  The tree view on the left shows the virtual folder structure the server maintains for builds. The item selected in here determines what is downloaded. If a folder containing builds (known as a "build container") is selected then tool will always download the build contained in it that matches the selection rule and filter. If an individual build is selected then only that one will be downloaded.
               </para>
             <alert class="note">If the folder list is empty its likely the server maintainer needs to grant you permission to view builds.</alert>
             <alert class="note">The <ui>Automatically keep up to date</ui> will automatically download the newest build in the selected build container when it is published.</alert>
             <alert class="note">The <ui>Automatically install</ui> will automatically run the install steps in the build configuration (See <link xlink:href="22ddb329-8476-4aec-9c69-5fb743c0787b"/>) when a download completes.</alert>
             <alert class="note">The <ui>Device name</ui> is the hostname or ip of the device that the build will install and run on when launched. For example when launching a console build this would be the devkit IP.</alert>
+            <alert class="note">The <ui>Build selection rule</ui> determines what build in a build container is selected for download.</alert>
+            <alert class="note">The <ui>Build selection filter</ui> filters which builds in a build container are valid for selection as a download.</alert>
+            <alert class="note">The <ui>Soure control workspace</ui> determines which workspace is used for any SCM dependent build selection filters. A workspace can be defined in the <ui>Source Control</ui> section of the <ui>Preferences</ui> window.</alert>
+            <alert class="note">The <ui>Soure control file path</ui> is the file relative to the SCM workspace that is used for any SCM dependent build selection filters.</alert>
           </content>
         </step>
         <step>

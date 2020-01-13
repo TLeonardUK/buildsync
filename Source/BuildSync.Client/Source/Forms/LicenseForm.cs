@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -87,6 +88,16 @@ namespace BuildSync.Client.Forms
                     Program.NetClient.RequestApplyLicense(license);
                 }
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BuyClicked(object sender, EventArgs e)
+        {
+            Process.Start("http://www.buildsync.com");
         }
     }
 }

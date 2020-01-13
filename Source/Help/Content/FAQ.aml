@@ -24,6 +24,13 @@
         <para>This occurs on a download when the install steps defined in the builds configuration file fail. You can see the reason for the failure by clicking the <ui>View Console</ui> option in the <ui>Advanced</ui> menu. Resuming the download will attempt to re-run the install.</para>
       </content>
     </section>
+      
+    <section address="Section1">
+      <title>Is this going to impact by internet speed?</title>
+      <content>
+        <para>This tool will attempt to saturate the network port it communicates through, which can impact responsiveness and speeds of access the internet or other network resources. To mitigate this you can set bandwidth limits in the <ui>Bandwidth</ui> page in the <ui>Prefernces</ui> window.</para>
+      </content>
+    </section>
 
     <relatedTopics>
     </relatedTopics>

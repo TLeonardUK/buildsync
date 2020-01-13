@@ -379,13 +379,57 @@ namespace BuildSync.Client.Forms
                 forceRedownloadToolStripMenuItem.Enabled = (Downloader != null && Downloader.State != ManifestDownloadProgressState.Validating && Downloader.State != ManifestDownloadProgressState.Initializing && Downloader.State != ManifestDownloadProgressState.Installing);
                 forceRevalidateToolStripMenuItem.Enabled = (Downloader != null && (Downloader.State == ManifestDownloadProgressState.Complete || Downloader.State == ManifestDownloadProgressState.ValidationFailed));
                 forceReinstallToolStripMenuItem.Enabled = (Downloader != null && (Downloader.State == ManifestDownloadProgressState.Complete || Downloader.State == ManifestDownloadProgressState.InstallFailed));
+                pauseToolStripMenuItem.Enabled = (Downloader != null);
+                pauseToolStripMenuItem.Text = (Downloader != null && Downloader.Paused ? "Resume" : "Pause");
+                pauseToolStripMenuItem.Image = (Downloader != null && Downloader.Paused ? global::BuildSync.Client.Properties.Resources.appbar_control_play : global::BuildSync.Client.Properties.Resources.appbar_control_pause);
+                deleteToolStripMenuItem.Enabled = (Downloader != null);
+                settingsToolStripMenuItem.Enabled = (Downloader != null);
             }
             else
             {
                 forceRedownloadToolStripMenuItem.Enabled = false;
                 forceRevalidateToolStripMenuItem.Enabled = false;
                 forceReinstallToolStripMenuItem.Enabled = false;
+                pauseToolStripMenuItem.Enabled = false;
+                pauseToolStripMenuItem.Text = "Pause";
+                deleteToolStripMenuItem.Enabled = false;
+                settingsToolStripMenuItem.Enabled = false;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PauseClicked(object sender, EventArgs e)
+        {
+            ContextMenuDownloadItem.State.Paused = !ContextMenuDownloadItem.State.Paused;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DeleteClicked(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("Are you sure you wish to delete '" + ContextMenuDownloadItem.State.Name + "'?", "Delete Download?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                Program.DownloadManager.RemoveDownload(ContextMenuDownloadItem.State);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SettingsClicked(object sender, EventArgs e)
+        {
+            AddDownloadForm Dialog = new AddDownloadForm();
+            Dialog.EditState = ContextMenuDownloadItem.State;
+            Dialog.ShowDialog(this);
         }
 
         /// <summary>
@@ -439,25 +483,25 @@ namespace BuildSync.Client.Forms
             }
 
             //publishBuildToolStripMenuItem.Enabled = Connected;
-            manageBuildsToolStripMenuItem.Text = "Manage builds ...";
+            manageBuildsToolStripMenuItem.Text = "Build Manager";
             manageBuildsToolStripMenuItem.Enabled = Connected;
             if (Connected)
             {
                 if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, ""))
                 {
                     manageBuildsToolStripMenuItem.Enabled = false;
-                    manageBuildsToolStripMenuItem.Text = "Manage builds (Permission Required)";
+                    manageBuildsToolStripMenuItem.Text = "Build Manager (Permission Required)";
                 }
             }
 
-            manageUsersToolStripMenuItem.Text = "Manage users ...";
+            manageUsersToolStripMenuItem.Text = "User Manager";
             manageUsersToolStripMenuItem.Enabled = Connected;
             if (Connected)
             {
                 if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageUsers, ""))
                 {
                     manageUsersToolStripMenuItem.Enabled = false;
-                    manageUsersToolStripMenuItem.Text = "Manage users (Permission Required)";
+                    manageUsersToolStripMenuItem.Text = "User Manager (Permission Required)";
                 }
             }
 

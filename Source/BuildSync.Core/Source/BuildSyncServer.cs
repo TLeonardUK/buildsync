@@ -86,6 +86,17 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        public int ClientCount
+        {
+            get
+            {
+                return ListenConnection.AllClients.Count;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public BuildSyncServer()
         {
             ListenConnection.OnClientMessageRecieved += HandleMessage;

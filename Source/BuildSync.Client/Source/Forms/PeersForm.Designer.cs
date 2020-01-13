@@ -103,7 +103,7 @@
             this.Name = "PeersForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Connected Peers";
+            this.Text = "Peer Explorer";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
             this.Shown += new System.EventHandler(this.OnShown);
             this.ResumeLayout(false);

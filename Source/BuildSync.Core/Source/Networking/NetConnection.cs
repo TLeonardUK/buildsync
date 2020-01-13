@@ -1104,7 +1104,7 @@ namespace BuildSync.Core.Networking
                 if (Message is NetMessage_HandshakeResult)
                 {
                     NetMessage_HandshakeResult HandshakeResult = Message as NetMessage_HandshakeResult;
-                    Logger.Log(LogLevel.Error, LogCategory.Transport, "Client returned handshake result of type '{0}'.", HandshakeResult.ResultType.ToString());
+                    Logger.Log(LogLevel.Info, LogCategory.Transport, "Client returned handshake result of type '{0}'.", HandshakeResult.ResultType.ToString());
 
                     lock (EventQueue)
                     {
@@ -1145,7 +1145,7 @@ namespace BuildSync.Core.Networking
 
                     if (ParentConnection != null)
                     {
-                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Current seats used {0} of {1}.", ParentConnection.Clients.Count, ParentConnection.MaxConnectedClients);
+                        Logger.Log(LogLevel.Info, LogCategory.Transport, "Current seats used {0} of {1}.", ParentConnection.Clients.Count, ParentConnection.MaxConnectedClients);
                     }
 
                     if (Response.ResultType != HandshakeResultType.Success)

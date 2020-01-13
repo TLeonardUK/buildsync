@@ -136,7 +136,7 @@
             this.Name = "ManageBuildsForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Manage Builds";
+            this.Text = "Build Manager";
             this.ResumeLayout(false);
             this.PerformLayout();
 

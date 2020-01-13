@@ -38,7 +38,7 @@
             this.logTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.logTextBox.Font = new System.Drawing.Font("Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.logTextBox.Location = new System.Drawing.Point(0, 0);
-            this.logTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.logTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.logTextBox.Multiline = true;
             this.logTextBox.Name = "logTextBox";
             this.logTextBox.ReadOnly = true;
@@ -59,12 +59,12 @@
             this.ClientSize = new System.Drawing.Size(721, 191);
             this.Controls.Add(this.logTextBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "ConsoleForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Console Output";
+            this.Text = "Console Window";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Closing);
             this.Shown += new System.EventHandler(this.OnShown);
             this.ResumeLayout(false);

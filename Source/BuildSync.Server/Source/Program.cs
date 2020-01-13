@@ -13,6 +13,7 @@ using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Users;
 using BuildSync.Core.Licensing;
+using BuildSync.Core.Networking;
 using BuildSync.Server.Commands;
 using CommandLine;
 using CommandLine.Text;
@@ -70,6 +71,16 @@ namespace BuildSync.Server
         /// 
         /// </summary>
         public static LicenseManager LicenseMgr;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static ulong LastStatusPrintTime = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private const ulong StatusPrintInterval = 60 * 1000;
 
         #region Unmanaged Functions
 
@@ -263,6 +274,14 @@ namespace BuildSync.Server
             NetServer.MaxConnectedClients = LicenseMgr.ActiveLicense.MaxSeats;
 
             PollIpcServer();
+
+            // Pring status every so often.
+            ulong Elapsed = TimeUtils.Ticks - LastStatusPrintTime;
+            if (Elapsed > StatusPrintInterval)
+            {
+                PrintStatus();
+                LastStatusPrintTime = TimeUtils.Ticks;
+            }
         }
 
         /// <summary>
@@ -275,6 +294,19 @@ namespace BuildSync.Server
                 NetServer.Disconnect();
                 NetServer = null;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static void PrintStatus()
+        {
+            Logger.Log(LogLevel.Info, LogCategory.Main, "Status: Clients={0}/{1}, Download={2}, Upload={3}",
+                NetServer.ClientCount,
+                NetServer.MaxConnectedClients,
+                StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn),
+                StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut)
+            );
         }
 
         /// <summary>

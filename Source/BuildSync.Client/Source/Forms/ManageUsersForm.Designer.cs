@@ -35,6 +35,7 @@
             this.closeButton = new System.Windows.Forms.Button();
             this.ButtonImageIndex = new System.Windows.Forms.ImageList(this.components);
             this.UserListView = new System.Windows.Forms.ListView();
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.PermissionListView = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -45,7 +46,6 @@
             this.AddUserButton = new System.Windows.Forms.Button();
             this.AddPermissionButton = new System.Windows.Forms.Button();
             this.RemovePermissionButton = new System.Windows.Forms.Button();
-            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -116,6 +116,11 @@
             this.UserListView.AfterLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.FinishLabelEdit);
             this.UserListView.BeforeLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.BeginLabelEdit);
             this.UserListView.SelectedIndexChanged += new System.EventHandler(this.UserListSelectedItemChanged);
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.Text = "Username";
+            this.columnHeader3.Width = 220;
             // 
             // UserImageList
             // 
@@ -239,11 +244,6 @@
             this.RemovePermissionButton.UseVisualStyleBackColor = true;
             this.RemovePermissionButton.Click += new System.EventHandler(this.RemovePermissionButtonClicked);
             // 
-            // columnHeader3
-            // 
-            this.columnHeader3.Text = "Username";
-            this.columnHeader3.Width = 220;
-            // 
             // ManageUsersForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -258,7 +258,7 @@
             this.Name = "ManageUsersForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Manage Users";
+            this.Text = "User Manager";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
             this.Shown += new System.EventHandler(this.OnShown);
             this.splitContainer1.Panel1.ResumeLayout(false);

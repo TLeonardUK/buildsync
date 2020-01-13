@@ -36,9 +36,9 @@
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // mainListView
@@ -94,12 +94,6 @@
             this.columnHeader6.Text = "Total Size";
             this.columnHeader6.Width = 80;
             // 
-            // UpdateTimer
-            // 
-            this.UpdateTimer.Enabled = true;
-            this.UpdateTimer.Interval = 1000;
-            this.UpdateTimer.Tick += new System.EventHandler(this.UpdateTimerTick);
-            // 
             // columnHeader7
             // 
             this.columnHeader7.Text = "Upload";
@@ -109,6 +103,12 @@
             // 
             this.columnHeader8.Text = "Download";
             this.columnHeader8.Width = 70;
+            // 
+            // UpdateTimer
+            // 
+            this.UpdateTimer.Enabled = true;
+            this.UpdateTimer.Interval = 1000;
+            this.UpdateTimer.Tick += new System.EventHandler(this.UpdateTimerTick);
             // 
             // ManifestsForm
             // 
@@ -123,7 +123,7 @@
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Manifests";
+            this.Text = "Manifest Explorer";
             this.Load += new System.EventHandler(this.OnLoaded);
             this.ResumeLayout(false);
 

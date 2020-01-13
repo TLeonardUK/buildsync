@@ -472,6 +472,13 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.link.png" />
+    <None Include="Resources\appbar.refresh.png" />
+    <None Include="Resources\appbar.question.png" />
+    <None Include="Resources\appbar.console.png" />
+    <None Include="Resources\appbar.cabinet.files.variant.png" />
+    <None Include="Resources\appbar.key.png" />
+    <None Include="Resources\appbar.close.png" />
     <None Include="Resources\buildsync.png" />
     <None Include="Resources\appbar.controller.xbox.png" />
   </ItemGroup>
@@ -496,6 +503,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy /iery "$(TargetDir)*.*" "$(SolutionDir)..\Build\Deploy"
+xcopy /iery "$(SolutionDir)..\Docs\Licenses.rtf" "$(SolutionDir)..\Build\Deploy\Docs\"
 xcopy /iery "$(SolutionDir)..\Docs\Build Sync Help.chm" "$(SolutionDir)..\Build\Deploy\Docs\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>

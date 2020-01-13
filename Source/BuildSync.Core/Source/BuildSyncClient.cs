@@ -359,7 +359,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private const int IdealPeerCount = 20;
+        public const int MaxPeerConnections = 20;
 
         /// <summary>
         /// 
@@ -958,7 +958,7 @@ namespace BuildSync.Core
                     lock (Peers)
                     {
                         peer = GetPeerByAddress(EndPoint);
-                        if (peer == null)
+                        if (peer == null && Peers.Count < MaxPeerConnections)
                         {
                             peer = new Peer();
                             peer.Address = EndPoint;
