@@ -341,7 +341,7 @@ namespace BuildSync.Core.Networking
         /// </summary>
         public void ProcessThreadEntry()
         {
-            while (!ProcessBufferQueue.IsAddingCompleted)
+            while (!ProcessBufferQueue.IsCompleted)
             {
                 MessageQueueEntry Data;
                 if (ProcessBufferQueue.TryTake(out Data, 1000))
