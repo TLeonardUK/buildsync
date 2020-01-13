@@ -49,6 +49,37 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Shipping|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Shipping\</OutputPath>
+    <DefineConstants>TRACE;SHIPPING</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>embedded</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Bcl.AsyncInterfaces.1.1.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -64,6 +95,9 @@
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis.Scripting, Version=3.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.CodeAnalysis.Scripting.Common.3.4.0\lib\netstandard2.0\Microsoft.CodeAnalysis.Scripting.dll</HintPath>
+    </Reference>
+    <Reference Include="p4api.net, Version=2019.3.189.3442, Culture=neutral, PublicKeyToken=f6b9b9d036c873e1, processorArchitecture=x86">
+      <HintPath>..\..\packages\p4api.net.x86.2019.3.189.3442\lib\net40\p4api.net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -152,13 +186,19 @@
     <Compile Include="Networking\NetMessage.cs" />
     <Compile Include="Networking\NetMessageSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Scm\Git\GitScmProvider.cs" />
+    <Compile Include="Scm\IScmProvider.cs" />
+    <Compile Include="Scm\Perforce\PerforceScmProvider.cs" />
+    <Compile Include="Scm\ScmManager.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />
     <Compile Include="Utils\BandwidthTracker.cs" />
     <Compile Include="Utils\CommandIPC.cs" />
     <Compile Include="Utils\Crc32.cs" />
     <Compile Include="Utils\DynamicPropertyGrid.cs" />
+    <Compile Include="Utils\EnumUtils.cs" />
     <Compile Include="Utils\ExapandableMemoryStream.cs" />
+    <Compile Include="Utils\FileCache.cs" />
     <Compile Include="Utils\FileUtils.cs" />
     <Compile Include="Utils\HostnameCache.cs" />
     <Compile Include="Utils\Logger.cs" />
@@ -188,12 +228,17 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-  </Target>
   <PropertyGroup>
     <PostBuildEvent>xcopy /iery "$(TargetDir)*.*" "$(SolutionDir)..\Build\Deploy"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>if $(ConfigurationName) == Shipping $(SolutionDir)VersionUpdater\Intermediate\VersionUpdater\bin\$(Configuration)\VersionUpdater.exe $(SolutionDir)BuildSync.Core\Source\Version.cs $(SolutionDir)</PreBuildEvent>
   </PropertyGroup>
+  <Import Project="..\..\packages\p4api.net.x86.2019.3.189.3442\build\p4api.net.x86.targets" Condition="Exists('..\..\packages\p4api.net.x86.2019.3.189.3442\build\p4api.net.x86.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\packages\p4api.net.x86.2019.3.189.3442\build\p4api.net.x86.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\p4api.net.x86.2019.3.189.3442\build\p4api.net.x86.targets'))" />
+  </Target>
 </Project>

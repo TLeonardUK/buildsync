@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Downloads;
+using BuildSync.Core.Scm;
 
 namespace BuildSync.Client
 {
@@ -13,6 +14,16 @@ namespace BuildSync.Client
     {
         public Guid ManifestId { get; set; } = Guid.Empty;
         public Dictionary<string, string> Values = new Dictionary<string, string>();
+    }
+
+    [Serializable]
+    public class ScmWorkspaceSettings
+    {
+        public ScmProviderType ProviderType { get; set; } = ScmProviderType.Perforce;
+        public string Server { get; set; } = "";
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string Location { get; set; } = "";
     }
 
     [Serializable]
@@ -38,6 +49,12 @@ namespace BuildSync.Client
 #endif
         public bool AlwaysRunInstallBeforeLaunching { get; set; } = true;
         public bool RunOnStartup { get; set; } = true;
+
+        //public string PerforceServer { get; set; } = "perforce:1666";
+        //public string PerforceUsername { get; set; } = "";
+        //public string PerforcePassword { get; set; } = "";
+
+        public List<ScmWorkspaceSettings> ScmWorkspaces { get; set; } = new List<ScmWorkspaceSettings>();
 
         public const int MaxLaunchSettings = 10;
         public List<StoredLaunchSettings> LaunchSettings { get; set; } = new List<StoredLaunchSettings>();

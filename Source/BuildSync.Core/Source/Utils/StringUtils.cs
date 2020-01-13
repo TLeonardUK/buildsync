@@ -65,5 +65,25 @@ namespace BuildSync.Core.Utils
 
             return string.Format("{0:D2}:{1:D2}:{2:D2}", Hours, Minutes, Seconds);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Input"></param>
+        /// <returns></returns>
+        public static bool IsValidNetAddress(string Input)
+        {
+            int Port = 0;
+
+            string[] Split = Input.Split(':');
+
+            if ((Split.Length == 1 && Uri.CheckHostName(Split[0]) != UriHostNameType.Unknown) ||
+                (Split.Length == 2 && Uri.CheckHostName(Split[0]) != UriHostNameType.Unknown && int.TryParse(Split[1], out Port)))
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

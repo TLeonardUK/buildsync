@@ -32,7 +32,8 @@ namespace BuildSync.Core.Utils
         Peers,
         IO,
         Users,
-        Licensing
+        Licensing,
+        Scm
     }
 
     /// <summary>
