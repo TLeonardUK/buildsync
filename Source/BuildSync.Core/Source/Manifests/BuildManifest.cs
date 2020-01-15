@@ -522,25 +522,32 @@ namespace BuildSync.Core.Manifests
                             }
                         }
 
-                        string Checksum = FileUtils.GetChecksum(FilePath, Tracker, (long BytesProcessed) =>
+                        try
                         {
-                            Interlocked.Add(ref BytesValidated, BytesProcessed);
-
-                            float Progress = (float)BytesValidated / (float)TotalSize;
-                            if (Callback != null)
+                            string Checksum = FileUtils.GetChecksum(FilePath, Tracker, (long BytesProcessed) =>
                             {
-                                Callback?.Invoke(Progress);
-                            }
-                        });
+                                Interlocked.Add(ref BytesValidated, BytesProcessed);
 
-                        if (FileInfo.Checksum != Checksum)
+                                float Progress = (float)BytesValidated / (float)TotalSize;
+                                if (Callback != null)
+                                {
+                                    Callback?.Invoke(Progress);
+                                }
+                            });
+
+                            if (FileInfo.Checksum != Checksum)
+                            {
+                                Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File '" + FilePath + "' has an invalid checksum (got {0} expected {1}), file system may have been modified externally.", Checksum, FileInfo.Checksum);
+
+                                lock (FailedFiles)
+                                {
+                                    FailedFiles.Add(FileInfo.Path);
+                                }
+                            }
+                        }
+                        catch (Exception Ex)
                         {
-                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File '" + FilePath + "' has an invalid checksum (got {0} expected {1}), file system may have been modified externally.", Checksum, FileInfo.Checksum);
-
-                            lock (FailedFiles)
-                            {
-                                FailedFiles.Add(FileInfo.Path);
-                            }
+                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File '" + FilePath + "' failed validation as checksuming caused exception: ", Ex.Message);
                         }
                     }
                 }));

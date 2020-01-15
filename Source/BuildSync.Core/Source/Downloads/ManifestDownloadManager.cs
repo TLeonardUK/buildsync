@@ -240,6 +240,21 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        private ulong SplitIndexLastUpdatedTimer = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private int SplitIndex = -1;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private const int SplitIndexUpdateInterval = 5 * 60 * 1000;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public BlockListState GetBlockListState(bool ReturnEmptyIfTrafficDisabled = true)
         {
             BlockListState Result = new BlockListState();
@@ -446,6 +461,8 @@ namespace BuildSync.Core.Downloads
             State.BlockStates.SetAll(false);
             State.State = ManifestDownloadProgressState.RetrievingManifest;
 
+            ClearFileCompletedStates(State);
+
             StateDirtyCount++;
         }
 
@@ -622,6 +639,16 @@ namespace BuildSync.Core.Downloads
                 CompletedState.ModifiedTimestampOnCompleted = GetFileLastWriteTime(LocalPath);
                 State.FileCompletedStates.Add(CompletedState);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        private void ClearFileCompletedStates(ManifestDownloadState State)
+        {
+            State.FileCompletedStates.Clear();
+            ClearFileWriteCache(State.LocalFolder);
         }
 
         /// <summary>
@@ -894,6 +921,33 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="Path"></param>
+        /// <returns></returns>
+        private void ClearFileWriteCache(string Path)
+        {
+            string NormalizedPath = FileUtils.NormalizePath(Path);
+
+            lock (LastFileWriteCache)
+            {
+                ulong time = TimeUtils.Ticks;
+                List<string> KeysToRemove = new List<string>();
+                foreach (var pair in LastFileWriteCache)
+                {
+                    if (FileUtils.NormalizePath(pair.Key) == NormalizedPath)
+                    {
+                        KeysToRemove.Add(pair.Key);
+                    }
+                }
+                foreach (string key in KeysToRemove)
+                {
+                    LastFileWriteCache.Remove(key);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="NewState"></param>
         private void ChangeState(ManifestDownloadState State, ManifestDownloadProgressState NewState, bool IsError = false)
         {
@@ -909,6 +963,7 @@ namespace BuildSync.Core.Downloads
             if (NewState != ManifestDownloadProgressState.Complete)
             {
                 State.Installed = false;
+                ClearFileCompletedStates(State);
             }
         }
 
@@ -1089,6 +1144,7 @@ namespace BuildSync.Core.Downloads
             if (State == null)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for block from manifest we do not have.");
+                Callback?.Invoke(false);
                 return false;
             }
 
@@ -1096,6 +1152,7 @@ namespace BuildSync.Core.Downloads
             if (!State.Manifest.GetBlockInfo(BlockIndex, ref BlockInfo))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for invalid block info.");
+                Callback?.Invoke(false);
                 return false;
             }
 
@@ -1103,6 +1160,7 @@ namespace BuildSync.Core.Downloads
             if (!State.BlockStates.Get(BlockIndex))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for block data for block we do not have.");
+                Callback?.Invoke(false);
                 return false;
             }
 
@@ -1177,6 +1235,7 @@ namespace BuildSync.Core.Downloads
             if (State == null)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block from manifest we do not have.");
+                Callback?.Invoke(false);
                 return false;
             }
 
@@ -1184,13 +1243,15 @@ namespace BuildSync.Core.Downloads
             if (!State.Manifest.GetBlockInfo(BlockIndex, ref BlockInfo))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block which we don't have info for.");
+                Callback?.Invoke(false);
                 return false;
             }
 
             // Ensure data is valid.
             if (Data.Length != BlockInfo.TotalSize)
             {
-                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to write block with smaller than expected data.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to write block {0} in {1} with smaller than expected data (Recieved:{2}, Expected:{3}).", BlockIndex, ManifestId.ToString(), Data.Length, BlockInfo.TotalSize);
+                Callback?.Invoke(false);
                 return false;
             }
 
@@ -1198,6 +1259,7 @@ namespace BuildSync.Core.Downloads
             if (State.BlockStates.Get(BlockIndex))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block data for block we not have.");
+                Callback?.Invoke(false);
                 return false;
             }
 
@@ -1227,7 +1289,7 @@ namespace BuildSync.Core.Downloads
                     }
                 });
             }
-            return false;
+            return true;
         }
 
         /// <summary>
@@ -1329,6 +1391,13 @@ namespace BuildSync.Core.Downloads
                 return;
             }
 
+            // Update split index periodically.
+            if (SplitIndex == -1 || TimeUtils.Ticks - SplitIndexLastUpdatedTimer > SplitIndexUpdateInterval)
+            {
+                SplitIndex = (new Random(Environment.TickCount)).Next();
+                SplitIndexLastUpdatedTimer = TimeUtils.Ticks;
+            }
+
             // Create queues of blocks that we want.
             List<ManifestDownloadQueue> ManifestQueues = new List<ManifestDownloadQueue>();
 
@@ -1360,7 +1429,7 @@ namespace BuildSync.Core.Downloads
                     bool[] Current = State.BlockStates.ToArray();
                     bool[] ToDownload = new bool[Available.Length];
 
-                    // Make list of blcoks that are available and blocks that we don't have. aka. our download list.
+                    // Make list of blocks that are available and blocks that we don't have. aka. our download list.
                     for (int i = 0; i < Available.Length; i++)
                     {
                         ToDownload[i] = Available[i] && !Current[i];
@@ -1370,7 +1439,12 @@ namespace BuildSync.Core.Downloads
                     SparseStateArray DownloadRanges = new SparseStateArray();
                     DownloadRanges.Size = 0;
                     DownloadRanges.Ranges = null;
-                    DownloadRanges.FromArray(ToDownload);
+
+                    // Split at a random place and download the second segment first. This speeds up the rate at which peers have blocks available to seed. And stops
+                    // the first seeder being hammered.
+                    int ThisSplitIndex = SplitIndex % ToDownload.Length;
+                    DownloadRanges.AddArray(ToDownload, ThisSplitIndex, ToDownload.Length - ThisSplitIndex);
+                    DownloadRanges.AddArray(ToDownload, 0, ThisSplitIndex);
 
                     if (DownloadRanges.Ranges != null)
                     {

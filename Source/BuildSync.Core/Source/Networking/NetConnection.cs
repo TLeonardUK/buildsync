@@ -95,7 +95,7 @@ namespace BuildSync.Core.Networking
 
         private static ConcurrentBag<byte[]> MessageBuffers = new ConcurrentBag<byte[]>();
         private static int MessageBufferCount = 0;
-        private const int MaxMessageBuffers = 32;
+        private const int MaxMessageBuffers = 128;
 
         private ulong MaxClientsExceededPurgeTime = 0;
 
@@ -1130,7 +1130,7 @@ namespace BuildSync.Core.Networking
 #if SHIPPING
                     if (Msg.Version != AppVersion.ProtocolVersion)
                     {
-                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Client has incompatible protocol version, rejecting.", Address.ToString());
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Client has incompatible protocol version {0}, rejecting.", Msg.Version, Address.ToString());
                         Response.ResultType = HandshakeResultType.InvalidVersion;
                         HandshakeFailed = true;
                     }

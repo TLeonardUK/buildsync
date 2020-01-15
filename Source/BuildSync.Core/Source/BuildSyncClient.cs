@@ -106,7 +106,7 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
-            public const int BlockDownloadTimeout = 30 * 1000;
+            public const int BlockDownloadTimeout = 15 * 1000;
 
             /// <summary>
             /// 
@@ -127,6 +127,40 @@ namespace BuildSync.Core
             /// 
             /// </summary>
             public RollingAverage AverageBlockSize = new RollingAverage(100);
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="TargetMsOfData"></param>
+            /// <returns></returns>
+            public long GetMaxInFlightData(int TargetMsOfData)
+            {
+                // Calculate a rough idea for how many bytes we should have in flight at a given time.
+                double InBlockRecieveLatency = BlockRecieveLatency.Get();
+                double InAverageBlockSize = AverageBlockSize.Get();
+
+                long MaxInFlightBytes = 0;
+                if (InBlockRecieveLatency < 5 || InAverageBlockSize < 1024)
+                {
+                    MaxInFlightBytes = BuildManifest.BlockSize * 30;
+                }
+                else
+                {
+                    MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMsOfData / InBlockRecieveLatency) * InAverageBlockSize));
+                }
+
+                return MaxInFlightBytes;
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="TargetMsOfData"></param>
+            /// <returns></returns>
+            public long GetAvailableInFlightData(int TargetMsOfData)
+            {
+                return Math.Max(0, GetMaxInFlightData(TargetMsOfData) - ActiveBlockDownloadSize);
+            }
 
             /// <summary>
             /// 
@@ -280,6 +314,31 @@ namespace BuildSync.Core
                         }
                     }
                 }
+            }
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// <param name="ManifestId"></param>
+            /// <param name="BlockIndex"></param>
+            /// <returns></returns>
+            public bool HasActiveBlockDownload(Guid ManifestId, int BlockIndex)
+            {
+                lock (ActiveBlockDownloads)
+                {
+                    for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                    {
+                        ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                        if (Download.BlockIndex == BlockIndex &&
+                            Download.ManifestId == ManifestId)
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
             }
 
             /// <summary>
@@ -853,9 +912,42 @@ namespace BuildSync.Core
                         continue;
                     }
 
+                    // Find all peers that have this block.
+                    Peer LeastLoadedPeer = null;
+                    long LeastLoadedPeerAvailableBandwidth = 0;
+                    for (int j = 0; j < Peers.Count; j++)
+                    {
+                        Peer Peer = Peers[j];
+                        long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
+                        long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
+                        if (LeastLoadedPeer == null || ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && Peer.ActiveBlockDownloadSize < LeastLoadedPeerAvailableBandwidth))
+                        {
+                            LeastLoadedPeer = Peer;
+                            LeastLoadedPeerAvailableBandwidth = Peer.ActiveBlockDownloadSize;
+                        }
+                    }
+
+                    if (LeastLoadedPeer != null)
+                    {
+                        NetMessage_GetBlock Msg = new NetMessage_GetBlock();
+                        Msg.ManifestId = Item.ManifestId;
+                        Msg.BlockIndex = Item.BlockIndex;
+                        LeastLoadedPeer.Connection.Send(Msg);
+
+                        Item.TimeStarted = TimeUtils.Ticks;
+                        Item.Size = BlockInfo.TotalSize;
+
+                        LeastLoadedPeer.AddActiveBlockDownload(Item);
+
+                       // Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}, from peer {4}.", Msg.ManifestId, Msg.BlockIndex, BlockInfo.TotalSize, LeastLoadedPeer.ActiveBlockDownloadSize, HostnameCache.GetHostname(LeastLoadedPeer.Connection.Address.Address.ToString()));
+
+                        break;
+                    }
+
                     // Try and find a peer with space in its download queue for this item.
                     // Cycle peers to request from so we don't always hit the first if he has everything.
                     // TODO: If recent request failed, wait.
+                    /*
                     for (int j = 0; j < Peers.Count; j++)
                     {
                         Peer peer = Peers[(j + PeerCycleIndex) % Peers.Count];
@@ -873,12 +965,13 @@ namespace BuildSync.Core
                         {
                             MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMillisecondsOfDataInFlight / BlockRecieveLatency) * AverageBlockSize));
                         }
-                        
+
                         //Console.WriteLine("Target:{0} ({1} mb) Latency:{2} BlockSize:{3} Actual:{4} ({5} mb) TotalDownloads:{6}", MaxInFlightBytes, MaxInFlightBytes / 1024.0f / 1024.0f, BlockRecieveLatency, AverageBlockSize, peer.ActiveBlockDownloadSize, peer.ActiveBlockDownloadSize / 1024.0f / 1024.0f, peer.ActiveBlockDownloads.Count);
 
                         // TODO: Take disk queue into account.
 
-                        if ((peer.ActiveBlockDownloadSize + BlockInfo.TotalSize <= MaxInFlightBytes || BlockInfo.TotalSize > MaxInFlightBytes) && peer.HasBlock(Item))
+                        //if ((peer.ActiveBlockDownloadSize + BlockInfo.TotalSize <= MaxInFlightBytes || BlockInfo.TotalSize > MaxInFlightBytes) && peer.HasBlock(Item))
+                        if (peer.ActiveBlockDownloads.Count < 512 && peer.HasBlock(Item))
                         {
                             NetMessage_GetBlock Msg = new NetMessage_GetBlock();
                             Msg.ManifestId = Item.ManifestId;
@@ -890,16 +983,16 @@ namespace BuildSync.Core
 
                             peer.AddActiveBlockDownload(Item);
 
-                            //Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}.", Msg.ManifestId, Msg.BlockIndex, BlockSize, peer.ActiveBlockDownloadSize);
+                            Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}, from peer {4}.", Msg.ManifestId, Msg.BlockIndex, BlockInfo.TotalSize, peer.ActiveBlockDownloadSize, HostnameCache.GetHostname(peer.Connection.Address.Address.ToString()));
 
                             break;
                         }
-                    }
+                    }*/
+                }
 
-                    if (Peers.Count > 0)
-                    {
-                        PeerCycleIndex = (++PeerCycleIndex % Peers.Count);
-                    }
+                if (Peers.Count > 0)
+                {
+                    PeerCycleIndex = (++PeerCycleIndex % Peers.Count);
                 }
             }
         }
@@ -1399,7 +1492,10 @@ namespace BuildSync.Core
                 Peer peer = GetPeerByConnection(Connection);
                 if (peer != null)
                 {
-                    peer.BlockState = Msg.BlockState;
+                    lock (Peers)
+                    {
+                        peer.BlockState = Msg.BlockState;
+                    }
                 }
 
                 UpdateAvailableBlocks();
@@ -1416,7 +1512,7 @@ namespace BuildSync.Core
                 Response.ManifestId = Msg.ManifestId;
                 Response.BlockIndex = Msg.BlockIndex;
 
-                ManifestDownloadManager.GetBlockData(Msg.ManifestId, Msg.BlockIndex, ref Response.Data, (bool bSuccess) =>
+                BlockAccessCompleteHandler Callback = (bool bSuccess) =>
                 {
 
                     lock (DeferredActions)
@@ -1439,7 +1535,9 @@ namespace BuildSync.Core
                         });
                     }
 
-                });
+                };
+
+                ManifestDownloadManager.GetBlockData(Msg.ManifestId, Msg.BlockIndex, ref Response.Data, Callback);
             }
 
             // Peer provided block of data we requested.
@@ -1447,7 +1545,7 @@ namespace BuildSync.Core
             {
                 NetMessage_GetBlockResponse Msg = BaseMessage as NetMessage_GetBlockResponse;
 
-                if (Msg.Data == null)
+                if (Msg.Data.Data == null)
                 {
                     Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved null block {0} in manifest {1} from {2}, looks like peer no longer has it.", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
 
@@ -1476,7 +1574,12 @@ namespace BuildSync.Core
                         //peer.MarkActiveBlockDownloadAsRecieved(Msg.ManifestId, Msg.BlockIndex);
                     }
 
-                    ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, (bool bSuccess) =>
+                    if (!peer.HasActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex))
+                    {
+                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved unexpected block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
+                    }
+
+                    BlockAccessCompleteHandler Callback = (bool bSuccess) =>
                     {
                         Msg.Cleanup();
 
@@ -1494,8 +1597,12 @@ namespace BuildSync.Core
                                 peer.RemoveActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex);
                             });
                         }
+                    };
 
-                    });
+                    if (!ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, Callback))
+                    {
+                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved invalid block data from: {0}", HostnameCache.GetHostname(Connection.Address.Address.ToString()));
+                    }
                 }
             }
 

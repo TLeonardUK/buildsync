@@ -146,7 +146,7 @@ namespace BuildSync.Core.Utils
 
             using (Crc32 crc = new Crc32())
             {
-                using (var stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                using (var stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     var hash = crc.ComputeLargeStreamHash(stream, Tracker, Callback);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();

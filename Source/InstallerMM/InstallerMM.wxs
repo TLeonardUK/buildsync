@@ -97,9 +97,6 @@
         <Component Id="owc1C01913CF507CA8CA5C63158EAEBEEB9" Guid="ac47d95e-041b-4a1a-e3b3-19997cbdafed">
           <File Id="owf1C01913CF507CA8CA5C63158EAEBEEB9" Source="$(var.SourceDir)\p4api.net.xml" KeyPath="yes" />
         </Component>
-        <Component Id="owc73A49B67EFECE681DDA4E470246C2D32" Guid="762e6f4e-cc16-3cfd-9f8b-62910bbd6a43">
-          <File Id="owf73A49B67EFECE681DDA4E470246C2D32" Source="$(var.SourceDir)\p4bridge.dll" KeyPath="yes" />
-        </Component>
         <Component Id="owc266C4DEC591C8A54CCC1D3C61FC512AA" Guid="2224179c-4d85-88a2-23e2-bc0c27cadd0e">
           <File Id="owf266C4DEC591C8A54CCC1D3C61FC512AA" Source="$(var.SourceDir)\System.Buffers.dll" KeyPath="yes" />
         </Component>

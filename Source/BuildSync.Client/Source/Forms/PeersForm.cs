@@ -99,7 +99,7 @@ namespace BuildSync.Client.Forms
                     MainListView.Items.Add(Item);
                 }
 
-                Item.SubItems[0].Text = Peer.Connection.Address == null ? "" : HostnameCache.GetHostname(Peer.Connection.Address.Address.ToString());
+                Item.SubItems[0].Text = (Peer.RemoteInitiated ? "[Remote Initiated] " : "") + (Peer.Connection.Address == null ? "" : HostnameCache.GetHostname(Peer.Connection.Address.Address.ToString()));
                 Item.SubItems[1].Text = StringUtils.FormatAsTransferRate(Peer.Connection.BandwidthStats.RateIn);
                 Item.SubItems[2].Text = StringUtils.FormatAsTransferRate(Peer.Connection.BandwidthStats.RateOut);
                 Item.SubItems[3].Text = StringUtils.FormatAsSize(Peer.Connection.BandwidthStats.TotalIn);

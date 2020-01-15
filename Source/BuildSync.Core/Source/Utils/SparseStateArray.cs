@@ -77,6 +77,42 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
+        ///     BE CAREFUL, THIS DOESNT MAINTAIN ORDERING
+        /// </summary>
+        /// <param name="Array"></param>
+        public void AddArray(bool[] Array, int Offset, int Length)
+        {
+            if (Ranges == null)
+            {
+                Ranges = new List<Range>();
+            }
+
+            for (int RangeStart = Offset; RangeStart < Offset + Length; )
+            {
+                int RangeEnd = RangeStart;
+
+                for (; RangeEnd < Offset + Length; RangeEnd++)
+                {
+                    if (Array[RangeStart] != Array[RangeEnd])
+                    {
+                        break;
+                    }
+                }
+
+                Range Range = new Range
+                {
+                    Start = RangeStart,
+                    End = RangeEnd - 1,
+                    State = Array[RangeStart]
+                };
+
+                Ranges.Add(Range);
+
+                RangeStart = RangeEnd;
+            }
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="State"></param>
@@ -109,7 +145,7 @@ namespace BuildSync.Core.Utils
 
             // This is shit, do it in-place.
             bool[] Array = ToArray();
-            bool[] OtherArray = ToArray();
+            bool[] OtherArray = Other.ToArray();
             bool[] Union = new bool[Size];
             for (int i = 0; i < Size; i++)
             {
