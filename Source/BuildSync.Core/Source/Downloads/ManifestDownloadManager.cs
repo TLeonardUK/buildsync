@@ -201,6 +201,15 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        public bool SkipValidation
+        {
+            get;
+            set;
+        } = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private int Internal_StateDirtyCount = 0;
         public int StateDirtyCount
         {
@@ -742,7 +751,14 @@ namespace BuildSync.Core.Downloads
                     {
                         if (State.BlockStates.AreAllSet(true))
                         {
-                            ChangeState(State, ManifestDownloadProgressState.Validating);
+                            if (SkipValidation)
+                            {
+                                ChangeState(State, ManifestDownloadProgressState.Complete);
+                            }
+                            else
+                            {
+                                ChangeState(State, ManifestDownloadProgressState.Validating);
+                            }
                         }
 
                         break;

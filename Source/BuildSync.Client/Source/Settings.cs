@@ -52,9 +52,7 @@ namespace BuildSync.Client
 
         public Guid LastAutoUpdateManifest { get; set; } = Guid.Empty;
 
-        //public string PerforceServer { get; set; } = "perforce:1666";
-        //public string PerforceUsername { get; set; } = "";
-        //public string PerforcePassword { get; set; } = "";
+        public bool SkipValidation { get; set; } = false;
 
         public List<ScmWorkspaceSettings> ScmWorkspaces { get; set; } = new List<ScmWorkspaceSettings>();
 

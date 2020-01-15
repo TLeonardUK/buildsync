@@ -29,6 +29,7 @@ namespace BuildSync.Client.Controls.Settings
             RunOnStartupCheckbox.Checked = Program.Settings.RunOnStartup;
             MinimizeToTrayCheckbox.Checked = Program.Settings.MinimizeToTrayOnClose;
             runInstallWhenLaunchingCheckbox.Checked = Program.Settings.AlwaysRunInstallBeforeLaunching;
+            skipVerificationCheckBox.Checked = Program.Settings.SkipValidation;
             SkipValidity = false;
 
             UpdateValidityState();
@@ -58,6 +59,7 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.RunOnStartup = RunOnStartupCheckbox.Checked;
             Program.Settings.MinimizeToTrayOnClose = MinimizeToTrayCheckbox.Checked;
             Program.Settings.AlwaysRunInstallBeforeLaunching = runInstallWhenLaunchingCheckbox.Checked;
+            Program.Settings.SkipValidation = skipVerificationCheckBox.Checked;
         }
 
         /// <summary>

@@ -31,6 +31,7 @@
             this.RunOnStartupCheckbox = new System.Windows.Forms.CheckBox();
             this.MinimizeToTrayCheckbox = new System.Windows.Forms.CheckBox();
             this.runInstallWhenLaunchingCheckbox = new System.Windows.Forms.CheckBox();
+            this.skipVerificationCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // RunOnStartupCheckbox
@@ -63,21 +64,34 @@
             this.runInstallWhenLaunchingCheckbox.Location = new System.Drawing.Point(16, 75);
             this.runInstallWhenLaunchingCheckbox.Margin = new System.Windows.Forms.Padding(2);
             this.runInstallWhenLaunchingCheckbox.Name = "runInstallWhenLaunchingCheckbox";
-            this.runInstallWhenLaunchingCheckbox.Size = new System.Drawing.Size(219, 17);
+            this.runInstallWhenLaunchingCheckbox.Size = new System.Drawing.Size(446, 17);
             this.runInstallWhenLaunchingCheckbox.TabIndex = 35;
-            this.runInstallWhenLaunchingCheckbox.Text = "Always run install before launching build?";
+            this.runInstallWhenLaunchingCheckbox.Text = "Always run install before launching build (Only recommended for non-incremental i" +
+    "nstalls)?";
             this.runInstallWhenLaunchingCheckbox.UseVisualStyleBackColor = true;
             this.runInstallWhenLaunchingCheckbox.CheckedChanged += new System.EventHandler(this.StateChanged);
+            // 
+            // skipVerificationCheckBox
+            // 
+            this.skipVerificationCheckBox.AutoSize = true;
+            this.skipVerificationCheckBox.Location = new System.Drawing.Point(16, 105);
+            this.skipVerificationCheckBox.Margin = new System.Windows.Forms.Padding(2);
+            this.skipVerificationCheckBox.Name = "skipVerificationCheckBox";
+            this.skipVerificationCheckBox.Size = new System.Drawing.Size(287, 17);
+            this.skipVerificationCheckBox.TabIndex = 36;
+            this.skipVerificationCheckBox.Text = "Skip validation of builds (Faster but not recommended)?";
+            this.skipVerificationCheckBox.UseVisualStyleBackColor = true;
             // 
             // GeneralSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.Controls.Add(this.skipVerificationCheckBox);
             this.Controls.Add(this.runInstallWhenLaunchingCheckbox);
             this.Controls.Add(this.MinimizeToTrayCheckbox);
             this.Controls.Add(this.RunOnStartupCheckbox);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "GeneralSettings";
-            this.Size = new System.Drawing.Size(519, 107);
+            this.Size = new System.Drawing.Size(519, 138);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -88,5 +102,6 @@
         private System.Windows.Forms.CheckBox RunOnStartupCheckbox;
         private System.Windows.Forms.CheckBox MinimizeToTrayCheckbox;
         private System.Windows.Forms.CheckBox runInstallWhenLaunchingCheckbox;
+        private System.Windows.Forms.CheckBox skipVerificationCheckBox;
     }
 }

@@ -378,6 +378,9 @@ namespace BuildSync.Client
             NetConnection.GlobalBandwidthThrottleOut.MaxRate = Settings.BandwidthMaxUp;
 
             // General settings.
+            ManifestDownloadManager.SkipValidation = Settings.SkipValidation;
+
+            // General settings.
             ProcessUtils.SetLaunchOnStartup("Build Sync - Client", Settings.RunOnStartup);
         }
 
@@ -387,13 +390,11 @@ namespace BuildSync.Client
         public static void OnStart()
         {
             ScmManager = new ScmManager();
-
-            InitSettings();
-
             IOQueue = new AsyncIOQueue();
-
             ManifestDownloadManager = new ManifestDownloadManager();
             DownloadManager = new DownloadManager();
+
+            InitSettings();
 
             NetClient = new BuildSyncClient();
 
