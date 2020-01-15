@@ -14,7 +14,7 @@
     <Name>Help</Name>
     <!-- SHFB properties -->
     <FrameworkVersion>.NET Framework 4.5</FrameworkVersion>
-    <OutputPath>..\..\Docs\</OutputPath>
+    <OutputPath>..\..\Docs\Chm\</OutputPath>
     <HtmlHelpName>Build Sync Help</HtmlHelpName>
     <Language>en-US</Language>
     <TransformComponentArguments>

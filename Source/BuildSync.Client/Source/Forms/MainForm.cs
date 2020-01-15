@@ -7,8 +7,11 @@ using System.Drawing;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BuildSync.Client.Tasks;
+using BuildSync.Core;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Downloads;
@@ -111,6 +114,99 @@ namespace BuildSync.Client.Forms
             (new ManageBuildsForm()).ShowDialog(this);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PushUpdateClicked(object sender, EventArgs e)
+        {
+            OpenFileDialog Dialog = new OpenFileDialog();
+            Dialog.Title = "Select Update File";
+            Dialog.Filter = "Installer File (*.msi)|*.msi|All files (*.*)|*.*";
+            //Dialog.InitialDirectory = Environment.CurrentDirectory;
+            Dialog.CheckFileExists = true;
+            Dialog.ShowHelp = true;
+
+            if (Dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                BuildsRecievedHandler Handler = null;                
+                Handler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) => {
+
+                    Program.NetClient.OnBuildsRecieved -= Handler;
+
+                    // Find the next sequential build index.
+                    string NewVirtualPath = "";
+                    for (int i = 0; true; i++)
+                    {
+                        NewVirtualPath = RootPath + "/" + i.ToString();
+
+                        bool Exists = false;
+                        foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
+                        {
+                            if (Build.VirtualPath.ToUpper() == NewVirtualPath.ToUpper())
+                            {
+                                Exists = true;
+                                break;
+                            }
+                        }
+
+                        if (!Exists)
+                        {
+                            break;
+                        }
+                    }
+
+                    // Publish a folder.
+                    string TempFolder = FileUtils.GetTempDirectory();
+                    File.Copy(Dialog.FileName, Path.Combine(TempFolder, "installer.msi"));
+
+                    // Publish the build.
+                    PublishBuildTask Publisher = new PublishBuildTask();
+                    Publisher.Start(NewVirtualPath, TempFolder);
+
+                    Task.Run(() => { 
+
+                        bool PublishComplete = false;
+                        while (!PublishComplete)
+                        {
+                            switch (Publisher.State)
+                            {
+                                case BuildPublishingState.CopyingFiles:
+                                case BuildPublishingState.ScanningFiles:
+                                case BuildPublishingState.UploadingManifest:
+                                    {
+                                        // Ignore
+                                        break;
+                                    }
+                                case BuildPublishingState.Success:
+                                    {
+                                        this.Invoke((MethodInvoker)(() => { 
+                                            Publisher.Commit(); 
+                                        }));
+                                        Publisher = null;
+                                        PublishComplete = true;
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        Publisher = null;
+                                        PublishComplete = true;
+                                        break;
+                                    }
+                            }
+
+                            Thread.Sleep(1000);
+                        }
+
+                    });
+                }; 
+
+                Program.NetClient.OnBuildsRecieved += Handler;
+                Program.NetClient.RequestBuilds("$Internal$/Updates");
+            }
+        }
+        
         /// <summary>
         /// 
         /// </summary>
@@ -289,7 +385,7 @@ namespace BuildSync.Client.Forms
             foreach (DownloadState State in Program.DownloadManager.States.States)
             {
                 ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(State.ActiveManifestId);
-                if (Downloader != null && Downloader.State == ManifestDownloadProgressState.Downloading)
+                if (Downloader != null && Downloader.State == ManifestDownloadProgressState.Downloading && !State.IsInternal)
                 {
                     State.Paused = true;
                 }
@@ -305,7 +401,10 @@ namespace BuildSync.Client.Forms
         {
             foreach (DownloadState State in Program.DownloadManager.States.States)
             {
-                State.Paused = false;
+                if (!State.IsInternal)
+                {
+                    State.Paused = false;
+                }
             }
         }
 
@@ -502,6 +601,17 @@ namespace BuildSync.Client.Forms
                 {
                     manageUsersToolStripMenuItem.Enabled = false;
                     manageUsersToolStripMenuItem.Text = "User Manager (Permission Required)";
+                }
+            }
+
+            pushUpdateToolStripMenuItem.Text = "Push Update";
+            pushUpdateToolStripMenuItem.Enabled = Connected;
+            if (Connected)
+            {
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ForceUpdate, ""))
+                {
+                    pushUpdateToolStripMenuItem.Enabled = false;
+                    pushUpdateToolStripMenuItem.Text = "Push Update (Permission Required)";
                 }
             }
 

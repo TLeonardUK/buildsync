@@ -226,6 +226,11 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        private List<Guid> BlockedDownloadManifestIds = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         public BlockListState GetBlockListState(bool ReturnEmptyIfTrafficDisabled = true)
         {
             BlockListState Result = new BlockListState();
@@ -315,20 +320,46 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="ManifestId"></param>
+        public void BlockDownload(Guid ManifestId)
+        {
+            lock (BlockedDownloadManifestIds)
+            {
+                BlockedDownloadManifestIds.Add(ManifestId);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        public void UnblockDownload(Guid ManifestId)
+        {
+            lock (BlockedDownloadManifestIds)
+            {
+                BlockedDownloadManifestIds.Remove(ManifestId);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Priority"></param>
         public ManifestDownloadState AddLocalDownload(BuildManifest Manifest, string LocalPath, bool Available = true)
         {
             ManifestDownloadState State = GetDownload(Manifest.Guid);
-            if (State != null)
+
+            if (ManifestRegistry.GetManifestById(Manifest.Guid) == null)
             {
-                return State;
+                ManifestRegistry.RegisterManifest(Manifest);
             }
 
-            ManifestRegistry.RegisterManifest(Manifest);
-
-            State = new ManifestDownloadState();
-            State.Id = Guid.NewGuid();
+            if (State == null)
+            {
+                State = new ManifestDownloadState();
+                State.Id = Guid.NewGuid();
+            }
             State.ManifestId = Manifest.Guid;
             State.Priority = 2;
             State.Manifest = Manifest;
@@ -357,6 +388,14 @@ namespace BuildSync.Core.Downloads
         /// <param name="Priority"></param>
         public ManifestDownloadState StartDownload(Guid ManifestId, int Priority)
         {
+            lock (BlockedDownloadManifestIds)
+            {
+                if (BlockedDownloadManifestIds.Contains(ManifestId))
+                {
+                    return null;
+                }
+            }
+
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State != null)
             {
@@ -463,10 +502,13 @@ namespace BuildSync.Core.Downloads
                 return;
             }
 
-            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Paused download of manifest: {0}", ManifestId.ToString());
-            State.Paused = true;
+            if (!State.Paused)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Paused download of manifest: {0}", ManifestId.ToString());
+                State.Paused = true;
 
-            StateDirtyCount++;
+                StateDirtyCount++;
+            }
         }
 
         /// <summary>
@@ -481,10 +523,13 @@ namespace BuildSync.Core.Downloads
                 return;
             }
 
-            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Resumed download of manifest: {0}", ManifestId.ToString());
-            State.Paused = false;
+            if (State.Paused)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Resumed download of manifest: {0}", ManifestId.ToString());
+                State.Paused = false;
 
-            StateDirtyCount++;
+                StateDirtyCount++;
+            }
         }
 
         /// <summary>

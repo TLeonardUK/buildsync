@@ -1,9 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <?define ComponentRules="OneToOne"?>
   <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
   <?define SourceDir="..\..\Build\Deploy"?>
-  <Module Id="BuildSync" Language="1033" Version="1.0.0.0">
+  <Module Id="BuildSync" Language="1033" Version="1.0.0.82">
     <Package Id="2bfad680-e708-481c-9cd4-f285482e7ace" Manufacturer="Tim Leonard" InstallerVersion="200" Description="Tool for distributing application builds" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" />
@@ -14,13 +14,8 @@
         <Component Id="owc7D5E409F2BB983EA5B925AB057F52F2F" Guid="b0cd99a7-095f-842b-6517-ddf9af515a71">
           <File Id="owf7D5E409F2BB983EA5B925AB057F52F2F" Source="$(var.SourceDir)\BuildSync.Client.Cmd.exe.config" KeyPath="yes" />
         </Component>
-        <Directory Id="owd799F60633DE3314CD962556CD118A451" Name="Docs">
-          <Component Id="owc7C48FBEBBD7C5A083E49831811149457" Guid="4f6f6760-d28a-d349-5500-1e66e7bf7bbC">
-              <File Id="owc7C48FBEBBD7C5A083E49831811149457" Source="$(var.SourceDir)\Docs\Build Sync Help.chm" KeyPath="yes" />
-          </Component>
-        </Directory>
         <Component Id="owc1B96E4D26AFCE998D5963BF751248C09" Guid="30795a00-58cf-d9f2-1eff-593f1e781cfa">
-          <File Id="owf1B96E4D26AFCE998D5963BF751248C09" Source="$(var.SourceDir)\BuildSync.Client.exe" KeyPath="yes" >
+          <File Id="CLIENT_EXE_FILE" Source="$(var.SourceDir)\BuildSync.Client.exe" KeyPath="yes">
             <Shortcut Id="scAF4A07C53560668BDB7F0CCC9D792775" Name="Build Sync (Client)" Directory="DesktopFolder" />
           </File>
         </Component>
@@ -95,6 +90,15 @@
         </Component>
         <Component Id="owcC49DAF2C5622892839037EB7EFE32F00" Guid="65d0b15d-cfbd-751f-52f7-85ca2ada89ed">
           <File Id="owfC49DAF2C5622892839037EB7EFE32F00" Source="$(var.SourceDir)\Microsoft.WindowsAPICodePack.ShellExtensions.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owcDD3398E44BA7C1E7FE15B1362E07E133" Guid="67c283eb-8d41-b0b2-fbf9-4042b6098446">
+          <File Id="owfDD3398E44BA7C1E7FE15B1362E07E133" Source="$(var.SourceDir)\p4api.net.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owc1C01913CF507CA8CA5C63158EAEBEEB9" Guid="ac47d95e-041b-4a1a-e3b3-19997cbdafed">
+          <File Id="owf1C01913CF507CA8CA5C63158EAEBEEB9" Source="$(var.SourceDir)\p4api.net.xml" KeyPath="yes" />
+        </Component>
+        <Component Id="owc73A49B67EFECE681DDA4E470246C2D32" Guid="762e6f4e-cc16-3cfd-9f8b-62910bbd6a43">
+          <File Id="owf73A49B67EFECE681DDA4E470246C2D32" Source="$(var.SourceDir)\p4bridge.dll" KeyPath="yes" />
         </Component>
         <Component Id="owc266C4DEC591C8A54CCC1D3C61FC512AA" Guid="2224179c-4d85-88a2-23e2-bc0c27cadd0e">
           <File Id="owf266C4DEC591C8A54CCC1D3C61FC512AA" Source="$(var.SourceDir)\System.Buffers.dll" KeyPath="yes" />
@@ -185,6 +189,14 @@
           </Component>
           <Component Id="owcF790A17350C2437C0E1E354B9D980161" Guid="627f2dc4-5b88-d3f7-3acf-7630111e30e8">
             <File Id="owfF790A17350C2437C0E1E354B9D980161" Source="$(var.SourceDir)\de\Microsoft.CodeAnalysis.Scripting.resources.dll" KeyPath="yes" />
+          </Component>
+        </Directory>
+        <Directory Id="owd799F60633DE3314CD962556CD118A451" Name="Docs">
+          <Component Id="owc7C48FBEBBD7C5A083E49831811149457" Guid="4f6f6760-d28a-d349-5500-1e66e7bf7bbC">
+            <File Id="owc7C48FBEBBD7C5A083E49831811149457" Source="$(var.SourceDir)\Docs\Build Sync Help.chm" KeyPath="yes" />
+          </Component>
+          <Component Id="owc7C48FBEBBD7C5A083E49841811149457" Guid="4f6f6760-d28a-d349-5500-1e66e7bf7bbA">
+            <File Id="owc7C48FBEBBD7C5A083E49841811149457" Source="$(var.SourceDir)\Docs\Licenses.rtf" KeyPath="yes" />
           </Component>
         </Directory>
         <Directory Id="owdF542F1E9B1CF46F5EC5BF0998941ED93" Name="es">

@@ -19,6 +19,7 @@ namespace BuildSync.Core.Users
         ManageBuilds,
         ManageUsers,
         Access,
+        ForceUpdate,
         Unknown
     }
 

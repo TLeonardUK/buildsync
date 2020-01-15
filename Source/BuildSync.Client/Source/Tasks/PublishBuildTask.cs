@@ -82,6 +82,9 @@ namespace BuildSync.Client.Tasks
                 {
                     Guid NewManifestId = Guid.NewGuid();
 
+                    // Don't allow downloading of this manifest until we have fully committed it.
+                    Program.ManifestDownloadManager.BlockDownload(NewManifestId);
+
                     // Copy files over.
                     string LocalFolder = Program.ManifestDownloadManager.GetManifestStorageDirectory(NewManifestId).TrimEnd('/', '\\');
 
@@ -200,6 +203,9 @@ namespace BuildSync.Client.Tasks
         {
             // Add "completed" manifest downloader entry for this build so we can start seeding it.
             ManifestDownloadState LocalState = Program.ManifestDownloadManager.AddLocalDownload(Manifest, LocalPath);
+
+            // Allow this manifest id to be downloaded now.
+            Program.ManifestDownloadManager.BlockDownload(Manifest.Guid);
 
             Program.SaveSettings();
         }

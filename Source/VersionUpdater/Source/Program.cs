@@ -17,7 +17,7 @@ namespace VersionUpdater
             if (TagIndex < 0)
             {
                 Console.WriteLine("BuildVersion not found.");
-                return "";
+                return Contents;
             }
             TagIndex = TagIndex + Tag.Length;
 
@@ -25,7 +25,27 @@ namespace VersionUpdater
             if (EndTagIndex < 0)
             {
                 Console.WriteLine("BuildVersion end not found.");
-                return "";
+                return Contents;
+            }
+
+            return Contents.Substring(0, TagIndex) + NewValue + Contents.Substring(EndTagIndex);
+        }
+
+        public static string PatchFullTag(string Contents, string TagStart, string TagEnd, string NewValue)
+        {
+            int TagIndex = Contents.IndexOf(TagStart);
+            if (TagIndex < 0)
+            {
+                Console.WriteLine("Tag not found.");
+                return Contents;
+            }
+            TagIndex = TagIndex + TagStart.Length;
+
+            int EndTagIndex = Contents.IndexOf(TagEnd, TagIndex);
+            if (EndTagIndex < 0)
+            {
+                Console.WriteLine("Tag End end not found.");
+                return Contents;
             }
 
             return Contents.Substring(0, TagIndex) + NewValue + Contents.Substring(EndTagIndex);
@@ -39,7 +59,7 @@ namespace VersionUpdater
             if (TagIndex < 0)
             {
                 Console.WriteLine("BuildVersion not found.");
-                return "";
+                return Contents;
             }
             TagIndex = TagIndex + Tag.Length;
 
@@ -47,7 +67,7 @@ namespace VersionUpdater
             if (EndTagIndex < 0)
             {
                 Console.WriteLine("BuildVersion end not found.");
-                return "";
+                return Contents;
             }
 
             string Result = Contents.Substring(TagIndex, EndTagIndex - TagIndex);
@@ -62,7 +82,7 @@ namespace VersionUpdater
             if (TagIndex < 0)
             {
                 Console.WriteLine("BuildVersion not found.");
-                return "";
+                return Contents;
             }
             TagIndex = TagIndex + Tag.Length;
 
@@ -70,7 +90,7 @@ namespace VersionUpdater
             if (EndTagIndex < 0)
             {
                 Console.WriteLine("BuildVersion end not found.");
-                return "";
+                return Contents;
             }
 
             return Contents.Substring(0, TagIndex) + Value + Contents.Substring(EndTagIndex);
@@ -110,6 +130,22 @@ namespace VersionUpdater
                     string Contents = File.ReadAllText(FilePath);
                     Contents = PatchAssemblyTag(Contents, "AssemblyVersion", "\"" + VersionString + "\"");
                     Contents = PatchAssemblyTag(Contents, "AssemblyFileVersion", "\"" + VersionString + "\"");
+                    File.WriteAllText(FilePath, Contents);
+                }
+
+                // Patch installer data.
+                string[] InstallFiles = Directory.GetFiles(SolutionDirectory, "InstallerMM.wxs", SearchOption.AllDirectories);
+                foreach (string FilePath in InstallFiles)
+                {
+                    string Contents = File.ReadAllText(FilePath);
+                    Contents = PatchFullTag(Contents, "Language=\"1033\" Version=\"", "\"", VersionString);
+                    File.WriteAllText(FilePath, Contents);
+                }
+                InstallFiles = Directory.GetFiles(SolutionDirectory, "Product.wxs", SearchOption.AllDirectories);
+                foreach (string FilePath in InstallFiles)
+                {
+                    string Contents = File.ReadAllText(FilePath);
+                    Contents = PatchFullTag(Contents, "<Product Id=\"*\" Name=\"Build Sync\" Language=\"1033\" Version=\"", "\"", VersionString);
                     File.WriteAllText(FilePath, Contents);
                 }
             }

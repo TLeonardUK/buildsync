@@ -49,6 +49,7 @@
             this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1);
             this.downloadFileSystemTree.Name = "downloadFileSystemTree";
             this.downloadFileSystemTree.SelectedPath = "";
+            this.downloadFileSystemTree.ShowInternal = true;
             this.downloadFileSystemTree.Size = new System.Drawing.Size(545, 216);
             this.downloadFileSystemTree.TabIndex = 22;
             this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DateStateChanged);

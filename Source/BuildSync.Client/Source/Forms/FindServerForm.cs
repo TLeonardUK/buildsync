@@ -69,7 +69,7 @@ namespace BuildSync.Client.Forms
                 }
 
                 string Version = Response.Version;
-                if (Response.Version != AppVersion.VersionString)
+                if (Response.ProtocolVersion != AppVersion.ProtocolVersion)
                 {
                     Version += " (Incompatible)";
                 }

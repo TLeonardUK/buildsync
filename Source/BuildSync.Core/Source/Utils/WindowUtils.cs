@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Text;
+using System.Windows.Forms;
 
 namespace BuildSync.Core.Utils
 {
@@ -16,6 +17,8 @@ namespace BuildSync.Core.Utils
     {
         const int SW_RESTORE = 9;
 
+        [DllImport("User32.dll", CharSet = CharSet.Auto, SetLastError = false)]
+        static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr w, IntPtr l);
         [DllImport("User32.dll")]
         private static extern bool SetForegroundWindow(IntPtr handle);
         [DllImport("User32.dll")]
@@ -25,6 +28,11 @@ namespace BuildSync.Core.Utils
         [DllImport("USER32.DLL", CharSet = CharSet.Unicode)]
         public static extern IntPtr FindWindow(String lpClassName, String lpWindowName);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="AppWindowName"></param>
+        /// <returns></returns>
         public static bool BringOtherAppInstanceToFront(string AppWindowName)
         {
             // This is a shitty way to do this. We need to find a way to find the window in a better
@@ -60,6 +68,10 @@ namespace BuildSync.Core.Utils
 */
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="process"></param>
         public static void BringProcessToFront(Process process)
         {
             IntPtr handle = process.MainWindowHandle;
@@ -71,6 +83,10 @@ namespace BuildSync.Core.Utils
             SetForegroundWindow(handle);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public static IPAddress GetLocalIPAddress()
         {
             foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
@@ -87,6 +103,16 @@ namespace BuildSync.Core.Utils
                 }
             }
             return IPAddress.Any;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pBar"></param>
+        /// <param name="state"></param>
+        public static void SetState(this ProgressBar pBar, int state)
+        {
+            SendMessage(pBar.Handle, 1040, (IntPtr)state, IntPtr.Zero);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace BuildSync.Core.Networking.Messages
     /// </summary>
     public class NetMessage_Handshake : NetMessage
     {
-        public int Version = AppVersion.VersionNumber;
+        public int Version = AppVersion.ProtocolVersion;
 
         protected override void SerializePayload(NetMessageSerializer serializer)
         {

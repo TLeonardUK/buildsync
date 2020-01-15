@@ -504,7 +504,7 @@
   <PropertyGroup>
     <PostBuildEvent>xcopy /iery "$(TargetDir)*.*" "$(SolutionDir)..\Build\Deploy"
 xcopy /iery "$(SolutionDir)..\Docs\Licenses.rtf" "$(SolutionDir)..\Build\Deploy\Docs\"
-xcopy /iery "$(SolutionDir)..\Docs\Build Sync Help.chm" "$(SolutionDir)..\Build\Deploy\Docs\"</PostBuildEvent>
+xcopy /iery "$(SolutionDir)..\Docs\Chm\Build Sync Help.chm" "$(SolutionDir)..\Build\Deploy\Docs\"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>

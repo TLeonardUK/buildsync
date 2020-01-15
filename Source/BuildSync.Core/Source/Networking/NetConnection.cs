@@ -666,7 +666,7 @@ namespace BuildSync.Core.Networking
 
                         // Send handshake.
                         NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
-                        HandshakeMsg.Version = AppVersion.VersionNumber;
+                        HandshakeMsg.Version = AppVersion.ProtocolVersion;
                         Send(HandshakeMsg);
 
                         BeginSendThread();
@@ -882,7 +882,7 @@ namespace BuildSync.Core.Networking
         {
             // Send handshake to client.
             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
-            HandshakeMsg.Version = AppVersion.VersionNumber;
+            HandshakeMsg.Version = AppVersion.ProtocolVersion;
             Send(HandshakeMsg);
 
             // Start recieving from client
@@ -1128,7 +1128,7 @@ namespace BuildSync.Core.Networking
                     Response.ResultType = HandshakeResultType.Success;
 
 #if SHIPPING
-                    if (Msg.Version != AppVersion.VersionNumber)
+                    if (Msg.Version != AppVersion.ProtocolVersion)
                     {
                         Logger.Log(LogLevel.Error, LogCategory.Transport, "Client has incompatible protocol version, rejecting.", Address.ToString());
                         Response.ResultType = HandshakeResultType.InvalidVersion;

@@ -97,8 +97,8 @@
     <Folder Include="Code" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Code\Product.wxs" />
     <Compile Include="Code\Features.wxs" />
+    <Compile Include="Code\Product.wxs" />
     <Compile Include="Code\IISMeta.wxs" />
     <Compile Include="Code\UI.wxs" />
     <Compile Include="Code\UI-CustomDialog.wxs" />

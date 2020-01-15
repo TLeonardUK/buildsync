@@ -96,6 +96,11 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        public bool ShowInternal { get; set; } = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         [Browsable(true)]
         public event EventHandler OnSelectedNodeChanged;
 
@@ -154,6 +159,12 @@ namespace BuildSync.Client.Controls
             BuildFileSystem.OnNodeAdded += (VirtualFileSystem FileSystem, VirtualFileSystemNode Node) => {
 
                 Invoke((MethodInvoker)(() => {
+
+                    // Ignore internal parts of the heirarchy.
+                    if (Node.Path.Contains("$") && !ShowInternal)
+                    {
+                        return;
+                    }
 
                     TreeNodeCollection NodeCollection = MainTreeView.Nodes;
                     if (Node.Parent != null && Node.Parent.Name != "")
@@ -233,6 +244,12 @@ namespace BuildSync.Client.Controls
             BuildFileSystem.OnNodeRemoved += (VirtualFileSystem FileSystem, VirtualFileSystemNode Node) => {
 
                 Invoke((MethodInvoker)(() => {
+
+                    // Ignore internal parts of the heirarchy.
+                    if (Node.Path.Contains("$") && !ShowInternal)
+                    {
+                        return;
+                    }
 
                     TreeNode TrNode = GetNodeByPath(Node.Path);
                     TrNode.Remove();

@@ -101,6 +101,7 @@ namespace BuildSync.Client.Forms
             addDownloadButton.Enabled = (
                 downloadFileSystemTree.SelectedPath.Length > 0 &&
                 nameTextBox.Text.Trim().Length > 3 &&
+                !nameTextBox.Text.Contains("$") &&
                 priorityComboBox.SelectedIndex >= 0 &&
                 (
                     !IsScmSelectionRule ||

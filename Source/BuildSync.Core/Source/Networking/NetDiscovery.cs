@@ -25,6 +25,7 @@ namespace BuildSync.Core.Networking
         public string Address;
         public int Port;
         public string Version;
+        public int ProtocolVersion;
     }
 
     /// <summary>
@@ -179,6 +180,7 @@ namespace BuildSync.Core.Networking
                 Logger.Log(LogLevel.Info, LogCategory.IO, "Recieved udp packet for network discovery from: {0}", SourceEndPoint.ToString());
 
                 ResponseData.Version = AppVersion.VersionString;
+                ResponseData.ProtocolVersion = AppVersion.ProtocolVersion;
 
                 byte[] Response = FileUtils.WriteToArray<NetDiscoveryData>(ResponseData);
 

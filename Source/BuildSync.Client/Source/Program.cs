@@ -126,6 +126,16 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
+        private static DownloadState InternalUpdateDownload = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static Guid InternalUpdateManifestId = Guid.Empty;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static string AppDataDir
         {
             get
@@ -447,6 +457,26 @@ namespace BuildSync.Client
                 BuildFileSystem,
                 ScmManager
             );
+
+            // Ensure we are downloading the latest update.
+            string UpdateDownloadName = "$ Buildsync Update $";
+
+            foreach (DownloadState State in DownloadManager.States.States)
+            {
+                if (State.Name == UpdateDownloadName)
+                {
+                    InternalUpdateDownload = State;
+                    break;
+                }
+            }
+
+            if (InternalUpdateDownload == null)
+            {
+                InternalUpdateDownload = DownloadManager.AddDownload(UpdateDownloadName, "$Internal$/Updates", 2, BuildSelectionRule.Newest, BuildSelectionFilter.None, "", "", true, false, "");
+            }
+
+            // Make sure we have to get the latest manifest id before updating.
+            InternalUpdateDownload.ActiveManifestId = Guid.Empty;
         }
 
         /// <summary>
@@ -516,6 +546,61 @@ namespace BuildSync.Client
             }
 
             PollIpcServer();
+
+            // Check if we need to install download.
+            PollAutoUpdate();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static void PollAutoUpdate()
+        {
+            if (InternalUpdateDownload != null)
+            {
+                ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(InternalUpdateDownload.ActiveManifestId);
+                if (Downloader != null && Downloader.State == ManifestDownloadProgressState.Complete && Downloader.Manifest != null)
+                {
+                    if (Settings.LastAutoUpdateManifest != Downloader.ManifestId)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "Installing new update: {0}", Downloader.Manifest.VirtualPath);
+                        InstallAutoUpdate(Downloader);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static void InstallAutoUpdate(ManifestDownloadState AutoUpdateDownload)
+        {
+            string InstallerPath = Path.Combine(AutoUpdateDownload.LocalFolder, "installer.msi");
+            if (!File.Exists(InstallerPath))
+            {
+                MessageBox.Show("Buildsync installer cannot be found in update download. Update is likely corrupt", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            else
+            {
+                // Save the last manifest we installed.
+                Settings.LastAutoUpdateManifest = AutoUpdateDownload.ManifestId;
+                SaveSettings(true);
+
+                // Boot up the installer.
+                try
+                {
+                    Process.Start(InstallerPath, "/passive /norestart REINSTALL=ALL REINSTALLMODE=A MSIRMSHUTDOWN=1 MSIDISABLERMRESTART=0 ADDLOCAL=All");
+                    Application.Exit();
+                }
+                catch (Exception Ex)
+                {
+                    Console.WriteLine("Failed to install update '{0}' due to error: {1}", InstallerPath, Ex.Message);
+
+                    Settings.LastAutoUpdateManifest = Guid.Empty;
+                    SaveSettings(true);
+                }
+            }
         }
 
         /// <summary>

@@ -31,16 +31,33 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.statusStrip = new System.Windows.Forms.StatusStrip();
+            this.peerCountLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.totalDiskDownBandwidthLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.totalDiskUpBandwidthLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.totalDownBandwidthLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.totalUpBandwidthLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addDownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            this.pauseAllDownloadsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.resumeAllDownloadsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.preferencesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.adminToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
+            this.manageBuildsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.manageUsersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.viewConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.viewPeersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.viewManifestsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.helpTopicsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
+            this.viewLicenseMenuToolstrip = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.notifyIconContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.pauseAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -48,37 +65,21 @@
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.closeApplicationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.downloadListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
-            this.forceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.updateTimer = new System.Windows.Forms.Timer(this.components);
-            this.mainDownloadList = new BuildSync.Client.Controls.DownloadList();
-            this.aToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.peerCountLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.totalDiskDownBandwidthLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.totalDiskUpBandwidthLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.totalDownBandwidthLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.totalUpBandwidthLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.addDownloadToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.pauseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            this.forceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceRedownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceReinstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceRevalidateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.addDownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.pauseAllDownloadsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.resumeAllDownloadsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.preferencesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.manageUsersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.viewConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.viewPeersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.viewManifestsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.helpTopicsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.viewLicenseMenuToolstrip = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.manageBuildsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.updateTimer = new System.Windows.Forms.Timer(this.components);
+            this.mainDownloadList = new BuildSync.Client.Controls.DownloadList();
+            this.aToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pushUpdateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.statusStrip.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.notifyIconContextMenu.SuspendLayout();
@@ -101,6 +102,16 @@
             this.statusStrip.TabIndex = 2;
             this.statusStrip.Text = "statusStrip1";
             // 
+            // peerCountLabel
+            // 
+            this.peerCountLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.peerCountLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_people;
+            this.peerCountLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
+            this.peerCountLabel.Name = "peerCountLabel";
+            this.peerCountLabel.Size = new System.Drawing.Size(145, 32);
+            this.peerCountLabel.Text = "3 peers connected";
+            this.peerCountLabel.ToolTipText = "The number of peers currently being downloaded from";
+            // 
             // toolStripStatusLabel4
             // 
             this.toolStripStatusLabel4.AutoSize = false;
@@ -108,6 +119,46 @@
             this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
             this.toolStripStatusLabel4.Size = new System.Drawing.Size(286, 32);
             this.toolStripStatusLabel4.Spring = true;
+            // 
+            // totalDiskDownBandwidthLabel
+            // 
+            this.totalDiskDownBandwidthLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.totalDiskDownBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_disk_download;
+            this.totalDiskDownBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
+            this.totalDiskDownBandwidthLabel.Name = "totalDiskDownBandwidthLabel";
+            this.totalDiskDownBandwidthLabel.Size = new System.Drawing.Size(87, 32);
+            this.totalDiskDownBandwidthLabel.Text = "100 kb/s";
+            this.totalDiskDownBandwidthLabel.ToolTipText = "Rate at which data is being written to disk";
+            // 
+            // totalDiskUpBandwidthLabel
+            // 
+            this.totalDiskUpBandwidthLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.totalDiskUpBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_disk_upload;
+            this.totalDiskUpBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
+            this.totalDiskUpBandwidthLabel.Name = "totalDiskUpBandwidthLabel";
+            this.totalDiskUpBandwidthLabel.Size = new System.Drawing.Size(87, 32);
+            this.totalDiskUpBandwidthLabel.Text = "501 kb/s";
+            this.totalDiskUpBandwidthLabel.ToolTipText = "Rate at which data is being read from disk";
+            // 
+            // totalDownBandwidthLabel
+            // 
+            this.totalDownBandwidthLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.totalDownBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_download;
+            this.totalDownBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
+            this.totalDownBandwidthLabel.Name = "totalDownBandwidthLabel";
+            this.totalDownBandwidthLabel.Size = new System.Drawing.Size(87, 32);
+            this.totalDownBandwidthLabel.Text = "100 kb/s";
+            this.totalDownBandwidthLabel.ToolTipText = "Rate at which data is being downloaded from peers";
+            // 
+            // totalUpBandwidthLabel
+            // 
+            this.totalUpBandwidthLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.totalUpBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_upload;
+            this.totalUpBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
+            this.totalUpBandwidthLabel.Name = "totalUpBandwidthLabel";
+            this.totalUpBandwidthLabel.Size = new System.Drawing.Size(87, 32);
+            this.totalUpBandwidthLabel.Text = "501 kb/s";
+            this.totalUpBandwidthLabel.ToolTipText = "Rate at which data is being uploaded from peers";
             // 
             // menuStrip
             // 
@@ -137,26 +188,67 @@
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
+            // addDownloadToolStripMenuItem
+            // 
+            this.addDownloadToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
+            this.addDownloadToolStripMenuItem.Name = "addDownloadToolStripMenuItem";
+            this.addDownloadToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.addDownloadToolStripMenuItem.Text = "Add Download ...";
+            this.addDownloadToolStripMenuItem.Click += new System.EventHandler(this.AddDownloadClicked);
+            // 
             // toolStripSeparator4
             // 
             this.toolStripSeparator4.Name = "toolStripSeparator4";
-            this.toolStripSeparator4.Size = new System.Drawing.Size(200, 6);
+            this.toolStripSeparator4.Size = new System.Drawing.Size(192, 6);
+            // 
+            // pauseAllDownloadsToolStripMenuItem
+            // 
+            this.pauseAllDownloadsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+            this.pauseAllDownloadsToolStripMenuItem.Name = "pauseAllDownloadsToolStripMenuItem";
+            this.pauseAllDownloadsToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.pauseAllDownloadsToolStripMenuItem.Text = "Pause All Downloads";
+            this.pauseAllDownloadsToolStripMenuItem.Click += new System.EventHandler(this.PauseAllClicked);
+            // 
+            // resumeAllDownloadsToolStripMenuItem
+            // 
+            this.resumeAllDownloadsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_play;
+            this.resumeAllDownloadsToolStripMenuItem.Name = "resumeAllDownloadsToolStripMenuItem";
+            this.resumeAllDownloadsToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.resumeAllDownloadsToolStripMenuItem.Text = "Resume All Downloads";
+            this.resumeAllDownloadsToolStripMenuItem.Click += new System.EventHandler(this.ResumeAllClicked);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(200, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(192, 6);
+            // 
+            // preferencesToolStripMenuItem
+            // 
+            this.preferencesToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_settings;
+            this.preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
+            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.preferencesToolStripMenuItem.Text = "Preferences ...";
+            this.preferencesToolStripMenuItem.Click += new System.EventHandler(this.PreferencesClicked);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(200, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(192, 6);
+            // 
+            // quitToolStripMenuItem
+            // 
+            this.quitToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_close;
+            this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.quitToolStripMenuItem.Text = "Quit";
+            this.quitToolStripMenuItem.Click += new System.EventHandler(this.QuitClicked);
             // 
             // adminToolStripMenuItem
             // 
             this.adminToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.manageBuildsToolStripMenuItem,
             this.manageUsersToolStripMenuItem,
+            this.pushUpdateToolStripMenuItem,
             this.toolStripSeparator5,
             this.viewConsoleToolStripMenuItem,
             this.viewPeersToolStripMenuItem,
@@ -165,10 +257,45 @@
             this.adminToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.adminToolStripMenuItem.Text = "View";
             // 
-            // toolStripSeparator5
+            // manageBuildsToolStripMenuItem
             // 
-            this.toolStripSeparator5.Name = "toolStripSeparator5";
-            this.toolStripSeparator5.Size = new System.Drawing.Size(185, 6);
+            this.manageBuildsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_box;
+            this.manageBuildsToolStripMenuItem.Name = "manageBuildsToolStripMenuItem";
+            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.manageBuildsToolStripMenuItem.Text = "Build Manager";
+            this.manageBuildsToolStripMenuItem.Click += new System.EventHandler(this.ManageBuildsClicked);
+            // 
+            // manageUsersToolStripMenuItem
+            // 
+            this.manageUsersToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_people;
+            this.manageUsersToolStripMenuItem.Name = "manageUsersToolStripMenuItem";
+            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.manageUsersToolStripMenuItem.Text = "User Manager";
+            this.manageUsersToolStripMenuItem.Click += new System.EventHandler(this.ManageUsersClicked);
+            // 
+            // viewConsoleToolStripMenuItem
+            // 
+            this.viewConsoleToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_console;
+            this.viewConsoleToolStripMenuItem.Name = "viewConsoleToolStripMenuItem";
+            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.viewConsoleToolStripMenuItem.Text = "Console Window";
+            this.viewConsoleToolStripMenuItem.Click += new System.EventHandler(this.ViewConsoleClicked);
+            // 
+            // viewPeersToolStripMenuItem
+            // 
+            this.viewPeersToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_people_multiple;
+            this.viewPeersToolStripMenuItem.Name = "viewPeersToolStripMenuItem";
+            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.viewPeersToolStripMenuItem.Text = "Peer Explorer";
+            this.viewPeersToolStripMenuItem.Click += new System.EventHandler(this.ViewPeersClicked);
+            // 
+            // viewManifestsToolStripMenuItem
+            // 
+            this.viewManifestsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_cabinet_files_variant;
+            this.viewManifestsToolStripMenuItem.Name = "viewManifestsToolStripMenuItem";
+            this.viewManifestsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.viewManifestsToolStripMenuItem.Text = "Manifest Explorer";
+            this.viewManifestsToolStripMenuItem.Click += new System.EventHandler(this.ViewManifestsClicked);
             // 
             // helpToolStripMenuItem
             // 
@@ -181,10 +308,34 @@
             this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.helpToolStripMenuItem.Text = "Help";
             // 
+            // helpTopicsToolStripMenuItem
+            // 
+            this.helpTopicsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_book_perspective_help;
+            this.helpTopicsToolStripMenuItem.Name = "helpTopicsToolStripMenuItem";
+            this.helpTopicsToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
+            this.helpTopicsToolStripMenuItem.Text = "View Help ...";
+            this.helpTopicsToolStripMenuItem.Click += new System.EventHandler(this.ViewHelpClickled);
+            // 
             // toolStripSeparator7
             // 
             this.toolStripSeparator7.Name = "toolStripSeparator7";
-            this.toolStripSeparator7.Size = new System.Drawing.Size(185, 6);
+            this.toolStripSeparator7.Size = new System.Drawing.Size(136, 6);
+            // 
+            // viewLicenseMenuToolstrip
+            // 
+            this.viewLicenseMenuToolstrip.Image = global::BuildSync.Client.Properties.Resources.appbar_key;
+            this.viewLicenseMenuToolstrip.Name = "viewLicenseMenuToolstrip";
+            this.viewLicenseMenuToolstrip.Size = new System.Drawing.Size(139, 22);
+            this.viewLicenseMenuToolstrip.Text = "Licensing ...";
+            this.viewLicenseMenuToolstrip.Click += new System.EventHandler(this.ViewLicenseClicked);
+            // 
+            // aboutToolStripMenuItem
+            // 
+            this.aboutToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_question;
+            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
+            this.aboutToolStripMenuItem.Text = "About ...";
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutClicked);
             // 
             // notifyIcon
             // 
@@ -246,10 +397,34 @@
             this.downloadListContextMenu.Size = new System.Drawing.Size(174, 166);
             this.downloadListContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.DownloadListContextMenuShowing);
             // 
+            // addDownloadToolStripMenuItem1
+            // 
+            this.addDownloadToolStripMenuItem1.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
+            this.addDownloadToolStripMenuItem1.Name = "addDownloadToolStripMenuItem1";
+            this.addDownloadToolStripMenuItem1.Size = new System.Drawing.Size(173, 30);
+            this.addDownloadToolStripMenuItem1.Text = "Add Download ...";
+            this.addDownloadToolStripMenuItem1.Click += new System.EventHandler(this.AddDownloadClicked);
+            // 
             // toolStripSeparator6
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(170, 6);
+            // 
+            // pauseToolStripMenuItem
+            // 
+            this.pauseToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
+            this.pauseToolStripMenuItem.Name = "pauseToolStripMenuItem";
+            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(173, 30);
+            this.pauseToolStripMenuItem.Text = "Pause";
+            this.pauseToolStripMenuItem.Click += new System.EventHandler(this.PauseClicked);
+            // 
+            // deleteToolStripMenuItem
+            // 
+            this.deleteToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_delete;
+            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(173, 30);
+            this.deleteToolStripMenuItem.Text = "Delete";
+            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.DeleteClicked);
             // 
             // toolStripSeparator9
             // 
@@ -265,6 +440,38 @@
             this.forceToolStripMenuItem.Name = "forceToolStripMenuItem";
             this.forceToolStripMenuItem.Size = new System.Drawing.Size(173, 30);
             this.forceToolStripMenuItem.Text = "Force ...";
+            // 
+            // forceRedownloadToolStripMenuItem
+            // 
+            this.forceRedownloadToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_disk_download;
+            this.forceRedownloadToolStripMenuItem.Name = "forceRedownloadToolStripMenuItem";
+            this.forceRedownloadToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+            this.forceRedownloadToolStripMenuItem.Text = "Redownload";
+            this.forceRedownloadToolStripMenuItem.Click += new System.EventHandler(this.ForceRedownloadClicked);
+            // 
+            // forceReinstallToolStripMenuItem
+            // 
+            this.forceReinstallToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_refresh;
+            this.forceReinstallToolStripMenuItem.Name = "forceReinstallToolStripMenuItem";
+            this.forceReinstallToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+            this.forceReinstallToolStripMenuItem.Text = "Reinstall";
+            this.forceReinstallToolStripMenuItem.Click += new System.EventHandler(this.ForceReinstallClicked);
+            // 
+            // forceRevalidateToolStripMenuItem
+            // 
+            this.forceRevalidateToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_link;
+            this.forceRevalidateToolStripMenuItem.Name = "forceRevalidateToolStripMenuItem";
+            this.forceRevalidateToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
+            this.forceRevalidateToolStripMenuItem.Text = "Revalidate";
+            this.forceRevalidateToolStripMenuItem.Click += new System.EventHandler(this.ForceRevalidateClicked);
+            // 
+            // settingsToolStripMenuItem
+            // 
+            this.settingsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_settings;
+            this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(173, 30);
+            this.settingsToolStripMenuItem.Text = "Settings ...";
+            this.settingsToolStripMenuItem.Click += new System.EventHandler(this.SettingsClicked);
             // 
             // updateTimer
             // 
@@ -293,215 +500,18 @@
             this.aToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.aToolStripMenuItem.Text = "A";
             // 
-            // peerCountLabel
+            // pushUpdateToolStripMenuItem
             // 
-            this.peerCountLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.peerCountLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_people;
-            this.peerCountLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
-            this.peerCountLabel.Name = "peerCountLabel";
-            this.peerCountLabel.Size = new System.Drawing.Size(145, 32);
-            this.peerCountLabel.Text = "3 peers connected";
-            this.peerCountLabel.ToolTipText = "The number of peers currently being downloaded from";
+            this.pushUpdateToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_arrow_up;
+            this.pushUpdateToolStripMenuItem.Name = "pushUpdateToolStripMenuItem";
+            this.pushUpdateToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.pushUpdateToolStripMenuItem.Text = "Push Update";
+            this.pushUpdateToolStripMenuItem.Click += new System.EventHandler(this.PushUpdateClicked);
             // 
-            // totalDiskDownBandwidthLabel
+            // toolStripSeparator5
             // 
-            this.totalDiskDownBandwidthLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.totalDiskDownBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_disk_download;
-            this.totalDiskDownBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
-            this.totalDiskDownBandwidthLabel.Name = "totalDiskDownBandwidthLabel";
-            this.totalDiskDownBandwidthLabel.Size = new System.Drawing.Size(87, 32);
-            this.totalDiskDownBandwidthLabel.Text = "100 kb/s";
-            this.totalDiskDownBandwidthLabel.ToolTipText = "Rate at which data is being written to disk";
-            // 
-            // totalDiskUpBandwidthLabel
-            // 
-            this.totalDiskUpBandwidthLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.totalDiskUpBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_disk_upload;
-            this.totalDiskUpBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
-            this.totalDiskUpBandwidthLabel.Name = "totalDiskUpBandwidthLabel";
-            this.totalDiskUpBandwidthLabel.Size = new System.Drawing.Size(87, 32);
-            this.totalDiskUpBandwidthLabel.Text = "501 kb/s";
-            this.totalDiskUpBandwidthLabel.ToolTipText = "Rate at which data is being read from disk";
-            // 
-            // totalDownBandwidthLabel
-            // 
-            this.totalDownBandwidthLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.totalDownBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_download;
-            this.totalDownBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
-            this.totalDownBandwidthLabel.Name = "totalDownBandwidthLabel";
-            this.totalDownBandwidthLabel.Size = new System.Drawing.Size(87, 32);
-            this.totalDownBandwidthLabel.Text = "100 kb/s";
-            this.totalDownBandwidthLabel.ToolTipText = "Rate at which data is being downloaded from peers";
-            // 
-            // totalUpBandwidthLabel
-            // 
-            this.totalUpBandwidthLabel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.totalUpBandwidthLabel.Image = global::BuildSync.Client.Properties.Resources.appbar_upload;
-            this.totalUpBandwidthLabel.Margin = new System.Windows.Forms.Padding(0, -3, 0, -3);
-            this.totalUpBandwidthLabel.Name = "totalUpBandwidthLabel";
-            this.totalUpBandwidthLabel.Size = new System.Drawing.Size(87, 32);
-            this.totalUpBandwidthLabel.Text = "501 kb/s";
-            this.totalUpBandwidthLabel.ToolTipText = "Rate at which data is being uploaded from peers";
-            // 
-            // addDownloadToolStripMenuItem1
-            // 
-            this.addDownloadToolStripMenuItem1.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
-            this.addDownloadToolStripMenuItem1.Name = "addDownloadToolStripMenuItem1";
-            this.addDownloadToolStripMenuItem1.Size = new System.Drawing.Size(173, 30);
-            this.addDownloadToolStripMenuItem1.Text = "Add Download ...";
-            this.addDownloadToolStripMenuItem1.Click += new System.EventHandler(this.AddDownloadClicked);
-            // 
-            // pauseToolStripMenuItem
-            // 
-            this.pauseToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
-            this.pauseToolStripMenuItem.Name = "pauseToolStripMenuItem";
-            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(173, 30);
-            this.pauseToolStripMenuItem.Text = "Pause";
-            this.pauseToolStripMenuItem.Click += new System.EventHandler(this.PauseClicked);
-            // 
-            // deleteToolStripMenuItem
-            // 
-            this.deleteToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_delete;
-            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(173, 30);
-            this.deleteToolStripMenuItem.Text = "Delete";
-            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.DeleteClicked);
-            // 
-            // forceRedownloadToolStripMenuItem
-            // 
-            this.forceRedownloadToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_disk_download;
-            this.forceRedownloadToolStripMenuItem.Name = "forceRedownloadToolStripMenuItem";
-            this.forceRedownloadToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.forceRedownloadToolStripMenuItem.Text = "Redownload";
-            this.forceRedownloadToolStripMenuItem.Click += new System.EventHandler(this.ForceRedownloadClicked);
-            // 
-            // forceReinstallToolStripMenuItem
-            // 
-            this.forceReinstallToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_refresh;
-            this.forceReinstallToolStripMenuItem.Name = "forceReinstallToolStripMenuItem";
-            this.forceReinstallToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.forceReinstallToolStripMenuItem.Text = "Reinstall";
-            this.forceReinstallToolStripMenuItem.Click += new System.EventHandler(this.ForceReinstallClicked);
-            // 
-            // forceRevalidateToolStripMenuItem
-            // 
-            this.forceRevalidateToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_link;
-            this.forceRevalidateToolStripMenuItem.Name = "forceRevalidateToolStripMenuItem";
-            this.forceRevalidateToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.forceRevalidateToolStripMenuItem.Text = "Revalidate";
-            this.forceRevalidateToolStripMenuItem.Click += new System.EventHandler(this.ForceRevalidateClicked);
-            // 
-            // settingsToolStripMenuItem
-            // 
-            this.settingsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_settings;
-            this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(173, 30);
-            this.settingsToolStripMenuItem.Text = "Settings ...";
-            this.settingsToolStripMenuItem.Click += new System.EventHandler(this.SettingsClicked);
-            // 
-            // addDownloadToolStripMenuItem
-            // 
-            this.addDownloadToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
-            this.addDownloadToolStripMenuItem.Name = "addDownloadToolStripMenuItem";
-            this.addDownloadToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
-            this.addDownloadToolStripMenuItem.Text = "Add Download ...";
-            this.addDownloadToolStripMenuItem.Click += new System.EventHandler(this.AddDownloadClicked);
-            // 
-            // pauseAllDownloadsToolStripMenuItem
-            // 
-            this.pauseAllDownloadsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
-            this.pauseAllDownloadsToolStripMenuItem.Name = "pauseAllDownloadsToolStripMenuItem";
-            this.pauseAllDownloadsToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
-            this.pauseAllDownloadsToolStripMenuItem.Text = "Pause All Downloads";
-            this.pauseAllDownloadsToolStripMenuItem.Click += new System.EventHandler(this.PauseAllClicked);
-            // 
-            // resumeAllDownloadsToolStripMenuItem
-            // 
-            this.resumeAllDownloadsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_play;
-            this.resumeAllDownloadsToolStripMenuItem.Name = "resumeAllDownloadsToolStripMenuItem";
-            this.resumeAllDownloadsToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
-            this.resumeAllDownloadsToolStripMenuItem.Text = "Resume All Downloads";
-            this.resumeAllDownloadsToolStripMenuItem.Click += new System.EventHandler(this.ResumeAllClicked);
-            // 
-            // preferencesToolStripMenuItem
-            // 
-            this.preferencesToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_settings;
-            this.preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
-            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
-            this.preferencesToolStripMenuItem.Text = "Preferences ...";
-            this.preferencesToolStripMenuItem.Click += new System.EventHandler(this.PreferencesClicked);
-            // 
-            // quitToolStripMenuItem
-            // 
-            this.quitToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_close;
-            this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
-            this.quitToolStripMenuItem.Text = "Quit";
-            this.quitToolStripMenuItem.Click += new System.EventHandler(this.QuitClicked);
-            // 
-            // manageUsersToolStripMenuItem
-            // 
-            this.manageUsersToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_people;
-            this.manageUsersToolStripMenuItem.Name = "manageUsersToolStripMenuItem";
-            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.manageUsersToolStripMenuItem.Text = "User Manager";
-            this.manageUsersToolStripMenuItem.Click += new System.EventHandler(this.ManageUsersClicked);
-            // 
-            // viewConsoleToolStripMenuItem
-            // 
-            this.viewConsoleToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_console;
-            this.viewConsoleToolStripMenuItem.Name = "viewConsoleToolStripMenuItem";
-            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.viewConsoleToolStripMenuItem.Text = "Console Window";
-            this.viewConsoleToolStripMenuItem.Click += new System.EventHandler(this.ViewConsoleClicked);
-            // 
-            // viewPeersToolStripMenuItem
-            // 
-            this.viewPeersToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_people_multiple;
-            this.viewPeersToolStripMenuItem.Name = "viewPeersToolStripMenuItem";
-            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.viewPeersToolStripMenuItem.Text = "Peer Explorer";
-            this.viewPeersToolStripMenuItem.Click += new System.EventHandler(this.ViewPeersClicked);
-            // 
-            // viewManifestsToolStripMenuItem
-            // 
-            this.viewManifestsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_cabinet_files_variant;
-            this.viewManifestsToolStripMenuItem.Name = "viewManifestsToolStripMenuItem";
-            this.viewManifestsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.viewManifestsToolStripMenuItem.Text = "Manifest Explorer";
-            this.viewManifestsToolStripMenuItem.Click += new System.EventHandler(this.ViewManifestsClicked);
-            // 
-            // helpTopicsToolStripMenuItem
-            // 
-            this.helpTopicsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_book_perspective_help;
-            this.helpTopicsToolStripMenuItem.Name = "helpTopicsToolStripMenuItem";
-            this.helpTopicsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.helpTopicsToolStripMenuItem.Text = "View Help ...";
-            this.helpTopicsToolStripMenuItem.Click += new System.EventHandler(this.ViewHelpClickled);
-            // 
-            // viewLicenseMenuToolstrip
-            // 
-            this.viewLicenseMenuToolstrip.Image = global::BuildSync.Client.Properties.Resources.appbar_key;
-            this.viewLicenseMenuToolstrip.Name = "viewLicenseMenuToolstrip";
-            this.viewLicenseMenuToolstrip.Size = new System.Drawing.Size(188, 30);
-            this.viewLicenseMenuToolstrip.Text = "Licensing ...";
-            this.viewLicenseMenuToolstrip.Click += new System.EventHandler(this.ViewLicenseClicked);
-            // 
-            // aboutToolStripMenuItem
-            // 
-            this.aboutToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_question;
-            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.aboutToolStripMenuItem.Text = "About ...";
-            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutClicked);
-            // 
-            // manageBuildsToolStripMenuItem
-            // 
-            this.manageBuildsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_box;
-            this.manageBuildsToolStripMenuItem.Name = "manageBuildsToolStripMenuItem";
-            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.manageBuildsToolStripMenuItem.Text = "Build Manager";
-            this.manageBuildsToolStripMenuItem.Click += new System.EventHandler(this.ManageBuildsClicked);
+            this.toolStripSeparator5.Name = "toolStripSeparator5";
+            this.toolStripSeparator5.Size = new System.Drawing.Size(185, 6);
             // 
             // MainForm
             // 
@@ -561,7 +571,6 @@
         private System.Windows.Forms.ToolStripMenuItem adminToolStripMenuItem;
         private System.Windows.Forms.ToolStripStatusLabel totalDiskDownBandwidthLabel;
         private System.Windows.Forms.ToolStripStatusLabel totalDiskUpBandwidthLabel;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
         private System.Windows.Forms.ToolStripMenuItem viewConsoleToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
         private System.Windows.Forms.ToolStripMenuItem forceRedownloadToolStripMenuItem;
@@ -580,6 +589,8 @@
         private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageBuildsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem pushUpdateToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
     }
 }
 

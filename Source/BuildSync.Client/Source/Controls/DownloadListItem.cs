@@ -95,18 +95,22 @@ namespace BuildSync.Client.Controls
             if (Coloring == StateColoring.Error)
             {
                 TargetColor = Color.Red;
+                ProgressBar.SetState(2);
             }
             else if (Coloring == StateColoring.Info)
             {
                 TargetColor = Color.Black;
+                ProgressBar.SetState(1);
             }
             else if (Coloring == StateColoring.Warning)
             {
                 TargetColor = Color.Orange;
+                ProgressBar.SetState(3);
             }
             else if (Coloring == StateColoring.Success)
             {
                 TargetColor = Color.Green;
+                ProgressBar.SetState(1);
             }
 
             if (EtaLabel.ForeColor != TargetColor)
@@ -185,17 +189,17 @@ namespace BuildSync.Client.Controls
                     {
                         case ManifestDownloadProgressState.InitializeFailed:
                             {
-                                SetStatus("Disk Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Resume, UpRate, DownRate);
+                                SetStatus("Disk Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Resume, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.ValidationFailed:
                             {
-                                SetStatus("Validation Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Resume, UpRate, DownRate);
+                                SetStatus("Validation Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Resume, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.InstallFailed:
                             {
-                                SetStatus("Install Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Resume, UpRate, DownRate);
+                                SetStatus("Install Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Resume, UpRate, DownRate);
                                 break;
                             }
                         default:
@@ -216,12 +220,12 @@ namespace BuildSync.Client.Controls
                             }
                         case ManifestDownloadProgressState.Initializing:
                             {
-                                SetStatus("Allocating Disk Space", StateColoring.Info, Downloader.Manifest.VirtualPath, Downloader.InitializeProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                                SetStatus("Allocating Disk Space", StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.InitializeProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Validating:
                             {
-                                SetStatus("Validating", StateColoring.Info, Downloader.Manifest.VirtualPath, Downloader.ValidateProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                                SetStatus("Validating", StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.ValidateProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Installing:

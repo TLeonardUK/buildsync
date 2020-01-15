@@ -16,6 +16,17 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        /// <returns></returns>
+        public static string GetTempDirectory()
+        {
+            string TempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(TempDirectory);
+            return TempDirectory;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
         public static byte[] Compress(byte[] data)

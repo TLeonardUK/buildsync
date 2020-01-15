@@ -130,5 +130,16 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         public Guid ActiveManifestId { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool IsInternal 
+        {
+            get
+            {
+                return Name.Contains("$");
+            }
+        }
     }
 }

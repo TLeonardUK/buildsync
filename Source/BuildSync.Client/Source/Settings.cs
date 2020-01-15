@@ -50,6 +50,8 @@ namespace BuildSync.Client
         public bool AlwaysRunInstallBeforeLaunching { get; set; } = true;
         public bool RunOnStartup { get; set; } = true;
 
+        public Guid LastAutoUpdateManifest { get; set; } = Guid.Empty;
+
         //public string PerforceServer { get; set; } = "perforce:1666";
         //public string PerforceUsername { get; set; } = "";
         //public string PerforcePassword { get; set; } = "";

@@ -103,7 +103,7 @@ namespace BuildSync.Client.Controls
                     }
                 }
 
-                if (!Exists)
+                if (!Exists && !State.IsInternal)
                 {
                     DownloadListItem NewItem = new DownloadListItem();
                     NewItem.State = State;

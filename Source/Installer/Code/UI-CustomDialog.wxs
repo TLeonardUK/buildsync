@@ -50,7 +50,7 @@
     <!-- Attempt to retrieve previously persisted property -->
     <Property Id='FINDCUSTOM' Secure='yes'>
       <RegistrySearch Id='CustomerNumber' Root='HKLM'
-                   Key='SOFTWARE\CompanyName\ProductName'
+                   Key='SOFTWARE\Tim Leonard\BuildSync'
                    Name='Custom' Type='raw' />
     </Property>
 
