@@ -301,7 +301,10 @@ namespace BuildSync.Client.Forms
         {
             if (ConsoleOutputForm != null)
             {
-                ConsoleOutputForm.Show(this);
+                if (!ConsoleOutputForm.Visible)
+                {
+                    ConsoleOutputForm.Show(this);
+                }
             }
             else
             {
@@ -319,7 +322,10 @@ namespace BuildSync.Client.Forms
         {
             if (StatsForm != null)
             {
-                StatsForm.Show(this);
+                if (!StatsForm.Visible)
+                {
+                    StatsForm.Show(this);
+                }
             }
             else
             {
