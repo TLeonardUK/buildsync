@@ -29,6 +29,26 @@ namespace BuildSync.Core.Utils
         public static extern IntPtr FindWindow(String lpClassName, String lpWindowName);
 
         /// <summary>
+        ///     Sets a given control to be double buffered to prevent flickering.
+        /// </summary>
+        /// <param name="c">Control to set as double buffered.</param>
+        public static void EnableDoubleBuffering(Control c)
+        {
+            // Taxes: Remote Desktop Connection and painting
+            // http://blogs.msdn.com/oldnewthing/archive/2006/01/03/508694.aspx
+            if (System.Windows.Forms.SystemInformation.TerminalServerSession)
+                return;
+
+            System.Reflection.PropertyInfo aProp =
+                  typeof(System.Windows.Forms.Control).GetProperty(
+                        "DoubleBuffered",
+                        System.Reflection.BindingFlags.NonPublic |
+                        System.Reflection.BindingFlags.Instance);
+
+            aProp.SetValue(c, true, null);
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="AppWindowName"></param>

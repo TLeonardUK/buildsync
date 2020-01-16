@@ -57,6 +57,145 @@ namespace BuildSync.Core.Networking
     /// <summary>
     /// 
     /// </summary>
+    public class Statistic_BandwidthIn : Statistic
+    {
+        public Statistic_BandwidthIn()
+        {
+            Name = @"IO\Download Speed (MB/s)";
+            MaxLabel = "128 MB/s";
+            MaxValue = 128.0f;
+            DefaultShown = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.GlobalBandwidthStats.RateIn / 1024.0f / 1024.0f);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_BandwidthOut : Statistic
+    {
+        public Statistic_BandwidthOut()
+        {
+            Name = @"IO\Upload Speed (MB/s)";
+            MaxLabel = "128 MB/s";
+            MaxValue = 128.0f;
+            DefaultShown = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.GlobalBandwidthStats.RateOut / 1024.0f / 1024.0f);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_TotalIn : Statistic
+    {
+        public Statistic_TotalIn()
+        {
+            Name = @"IO\Total Downloaded (MB)";
+            MaxLabel = "128 MB";
+            MaxValue = 128 * 1024 * 1024;
+            DefaultShown = true;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsSize = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.GlobalBandwidthStats.TotalIn);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_TotalOut : Statistic
+    {
+        public Statistic_TotalOut()
+        {
+            Name = @"IO\Total Uploaded (MB)";
+            MaxLabel = "128 MB";
+            MaxValue = 128 * 1024 * 1024;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsSize = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.GlobalBandwidthStats.TotalOut);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_AvailableMessageBuffers : Statistic
+    {
+        public Statistic_AvailableMessageBuffers()
+        {
+            Name = @"Packets\Available Message Buffers";
+            MaxLabel = NetConnection.MaxMessageBuffers.ToString();
+            MaxValue = NetConnection.MaxMessageBuffers;
+            DefaultShown = false;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.MessageBuffers.Count);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_PacketsIn : Statistic
+    {
+        public Statistic_PacketsIn()
+        {
+            Name = @"Packets\Packets In";
+            MaxLabel = "256";
+            MaxValue = 256;
+            DefaultShown = false;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.GlobalPacketStats.RateIn);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_PacketsOut : Statistic
+    {
+        public Statistic_PacketsOut()
+        {
+            Name = @"Packets\Packets Out";
+            MaxLabel = "256";
+            MaxValue = 256;
+            DefaultShown = false;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.GlobalPacketStats.RateOut);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public class NetConnection
     {
         private Socket Socket;
@@ -89,13 +228,15 @@ namespace BuildSync.Core.Networking
         private long SendQueueBytes = 0;
         private Thread SendThread;
         private bool IsSendingThreadRunning = false;
+        private bool IsSendingThreadTerminating = false;
+        private object SendThreadQueueLock = new object();
 
         private BlockingCollection<MessageQueueEntry> ProcessBufferQueue = null;
         private Thread ProcessThread;
 
-        private static ConcurrentBag<byte[]> MessageBuffers = new ConcurrentBag<byte[]>();
-        private static int MessageBufferCount = 0;
-        private const int MaxMessageBuffers = 128;
+        internal static ConcurrentBag<byte[]> MessageBuffers = new ConcurrentBag<byte[]>();
+        internal static int MessageBufferCount = 0;
+        internal const int MaxMessageBuffers = 128;
 
         private ulong MaxClientsExceededPurgeTime = 0;
 
@@ -127,6 +268,11 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         public static BandwidthTracker GlobalBandwidthStats = new BandwidthTracker();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static BandwidthTracker GlobalPacketStats = new BandwidthTracker();
 
         /// <summary>
         /// 
@@ -287,6 +433,7 @@ namespace BuildSync.Core.Networking
         private void BeginSendThread()
         {
             IsSendingThreadRunning = true;
+            IsSendingThreadTerminating = false;
 
             if (SendThread != null || ProcessThread != null)
             {
@@ -307,40 +454,6 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        private void EndSendThread()
-        {
-            if (SendThread != null)
-            {
-                lock (SendQueueWakeObject)
-                {
-                    IsSendingThreadRunning = false;
-                    Monitor.Pulse(SendQueueWakeObject);
-                }
-
-                SendThread.Join();
-            }
-
-            if (ProcessThread != null)
-            {
-                ProcessBufferQueue.CompleteAdding();
-                ProcessThread.Join();
-            }
-
-            while (SendQueue.Count > 0)
-            {
-                MessageQueueEntry Data;
-                SendQueue.TryDequeue(out Data);
-                ReleaseMessageBuffer(Data.Data);
-            }
-
-            ProcessBufferQueue = null;
-            SendThread = null;
-            ProcessThread = null;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public void ProcessThreadEntry()
         {
             while (!ProcessBufferQueue.IsCompleted)
@@ -349,7 +462,7 @@ namespace BuildSync.Core.Networking
                 if (ProcessBufferQueue.TryTake(out Data, 1000))
                 {
                     ProcessMessage(Data.Data, Data.BufferSize);
-                    ReleaseMessageBuffer(Data.Data);
+                    ReleaseMessageBuffer(Data.Data, "ProcessThreadEntry");
                 }
             }
         }
@@ -670,7 +783,7 @@ namespace BuildSync.Core.Networking
                         Send(HandshakeMsg);
 
                         BeginSendThread();
-                        BeginRecievingHeader();
+                        BeginRecievingHeader(AllocMessageBuffer("ConnectToIP.RecieveHeader"));
                     }
                     catch (Exception ex)
                     {
@@ -785,6 +898,44 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        private void EndSendThread()
+        {
+            if (SendThread != null)
+            {
+                lock (SendQueueWakeObject)
+                {
+                    IsSendingThreadRunning = false;
+                    Monitor.Pulse(SendQueueWakeObject);
+                }
+
+                SendThread.Join();
+            }
+
+            if (ProcessThread != null)
+            {
+                ProcessBufferQueue.CompleteAdding();
+                ProcessThread.Join();
+            }
+
+            IsSendingThreadTerminating = true;
+            lock (SendThreadQueueLock)
+            {
+                while (SendQueue.Count > 0)
+                {
+                    MessageQueueEntry Data;
+                    SendQueue.TryDequeue(out Data);
+                    ReleaseMessageBuffer(Data.Data, "EndSendThread");
+                }
+            }
+
+            ProcessBufferQueue = null;
+            SendThread = null;
+            ProcessThread = null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private void SendThreadEntry()
         {
             while (IsSendingThreadRunning)
@@ -811,6 +962,8 @@ namespace BuildSync.Core.Networking
                     }
                 }
 
+                GlobalPacketStats.BytesOut(1);
+
                 SendBlock(SendData.Data, 0, SendData.BufferSize);
             }
         }
@@ -821,23 +974,25 @@ namespace BuildSync.Core.Networking
         /// <param name="Message"></param>
         public void Send(NetMessage Message)
         {
-            //Stopwatch totalstop = new Stopwatch();
-            //totalstop.Start();
-
-            byte[] Serialized = AllocMessageBuffer();
-            int BufferLength = Message.ToByteArray(ref Serialized);
-
-            Message.Cleanup();
-
-            //totalstop.Stop();
-            //Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to serialize message: {0} size was {1}kb type {2}", ((float)totalstop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)), BufferLength / 1024, Message.GetType().Name);
-
-            SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength });
-            Interlocked.Add(ref SendQueueBytes, BufferLength);
-
-            lock (SendQueueWakeObject)
+            lock (SendThreadQueueLock)
             {
-                Monitor.Pulse(SendQueueWakeObject);
+                if (IsSendingThreadTerminating)
+                {
+                    return;
+                }
+
+                byte[] Serialized = AllocMessageBuffer("Send");
+                int BufferLength = Message.ToByteArray(ref Serialized);
+
+                Message.Cleanup();
+
+                SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength });
+                Interlocked.Add(ref SendQueueBytes, BufferLength);
+
+                lock (SendQueueWakeObject)
+                {
+                    Monitor.Pulse(SendQueueWakeObject);
+                }
             }
         }
 
@@ -871,7 +1026,7 @@ namespace BuildSync.Core.Networking
             finally
             {
                 RecordEndAsyncCall(AsyncCallType.Send);
-                ReleaseMessageBuffer(Block);
+                ReleaseMessageBuffer(Block, "SendBlockFinally");
             }
         }
 
@@ -889,7 +1044,7 @@ namespace BuildSync.Core.Networking
             try
             {
                 BeginSendThread();
-                BeginRecievingHeader();
+                BeginRecievingHeader(AllocMessageBuffer("BeginClient.RecieveHeader"));
             }
             catch (Exception ex)
             {
@@ -901,10 +1056,8 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        private void BeginRecievingHeader(int Offset = 0, int Size = NetMessage.HeaderSize)
+        private void BeginRecievingHeader(byte[] MessageBuffer, int Offset = 0, int Size = NetMessage.HeaderSize)
         {
-            byte[] MessageBuffer = AllocMessageBuffer();
-
             try
             {
                 RecordBeginAsyncCall(AsyncCallType.Recieve);
@@ -918,13 +1071,14 @@ namespace BuildSync.Core.Networking
                     {
                         int BytesRecieved = Socket.EndReceive(Result);
 
+                        GlobalPacketStats.BytesIn(1);
+
                         BandwidthStats.BytesIn(BytesRecieved);
                         GlobalBandwidthStats.BytesIn(BytesRecieved);
 
                         if (BytesRecieved < Size)
                         {
-                            ReleaseMessageBuffer(MessageBuffer);
-                            BeginRecievingHeader(Offset + BytesRecieved, Size - BytesRecieved);
+                            BeginRecievingHeader(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved); // TODO: This is fucked!?
                             return;
                         }
 
@@ -933,7 +1087,7 @@ namespace BuildSync.Core.Networking
                     catch (Exception ex)
                     {
                         Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
-                        ReleaseMessageBuffer(MessageBuffer);
+                        ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.Exception");
                         ShouldDisconnect = true;
                     }
                     finally
@@ -949,7 +1103,7 @@ namespace BuildSync.Core.Networking
             }
             catch (Exception ex)
             {
-                ReleaseMessageBuffer(MessageBuffer);
+                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.OuterException");
 
                 RecordEndAsyncCall(AsyncCallType.Recieve);
 
@@ -970,7 +1124,7 @@ namespace BuildSync.Core.Networking
             if (TotalSize > NetMessage.HeaderSize + NetMessage.MaxPayloadSize)
             {
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message with payload above max size {0}, disconnecting", MessageHeaderTempStorage.PayloadSize);
-                ReleaseMessageBuffer(MessageBuffer);
+                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingpayload.TotalSize");
                 QueueDisconnect();
                 return;
             }
@@ -984,7 +1138,7 @@ namespace BuildSync.Core.Networking
             if (MessageHeaderTempStorage.PayloadSize == 0)
             {
                 ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer,  BufferSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize });
-                BeginRecievingHeader();
+                BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayload.RecieveNextHeader"));
             }
             else
             {
@@ -1022,12 +1176,12 @@ namespace BuildSync.Core.Networking
 
                         ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size });
 
-                        BeginRecievingHeader();
+                        BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader"));
                     }
                     catch (Exception ex)
                     {
                         Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
-                        ReleaseMessageBuffer(MessageBuffer);
+                        ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.Exception");
                         QueueDisconnect();
                     }
                     finally
@@ -1038,7 +1192,7 @@ namespace BuildSync.Core.Networking
             }
             catch (Exception ex)
             {
-                ReleaseMessageBuffer(MessageBuffer);
+                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.OuterException");
 
                 RecordEndAsyncCall(AsyncCallType.Recieve);
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
@@ -1063,7 +1217,7 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         /// <returns></returns>
-        private byte[] AllocMessageBuffer()
+        private byte[] AllocMessageBuffer(string Site)
         {
             byte[] Serialized = null;
             while (MessageBuffers.Count > 0 || MessageBufferCount == MaxMessageBuffers)
@@ -1077,6 +1231,9 @@ namespace BuildSync.Core.Networking
             Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
             Interlocked.Increment(ref MessageBufferCount);
             Logger.Log(LogLevel.Info, LogCategory.Transport, "Dynamically allocating new message buffer, now a total of {0} buffers ({1} in queue).", MessageBufferCount, MessageBuffers.Count);
+
+           // Console.WriteLine("AllocMessageBuffer - {0} - {1} - {2}", Site, MessageBuffers.Count, IsSendingThreadRunning);
+
             return Serialized;
         }
 
@@ -1084,9 +1241,10 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         /// <param name="Buffer"></param>
-        private void ReleaseMessageBuffer(byte[] Buffer)
+        private void ReleaseMessageBuffer(byte[] Buffer, string Site)
         {
             MessageBuffers.Add(Buffer);
+            //Console.WriteLine("ReleaseMessageBuffer - {0} - {1}", Site, MessageBuffers.Count);
         }
 
         /// <summary>

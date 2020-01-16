@@ -41,6 +41,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private StatisticsForm StatsForm = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private DownloadListItem ContextMenuDownloadItem = null;
 
         #endregion
@@ -302,6 +307,24 @@ namespace BuildSync.Client.Forms
             {
                 ConsoleOutputForm = new ConsoleForm();
                 ConsoleOutputForm.Show(this);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StatisticsClicked(object sender, EventArgs e)
+        {
+            if (StatsForm != null)
+            {
+                StatsForm.Show(this);
+            }
+            else
+            {
+                StatsForm = new StatisticsForm();
+                StatsForm.Show(this);
             }
         }
 
@@ -623,22 +646,22 @@ namespace BuildSync.Client.Forms
             totalUpBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalOut));
             totalDownBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalIn));
 
-            if (Program.IOQueue.QueuedOut > 0)
+            if (AsyncIOQueue.QueuedOut > 0)
             {
-                totalDiskUpBandwidthLabel.Text = string.Format("{0} (Q {1})", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateOut), StringUtils.FormatAsSize(Program.IOQueue.QueuedOut));
+                totalDiskUpBandwidthLabel.Text = string.Format("{0} (Q {1})", StringUtils.FormatAsTransferRate(AsyncIOQueue.GlobalBandwidthStats.RateOut), StringUtils.FormatAsSize(AsyncIOQueue.QueuedOut));
             }
             else
             {
-                totalDiskUpBandwidthLabel.Text = string.Format("{0} ", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateOut));
+                totalDiskUpBandwidthLabel.Text = string.Format("{0} ", StringUtils.FormatAsTransferRate(AsyncIOQueue.GlobalBandwidthStats.RateOut));
             }
 
-            if (Program.IOQueue.QueuedIn > 0)
+            if (AsyncIOQueue.QueuedIn > 0)
             {
-                totalDiskDownBandwidthLabel.Text = string.Format("{0} (Q {1})", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateIn), StringUtils.FormatAsSize(Program.IOQueue.QueuedIn));
+                totalDiskDownBandwidthLabel.Text = string.Format("{0} (Q {1})", StringUtils.FormatAsTransferRate(AsyncIOQueue.GlobalBandwidthStats.RateIn), StringUtils.FormatAsSize(AsyncIOQueue.QueuedIn));
             }
             else
             {
-                totalDiskDownBandwidthLabel.Text = string.Format("{0}", StringUtils.FormatAsTransferRate(Program.IOQueue.BandwidthStats.RateIn));
+                totalDiskDownBandwidthLabel.Text = string.Format("{0}", StringUtils.FormatAsTransferRate(AsyncIOQueue.GlobalBandwidthStats.RateIn));
             }
         }
 

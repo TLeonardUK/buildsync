@@ -62,6 +62,76 @@ namespace BuildSync.Core
     /// 
     /// </summary>
     public delegate void ManifestDeleteResultRecievedHandler(Guid ManifestId);
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_PeerCount : Statistic
+    {
+        public Statistic_PeerCount()
+        {
+            Name = @"Peers\Peer Count";
+            MaxLabel = "64";
+            MaxValue = 64;
+            DefaultShown = false;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_DataInFlight : Statistic
+    {
+        public Statistic_DataInFlight()
+        {
+            Name = @"Peers\Data In Flight";
+            MaxLabel = "256 MB";
+            MaxValue = 256;
+            DefaultShown = false;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_BlocksInFlight : Statistic
+    {
+        public Statistic_BlocksInFlight()
+        {
+            Name = @"Peers\Blocks In Flight";
+            MaxLabel = "256";
+            MaxValue = 256;
+            DefaultShown = false;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_AverageBlockLatency : Statistic
+    {
+        public Statistic_AverageBlockLatency()
+        {
+            Name = @"Peers\Average Block Latency (ms)";
+            MaxLabel = "5000 ms";
+            MaxValue = 5000;
+            DefaultShown = false;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_AverageBlockSize : Statistic
+    {
+        public Statistic_AverageBlockSize()
+        {
+            Name = @"Peers\Average Block Size (MB)";
+            MaxLabel = "5 mb";
+            MaxValue = 5;
+            DefaultShown = false;
+        }
+    }
 
     /// <summary>
     /// 
@@ -726,6 +796,8 @@ namespace BuildSync.Core
             Started = true;
         }
 
+        //static ulong time = TimeUtils.Ticks;
+
         /// <summary>
         /// 
         /// </summary>
@@ -807,9 +879,6 @@ namespace BuildSync.Core
                     }
                 }
             }
-
-            UpdateBlockDownloads();
-
             // Execute all deferred actions.
             lock (DeferredActions)
             {
@@ -817,6 +886,42 @@ namespace BuildSync.Core
                 {
                     DeferredActions.Dequeue().Invoke();
                 }
+            }
+
+            UpdateBlockDownloads();
+
+
+            //ulong elapsed = TimeUtils.Ticks - time;
+            //time = TimeUtils.Ticks;
+            //Console.WriteLine("Elapsed: {0}", elapsed);
+
+            // Update some stats.
+            lock (Peers)
+            {
+                Statistic.Get<Statistic_PeerCount>().AddSample(Peers.Count);
+
+                long DataInFlight = 0;
+                long BlocksInFlight = 0;
+                double AverageBlockLatency = 0;
+                double AverageBlockSize = 0;
+                foreach (Peer peer in Peers)
+                {
+                    DataInFlight += peer.ActiveBlockDownloadSize;
+                    BlocksInFlight += peer.ActiveBlockDownloads.Count;
+                    AverageBlockSize += peer.AverageBlockSize.Get();
+                    AverageBlockLatency += peer.BlockRecieveLatency.Get();
+                }
+
+                if (Peers.Count > 0)
+                {
+                    AverageBlockSize /= Peers.Count;
+                    AverageBlockLatency /= Peers.Count;
+                }
+
+                Statistic.Get<Statistic_DataInFlight>().AddSample(DataInFlight / 1024 / 1024);
+                Statistic.Get<Statistic_BlocksInFlight>().AddSample(BlocksInFlight);
+                Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float)AverageBlockLatency);
+                Statistic.Get<Statistic_AverageBlockSize>().AddSample((float)AverageBlockSize / 1024 / 1024);
             }
         }
 
@@ -918,9 +1023,16 @@ namespace BuildSync.Core
                     for (int j = 0; j < Peers.Count; j++)
                     {
                         Peer Peer = Peers[j];
+                        if (!Peer.Connection.IsReadyForData)
+                        {
+                            continue;
+                        }
+
                         long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
                         long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
+
                         if (LeastLoadedPeer == null || ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && Peer.ActiveBlockDownloadSize < LeastLoadedPeerAvailableBandwidth))
+                        //if (LeastLoadedPeer == null || Peer.ActiveBlockDownloads.Count < 256)
                         {
                             LeastLoadedPeer = Peer;
                             LeastLoadedPeerAvailableBandwidth = Peer.ActiveBlockDownloadSize;
@@ -940,8 +1052,6 @@ namespace BuildSync.Core
                         LeastLoadedPeer.AddActiveBlockDownload(Item);
 
                        // Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}, from peer {4}.", Msg.ManifestId, Msg.BlockIndex, BlockInfo.TotalSize, LeastLoadedPeer.ActiveBlockDownloadSize, HostnameCache.GetHostname(LeastLoadedPeer.Connection.Address.Address.ToString()));
-
-                        break;
                     }
 
                     // Try and find a peer with space in its download queue for this item.
@@ -1065,6 +1175,11 @@ namespace BuildSync.Core
                     // Attempt connection if time has elapsed.
                     if (!peer.Connection.IsConnected && !peer.Connection.IsConnecting && !peer.RemoteInitiated)
                     {
+                        if (peer.WasConnected)
+                        {
+                            Logger.Log(LogLevel.Info, LogCategory.Peers, "Disconnected from peer: {0}", peer.Address.ToString());
+                        }
+
                         ulong Elapsed = TimeUtils.Ticks - peer.LastConnectionAttemptTime;
                         if (peer.LastConnectionAttemptTime == 0 || Elapsed > ConnectionAttemptInterval)
                         {

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Downloads
 {
@@ -135,12 +136,12 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        private const int IdealDownloadQueueSizeBytes = 100 * 1024 * 1024;
+        private const int IdealDownloadQueueSizeBytes = 150 * 1024 * 1024;
 
         /// <summary>
         /// 
         /// </summary>
-        private const int MaxDownloadQueueItems = 200;
+        private const int MaxDownloadQueueItems = 250;
 
         /// <summary>
         /// 
@@ -815,7 +816,7 @@ namespace BuildSync.Core.Downloads
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
-                                        List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder, IOQueue.BandwidthStats, (float Progress) => {
+                                        List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder, AsyncIOQueue.GlobalBandwidthStats, (float Progress) => {
                                             State.ValidateProgress = Progress; 
                                         });
                                         if (FailedFiles.Count == 0)

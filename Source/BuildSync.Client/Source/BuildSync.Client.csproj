@@ -313,6 +313,12 @@
     <Compile Include="Forms\PublishBuildForm.Designer.cs">
       <DependentUpon>PublishBuildForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\StatisticsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\StatisticsForm.Designer.cs">
+      <DependentUpon>StatisticsForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tasks\PublishBuildTask.cs" />
@@ -396,6 +402,10 @@
     <EmbeddedResource Include="Forms\PublishBuildForm.resx">
       <DependentUpon>PublishBuildForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\StatisticsForm.resx">
+      <DependentUpon>StatisticsForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -472,6 +482,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.graph.histogram.png" />
     <None Include="Resources\appbar.link.png" />
     <None Include="Resources\appbar.refresh.png" />
     <None Include="Resources\appbar.question.png" />

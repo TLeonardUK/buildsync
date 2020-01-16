@@ -213,6 +213,16 @@ namespace BuildSync.Client.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap appbar_graph_histogram {
+            get {
+                object obj = ResourceManager.GetObject("appbar.graph.histogram", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap appbar_key {
             get {
                 object obj = ResourceManager.GetObject("appbar.key", resourceCulture);

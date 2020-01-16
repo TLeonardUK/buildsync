@@ -17,6 +17,82 @@ namespace BuildSync.Core.Utils
     /// <summary>
     /// 
     /// </summary>
+    public class Statistic_DiskIn : Statistic
+    {
+        public Statistic_DiskIn()
+        {
+            Name = @"IO\Disk Write (MB/s)";
+            MaxLabel = "512 MB/s";
+            MaxValue = 512.0f;
+            DefaultShown = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(AsyncIOQueue.GlobalBandwidthStats.RateIn / 1024.0f / 1024.0f);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_DiskOut : Statistic
+    {
+        public Statistic_DiskOut()
+        {
+            Name = @"IO\Disk Read (MB/s)";
+            MaxLabel = "512 MB/s";
+            MaxValue = 512.0f;
+            DefaultShown = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(AsyncIOQueue.GlobalBandwidthStats.RateOut / 1024.0f / 1024.0f);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_DiskInQueue : Statistic
+    {
+        public Statistic_DiskInQueue()
+        {
+            Name = @"IO\Disk Write Queue (MB)";
+            MaxLabel = "1024 MB";
+            MaxValue = 1024.0f;
+            DefaultShown = false;
+        }
+
+        public override void Gather()
+        {
+            AddSample(AsyncIOQueue.QueuedIn / 1024.0f / 1024.0f);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_DiskOutQueue : Statistic
+    {
+        public Statistic_DiskOutQueue()
+        {
+            Name = @"IO\Disk Read Queue (MB)";
+            MaxLabel = "1024 MB";
+            MaxValue = 1024.0f;
+            DefaultShown = false;
+        }
+
+        public override void Gather()
+        {
+            AddSample(AsyncIOQueue.QueuedOut / 1024.0f / 1024.0f);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public class AsyncIOQueue
     {
         public enum TaskType
@@ -58,10 +134,10 @@ namespace BuildSync.Core.Utils
 
         private List<ActiveStream> ActiveStreams = new List<ActiveStream>();
 
-        public BandwidthTracker BandwidthStats = new BandwidthTracker();
+        public static BandwidthTracker GlobalBandwidthStats = new BandwidthTracker();
 
-        private long InternalQueuedOut = 0;
-        private long InternalQueuedIn = 0;
+        private static long GlobalQueuedOut = 0;
+        private static long GlobalQueuedIn = 0;
 
         private int ActiveTasks = 0;
 
@@ -79,17 +155,17 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
-        public long QueuedOut
+        public static long QueuedOut
         {
-            get { return InternalQueuedOut; }
+            get { return GlobalQueuedOut; }
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public long QueuedIn
+        public static long QueuedIn
         {
-            get { return InternalQueuedIn; }
+            get { return GlobalQueuedIn; }
         }
 
         /// <summary>
@@ -392,7 +468,7 @@ namespace BuildSync.Core.Utils
 
                             try
                             {
-                                BandwidthStats.BytesIn(Work.Size);
+                                GlobalBandwidthStats.BytesIn(Work.Size);
 
                                 Stm.Stream.EndWrite(Result);
 
@@ -405,7 +481,7 @@ namespace BuildSync.Core.Utils
                             }
                             finally
                             {
-                                Interlocked.Add(ref InternalQueuedIn, -Work.Size);
+                                Interlocked.Add(ref GlobalQueuedIn, -Work.Size);
                                 Interlocked.Decrement(ref Stm.ActiveOperations);
                             }
 
@@ -416,7 +492,7 @@ namespace BuildSync.Core.Utils
                         Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to write to file {0} with error: {1}", Stm.Path, Ex.Message);
 
                         Work.Callback?.Invoke(false);
-                        Interlocked.Add(ref InternalQueuedIn, -Work.Size);
+                        Interlocked.Add(ref GlobalQueuedIn, -Work.Size);
                         Interlocked.Decrement(ref Stm.ActiveOperations);
                     }
                 }
@@ -466,7 +542,7 @@ namespace BuildSync.Core.Utils
                         try
                         {
                             int BytesRead = Stm.Stream.EndRead(Result);
-                            BandwidthStats.BytesOut(BytesRead);
+                            GlobalBandwidthStats.BytesOut(BytesRead);
 
                             if (BytesRead < Work.Size)
                             {
@@ -484,7 +560,7 @@ namespace BuildSync.Core.Utils
                         }
                         finally
                         {
-                            Interlocked.Add(ref InternalQueuedOut, -Work.Size);
+                            Interlocked.Add(ref GlobalQueuedOut, -Work.Size);
                             Interlocked.Decrement(ref Stm.ActiveOperations);
                         }
 
@@ -495,7 +571,7 @@ namespace BuildSync.Core.Utils
                     Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to read to file {0} with error: {1}", Stm.Path, Ex.Message);
 
                     Work.Callback?.Invoke(false);
-                    Interlocked.Add(ref InternalQueuedOut, -Work.Size);
+                    Interlocked.Add(ref GlobalQueuedOut, -Work.Size);
                     Interlocked.Decrement(ref Stm.ActiveOperations);
                 }
             }
@@ -521,7 +597,7 @@ namespace BuildSync.Core.Utils
         /// <param name="Size"></param>
         public void Write(string InPath, long InOffset, long InSize, byte[] InData, long InDataOffset, IOCompleteCallbackHandler InCallback)
         {
-            Interlocked.Add(ref InternalQueuedIn, InSize);
+            Interlocked.Add(ref GlobalQueuedIn, InSize);
             //Console.WriteLine("####### START WRITE[offset={0} size={1}] {2}", InOffset, InSize, InPath);
 
             TaskQueue.Enqueue(new Task { Type = TaskType.Write, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, DataOffset = InDataOffset, Callback = InCallback });
@@ -536,7 +612,7 @@ namespace BuildSync.Core.Utils
         /// <param name="Size"></param>
         public void Read(string InPath, long InOffset, long InSize, byte[] InData, long InDataOffset, IOCompleteCallbackHandler InCallback)
         {
-            Interlocked.Add(ref InternalQueuedOut, InSize);
+            Interlocked.Add(ref GlobalQueuedOut, InSize);
             TaskQueue.Enqueue(new Task { Type = TaskType.Read, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, DataOffset = InDataOffset, Callback = InCallback });
             WakeThread();
         }

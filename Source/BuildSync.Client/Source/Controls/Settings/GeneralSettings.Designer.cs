@@ -64,10 +64,10 @@
             this.runInstallWhenLaunchingCheckbox.Location = new System.Drawing.Point(16, 75);
             this.runInstallWhenLaunchingCheckbox.Margin = new System.Windows.Forms.Padding(2);
             this.runInstallWhenLaunchingCheckbox.Name = "runInstallWhenLaunchingCheckbox";
-            this.runInstallWhenLaunchingCheckbox.Size = new System.Drawing.Size(446, 17);
+            this.runInstallWhenLaunchingCheckbox.Size = new System.Drawing.Size(494, 17);
             this.runInstallWhenLaunchingCheckbox.TabIndex = 35;
-            this.runInstallWhenLaunchingCheckbox.Text = "Always run install before launching build (Only recommended for non-incremental i" +
-    "nstalls)?";
+            this.runInstallWhenLaunchingCheckbox.Text = "Always run install before launching build? (Only recommended to disable for non-i" +
+    "ncremental installs)\r\n";
             this.runInstallWhenLaunchingCheckbox.UseVisualStyleBackColor = true;
             this.runInstallWhenLaunchingCheckbox.CheckedChanged += new System.EventHandler(this.StateChanged);
             // 
@@ -77,9 +77,9 @@
             this.skipVerificationCheckBox.Location = new System.Drawing.Point(16, 105);
             this.skipVerificationCheckBox.Margin = new System.Windows.Forms.Padding(2);
             this.skipVerificationCheckBox.Name = "skipVerificationCheckBox";
-            this.skipVerificationCheckBox.Size = new System.Drawing.Size(287, 17);
+            this.skipVerificationCheckBox.Size = new System.Drawing.Size(358, 17);
             this.skipVerificationCheckBox.TabIndex = 36;
-            this.skipVerificationCheckBox.Text = "Skip validation of builds (Faster but not recommended)?";
+            this.skipVerificationCheckBox.Text = "Skip validation of builds? (Faster but may not catch any corrupted files)";
             this.skipVerificationCheckBox.UseVisualStyleBackColor = true;
             // 
             // GeneralSettings

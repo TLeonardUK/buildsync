@@ -557,6 +557,7 @@ namespace BuildSync.Client
         /// </summary>
         public static void PollAutoUpdate()
         {
+#if SHIPPING
             if (InternalUpdateDownload != null)
             {
                 ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(InternalUpdateDownload.ActiveManifestId);
@@ -569,6 +570,7 @@ namespace BuildSync.Client
                     }
                 }
             }
+#endif
         }
 
         /// <summary>
