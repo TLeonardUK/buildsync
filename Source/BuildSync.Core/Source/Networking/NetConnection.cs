@@ -267,17 +267,17 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        public static BandwidthTracker GlobalBandwidthStats = new BandwidthTracker();
+        public static RateTracker GlobalBandwidthStats = new RateTracker();
 
         /// <summary>
         /// 
         /// </summary>
-        public static BandwidthTracker GlobalPacketStats = new BandwidthTracker();
+        public static RateTracker GlobalPacketStats = new RateTracker();
 
         /// <summary>
         /// 
         /// </summary>
-        public BandwidthTracker BandwidthStats = new BandwidthTracker();
+        public RateTracker BandwidthStats = new RateTracker();
 
         /// <summary>
         /// 
@@ -588,7 +588,7 @@ namespace BuildSync.Core.Networking
                 }*/
             }
 
-            if (IsConnected && !IsListening && Handshake != null)
+            if (!IsListening && IsReadyForData)
             {
                 ulong Elapsed = TimeUtils.Ticks - LastKeepAliveSendTime;
                 if (Elapsed > KeepAliveInterval)
@@ -777,13 +777,13 @@ namespace BuildSync.Core.Networking
                             EventQueue.Enqueue(() => { OnConnect?.Invoke(this); });
                         }
 
+                        BeginSendThread();
+                        BeginRecievingHeader(AllocMessageBuffer("ConnectToIP.RecieveHeader"));
+
                         // Send handshake.
                         NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
                         HandshakeMsg.Version = AppVersion.ProtocolVersion;
                         Send(HandshakeMsg);
-
-                        BeginSendThread();
-                        BeginRecievingHeader(AllocMessageBuffer("ConnectToIP.RecieveHeader"));
                     }
                     catch (Exception ex)
                     {
@@ -962,7 +962,7 @@ namespace BuildSync.Core.Networking
                     }
                 }
 
-                GlobalPacketStats.BytesOut(1);
+                GlobalPacketStats.Out(1);
 
                 SendBlock(SendData.Data, 0, SendData.BufferSize);
             }
@@ -983,6 +983,8 @@ namespace BuildSync.Core.Networking
 
                 byte[] Serialized = AllocMessageBuffer("Send");
                 int BufferLength = Message.ToByteArray(ref Serialized);
+
+                //Logger.Log(LogLevel.Info, LogCategory.Transport, "Sending message of type {0}", Message.GetType().Name);
 
                 Message.Cleanup();
 
@@ -1011,8 +1013,8 @@ namespace BuildSync.Core.Networking
                     int BytesToSend = GlobalBandwidthThrottleOut.Throttle(BytesLeft);
 
                     int BytesSent = Socket.Send(Block, Offset + TotalBytesSent, BytesToSend, SocketFlags.None);
-                    BandwidthStats.BytesOut(BytesSent);
-                    GlobalBandwidthStats.BytesOut(BytesSent);
+                    BandwidthStats.Out(BytesSent);
+                    GlobalBandwidthStats.Out(BytesSent);
 
                     TotalBytesSent += BytesSent;
                 }
@@ -1071,10 +1073,10 @@ namespace BuildSync.Core.Networking
                     {
                         int BytesRecieved = Socket.EndReceive(Result);
 
-                        GlobalPacketStats.BytesIn(1);
+                        GlobalPacketStats.In(1);
 
-                        BandwidthStats.BytesIn(BytesRecieved);
-                        GlobalBandwidthStats.BytesIn(BytesRecieved);
+                        BandwidthStats.In(BytesRecieved);
+                        GlobalBandwidthStats.In(BytesRecieved);
 
                         if (BytesRecieved < Size)
                         {
@@ -1165,8 +1167,8 @@ namespace BuildSync.Core.Networking
                     {
                         int BytesRecieved = Socket.EndReceive(Result);
 
-                        BandwidthStats.BytesIn(BytesRecieved);
-                        GlobalBandwidthStats.BytesIn(BytesRecieved);
+                        BandwidthStats.In(BytesRecieved);
+                        GlobalBandwidthStats.In(BytesRecieved);
 
                         if (BytesRecieved < Size)
                         {

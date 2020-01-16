@@ -440,7 +440,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public void InitializeDirectory(string RootPath, BuildManfiestInitProgressCallbackHandler Callback = null)
+        public void InitializeDirectory(string RootPath, AsyncIOQueue IOQueue, BuildManfiestInitProgressCallbackHandler Callback = null)
         {
             const int WriteChunkSize = 16 * 1024 * 1024;
             byte[] ChunkArray = new byte[WriteChunkSize];
@@ -477,6 +477,8 @@ namespace BuildSync.Core.Manifests
                         BytesWritten += Size;
                         BytesRemaining -= Size;
 
+                        AsyncIOQueue.GlobalBandwidthStats.In(Size);
+
                         Callback?.Invoke((float)BytesWritten / (float)TotalBytes);
                     }
                 }
@@ -486,7 +488,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public List<string> Validate(string RootPath, BandwidthTracker Tracker, BuildManfiestValidateProgressCallbackHandler Callback = null)
+        public List<string> Validate(string RootPath, RateTracker Tracker, BuildManfiestValidateProgressCallbackHandler Callback = null)
         {
             List<string> FailedFiles = new List<string>();
 

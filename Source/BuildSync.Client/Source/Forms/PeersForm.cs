@@ -54,37 +54,21 @@ namespace BuildSync.Client.Forms
         {
             BuildSyncClient.Peer[] AllPeers = Program.NetClient.AllPeers;
 
-            List<BuildSyncClient.Peer> ConnectedPeers = new List<BuildSyncClient.Peer>();
+            List<string> ConnectedAddresses = new List<string>();
             foreach (BuildSyncClient.Peer Peer in AllPeers)
             {
-                if (Peer.Connection.IsConnected)
+                if (Peer.Connection.IsConnected && Peer.Connection.Address != null)
                 {
-                    ConnectedPeers.Add(Peer);
+                    ConnectedAddresses.Add(Peer.Connection.Address.Address.ToString());
                 }
             }
 
-            // Remove old peers.
-            List<ListViewItem> ItemsToRemove = new List<ListViewItem>();
-            foreach (ListViewItem Item in MainListView.Items)
-            {
-                BuildSyncClient.Peer ItemPeer = Item.Tag as BuildSyncClient.Peer;
-                if (!ConnectedPeers.Contains(ItemPeer))
-                {
-                    ItemsToRemove.Add(Item);
-                }
-            }
-            foreach (ListViewItem Item in ItemsToRemove)
-            {
-                MainListView.Items.Remove(Item);
-            }
-
-            // Add new peers.
-            foreach (BuildSyncClient.Peer Peer in ConnectedPeers)
+            foreach (PeerSettingsRecord Peer in Program.Settings.PeerRecords)
             {
                 ListViewItem Item = null;
                 foreach (ListViewItem SubItem in MainListView.Items)
                 {
-                    BuildSyncClient.Peer ItemPeer = SubItem.Tag as BuildSyncClient.Peer;
+                    PeerSettingsRecord ItemPeer = SubItem.Tag as PeerSettingsRecord;
                     if (ItemPeer == Peer)
                     {
                         Item = SubItem;
@@ -94,16 +78,22 @@ namespace BuildSync.Client.Forms
 
                 if (Item == null)
                 {
-                    Item = new ListViewItem(new string[5]);
+                    Item = new ListViewItem(new string[6]);
                     Item.Tag = Peer;
+                    Item.ImageIndex = 0;
+                    Item.StateImageIndex = 0;
                     MainListView.Items.Add(Item);
+
+                    MainListView.Sort();
                 }
 
-                Item.SubItems[0].Text = (Peer.RemoteInitiated ? "[Remote Initiated] " : "") + (Peer.Connection.Address == null ? "" : HostnameCache.GetHostname(Peer.Connection.Address.Address.ToString()));
-                Item.SubItems[1].Text = StringUtils.FormatAsTransferRate(Peer.Connection.BandwidthStats.RateIn);
-                Item.SubItems[2].Text = StringUtils.FormatAsTransferRate(Peer.Connection.BandwidthStats.RateOut);
-                Item.SubItems[3].Text = StringUtils.FormatAsSize(Peer.Connection.BandwidthStats.TotalIn);
-                Item.SubItems[4].Text = StringUtils.FormatAsSize(Peer.Connection.BandwidthStats.TotalOut);
+                Item.Group = ConnectedAddresses.Contains(Peer.Address) ? MainListView.Groups[0] : MainListView.Groups[1];
+                Item.SubItems[0].Text = HostnameCache.GetHostname(Peer.Address);
+                Item.SubItems[1].Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate((long)Peer.AverageRateIn), StringUtils.FormatAsTransferRate((long)Peer.PeakRateIn));
+                Item.SubItems[2].Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate((long)Peer.AverageRateOut), StringUtils.FormatAsTransferRate((long)Peer.PeakRateOut));
+                Item.SubItems[3].Text = StringUtils.FormatAsSize((long)Peer.TotalIn);
+                Item.SubItems[4].Text = StringUtils.FormatAsSize((long)Peer.TotalOut);
+                Item.SubItems[5].Text = Peer.LastSeen.ToString("dd/MM/yyyy HH:mm");
             }
         }
     }

@@ -92,6 +92,8 @@ namespace BuildSync.Client.Forms
                     NewNode.Name = split[0];
                     Nodes.Add(NewNode);
 
+                    WindowUtils.HideTreeNodeCheckbox(NewNode);
+
                     NextCollection = NewNode.Nodes;
                 }
                 else
@@ -165,6 +167,7 @@ namespace BuildSync.Client.Forms
             foreach (TreeNode node in StatsTreeView.Nodes)
             {
                 node.ExpandAll();
+                WindowUtils.HideTreeNodeCheckbox(node);
             }
         }
 

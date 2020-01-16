@@ -131,7 +131,7 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <param name="Algo"></param>
-        public byte[] ComputeLargeStreamHash(Stream Stream, BandwidthTracker Tracker, ChecksumProgressEventHandler Callback)
+        public byte[] ComputeLargeStreamHash(Stream Stream, RateTracker Tracker, ChecksumProgressEventHandler Callback)
         {
             // Buffer size optimized for reading massive files.
             const int BufferSize = 4 * 1024 * 1024;
@@ -151,7 +151,7 @@ namespace BuildSync.Core.Utils
 
                     if (Tracker != null)
                     {
-                        Tracker.BytesOut(bytesRead);
+                        Tracker.Out(bytesRead);
                     }
                 }
             } while (bytesRead > 0);

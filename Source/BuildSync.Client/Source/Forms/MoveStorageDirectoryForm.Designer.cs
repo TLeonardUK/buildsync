@@ -48,18 +48,18 @@
             // 
             // TaskProgressBar
             // 
-            this.TaskProgressBar.Location = new System.Drawing.Point(9, 25);
-            this.TaskProgressBar.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TaskProgressBar.Location = new System.Drawing.Point(11, 24);
+            this.TaskProgressBar.Margin = new System.Windows.Forms.Padding(2);
             this.TaskProgressBar.Name = "TaskProgressBar";
-            this.TaskProgressBar.Size = new System.Drawing.Size(443, 15);
+            this.TaskProgressBar.Size = new System.Drawing.Size(633, 15);
             this.TaskProgressBar.TabIndex = 2;
             // 
             // TotalProgressBar
             // 
-            this.TotalProgressBar.Location = new System.Drawing.Point(9, 65);
-            this.TotalProgressBar.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TotalProgressBar.Location = new System.Drawing.Point(11, 64);
+            this.TotalProgressBar.Margin = new System.Windows.Forms.Padding(2);
             this.TotalProgressBar.Name = "TotalProgressBar";
-            this.TotalProgressBar.Size = new System.Drawing.Size(443, 15);
+            this.TotalProgressBar.Size = new System.Drawing.Size(633, 15);
             this.TotalProgressBar.TabIndex = 4;
             // 
             // TotalProgressLabel
@@ -80,13 +80,13 @@
             // MoveStorageDirectoryForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(460, 94);
+            this.ClientSize = new System.Drawing.Size(655, 94);
             this.Controls.Add(this.TotalProgressBar);
             this.Controls.Add(this.TotalProgressLabel);
             this.Controls.Add(this.TaskProgressBar);
             this.Controls.Add(this.TaskProgressLabel);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "MoveStorageDirectoryForm";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;

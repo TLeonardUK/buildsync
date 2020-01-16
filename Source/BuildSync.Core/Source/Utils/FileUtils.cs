@@ -132,7 +132,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="FilePath"></param>
         /// <returns></returns>
-        public static string GetChecksum(string FilePath, BandwidthTracker Tracker, ChecksumProgressEventHandler Callback = null)
+        public static string GetChecksum(string FilePath, RateTracker Tracker, ChecksumProgressEventHandler Callback = null)
         {
             /*
             using (var md5 = MD5.Create())

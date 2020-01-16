@@ -307,6 +307,11 @@ namespace BuildSync.Core.Downloads
                 State.Manifest = ManifestRegistry.GetManifestById(State.ManifestId);
                 if (State.Manifest == null)
                 {
+                    // If we don't have the manifest locally we cannot determine we have all blocks, so mark all as unavailable.
+                    // Someone probably balls up their local storage.
+                    State.BlockStates.SetAll(false);
+                    StateDirtyCount++;
+
                     State.State = ManifestDownloadProgressState.RetrievingManifest;
                 }
             }
@@ -703,7 +708,7 @@ namespace BuildSync.Core.Downloads
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Initializing directory: {0}", State.LocalFolder);
-                                        State.Manifest.InitializeDirectory(State.LocalFolder, (float Progress) =>
+                                        State.Manifest.InitializeDirectory(State.LocalFolder, IOQueue, (float Progress) =>
                                         {
                                             State.InitializeProgress = Progress;
                                         });
@@ -779,6 +784,9 @@ namespace BuildSync.Core.Downloads
                     {
                         if (State.BlockStates.AreAllSet(true))
                         {
+                            RestartDownload(State.ManifestId);
+
+                            /*
                             if (SkipValidation)
                             {
                                 ChangeState(State, ManifestDownloadProgressState.Complete);
@@ -786,7 +794,7 @@ namespace BuildSync.Core.Downloads
                             else
                             {
                                 ChangeState(State, ManifestDownloadProgressState.Validating);
-                            }
+                            }*/
                         }
 
                         break;
@@ -1142,7 +1150,7 @@ namespace BuildSync.Core.Downloads
         public bool GetBlockData(Guid ManifestId, int BlockIndex, ref NetCachedArray Data, BlockAccessCompleteHandler Callback)
         {
             ManifestDownloadState State = GetDownload(ManifestId);
-            if (State == null)
+            if (State == null || State.Manifest == null)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request for block from manifest we do not have.");
                 Callback?.Invoke(false);
@@ -1182,7 +1190,7 @@ namespace BuildSync.Core.Downloads
                 {
                     if (bSuccess)
                     {
-                        State.BandwidthStats.BytesOut(SubBlockInfo.FileSize);
+                        State.BandwidthStats.Out(SubBlockInfo.FileSize);
                     }
                     else
                     {
@@ -1277,7 +1285,7 @@ namespace BuildSync.Core.Downloads
                 {
                     if (bSuccess)
                     {
-                        State.BandwidthStats.BytesIn(SubBlockInfo.FileSize);
+                        State.BandwidthStats.In(SubBlockInfo.FileSize);
                     }
                     else
                     {
@@ -1351,9 +1359,18 @@ namespace BuildSync.Core.Downloads
         public void MarkBlockAsUnavailable(Guid ManifestId, int BlockIndex)
         {
             ManifestDownloadState State = GetDownload(ManifestId);
-            if (State == null)
+            if (State == null || State.Manifest == null)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to unset block from manifest we do not have.");
+
+                // If we doin't have a manifest, just mark everything as not having it, someone probably deleted
+                // manifests locally :S
+                if (State.Manifest == null)
+                {
+                    State.BlockStates.SetAll(false);
+                    StateDirtyCount++;
+                }
+
                 return;
             }
 

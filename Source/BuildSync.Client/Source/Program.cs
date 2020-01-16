@@ -547,9 +547,40 @@ namespace BuildSync.Client
             }
 
             PollIpcServer();
-
-            // Check if we need to install download.
             PollAutoUpdate();
+            RecordPeerStates();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static void RecordPeerStates()
+        {
+            BuildSyncClient.Peer[] AllPeers = Program.NetClient.AllPeers;
+            foreach (BuildSyncClient.Peer Peer in AllPeers)
+            {
+                if (Peer.Connection.IsConnected && Peer.Connection.Address != null)
+                {
+                    PeerSettingsRecord Record = Settings.GetOrCreatePeerRecord(Peer.Connection.Address.Address.ToString());
+
+                    long TotalIn = Peer.Connection.BandwidthStats.TotalIn;
+                    long TotalOut = Peer.Connection.BandwidthStats.TotalOut;
+
+                    Record.LastSeen = DateTime.Now;
+
+                    Record.TotalIn += (Record.TotalInTracker == -1) ? 0 : TotalIn - Record.TotalInTracker;
+                    Record.TotalOut += (Record.TotalOutTracker == -1) ? 0 : TotalOut - Record.TotalOutTracker;
+
+                    Record.TotalInTracker = TotalIn;
+                    Record.TotalOutTracker = TotalOut;
+
+                    Record.AverageRateIn = (Record.AverageRateIn * 0.5f) + (Peer.Connection.BandwidthStats.RateIn * 0.5f);
+                    Record.AverageRateOut = (Record.AverageRateOut * 0.5f) + (Peer.Connection.BandwidthStats.RateOut * 0.5f);
+
+                    Record.PeakRateIn = Math.Max(Record.PeakRateIn, Record.AverageRateIn);
+                    Record.PeakRateOut = Math.Max(Record.PeakRateOut, Record.AverageRateOut);
+                }
+            }
         }
 
         /// <summary>

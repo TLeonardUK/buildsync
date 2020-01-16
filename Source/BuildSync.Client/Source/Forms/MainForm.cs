@@ -569,10 +569,14 @@ namespace BuildSync.Client.Forms
 
             if (!Connected)
             {
-                if (Program.NetClient.IsConnected || Program.NetClient.IsConnecting)
+                if (Program.NetClient.IsConnected)
+                {
+                    peerCountLabel.Text = "Handshaking with '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
+                    peerCountLabel.ForeColor = Color.DarkCyan;
+                }
+                else if (Program.NetClient.IsConnecting)
                 {
                     peerCountLabel.Text = "Connecting to '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
-
                     peerCountLabel.ForeColor = Color.DarkCyan;
                 }
                 else

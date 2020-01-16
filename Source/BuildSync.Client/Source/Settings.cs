@@ -27,6 +27,22 @@ namespace BuildSync.Client
     }
 
     [Serializable]
+    public class PeerSettingsRecord
+    {
+        public string Address { get; set; } = "";
+        public long TotalIn { get; set; } = 0;
+        public long TotalOut { get; set; } = 0;
+        public float AverageRateIn { get; set; } = 0;
+        public float AverageRateOut { get; set; } = 0;
+        public float PeakRateIn { get; set; } = 0;
+        public float PeakRateOut { get; set; } = 0;
+        public DateTime LastSeen { get; set; } = DateTime.Now;
+
+        internal long TotalInTracker = -1;
+        internal long TotalOutTracker = -1;
+    }
+
+    [Serializable]
     public class Settings : SettingsBase
     {
         public string ServerHostname { get; set; } = "localhost";
@@ -54,6 +70,8 @@ namespace BuildSync.Client
 
         public bool SkipValidation { get; set; } = false;
 
+        public List<PeerSettingsRecord> PeerRecords { get; set; } = new List<PeerSettingsRecord>();
+
         public List<ScmWorkspaceSettings> ScmWorkspaces { get; set; } = new List<ScmWorkspaceSettings>();
 
         public const int MaxLaunchSettings = 10;
@@ -61,5 +79,27 @@ namespace BuildSync.Client
 
         public DownloadStateCollection DownloadStates { get; set; } = new DownloadStateCollection();
         public ManifestDownloadStateCollection ManifestDownloadStates { get; set; } = new ManifestDownloadStateCollection();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Address"></param>
+        /// <returns></returns>
+        public PeerSettingsRecord GetOrCreatePeerRecord(string Address)
+        {
+            foreach (PeerSettingsRecord Record in PeerRecords)
+            {
+                if (Record.Address == Address)
+                {
+                    return Record;
+                }
+            }
+
+            PeerSettingsRecord NewRecord = new PeerSettingsRecord();
+            NewRecord.Address = Address;
+            PeerRecords.Add(NewRecord);
+
+            return NewRecord;
+        }
     }
 }

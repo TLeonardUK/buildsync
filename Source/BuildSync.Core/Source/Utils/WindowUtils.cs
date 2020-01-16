@@ -15,7 +15,13 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public static class WindowUtils
     {
-        const int SW_RESTORE = 9;
+        public const int SW_RESTORE = 9;
+
+        // Treeview consts
+        public const int TVIF_STATE = 0x8;
+        public const int TVIS_STATEIMAGEMASK = 0xF000;
+        public const int TV_FIRST = 0x1100;
+        public const int TVM_SETITEM = TV_FIRST + 63;
 
         [DllImport("User32.dll", CharSet = CharSet.Auto, SetLastError = false)]
         static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr w, IntPtr l);
@@ -27,6 +33,40 @@ namespace BuildSync.Core.Utils
         private static extern bool IsIconic(IntPtr handle);
         [DllImport("USER32.DLL", CharSet = CharSet.Unicode)]
         public static extern IntPtr FindWindow(String lpClassName, String lpWindowName);
+
+        // Treeview node properties
+        public struct TVITEM
+        {
+            public int mask;
+            public IntPtr hItem;
+            public int state;
+            public int stateMask;
+            [MarshalAs(UnmanagedType.LPTStr)]
+            public String lpszText;
+            public int cchTextMax;
+            public int iImage;
+            public int iSelectedImage;
+            public int cChildren;
+            public IntPtr lParam;
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="node"></param>
+        public static void HideTreeNodeCheckbox(TreeNode node)
+        {
+            TVITEM tvi = new TVITEM();
+            tvi.hItem = node.Handle;
+            tvi.mask = TVIF_STATE;
+            tvi.stateMask = TVIS_STATEIMAGEMASK;
+            tvi.state = 0;
+
+            IntPtr lparam = Marshal.AllocHGlobal(Marshal.SizeOf(tvi));
+            Marshal.StructureToPtr(tvi, lparam, false);
+
+            SendMessage(node.TreeView.Handle, TVM_SETITEM, IntPtr.Zero, lparam);
+        }
 
         /// <summary>
         ///     Sets a given control to be double buffered to prevent flickering.

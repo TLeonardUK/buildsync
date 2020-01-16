@@ -117,6 +117,28 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <metadata name="UserImageList.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>145, 17</value>
+  </metadata>
+  <data name="UserImageList.ImageStream" mimetype="application/x-microsoft.net.object.binary.base64">
+    <value>
+        AAEAAAD/////AQAAAAAAAAAMAgAAAFdTeXN0ZW0uV2luZG93cy5Gb3JtcywgVmVyc2lvbj00LjAuMC4w
+        LCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkFAQAAACZTeXN0
+        ZW0uV2luZG93cy5Gb3Jtcy5JbWFnZUxpc3RTdHJlYW1lcgEAAAAERGF0YQcCAgAAAAkDAAAADwMAAACo
+        AgAAAk1TRnQBSQFMAwEBAAFAAQABQAEAARgBAAEYAQAE/wEhAQAI/wFCAU0BNgcAATYDAAEoAwABYAMA
+        ARgDAAEBAQABIAYAAST/AP8A/wD/AP8A/wD/AP8A/wA2AAH/AwAB/wMAAf8DAAH/AwAB/wMAAf8DAAH/
+        AwAB/wMAAf8DAAH/AwAB/wMAAf//AFQAAf8DAAH/AwAB/wMAAf8DAAH/AwAB/wMAAf8DAAH/AwAB/wMA
+        Af8DAAH/AwAB//8AUQADDAEQAwAB/wMAAf8DAAH/AwAB/wMAAf8DAAH/AwAB/wMAAf8DAAH/AwAB/wMq
+        AfX/AFUAAwcBCgNSAd4DAAH/AwAB/wMAAf8DAAH/AwAB/wMAAf8DAAH/A1ABnQMAAQH/AF0AAwMBBAMX
+        ASADAAH/AwAB/wMkAfcDFAEcAwABAf8AcAAB/wMAAf8DKgH1/wBxAANEAXsDAAH/AwAB/wMAAf8DAgED
+        /wBpAAMGAQgDAAH/AwAB/wMAAf8DAAH/A0gB6/8AbAABAQMAAf8DAAH/AwAB/wMAAf8DWAHS/wBwAAH/
+        AwAB/wMAAf8DAAH/A1YBuP8AbQADVwHaAwAB/wMAAf8DAAH/AzoBYv8AcQADTgGZAyMB9gM6AWH/AP8A
+        /wD/AP8A/wD/AP8A/wD/AFIAAUIBTQE+BwABPgMAASgDAAFgAwABGAMAAQEBAAEBBQABIAEBFgAD/wEA
+        A/8JAAP/CQAD/wkAA/8JAAP/CQAD/wkAAfwBAAE/CQAB/AEAAT8JAAH8AQABPwkAAf4BAAE/CQAB/wGA
+        Af8JAAH/AeMB/wkAAf8BwQH/CQAB/wGBAf8JAAH/AYEB/wkAAf8BwQH/CQAB/wHBAf8JAAH/AeMB/wkA
+        A/8JAAP/CQAD/wkAA/8JAAP/CQAD/wkACw==
+</value>
+  </data>
   <metadata name="ListUpdateTimer.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>

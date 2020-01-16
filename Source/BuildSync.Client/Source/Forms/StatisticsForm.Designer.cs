@@ -54,7 +54,7 @@
             this.StatsTreeView.ItemHeight = 25;
             this.StatsTreeView.Location = new System.Drawing.Point(0, 0);
             this.StatsTreeView.Name = "StatsTreeView";
-            this.StatsTreeView.Size = new System.Drawing.Size(226, 445);
+            this.StatsTreeView.Size = new System.Drawing.Size(231, 361);
             this.StatsTreeView.TabIndex = 4;
             this.StatsTreeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.StatisticCheckChanged);
             // 
@@ -71,8 +71,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.StatPanel);
-            this.splitContainer1.Size = new System.Drawing.Size(929, 445);
-            this.splitContainer1.SplitterDistance = 226;
+            this.splitContainer1.Size = new System.Drawing.Size(684, 361);
+            this.splitContainer1.SplitterDistance = 231;
             this.splitContainer1.TabIndex = 5;
             // 
             // StatPanel
@@ -82,17 +82,18 @@
             this.StatPanel.Location = new System.Drawing.Point(0, 0);
             this.StatPanel.Name = "StatPanel";
             this.StatPanel.Padding = new System.Windows.Forms.Padding(5);
-            this.StatPanel.Size = new System.Drawing.Size(699, 445);
+            this.StatPanel.Size = new System.Drawing.Size(449, 361);
             this.StatPanel.TabIndex = 0;
             // 
             // StatisticsForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(929, 445);
+            this.ClientSize = new System.Drawing.Size(684, 361);
             this.Controls.Add(this.splitContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(700, 400);
             this.MinimizeBox = false;
             this.Name = "StatisticsForm";
             this.ShowInTaskbar = false;

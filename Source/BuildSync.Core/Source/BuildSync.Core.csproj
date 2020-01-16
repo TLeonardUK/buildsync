@@ -202,9 +202,10 @@
     <Compile Include="Scm\ScmManager.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />
-    <Compile Include="Utils\BandwidthTracker.cs" />
+    <Compile Include="Utils\RateTracker.cs" />
     <Compile Include="Utils\CommandIPC.cs" />
     <Compile Include="Utils\Crc32.cs" />
+    <Compile Include="Utils\Drawing.cs" />
     <Compile Include="Utils\DynamicPropertyGrid.cs" />
     <Compile Include="Utils\EnumUtils.cs" />
     <Compile Include="Utils\ExapandableMemoryStream.cs" />

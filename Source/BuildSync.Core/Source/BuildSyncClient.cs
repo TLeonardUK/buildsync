@@ -136,6 +136,39 @@ namespace BuildSync.Core
     /// <summary>
     /// 
     /// </summary>
+    public class Statistic_RequestFailures : Statistic
+    {
+        public Statistic_RequestFailures()
+        {
+            Name = @"Peers\Request Failures";
+            MaxLabel = "100";
+            MaxValue = 100;
+            DefaultShown = false;
+
+            Series.Outline = Drawing.PrimaryOutlineColors[4];
+            Series.Fill = Drawing.PrimaryFillColors[4];
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_BlockListUpdates : Statistic
+    {
+        public Statistic_BlockListUpdates()
+        {
+            Name = @"Peers\Block List Updates";
+            MaxLabel = "32";
+            MaxValue = 32;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public class BuildSyncClient
     {
         /// <summary>
@@ -656,6 +689,16 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        public long BlockRequestFailureRate = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long BlockListUpdateRate = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public bool ConnectionsDisabled
         {
             get
@@ -918,10 +961,15 @@ namespace BuildSync.Core
                     AverageBlockLatency /= Peers.Count;
                 }
 
+                Statistic.Get<Statistic_RequestFailures>().AddSample((float)BlockRequestFailureRate);
+                Statistic.Get<Statistic_BlockListUpdates>().AddSample((float)BlockListUpdateRate);
                 Statistic.Get<Statistic_DataInFlight>().AddSample(DataInFlight / 1024 / 1024);
                 Statistic.Get<Statistic_BlocksInFlight>().AddSample(BlocksInFlight);
                 Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float)AverageBlockLatency);
                 Statistic.Get<Statistic_AverageBlockSize>().AddSample((float)AverageBlockSize / 1024 / 1024);
+
+                BlockRequestFailureRate = 0;
+                BlockListUpdateRate = 0;
             }
         }
 
@@ -1613,6 +1661,8 @@ namespace BuildSync.Core
                     }
                 }
 
+                Interlocked.Increment(ref BlockListUpdateRate);
+
                 UpdateAvailableBlocks();
             }
 
@@ -1676,6 +1726,8 @@ namespace BuildSync.Core
                         });
                     }
 
+                    Interlocked.Increment(ref BlockRequestFailureRate);
+
                     Msg.Cleanup();
 
                     return;
@@ -1692,6 +1744,10 @@ namespace BuildSync.Core
                     if (!peer.HasActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex))
                     {
                         Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved unexpected block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
+
+                        Interlocked.Increment(ref BlockRequestFailureRate);
+
+                        return;
                     }
 
                     BlockAccessCompleteHandler Callback = (bool bSuccess) =>

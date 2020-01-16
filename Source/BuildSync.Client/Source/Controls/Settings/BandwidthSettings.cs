@@ -26,8 +26,8 @@ namespace BuildSync.Client.Controls.Settings
             InitializeComponent();
 
             SkipValidity = true;
-            MaxUploadBandwidthBox.Value = Program.Settings.BandwidthMaxUp * 1024;
-            MaxDownloadBandwidthBox.Value = Program.Settings.BandwidthMaxDown * 1024;
+            MaxUploadBandwidthBox.Value = Program.Settings.BandwidthMaxUp / 1024;
+            MaxDownloadBandwidthBox.Value = Program.Settings.BandwidthMaxDown / 1024;
             BandwidthTimespanStartHourBox.Value = Program.Settings.BandwidthStartTimeHour;
             BandwidthTimespanStartMinBox.Value = Program.Settings.BandwidthStartTimeMin;
             BandwidthTimespanEndHourBox.Value = Program.Settings.BandwidthEndTimeHour;
@@ -58,8 +58,8 @@ namespace BuildSync.Client.Controls.Settings
                 return;
             }
 
-            Program.Settings.BandwidthMaxUp = (long)MaxUploadBandwidthBox.Value / 1024;
-            Program.Settings.BandwidthMaxDown = (long)MaxDownloadBandwidthBox.Value / 1024;
+            Program.Settings.BandwidthMaxUp = (long)MaxUploadBandwidthBox.Value * 1024;
+            Program.Settings.BandwidthMaxDown = (long)MaxDownloadBandwidthBox.Value * 1024;
             Program.Settings.BandwidthStartTimeHour = (int)BandwidthTimespanStartHourBox.Value;
             Program.Settings.BandwidthStartTimeMin = (int)BandwidthTimespanStartMinBox.Value;
             Program.Settings.BandwidthEndTimeHour = (int)BandwidthTimespanEndHourBox.Value;

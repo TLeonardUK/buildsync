@@ -134,7 +134,7 @@ namespace BuildSync.Core.Utils
 
         private List<ActiveStream> ActiveStreams = new List<ActiveStream>();
 
-        public static BandwidthTracker GlobalBandwidthStats = new BandwidthTracker();
+        public static RateTracker GlobalBandwidthStats = new RateTracker();
 
         private static long GlobalQueuedOut = 0;
         private static long GlobalQueuedIn = 0;
@@ -468,7 +468,7 @@ namespace BuildSync.Core.Utils
 
                             try
                             {
-                                GlobalBandwidthStats.BytesIn(Work.Size);
+                                GlobalBandwidthStats.In(Work.Size);
 
                                 Stm.Stream.EndWrite(Result);
 
@@ -542,7 +542,7 @@ namespace BuildSync.Core.Utils
                         try
                         {
                             int BytesRead = Stm.Stream.EndRead(Result);
-                            GlobalBandwidthStats.BytesOut(BytesRead);
+                            GlobalBandwidthStats.Out(BytesRead);
 
                             if (BytesRead < Work.Size)
                             {

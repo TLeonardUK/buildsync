@@ -8,7 +8,7 @@ namespace BuildSync.Core.Utils
     /// <summary>
     /// 
     /// </summary>
-    public class BandwidthTracker
+    public class RateTracker
     {
         private object LockObject = new object();
 
@@ -90,7 +90,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="Sent"></param>
         /// <returns></returns>
-        public void BytesOut(long Bytes)
+        public void Out(long Bytes)
         {
             lock (LockObject)
             {
@@ -104,7 +104,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="Sent"></param>
         /// <returns></returns>
-        public void BytesIn(long Bytes)
+        public void In(long Bytes)
         {
             lock (LockObject)
             {
