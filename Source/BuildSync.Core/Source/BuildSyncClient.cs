@@ -1686,7 +1686,8 @@ namespace BuildSync.Core
                         {
                             if (!bSuccess)
                             {
-                                ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
+                                ManifestDownloadManager.MarkAllBlockFilesAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
+                                //ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
                                 Response.Data.SetNull();
                             }
 

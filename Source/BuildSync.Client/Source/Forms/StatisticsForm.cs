@@ -35,6 +35,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private bool IsForceClosing = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Name"></param>
         /// <param name="Max"></param>
         public int AddStatistic(Statistic stat)
@@ -226,10 +231,23 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        public void ForceClose()
+        {
+            IsForceClosing = true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void OnClosing(object sender, FormClosingEventArgs e)
         {
+            if (IsForceClosing)
+            {
+                return;
+            }
+
             Hide();
             e.Cancel = true;
         }

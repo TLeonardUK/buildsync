@@ -160,8 +160,6 @@ namespace BuildSync.Core.Utils
         /// <param name="DirPath"></param>
         public static void DeleteDirectory(string DirPath)
         {
-            File.SetAttributes(DirPath, FileAttributes.Normal);
-
             string[] Files = Directory.GetFiles(DirPath);
             string[] Dirs = Directory.GetDirectories(DirPath);
 
@@ -193,9 +191,16 @@ namespace BuildSync.Core.Utils
         /// <returns></returns>
         public static string NormalizePath(string path)
         {
-            return Path.GetFullPath(new Uri(path).LocalPath)
-                       .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                       .ToUpperInvariant();
+            try
+            {
+                return Path.GetFullPath(new Uri(path).LocalPath)
+                           .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                           .ToUpperInvariant();
+            }
+            catch (UriFormatException)
+            {
+                return path;
+            }
         }
 
         /// <summary>
@@ -205,13 +210,20 @@ namespace BuildSync.Core.Utils
         public static bool AnyRunningProcessesInDirectory(string DirPath)
         {
             DirPath = NormalizePath(DirPath);
-            foreach (Process proc in Process.GetProcesses())
+            Process[] procs = Process.GetProcesses();
+            foreach (Process proc in procs)
             {
-                string File = NormalizePath(proc.MainModule.FileName);
+                string ModuleName = WindowUtils.GetProcessName(proc.Id);
+                if (ModuleName == null)
+                {
+                    continue;
+                }
+
+                string File = NormalizePath(ModuleName);
                 if (File.ToLower().StartsWith(DirPath))
                 {
                     return true;
-                }
+                }             
             }
             return false;
         }

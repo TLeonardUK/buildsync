@@ -20,11 +20,24 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private bool IsForceClosing = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public PeersForm()
         {
             InitializeComponent();
         }
         
+        /// <summary>
+        /// 
+        /// </summary>
+        public void ForceClose()
+        {
+            IsForceClosing = true;
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -43,6 +56,22 @@ namespace BuildSync.Client.Forms
         private void OnClosed(object sender, FormClosedEventArgs e)
         {
 
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Closing(object sender, FormClosingEventArgs e)
+        {
+            if (IsForceClosing)
+            {
+                return;
+            }
+
+            Hide();
+            e.Cancel = true;
         }
 
         /// <summary>

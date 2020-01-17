@@ -46,6 +46,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private PeersForm PeersForm = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private DownloadListItem ContextMenuDownloadItem = null;
 
         #endregion
@@ -279,6 +284,22 @@ namespace BuildSync.Client.Forms
         private void QuitClicked(object sender, EventArgs e)
         {
             ForcedExit = true;
+
+            if (StatsForm != null)
+            {
+                StatsForm.ForceClose();
+            }
+
+            if (PeersForm != null)
+            {
+                PeersForm.ForceClose();
+            }
+
+            if (ConsoleOutputForm != null)
+            {
+                ConsoleOutputForm.ForceClose();
+            }
+
             Application.Exit();
         }
 
@@ -341,8 +362,18 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewPeersClicked(object sender, EventArgs e)
         {
-            PeersForm form = new PeersForm();
-            form.Show(this);
+            if (PeersForm != null)
+            {
+                if (!PeersForm.Visible)
+                {
+                    PeersForm.Show(this);
+                }
+            }
+            else
+            {
+                PeersForm = new PeersForm();
+                PeersForm.Show(this);
+            }
         }
 
         /// <summary>

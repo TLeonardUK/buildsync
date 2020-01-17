@@ -93,8 +93,8 @@
             this.Controls.Add(this.splitContainer1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.MaximizeBox = false;
-            this.MaximumSize = new System.Drawing.Size(700, 400);
             this.MinimizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(700, 400);
             this.Name = "StatisticsForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

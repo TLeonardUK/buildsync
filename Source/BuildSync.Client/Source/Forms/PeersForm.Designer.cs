@@ -38,9 +38,9 @@
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
+            this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // MainListView
@@ -102,12 +102,6 @@
             this.columnHeader2.Text = "Total Uploaded";
             this.columnHeader2.Width = 110;
             // 
-            // ListUpdateTimer
-            // 
-            this.ListUpdateTimer.Enabled = true;
-            this.ListUpdateTimer.Interval = 1000;
-            this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
-            // 
             // columnHeader3
             // 
             this.columnHeader3.Text = "Last Seen";
@@ -118,6 +112,12 @@
             this.UserImageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("UserImageList.ImageStream")));
             this.UserImageList.TransparentColor = System.Drawing.Color.Transparent;
             this.UserImageList.Images.SetKeyName(0, "appbar.user.png");
+            // 
+            // ListUpdateTimer
+            // 
+            this.ListUpdateTimer.Enabled = true;
+            this.ListUpdateTimer.Interval = 1000;
+            this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
             // 
             // PeersForm
             // 
@@ -131,6 +131,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Peer Explorer";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Closing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
             this.Shown += new System.EventHandler(this.OnShown);
             this.ResumeLayout(false);
