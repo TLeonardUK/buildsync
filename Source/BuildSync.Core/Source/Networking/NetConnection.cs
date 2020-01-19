@@ -102,7 +102,7 @@ namespace BuildSync.Core.Networking
             Name = @"IO\Total Downloaded (MB)";
             MaxLabel = "128 MB";
             MaxValue = 128 * 1024 * 1024;
-            DefaultShown = true;
+            DefaultShown = false;
 
             Series.YAxis.AutoAdjustMax = true;
             Series.YAxis.FormatMaxLabelAsSize = true;
@@ -236,7 +236,7 @@ namespace BuildSync.Core.Networking
 
         internal static ConcurrentBag<byte[]> MessageBuffers = new ConcurrentBag<byte[]>();
         internal static int MessageBufferCount = 0;
-        internal const int MaxMessageBuffers = 128;
+        internal const int MaxMessageBuffers = 64;
 
         private ulong MaxClientsExceededPurgeTime = 0;
 

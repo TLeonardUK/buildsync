@@ -180,7 +180,7 @@ namespace BuildSync.Client
 
                     OnStart();
 
-                    PollTimer = new System.Timers.Timer(1);
+                    PollTimer = new System.Timers.Timer(20);
                     PollTimer.Elapsed += (object sender, ElapsedEventArgs e) =>
                     {
                         if (Monitor.TryEnter(PollTimer))

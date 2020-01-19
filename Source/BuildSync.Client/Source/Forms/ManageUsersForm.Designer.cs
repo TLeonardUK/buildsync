@@ -31,8 +31,6 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManageUsersForm));
             this.label1 = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.closeButton = new System.Windows.Forms.Button();
             this.ButtonImageIndex = new System.Windows.Forms.ImageList(this.components);
             this.UserListView = new System.Windows.Forms.ListView();
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -61,29 +59,6 @@
             this.label1.TabIndex = 32;
             this.label1.Text = "Users";
             // 
-            // panel1
-            // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(9, 264);
-            this.panel1.Margin = new System.Windows.Forms.Padding(2);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(638, 1);
-            this.panel1.TabIndex = 31;
-            // 
-            // closeButton
-            // 
-            this.closeButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.closeButton.Location = new System.Drawing.Point(552, 275);
-            this.closeButton.Margin = new System.Windows.Forms.Padding(2);
-            this.closeButton.Name = "closeButton";
-            this.closeButton.Size = new System.Drawing.Size(95, 29);
-            this.closeButton.TabIndex = 30;
-            this.closeButton.Text = "Close";
-            this.closeButton.UseVisualStyleBackColor = true;
-            this.closeButton.Click += new System.EventHandler(this.CloseClicked);
-            // 
             // ButtonImageIndex
             // 
             this.ButtonImageIndex.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("ButtonImageIndex.ImageStream")));
@@ -107,7 +82,7 @@
             this.UserListView.LabelEdit = true;
             this.UserListView.Location = new System.Drawing.Point(0, 39);
             this.UserListView.Name = "UserListView";
-            this.UserListView.Size = new System.Drawing.Size(224, 209);
+            this.UserListView.Size = new System.Drawing.Size(230, 270);
             this.UserListView.SmallImageList = this.UserImageList;
             this.UserListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.UserListView.TabIndex = 33;
@@ -140,9 +115,9 @@
             this.PermissionListView.GridLines = true;
             this.PermissionListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.PermissionListView.HideSelection = false;
-            this.PermissionListView.Location = new System.Drawing.Point(0, 39);
+            this.PermissionListView.Location = new System.Drawing.Point(2, 39);
             this.PermissionListView.Name = "PermissionListView";
-            this.PermissionListView.Size = new System.Drawing.Size(407, 209);
+            this.PermissionListView.Size = new System.Drawing.Size(409, 270);
             this.PermissionListView.TabIndex = 36;
             this.PermissionListView.UseCompatibleStateImageBehavior = false;
             this.PermissionListView.View = System.Windows.Forms.View.Details;
@@ -172,7 +147,7 @@
             this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.splitContainer1.Location = new System.Drawing.Point(9, 2);
+            this.splitContainer1.Location = new System.Drawing.Point(5, 2);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -188,8 +163,8 @@
             this.splitContainer1.Panel2.Controls.Add(this.PermissionListView);
             this.splitContainer1.Panel2.Controls.Add(this.label2);
             this.splitContainer1.Panel2.Controls.Add(this.RemovePermissionButton);
-            this.splitContainer1.Size = new System.Drawing.Size(637, 248);
-            this.splitContainer1.SplitterDistance = 226;
+            this.splitContainer1.Size = new System.Drawing.Size(649, 309);
+            this.splitContainer1.SplitterDistance = 230;
             this.splitContainer1.TabIndex = 40;
             // 
             // RemoveUserButton
@@ -223,7 +198,7 @@
             this.AddPermissionButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.AddPermissionButton.ImageIndex = 0;
             this.AddPermissionButton.ImageList = this.ButtonImageIndex;
-            this.AddPermissionButton.Location = new System.Drawing.Point(342, 5);
+            this.AddPermissionButton.Location = new System.Drawing.Point(346, 5);
             this.AddPermissionButton.Margin = new System.Windows.Forms.Padding(2);
             this.AddPermissionButton.Name = "AddPermissionButton";
             this.AddPermissionButton.Size = new System.Drawing.Size(30, 29);
@@ -236,7 +211,7 @@
             this.RemovePermissionButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.RemovePermissionButton.ImageIndex = 1;
             this.RemovePermissionButton.ImageList = this.ButtonImageIndex;
-            this.RemovePermissionButton.Location = new System.Drawing.Point(377, 5);
+            this.RemovePermissionButton.Location = new System.Drawing.Point(381, 5);
             this.RemovePermissionButton.Margin = new System.Windows.Forms.Padding(2);
             this.RemovePermissionButton.Name = "RemovePermissionButton";
             this.RemovePermissionButton.Size = new System.Drawing.Size(30, 29);
@@ -250,9 +225,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(658, 315);
             this.Controls.Add(this.splitContainer1);
-            this.Controls.Add(this.panel1);
-            this.Controls.Add(this.closeButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.HideOnClose = true;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "ManageUsersForm";
@@ -274,8 +249,6 @@
         #endregion
 
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Button closeButton;
         private System.Windows.Forms.Button AddUserButton;
         private System.Windows.Forms.Button RemoveUserButton;
         private System.Windows.Forms.ListView UserListView;

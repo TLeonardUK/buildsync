@@ -24,6 +24,7 @@ namespace BuildSync.Core.Utils
 
         public void AddSample(float Value)
         {
+            Series.MinimumInterval = 1.0f / 2.0f;
             Series.AddDataPoint(Environment.TickCount / 1000.0f, Value);
         }
 

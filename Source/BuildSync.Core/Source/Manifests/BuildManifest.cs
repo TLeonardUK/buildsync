@@ -402,15 +402,18 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         /// <param name="Index"></param>
         /// <returns></returns>
-        public byte[] GetBlockData(int Index, string RootPath, AsyncIOQueue IOQueue)
+        public void GetBlockData(int Index, string RootPath, AsyncIOQueue IOQueue, byte[] Data, out long DataLength)
         {
+            DataLength = 0;
+
             if (Index < 0 || Index >= BlockCount)
             {
                 throw new ArgumentOutOfRangeException("Index", "Block index out of range.");
             }
 
             BuildManifestBlockInfo Info = BlockInfo[Index];
-            byte[] Data = new byte[Info.TotalSize];
+            Debug.Assert(Data.Length >= Info.TotalSize);
+            DataLength = Info.TotalSize;
 
             ManualResetEvent CompleteEvent = new ManualResetEvent(false);
             int QueuedReads = Info.SubBlocks.Count;
@@ -433,8 +436,6 @@ namespace BuildSync.Core.Manifests
             }
 
             CompleteEvent.WaitOne();
-
-            return Data;
         }
 
         /// <summary>
@@ -488,13 +489,13 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public List<string> Validate(string RootPath, RateTracker Tracker, BuildManfiestValidateProgressCallbackHandler Callback = null)
+        public List<int> Validate(string RootPath, RateTracker Tracker, AsyncIOQueue IOQueue, BuildManfiestValidateProgressCallbackHandler Callback = null)
         {
-            List<string> FailedFiles = new List<string>();
+            List<int> FailedBlocks = new List<int>();
 
             int TaskCount = Environment.ProcessorCount;
             Task[] FileTasks = new Task[TaskCount];
-            int FileCounter = 0;
+            int BlockCounter = 0;
 
             long BytesValidated = 0;
 
@@ -502,54 +503,43 @@ namespace BuildSync.Core.Manifests
             {
                 FileTasks[i] = (Task.Run(() =>
                 {
+                    byte[] Buffer = new byte[BlockSize];
+
                     while (true)
                     {
-                        int FileIndex = Interlocked.Increment(ref FileCounter) - 1;
-                        if (FileIndex >= Files.Count)
+                        int BlockIndex = Interlocked.Increment(ref BlockCounter) - 1;
+                        if (BlockIndex >= BlockCount)
                         {
                             break;
                         }
 
-                        BuildManifestFileInfo FileInfo = Files[FileIndex];
+                        BuildManifestBlockInfo BInfo = BlockInfo[BlockIndex];
 
-                        string FilePath = Path.Combine(RootPath, FileInfo.Path);
+                        long BufferLength = 0;
+                        GetBlockData(BlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
 
-                        if (!File.Exists(FilePath))
+                        if (BlockChecksums[BlockIndex] != Crc32.Compute(Buffer, (int)BufferLength))
                         {
-                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File '" + FilePath + "' does not exist in folder, file system may have been modified externally.");
+                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block {0} failed checksum, block contains following sub-blocks:");
 
-                            lock (FailedFiles)
+                            for (int SubBlock = 0; SubBlock < BInfo.SubBlocks.Count; SubBlock++)
                             {
-                                FailedFiles.Add(FileInfo.Path);
+                                BuildManifestSubBlockInfo SubBInfo = BInfo.SubBlocks[SubBlock];
+                                Logger.Log(LogLevel.Warning, LogCategory.Manifest, "\tfile={0} offset={1} size={2}", SubBInfo.File.Path, SubBInfo.FileOffset, SubBInfo.FileSize);
+                            }
+
+                            lock (FailedBlocks)
+                            {
+                                FailedBlocks.Add(BlockIndex);
                             }
                         }
 
-                        try
+                        Interlocked.Add(ref BytesValidated, BInfo.TotalSize);
+
+                        float Progress = (float)BytesValidated / (float)TotalSize;
+                        if (Callback != null)
                         {
-                            string Checksum = FileUtils.GetChecksum(FilePath, Tracker, (long BytesProcessed) =>
-                            {
-                                Interlocked.Add(ref BytesValidated, BytesProcessed);
-
-                                float Progress = (float)BytesValidated / (float)TotalSize;
-                                if (Callback != null)
-                                {
-                                    Callback?.Invoke(Progress);
-                                }
-                            });
-
-                            if (FileInfo.Checksum != Checksum)
-                            {
-                                Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File '" + FilePath + "' has an invalid checksum (got {0} expected {1}), file system may have been modified externally.", Checksum, FileInfo.Checksum);
-
-                                lock (FailedFiles)
-                                {
-                                    FailedFiles.Add(FileInfo.Path);
-                                }
-                            }
-                        }
-                        catch (Exception Ex)
-                        {
-                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File '" + FilePath + "' failed validation as checksuming caused exception: ", Ex.Message);
+                            Callback?.Invoke(Progress);
                         }
                     }
                 }));
@@ -557,7 +547,7 @@ namespace BuildSync.Core.Manifests
 
             Task.WaitAll(FileTasks);
 
-            return FailedFiles;
+            return FailedBlocks;
         }
 
         /// <summary>
@@ -683,6 +673,8 @@ namespace BuildSync.Core.Manifests
             {
                 ChecksumTasks.Add(Task.Run(() =>
                 {
+                    byte[] Buffer = new byte[BlockSize];
+
                     while (true)
                     {
                         int CalculateBlockIndex = Interlocked.Increment(ref BlockCounter) - 1;
@@ -691,9 +683,10 @@ namespace BuildSync.Core.Manifests
                             break;
                         }
 
-                        byte[] Data = Manifest.GetBlockData(CalculateBlockIndex, RootPath, IOQueue);
+                        long BufferLength = 0;
+                        Manifest.GetBlockData(CalculateBlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
 
-                        Manifest.BlockChecksums[CalculateBlockIndex] = Crc32.Compute(Data);
+                        Manifest.BlockChecksums[CalculateBlockIndex] = Crc32.Compute(Buffer, (int)BufferLength);
 
                         if (Callback != null)
                         {

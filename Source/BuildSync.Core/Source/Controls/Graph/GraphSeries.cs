@@ -51,6 +51,11 @@ namespace BuildSync.Core.Controls.Graph
         public bool SlidingWindow { get; set; } = true;
 
         /// <summary>
+        ///     Gets or sets the minimal X axis between samples recorded on the graph. 0 will record on every call to AddDataPoint
+        /// </summary>
+        public float MinimumInterval { get; set; } = 0;
+
+        /// <summary>
         ///     Gets the list of data points in the series. 
         /// </summary>
         /// <remarks>
@@ -66,18 +71,32 @@ namespace BuildSync.Core.Controls.Graph
         /// <param name="y">Data points value on the y-axis.</param>
         public void AddDataPoint(float x, float y)
         {
+            if (MinimumInterval != 0 && this.Data.Count > 0)
+            {
+                float Elapsed = (x - this.Data[this.Data.Count - 1].X);
+                if (Elapsed < MinimumInterval)
+                {
+                    return;
+                }
+            }
+
             GraphDataPoint newPoint = new GraphDataPoint() { X = x, Y = y };
             this.Data.Add(newPoint);
 
             // Adjust Y axis if value added is over current max.
             if (YAxis.AutoAdjustMax)
             {
+                float OriginalMax = YAxis.Max;
+
                 YAxis.Max = Math.Max(y, YAxis.Max);
                 YAxis.GridInterval = YAxis.Max / 10.0f;
 
-                if (YAxis.FormatMaxLabelAsSize)
+                if (YAxis.Max != OriginalMax)
                 {
-                    YAxis.MaxLabel = Utils.StringUtils.FormatAsSize((long)YAxis.Max); // TODO: add some formatting to this.
+                    if (YAxis.FormatMaxLabelAsSize)
+                    {
+                        YAxis.MaxLabel = Utils.StringUtils.FormatAsSize((long)YAxis.Max); // TODO: add some formatting to this.
+                    }
                 }
             }
 
@@ -112,7 +131,7 @@ namespace BuildSync.Core.Controls.Graph
             // Always sort the resulting data along the X-axis, it makes drawing simpler.
             // If this becomes an issue, do sorting at the insertion point rather than sorting
             // entire list.
-            this.Data.Sort((c1, c2) => Math.Sign(c1.X - c2.X));
+//            this.Data.Sort((c1, c2) => Math.Sign(c1.X - c2.X));
         }
 
         /// <summary>

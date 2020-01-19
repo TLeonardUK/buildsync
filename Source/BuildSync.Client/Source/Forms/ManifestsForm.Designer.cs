@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManifestsForm));
             this.mainListView = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -67,7 +68,7 @@
             // columnHeader1
             // 
             this.columnHeader1.Text = "Id";
-            this.columnHeader1.Width = 220;
+            this.columnHeader1.Width = 150;
             // 
             // columnHeader2
             // 
@@ -77,7 +78,7 @@
             // columnHeader5
             // 
             this.columnHeader5.Text = "Local Path";
-            this.columnHeader5.Width = 300;
+            this.columnHeader5.Width = 200;
             // 
             // columnHeader3
             // 
@@ -117,6 +118,8 @@
             this.ClientSize = new System.Drawing.Size(1068, 211);
             this.Controls.Add(this.mainListView);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.HideOnClose = true;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "ManifestsForm";

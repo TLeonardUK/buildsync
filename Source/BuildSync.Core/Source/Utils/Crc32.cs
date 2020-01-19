@@ -134,7 +134,7 @@ namespace BuildSync.Core.Utils
         public byte[] ComputeLargeStreamHash(Stream Stream, RateTracker Tracker, ChecksumProgressEventHandler Callback)
         {
             // Buffer size optimized for reading massive files.
-            const int BufferSize = 4 * 1024 * 1024;
+            const int BufferSize = 256 * 1024;
             byte[] buffer = MemoryPool.AllocBuffer(BufferSize);
             int bytesRead;
             do

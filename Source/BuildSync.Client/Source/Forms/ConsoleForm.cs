@@ -9,13 +9,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BuildSync.Core.Utils;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
     /// 
     /// </summary>
-    public partial class ConsoleForm : Form
+    public partial class ConsoleForm : DockContent
     {
         /// <summary>
         /// 
@@ -61,22 +62,9 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        private bool IsForceClosing = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
         public ConsoleForm()
         {
             InitializeComponent();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void ForceClose()
-        {
-            IsForceClosing = true;
         }
 
         /// <summary>
@@ -86,14 +74,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void Closing(object sender, FormClosingEventArgs e)
         {
-            if (IsForceClosing)
-            {
-                return;
-            }
-
-            Hide();
             Logger.UnregisterSink(Sink);
-            e.Cancel = true;
         }
 
         /// <summary>

@@ -11,13 +11,14 @@ using System.Windows.Forms;
 using BuildSync.Core.Controls.Graph;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Utils;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
     /// 
     /// </summary>
-    public partial class StatisticsForm : Form
+    public partial class StatisticsForm : DockContent
     {
         /// <summary>
         /// 
@@ -31,11 +32,6 @@ namespace BuildSync.Client.Forms
         private int UploadSpeedIndex = 0;
         private int DiskWriteSpeedIndex = 0;
         private int DiskReadSpeedIndex = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool IsForceClosing = false;
 
         /// <summary>
         /// 
@@ -231,25 +227,10 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        public void ForceClose()
-        {
-            IsForceClosing = true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void OnClosing(object sender, FormClosingEventArgs e)
         {
-            if (IsForceClosing)
-            {
-                return;
-            }
-
-            Hide();
-            e.Cancel = true;
         }
 
         /// <summary>

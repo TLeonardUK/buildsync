@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConsoleForm));
             this.logTextBox = new System.Windows.Forms.TextBox();
             this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
@@ -59,6 +60,8 @@
             this.ClientSize = new System.Drawing.Size(721, 191);
             this.Controls.Add(this.logTextBox);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.HideOnClose = true;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "ConsoleForm";
             this.ShowIcon = false;

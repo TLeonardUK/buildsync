@@ -125,6 +125,8 @@
             this.ClientSize = new System.Drawing.Size(895, 204);
             this.Controls.Add(this.MainListView);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.HideOnClose = true;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "PeersForm";

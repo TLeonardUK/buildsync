@@ -780,9 +780,9 @@ namespace BuildSync.Core
 
             ListenConnection.OnClientConnect += PeerConnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 164);
-            MemoryPool.PreallocateBuffers(4 * 1024 * 1024, 8); // CRC'ing buffers.
-            NetConnection.PreallocateBuffers(32);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 64);
+            MemoryPool.PreallocateBuffers(256 * 1024, 16);
+            NetConnection.PreallocateBuffers(64);
         }
 
         /// <summary>

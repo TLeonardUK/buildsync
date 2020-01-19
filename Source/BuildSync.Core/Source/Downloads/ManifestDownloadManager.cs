@@ -821,10 +821,10 @@ namespace BuildSync.Core.Downloads
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
-                                        List<string> FailedFiles = State.Manifest.Validate(State.LocalFolder, AsyncIOQueue.GlobalBandwidthStats, (float Progress) => {
+                                        List<int> FailedBlocks = State.Manifest.Validate(State.LocalFolder, AsyncIOQueue.GlobalBandwidthStats, IOQueue, (float Progress) => {
                                             State.ValidateProgress = Progress; 
                                         });
-                                        if (FailedFiles.Count == 0)
+                                        if (FailedBlocks.Count == 0)
                                         {
                                             if (State.InstallOnComplete)
                                             {
@@ -839,9 +839,10 @@ namespace BuildSync.Core.Downloads
                                         }
                                         else
                                         {
-                                            foreach (string File in FailedFiles)
+                                            foreach (int Block in FailedBlocks)
                                             {
-                                                MarkFileAsUnavailable(State.ManifestId, File);
+                                                MarkBlockAsUnavailable(State.ManifestId, Block);
+                                                //MarkFileAsUnavailable(State.ManifestId, File);
                                             }
 
                                             ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);

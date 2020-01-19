@@ -8,13 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BuildSync.Core.Downloads;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Controls
 {
     /// <summary>
     /// 
     /// </summary>
-    public partial class DownloadList : UserControl
+    public partial class DownloadList : DockContent
     {
         /// <summary>
         /// 
@@ -137,6 +138,19 @@ namespace BuildSync.Client.Controls
             foreach (DownloadListItem Ctl in ExistingItems)
             {
                 Ctl.RefreshState();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MouseClicked(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                //Program.AppForm.ShowDownloadListContextMenu();
             }
         }
     }

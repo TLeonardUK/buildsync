@@ -103,7 +103,6 @@ namespace BuildSync.Core
             ListenConnection.OnClientConnect += ClientConnected;
 
             MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 5);
-            MemoryPool.PreallocateBuffers(4 * 1024 * 1024, 8); // CRC'ing buffers.
             NetConnection.PreallocateBuffers(48);
         }
 

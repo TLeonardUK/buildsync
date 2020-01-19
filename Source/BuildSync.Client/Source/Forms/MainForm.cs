@@ -18,6 +18,7 @@ using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Users;
 using BuildSync.Client.Controls;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
@@ -51,7 +52,27 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private ManifestsForm ManifestsForm = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ManageUsersForm ManageUsersForm = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ManageBuildsForm ManageBuildsForm = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private DownloadListItem ContextMenuDownloadItem = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private DownloadList MainDownloadList = null;
 
         #endregion
         #region Methods
@@ -80,6 +101,29 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void FormShown(object sender, EventArgs e)
         {
+            DockPanel.Theme = new VS2015LightTheme();
+
+            MainDownloadList = new DownloadList();
+            MainDownloadList.Show(DockPanel, DockState.Document);
+            MainDownloadList.ContextMenuStrip = downloadListContextMenu;
+
+            //ManifestsForm = new ManifestsForm();
+            //ManifestsForm.Show(DockPanel, DockState.DockBottomAutoHide);
+            //ManifestsForm.Hide();
+
+            StatsForm = new StatisticsForm();
+            StatsForm.Show(DockPanel, DockState.Document);
+
+            MainDownloadList.Activate();
+
+            //ConsoleOutputForm = new ConsoleForm();
+            //ConsoleOutputForm.Show(DockPanel, DockState.DockBottomAutoHide);
+            //ConsoleOutputForm.Hide();
+
+            //PeersForm = new PeersForm();
+            //PeersForm.Show(DockPanel, DockState.DockBottomAutoHide);
+            //PeersForm.Hide();
+
             RefreshState();
 
             if (Program.Settings.FirstRun)
@@ -121,7 +165,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ManageBuildsClicked(object sender, EventArgs e)
         {
-            (new ManageBuildsForm()).ShowDialog(this);
+            if (ManageBuildsForm == null)
+            {
+                ManageBuildsForm = new ManageBuildsForm();
+            }
+            ManageBuildsForm.Show(DockPanel, DockState.DockRight);
         }
 
         /// <summary>
@@ -263,7 +311,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ManageUsersClicked(object sender, EventArgs e)
         {
-            (new ManageUsersForm()).ShowDialog(this);
+            if (ManageUsersForm == null)
+            {
+                ManageUsersForm = new ManageUsersForm();
+            }
+            ManageUsersForm.Show(DockPanel, DockState.Document);
         }
 
         /// <summary>
@@ -285,21 +337,6 @@ namespace BuildSync.Client.Forms
         {
             ForcedExit = true;
 
-            if (StatsForm != null)
-            {
-                StatsForm.ForceClose();
-            }
-
-            if (PeersForm != null)
-            {
-                PeersForm.ForceClose();
-            }
-
-            if (ConsoleOutputForm != null)
-            {
-                ConsoleOutputForm.ForceClose();
-            }
-
             Application.Exit();
         }
 
@@ -320,18 +357,21 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewConsoleClicked(object sender, EventArgs e)
         {
-            if (ConsoleOutputForm != null)
-            {
-                if (!ConsoleOutputForm.Visible)
-                {
-                    ConsoleOutputForm.Show(this);
-                }
-            }
-            else
+            if (ConsoleOutputForm == null)
             {
                 ConsoleOutputForm = new ConsoleForm();
-                ConsoleOutputForm.Show(this);
+                ConsoleOutputForm.Show(DockPanel, DockState.DockBottom);
             }
+
+            ConsoleOutputForm.Show();
+            if (ConsoleOutputForm.DockState == DockState.DockLeftAutoHide ||
+                ConsoleOutputForm.DockState == DockState.DockRightAutoHide ||
+                ConsoleOutputForm.DockState == DockState.DockTopAutoHide ||
+                ConsoleOutputForm.DockState == DockState.DockBottomAutoHide)
+            {
+                DockPanel.ActiveAutoHideContent = ConsoleOutputForm;
+            }
+            ConsoleOutputForm.Activate();
         }
 
         /// <summary>
@@ -341,18 +381,15 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void StatisticsClicked(object sender, EventArgs e)
         {
-            if (StatsForm != null)
+            StatsForm.Show();
+            if (StatsForm.DockState == DockState.DockLeftAutoHide ||
+                StatsForm.DockState == DockState.DockRightAutoHide ||
+                StatsForm.DockState == DockState.DockTopAutoHide ||
+                StatsForm.DockState == DockState.DockBottomAutoHide)
             {
-                if (!StatsForm.Visible)
-                {
-                    StatsForm.Show(this);
-                }
+                DockPanel.ActiveAutoHideContent = StatsForm;
             }
-            else
-            {
-                StatsForm = new StatisticsForm();
-                StatsForm.Show(this);
-            }
+            StatsForm.Activate();
         }
 
         /// <summary>
@@ -362,18 +399,21 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewPeersClicked(object sender, EventArgs e)
         {
-            if (PeersForm != null)
-            {
-                if (!PeersForm.Visible)
-                {
-                    PeersForm.Show(this);
-                }
-            }
-            else
+            if (PeersForm == null)
             {
                 PeersForm = new PeersForm();
-                PeersForm.Show(this);
+                PeersForm.Show(DockPanel, DockState.DockBottom);
             }
+
+            PeersForm.Show();
+            if (PeersForm.DockState == DockState.DockLeftAutoHide ||
+                PeersForm.DockState == DockState.DockRightAutoHide ||
+                PeersForm.DockState == DockState.DockTopAutoHide ||
+                PeersForm.DockState == DockState.DockBottomAutoHide)
+            {
+                DockPanel.ActiveAutoHideContent = PeersForm;
+            }
+            PeersForm.Activate();
         }
 
         /// <summary>
@@ -383,8 +423,21 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewManifestsClicked(object sender, EventArgs e)
         {
-            ManifestsForm form = new ManifestsForm();
-            form.Show(this);
+            if (ManifestsForm == null)
+            {
+                ManifestsForm = new ManifestsForm();
+                ManifestsForm.Show(DockPanel, DockState.DockBottom);
+            }
+
+            ManifestsForm.Show();
+            if (ManifestsForm.DockState == DockState.DockLeftAutoHide ||
+                ManifestsForm.DockState == DockState.DockRightAutoHide ||
+                ManifestsForm.DockState == DockState.DockTopAutoHide ||
+                ManifestsForm.DockState == DockState.DockBottomAutoHide)
+            {
+                DockPanel.ActiveAutoHideContent = ManifestsForm;
+            }
+            ManifestsForm.Activate();
         }
 
         /// <summary>
@@ -530,7 +583,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void DownloadListContextMenuShowing(object sender, CancelEventArgs e)
         {
-            ContextMenuDownloadItem = mainDownloadList.SelectedItem;
+            ContextMenuDownloadItem = MainDownloadList.SelectedItem;
             if (ContextMenuDownloadItem != null)
             {
                 ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);

@@ -377,7 +377,11 @@ namespace BuildSync.Client.Controls
         {
             if (Selected)
             {
-                ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, Color.DarkBlue, ButtonBorderStyle.Solid);
+                ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, SystemColors.ActiveBorder, ButtonBorderStyle.Solid);
+            }
+            else
+            {
+                ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, SystemColors.ControlLight, ButtonBorderStyle.Solid);
             }
         }
     }

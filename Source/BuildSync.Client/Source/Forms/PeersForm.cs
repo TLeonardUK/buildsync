@@ -9,19 +9,15 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using BuildSync.Core;
 using BuildSync.Core.Utils;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
     /// 
     /// </summary>
-    public partial class PeersForm : Form
+    public partial class PeersForm : DockContent
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool IsForceClosing = false;
-
         /// <summary>
         /// 
         /// </summary>
@@ -30,14 +26,6 @@ namespace BuildSync.Client.Forms
             InitializeComponent();
         }
         
-        /// <summary>
-        /// 
-        /// </summary>
-        public void ForceClose()
-        {
-            IsForceClosing = true;
-        }
-
         /// <summary>
         /// 
         /// </summary>
@@ -65,13 +53,6 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void Closing(object sender, FormClosingEventArgs e)
         {
-            if (IsForceClosing)
-            {
-                return;
-            }
-
-            Hide();
-            e.Cancel = true;
         }
 
         /// <summary>

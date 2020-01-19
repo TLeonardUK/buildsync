@@ -102,7 +102,7 @@ namespace BuildSync.Core.Utils
             DeleteDir
         }
 
-        private struct Task
+        private class Task
         {
             public TaskType Type;
             public string Path;
@@ -133,6 +133,7 @@ namespace BuildSync.Core.Utils
         private const int StreamMaxConcurrentOps = 8;
 
         private List<ActiveStream> ActiveStreams = new List<ActiveStream>();
+        private Dictionary<string, ActiveStream> ActiveStreamsByPath = new Dictionary<string, ActiveStream>();
 
         public static RateTracker GlobalBandwidthStats = new RateTracker();
 
@@ -284,29 +285,31 @@ namespace BuildSync.Core.Utils
         /// <returns></returns>
         private ActiveStream GetActiveStream(string Path, bool AllowPermissionFixes = true, bool RequireWrite = true)
         {
+            ulong CurrentTicks = TimeUtils.Ticks;
+
             lock (ActiveStreams)
             {
-                foreach (ActiveStream Stm in ActiveStreams)
+                ActiveStream ExistingStream = null;
+                if (ActiveStreamsByPath.ContainsKey(Path))
                 {
-                    if (Stm.Path == Path)
-                    {
-                        // If we need to write to this file and we are only open for read, drain event queue and reopen.
-                        if (!Stm.CanWrite && RequireWrite)
-                        {
-                            while (Stm.ActiveOperations > 0)
-                            {
-                                Thread.Sleep(0);
-                            }
+                    ExistingStream = ActiveStreamsByPath[Path];
 
-                            Stm.Stream.Close();
-                            ActiveStreams.Remove(Stm);
-                            break;
-                        }
-                        else
+                    // If we need to write to this file and we are only open for read, drain event queue and reopen.
+                    if (!ExistingStream.CanWrite && RequireWrite)
+                    {
+                        while (ExistingStream.ActiveOperations > 0)
                         {
-                            Stm.LastAccessed = TimeUtils.Ticks;
-                            return Stm;
+                            Thread.Sleep(10);
                         }
+
+                        ExistingStream.Stream.Close();
+                        ActiveStreams.Remove(ExistingStream);
+                        ActiveStreamsByPath.Remove(ExistingStream.Path);
+                    }
+                    else
+                    {
+                        ExistingStream.LastAccessed = CurrentTicks;
+                        return ExistingStream;
                     }
                 }
 
@@ -338,6 +341,7 @@ namespace BuildSync.Core.Utils
                         OldestStream.Stream.Close();
 
                         ActiveStreams.Remove(OldestStream);
+                        ActiveStreamsByPath.Remove(OldestStream.Path);
                     }
                 }
 
@@ -346,10 +350,11 @@ namespace BuildSync.Core.Utils
                     Logger.Log(LogLevel.Verbose, LogCategory.IO, "Opening stream for async queue (can write = {0}): {1}", RequireWrite, Path);
 
                     ActiveStream NewStm = new ActiveStream();
-                    NewStm.LastAccessed = TimeUtils.Ticks;
+                    NewStm.LastAccessed = CurrentTicks;
                     NewStm.Path = Path;
                     NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous/* | FileOptions.WriteThrough*/);
                     ActiveStreams.Add(NewStm);
+                    ActiveStreamsByPath.Add(NewStm.Path, NewStm);
 
                     return NewStm;
                 }
@@ -372,13 +377,15 @@ namespace BuildSync.Core.Utils
         /// </summary>
         private void CloseOldStreams()
         {
+            ulong CurrentTicks = TimeUtils.Ticks;
+
             lock (ActiveStreams)
             {
                 for (int i = 0; i < ActiveStreams.Count; i++)
                 {
                     ActiveStream Stm = ActiveStreams[i];
 
-                    ulong Elapsed = TimeUtils.Ticks - Stm.LastAccessed;
+                    ulong Elapsed = CurrentTicks - Stm.LastAccessed;
                     if (Elapsed > MaxStreamAge && Stm.ActiveOperations == 0)
                     {
                         Logger.Log(LogLevel.Verbose, LogCategory.IO, "Closing stream for async queue: {0}", Stm.Path);
@@ -386,6 +393,7 @@ namespace BuildSync.Core.Utils
                         Stm.Stream.Close();
 
                         ActiveStreams.RemoveAt(i);
+                        ActiveStreamsByPath.Remove(Stm.Path);
                         i--;
                         continue;
                     }
@@ -415,6 +423,7 @@ namespace BuildSync.Core.Utils
                             Stm.Stream.Close();
 
                             ActiveStreams.RemoveAt(i);
+                            ActiveStreamsByPath.Remove(Stm.Path);
                             i--;
                             continue;
                         }

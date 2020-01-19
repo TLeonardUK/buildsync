@@ -11,13 +11,14 @@ using BuildSync.Client;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
     /// 
     /// </summary>
-    public partial class ManifestsForm : Form
+    public partial class ManifestsForm : DockContent
     {
         /// <summary>
         /// 

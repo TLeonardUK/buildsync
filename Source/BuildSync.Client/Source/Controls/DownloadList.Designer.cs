@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DownloadList));
             this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
@@ -41,10 +42,17 @@
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.AutoScroll = true;
-            this.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.Margin = new System.Windows.Forms.Padding(13, 13, 13, 13);
+            this.BackColor = System.Drawing.SystemColors.Control;
+            this.ClientSize = new System.Drawing.Size(517, 135);
+            this.CloseButton = false;
+            this.CloseButtonVisible = false;
+            this.HideOnClose = true;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Margin = new System.Windows.Forms.Padding(13);
             this.Name = "DownloadList";
-            this.Size = new System.Drawing.Size(533, 174);
+            this.ShowIcon = false;
+            this.Text = "Downloads";
+            this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MouseClicked);
             this.ResumeLayout(false);
 
         }

@@ -8,10 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BuildSync.Core.Users;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
-    public partial class ManageUsersForm : Form
+    public partial class ManageUsersForm : DockContent
     {
         private User SelectedUser
         {
