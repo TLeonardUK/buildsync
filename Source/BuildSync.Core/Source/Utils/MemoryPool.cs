@@ -14,6 +14,7 @@ namespace BuildSync.Core.Utils
         {
             public int Size;
             public List<byte[]> Buffers = new List<byte[]>();
+            public int TotalAllocated = 0;
         }
 
         private static List<Bucket> Buckets = new List<Bucket>();
@@ -33,6 +34,7 @@ namespace BuildSync.Core.Utils
                             {
                                 byte[] Result = new byte[bucket.Size];
                                 bucket.Buffers.Add(Result);
+                                bucket.TotalAllocated++;
                                 Interlocked.Add(ref MemoryAllocated, bucket.Size);
                             }
 
@@ -65,7 +67,9 @@ namespace BuildSync.Core.Utils
                             else
                             {
                                 byte[] Result = new byte[bucket.Size];
+                                bucket.TotalAllocated++;
                                 Interlocked.Add(ref MemoryAllocated, bucket.Size);
+
                                 return Result;
                             }
                         }
@@ -91,6 +95,18 @@ namespace BuildSync.Core.Utils
                 }
 
                 Debug.Assert(false);
+            }
+        }
+
+        public static void PrintStatus()
+        {
+            Console.WriteLine("======= MEMORY POOL ========");
+            lock (Buckets)
+            {
+                foreach (Bucket bucket in Buckets)
+                {
+                    Console.WriteLine("Size={0} Count={1} Size={2}", StringUtils.FormatAsSize(bucket.Size), bucket.TotalAllocated, StringUtils.FormatAsSize(bucket.Size * bucket.TotalAllocated));
+                }
             }
         }
     }

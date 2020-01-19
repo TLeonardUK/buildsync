@@ -218,7 +218,11 @@ namespace BuildSync.Core.Utils
 
                 if (!RunTask(NewTask))
                 {
-                    TaskQueue.Enqueue(NewTask);
+                    lock (WakeObject)
+                    {
+                        TaskQueue.Enqueue(NewTask);
+                        Monitor.Wait(WakeObject, 1000);
+                    }
                 }
 
                 Interlocked.Decrement(ref ActiveTasks);
@@ -492,6 +496,8 @@ namespace BuildSync.Core.Utils
                             {
                                 Interlocked.Add(ref GlobalQueuedIn, -Work.Size);
                                 Interlocked.Decrement(ref Stm.ActiveOperations);
+
+                                WakeThread();
                             }
 
                         }, null);
@@ -571,6 +577,8 @@ namespace BuildSync.Core.Utils
                         {
                             Interlocked.Add(ref GlobalQueuedOut, -Work.Size);
                             Interlocked.Decrement(ref Stm.ActiveOperations);
+
+                            WakeThread();
                         }
 
                     }, null);
@@ -582,6 +590,8 @@ namespace BuildSync.Core.Utils
                     Work.Callback?.Invoke(false);
                     Interlocked.Add(ref GlobalQueuedOut, -Work.Size);
                     Interlocked.Decrement(ref Stm.ActiveOperations);
+
+                    WakeThread();
                 }
             }
         }
