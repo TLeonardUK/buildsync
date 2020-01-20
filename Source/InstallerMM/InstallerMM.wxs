@@ -3,7 +3,7 @@
   <?define ComponentRules="OneToOne"?>
   <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
   <?define SourceDir="..\..\Build\Deploy"?>
-  <Module Id="BuildSync" Language="1033" Version="1.0.0.183">
+  <Module Id="BuildSync" Language="1033" Version="1.0.0.185">
     <Package Id="2bfad680-e708-481c-9cd4-f285482e7ace" Manufacturer="Tim Leonard" InstallerVersion="200" Description="Tool for distributing application builds" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" />
