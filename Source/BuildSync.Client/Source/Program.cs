@@ -579,6 +579,9 @@ namespace BuildSync.Client
 
                     Record.PeakRateIn = Math.Max(Record.PeakRateIn, Record.AverageRateIn);
                     Record.PeakRateOut = Math.Max(Record.PeakRateOut, Record.AverageRateOut);
+
+                    Record.TargetInFlightData = Peer.GetMaxInFlightData(BuildSyncClient.TargetMillisecondsOfDataInFlight);
+                    Record.CurrentInFlightData = Record.TargetInFlightData - Peer.GetAvailableInFlightData(BuildSyncClient.TargetMillisecondsOfDataInFlight);
                 }
             }
         }

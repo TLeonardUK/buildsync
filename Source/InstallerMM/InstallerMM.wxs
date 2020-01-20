@@ -3,7 +3,7 @@
   <?define ComponentRules="OneToOne"?>
   <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
   <?define SourceDir="..\..\Build\Deploy"?>
-  <Module Id="BuildSync" Language="1033" Version="1.0.0.82">
+  <Module Id="BuildSync" Language="1033" Version="1.0.0.183">
     <Package Id="2bfad680-e708-481c-9cd4-f285482e7ace" Manufacturer="Tim Leonard" InstallerVersion="200" Description="Tool for distributing application builds" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" />
@@ -97,6 +97,9 @@
         <Component Id="owc1C01913CF507CA8CA5C63158EAEBEEB9" Guid="ac47d95e-041b-4a1a-e3b3-19997cbdafed">
           <File Id="owf1C01913CF507CA8CA5C63158EAEBEEB9" Source="$(var.SourceDir)\p4api.net.xml" KeyPath="yes" />
         </Component>
+        <Component Id="owc73A49B67EFECE681DDA4E470246C2D32" Guid="762e6f4e-cc16-3cfd-9f8b-62910bbd6a43">
+          <File Id="owf73A49B67EFECE681DDA4E470246C2D32" Source="$(var.SourceDir)\p4bridge.dll" KeyPath="yes" />
+        </Component>
         <Component Id="owc266C4DEC591C8A54CCC1D3C61FC512AA" Guid="2224179c-4d85-88a2-23e2-bc0c27cadd0e">
           <File Id="owf266C4DEC591C8A54CCC1D3C61FC512AA" Source="$(var.SourceDir)\System.Buffers.dll" KeyPath="yes" />
         </Component>
@@ -159,6 +162,12 @@
         </Component>
         <Component Id="owc1ADA0F15BCE6F65E5471D1D274634C7D" Guid="cd1dd1a8-551e-1bab-387e-f9720445532b">
           <File Id="owf1ADA0F15BCE6F65E5471D1D274634C7D" Source="$(var.SourceDir)\System.ValueTuple.xml" KeyPath="yes" />
+        </Component>
+        <Component Id="owc908B7E902B97B5ADEBE9E9D0FB2EF3CA" Guid="2c8a85a4-24be-7835-bdeb-3b6d8939373d">
+          <File Id="owf908B7E902B97B5ADEBE9E9D0FB2EF3CA" Source="$(var.SourceDir)\WeifenLuo.WinFormsUI.Docking.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owc9A50F6B8B212BC616FEDB3425731F04A" Guid="c1471295-7a26-e0b4-a2c3-be0716f255bf">
+          <File Id="owf9A50F6B8B212BC616FEDB3425731F04A" Source="$(var.SourceDir)\WeifenLuo.WinFormsUI.Docking.ThemeVS2015.dll" KeyPath="yes" />
         </Component>
         <Directory Id="owd799F60633DE3314CD962556CD118A45D" Name="cs">
           <Component Id="owc99CE72FDB30C8FD0902CE01843ED4D88" Guid="c4c2d2ce-4eae-325d-f83e-f5d17907fa7d">
