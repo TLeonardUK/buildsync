@@ -23,6 +23,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private bool ApplyingServerState = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public ManageServerForm()
         {
             InitializeComponent();
@@ -51,7 +56,7 @@ namespace BuildSync.Client.Forms
                 series.YAxis.MinLabel = "";
                 series.YAxis.MaxLabel = "1 KB/s";
                 series.YAxis.AutoAdjustMax = true;
-                series.YAxis.FormatMaxLabelAsSize = true;
+                series.YAxis.FormatMaxLabelAsTransferRate = true;
                 series.MinimumInterval = 1.0f / 2.0f;
                 series.YAxis.Max = 1024l;
                 series.YAxis.GridInterval = series.YAxis.Max / 10;
@@ -85,6 +90,9 @@ namespace BuildSync.Client.Forms
         /// <param name="Users"></param>
         private void ServerStateRecieved(NetMessage_GetServerStateResponse Msg)
         {
+            ApplyingServerState = true;
+            MaxBandwidthBox.Value = Msg.BandwidthLimit / 1024;
+
             // Add new items.
             foreach (NetMessage_GetServerStateResponse.ClientState State in Msg.ClientStates)
             {
@@ -100,7 +108,7 @@ namespace BuildSync.Client.Forms
 
                 if (!Exists)
                 {
-                    ListViewItem Item = new ListViewItem(new string[7]);
+                    ListViewItem Item = new ListViewItem(new string[8]);
                     Item.Tag = State.Address;
                     Item.ImageIndex = 0;
 
@@ -125,6 +133,7 @@ namespace BuildSync.Client.Forms
                         Item.SubItems[4].Text = StringUtils.FormatAsSize(State.TotalUploaded);
                         Item.SubItems[5].Text = State.ConnectedPeerCount.ToString();
                         Item.SubItems[6].Text = StringUtils.FormatAsSize(State.DiskUsage);
+                        Item.SubItems[7].Text = State.Version;
 
                         Exists = true;
                         break;
@@ -145,6 +154,18 @@ namespace BuildSync.Client.Forms
                 TotalBandwidth += State.DownloadRate;
             }
             BandwithGraph.Series[0].AddDataPoint(Environment.TickCount / 1000.0f, TotalBandwidth);
+
+            ApplyingServerState = false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MaxBandwidthBoxChanged(object sender, EventArgs e)
+        {
+            Program.NetClient.SetServerMaxBandwidth((long)MaxBandwidthBox.Value * 1024l);
         }
     }
 }

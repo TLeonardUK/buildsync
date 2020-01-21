@@ -41,6 +41,10 @@ namespace BuildSync.Core.Networking.Messages
         /// </summary>
         public long DiskUsage = 0;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Version = "";
 
         /// <summary>
         /// 
@@ -54,6 +58,7 @@ namespace BuildSync.Core.Networking.Messages
             serializer.Serialize(ref TotalDownloaded);
             serializer.Serialize(ref ConnectedPeerCount);
             serializer.Serialize(ref DiskUsage);
+            serializer.Serialize(ref Version);
         }
     }
 }

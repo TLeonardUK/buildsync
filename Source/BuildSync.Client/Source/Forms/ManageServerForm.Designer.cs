@@ -30,8 +30,8 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManageServerForm));
-            System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Connected", System.Windows.Forms.HorizontalAlignment.Left);
-            System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Disconnected", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup3 = new System.Windows.Forms.ListViewGroup("Connected", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup4 = new System.Windows.Forms.ListViewGroup("Disconnected", System.Windows.Forms.HorizontalAlignment.Left);
             this.ButtonImageIndex = new System.Windows.Forms.ImageList(this.components);
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.MainListView = new System.Windows.Forms.ListView();
@@ -40,14 +40,15 @@
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.label1 = new System.Windows.Forms.Label();
             this.MaxBandwidthBox = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.RefreshTimer = new System.Windows.Forms.Timer(this.components);
-            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.BandwithGraph = new BuildSync.Core.Controls.Graph.GraphControl();
-            this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.MaxBandwidthBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -80,16 +81,17 @@
             this.columnHeader6,
             this.columnHeader2,
             this.columnHeader3,
-            this.columnHeader7});
+            this.columnHeader7,
+            this.columnHeader8});
             this.MainListView.FullRowSelect = true;
             this.MainListView.GridLines = true;
-            listViewGroup1.Header = "Connected";
-            listViewGroup1.Name = "Connected";
-            listViewGroup2.Header = "Disconnected";
-            listViewGroup2.Name = "Disconnected";
+            listViewGroup3.Header = "Connected";
+            listViewGroup3.Name = "Connected";
+            listViewGroup4.Header = "Disconnected";
+            listViewGroup4.Name = "Disconnected";
             this.MainListView.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup1,
-            listViewGroup2});
+            listViewGroup3,
+            listViewGroup4});
             this.MainListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.MainListView.HideSelection = false;
             this.MainListView.HotTracking = true;
@@ -107,7 +109,7 @@
             // columnHeader1
             // 
             this.columnHeader1.Text = "Address";
-            this.columnHeader1.Width = 190;
+            this.columnHeader1.Width = 180;
             // 
             // columnHeader4
             // 
@@ -128,6 +130,16 @@
             // 
             this.columnHeader2.Text = "Total Uploaded";
             this.columnHeader2.Width = 110;
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.Text = "Connected Peer Count";
+            this.columnHeader3.Width = 130;
+            // 
+            // columnHeader7
+            // 
+            this.columnHeader7.Text = "Disk Usage";
+            this.columnHeader7.Width = 100;
             // 
             // label1
             // 
@@ -150,6 +162,7 @@
             this.MaxBandwidthBox.Name = "MaxBandwidthBox";
             this.MaxBandwidthBox.Size = new System.Drawing.Size(340, 20);
             this.MaxBandwidthBox.TabIndex = 26;
+            this.MaxBandwidthBox.ValueChanged += new System.EventHandler(this.MaxBandwidthBoxChanged);
             // 
             // label3
             // 
@@ -179,11 +192,6 @@
             this.RefreshTimer.Interval = 1000;
             this.RefreshTimer.Tick += new System.EventHandler(this.RefreshTicked);
             // 
-            // columnHeader3
-            // 
-            this.columnHeader3.Text = "Connected Peer Count";
-            this.columnHeader3.Width = 130;
-            // 
             // BandwithGraph
             // 
             this.BandwithGraph.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -198,10 +206,10 @@
             this.BandwithGraph.Size = new System.Drawing.Size(556, 104);
             this.BandwithGraph.TabIndex = 3;
             // 
-            // columnHeader7
+            // columnHeader8
             // 
-            this.columnHeader7.Text = "Disk Usage";
-            this.columnHeader7.Width = 100;
+            this.columnHeader8.Text = "Version";
+            this.columnHeader8.Width = 80;
             // 
             // ManageServerForm
             // 
@@ -248,5 +256,6 @@
         private System.Windows.Forms.Timer RefreshTimer;
         private System.Windows.Forms.ColumnHeader columnHeader3;
         private System.Windows.Forms.ColumnHeader columnHeader7;
+        private System.Windows.Forms.ColumnHeader columnHeader8;
     }
 }

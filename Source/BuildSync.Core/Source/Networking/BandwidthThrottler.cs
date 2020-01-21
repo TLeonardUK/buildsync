@@ -23,6 +23,15 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        public long GlobalMaxRate
+        {
+            get;
+            set;
+        } = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public long MinimumTransmissionUnit
         {
             get;
@@ -51,14 +60,30 @@ namespace BuildSync.Core.Networking
         /// <returns></returns>
         public int Throttle(int Pending)
         {
+            long Limit = GlobalMaxRate;
+
+            // No global rate, use local instead.
+            if (Limit == 0)
+            {
+                Limit = MaxRate;
+            }
+            else
+            {
+                // If local rate is lower than global, use that instead.
+                if (MaxRate > 0 && MaxRate < GlobalMaxRate)
+                {
+                    Limit = MaxRate;
+                }
+            }
+
             // No limit, allow all.
-            if (MaxRate == 0)
+            if (Limit == 0)
             {
                 return Pending;
             }
 
             // Is there enough tokens to send the entire thing or at leat the MTU?
-            long Mtu = Math.Min(MinimumTransmissionUnit, MaxRate);
+            long Mtu = Math.Min(MinimumTransmissionUnit, Limit);
             double MinimumToSend = Math.Min((double)Mtu, (double)Pending);
             while (true)
             {
@@ -67,12 +92,12 @@ namespace BuildSync.Core.Networking
                 {
                     ulong Time = TimeUtils.Ticks;
                     double ElapsedSeconds = (Time - LastRefillTime) / 1000.0;
-                    double RefillTokens = ElapsedSeconds * (double)MaxRate;
+                    double RefillTokens = ElapsedSeconds * (double)Limit;
 
                     while (true)
                     {
                         double OriginalTokens = Tokens;
-                        double NewValue = Math.Min(MaxRate, OriginalTokens + RefillTokens);
+                        double NewValue = Math.Min(Limit, OriginalTokens + RefillTokens);
                         if (OriginalTokens == NewValue)
                         {
                             break;
@@ -101,7 +126,7 @@ namespace BuildSync.Core.Networking
                 else
                 {
                     double RefillRequired = MinimumToSend - AmountToTake;
-                    double TimeToFillMs = ((RefillRequired / MaxRate) * 1000.0);
+                    double TimeToFillMs = ((RefillRequired / Limit) * 1000.0);
                     Thread.Sleep((int)TimeToFillMs);
                 }
             }

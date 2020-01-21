@@ -1363,6 +1363,7 @@ namespace BuildSync.Core
             Msg.TotalUploaded = NetConnection.GlobalBandwidthStats.TotalOut;
             Msg.DiskUsage = 0;
             Msg.ConnectedPeerCount = 0;
+            Msg.Version = AppVersion.VersionString;
 
             lock (Peers)
             {
@@ -1514,6 +1515,25 @@ namespace BuildSync.Core
             NetMessage_SetUserPermissions Msg = new NetMessage_SetUserPermissions();
             Msg.Username = Username;
             Msg.Permissions = Permissions;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool SetServerMaxBandwidth(long MaxBandwidth)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to set max bandwidth, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetServerMaxBandwidth Msg = new NetMessage_GetServerMaxBandwidth();
+            Msg.BandwidthLimit = MaxBandwidth;
             Connection.Send(Msg);
 
             return true;
@@ -1898,6 +1918,17 @@ namespace BuildSync.Core
 
                 OnServerStateRecieved?.Invoke(Msg);
             }
+
+            // Enforcing bandwidth limitations
+            else if (BaseMessage is NetMessage_EnforceBandwidthLimit)
+            {
+                NetMessage_EnforceBandwidthLimit Msg = BaseMessage as NetMessage_EnforceBandwidthLimit;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Server has enforced bandwidth limit of: {0}", StringUtils.FormatAsTransferRate(Msg.BandwidthLimit));
+
+                // Only limit in rate, out rate is limited implicitly.
+                NetConnection.GlobalBandwidthThrottleIn.GlobalMaxRate = Msg.BandwidthLimit;
+            }            
         }
     }
 }

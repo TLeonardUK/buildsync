@@ -97,6 +97,10 @@ namespace BuildSync.Core.Controls.Graph
                     {
                         YAxis.MaxLabel = Utils.StringUtils.FormatAsSize((long)YAxis.Max); // TODO: add some formatting to this.
                     }
+                    if (YAxis.FormatMaxLabelAsTransferRate)
+                    {
+                        YAxis.MaxLabel = Utils.StringUtils.FormatAsTransferRate((long)YAxis.Max); // TODO: add some formatting to this.
+                    }
                 }
             }
 

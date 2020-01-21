@@ -211,7 +211,7 @@ namespace BuildSync.Core.Networking
         private ulong LastKeepAliveSendTime = 0;
         private const int KeepAliveInterval = 30 * 1000;
 
-        private NetMessage_Handshake Handshake = null;
+        public NetMessage_Handshake Handshake { get; internal set; }
         private bool HandshakeFailed = false;
         private bool HandshakeFinished = false;
 

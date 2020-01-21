@@ -49,5 +49,10 @@ namespace BuildSync.Core.Controls.Graph
         ///     Gets or sets if the max value label on the y axis should be formatted as a size if using auto-adjust.
         /// </summary>
         public bool FormatMaxLabelAsSize { get; set; } = false;
+
+        /// <summary>
+        ///     Gets or sets if the max value label on the y axis should be formatted as a transfer rate if using auto-adjust.
+        /// </summary>
+        public bool FormatMaxLabelAsTransferRate { get; set; } = false;
     }
 }

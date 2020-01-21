@@ -38,6 +38,9 @@ namespace BuildSync.Core
             public long UploadRate = 0;
             public int ConnectedPeerCount = 0;
             public long DiskUsage = 0;
+            public string Version = "";
+
+            public long BandwidthLimit = 0;
         }
 
         /// <summary>
@@ -89,6 +92,11 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         public int MaxConnectedClients = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long BandwidthLimit = 0;
 
         /// <summary>
         /// 
@@ -174,12 +182,27 @@ namespace BuildSync.Core
             // Go through each client, send them a list of peers that has blocks they are interested in.
             ListenConnection.MaxConnectedClients = MaxConnectedClients;
 
+            List<NetConnection> ActivelyDownloadingClients = new List<NetConnection>();
+
             List<NetConnection> Clients = ListenConnection.AllClients;
             foreach (NetConnection Connection in Clients)
             {
                 if (Connection.Metadata != null)
                 {
                     ClientState State = Connection.Metadata as ClientState;
+
+                    // Determine if client is actively download for bandwidth limitation later.
+                    if (State.BlockState != null)
+                    {
+                        foreach (ManifestBlockListState ManifestState in State.BlockState.States)
+                        {
+                            if (ManifestState.IsActive)
+                            {
+                                ActivelyDownloadingClients.Add(Connection);
+                                break;
+                            }
+                        }
+                    }
 
                     // Send user an update of the permissions they have.
                     if (State.PermissionsNeedUpdate)
@@ -248,6 +271,23 @@ namespace BuildSync.Core
                         State.RelevantPeerAddresses = NewPeers;
                         State.RelevantPeerAddressesNeedUpdate = false;
                     }
+                }
+            }
+
+            // Limit bandwidth between clients if required.
+            long PerClientBandwidthLimit = ActivelyDownloadingClients.Count > 0 ? BandwidthLimit / ActivelyDownloadingClients.Count : 0;
+            foreach (NetConnection Connection in ActivelyDownloadingClients)
+            {
+                ClientState State = Connection.Metadata as ClientState;
+                if (State.BandwidthLimit != PerClientBandwidthLimit)
+                {
+                    NetMessage_EnforceBandwidthLimit Msg = new NetMessage_EnforceBandwidthLimit();
+                    Msg.BandwidthLimit = PerClientBandwidthLimit;
+                    Connection.Send(Msg);
+
+                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Limiting peer {0} to {1}", Connection.Address.Address.ToString(), StringUtils.FormatAsTransferRate(PerClientBandwidthLimit));
+
+                    State.BandwidthLimit = PerClientBandwidthLimit;
                 }
             }
 
@@ -715,8 +755,17 @@ namespace BuildSync.Core
             // ------------------------------------------------------------------------------
             else if (BaseMessage is NetMessage_GetServerState)
             {
+                ClientState State = Connection.Metadata as ClientState;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageServer, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to manager server without permission.", State.Username);
+                    return;
+                }
+
                 NetMessage_GetServerStateResponse ResponseMsg = new NetMessage_GetServerStateResponse();
-                
+                ResponseMsg.BandwidthLimit = BandwidthLimit;
+
                 List<NetConnection> Clients = ListenConnection.AllClients;
                 foreach (NetConnection ClientConnection in Clients)
                 {
@@ -732,6 +781,7 @@ namespace BuildSync.Core
                         NewState.TotalUploaded = SubState.TotalUploaded;
                         NewState.ConnectedPeerCount = SubState.ConnectedPeerCount;
                         NewState.DiskUsage = SubState.DiskUsage;
+                        NewState.Version = SubState.Version;
 
                         ResponseMsg.ClientStates.Add(NewState);
                     }
@@ -755,6 +805,26 @@ namespace BuildSync.Core
                 State.UploadRate = Msg.UploadRate;
                 State.ConnectedPeerCount = Msg.ConnectedPeerCount;
                 State.DiskUsage = Msg.DiskUsage;
+                State.Version = Msg.Version;
+            }
+
+            // ------------------------------------------------------------------------------
+            // Changing server max bandwidth
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_GetServerMaxBandwidth)
+            {
+                ClientState State = Connection.Metadata as ClientState;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageServer, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to manager server without permission.", State.Username);
+                    return;
+                }
+
+                NetMessage_GetServerMaxBandwidth Msg = BaseMessage as NetMessage_GetServerMaxBandwidth;
+                BandwidthLimit = Msg.BandwidthLimit;
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' changed global bandwidth limit to {1}.", State.Username, StringUtils.FormatAsTransferRate(Msg.BandwidthLimit));
             }
         }
     }

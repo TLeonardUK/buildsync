@@ -21,6 +21,7 @@ namespace BuildSync.Core.Networking.Messages
             public long TotalUploaded;
             public int ConnectedPeerCount;
             public long DiskUsage;
+            public string Version;
         }
 
         /// <summary>
@@ -28,8 +29,15 @@ namespace BuildSync.Core.Networking.Messages
         /// </summary>
         public List<ClientState> ClientStates = new List<ClientState>();
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public long BandwidthLimit = 0;
+
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
+            serializer.Serialize(ref BandwidthLimit);
+
             int Count = ClientStates.Count;
             serializer.Serialize(ref Count);
 
@@ -47,6 +55,7 @@ namespace BuildSync.Core.Networking.Messages
                 serializer.Serialize(ref ClientStates[i].TotalUploaded);
                 serializer.Serialize(ref ClientStates[i].ConnectedPeerCount);
                 serializer.Serialize(ref ClientStates[i].DiskUsage);
+                serializer.Serialize(ref ClientStates[i].Version);
             }
         }
     }
