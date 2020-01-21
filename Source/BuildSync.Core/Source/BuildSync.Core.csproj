@@ -168,6 +168,7 @@
     <Compile Include="Networking\BandwidthThrottler.cs" />
     <Compile Include="Networking\Messages\NetMessage_ApplyLicense.cs" />
     <Compile Include="Networking\Messages\NetMessage_BlockListUpdate.cs" />
+    <Compile Include="Networking\Messages\Netmessage_ClientStateUpdate.cs" />
     <Compile Include="Networking\Messages\NetMessage_ConnectionInfo.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteManifestResponse.cs" />
@@ -189,6 +190,8 @@
     <Compile Include="Networking\Messages\NetMessage_PublishManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_PublishManifestResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_RelevantPeerListUpdate.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetServerState.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetServerStateResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_SetUserPermissions.cs" />
     <Compile Include="Networking\NetCachedArray.cs" />
     <Compile Include="Networking\NetConnection.cs" />

@@ -75,6 +75,22 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         /// <param name="Value"></param>
+        public void Serialize(ref long Value)
+        {
+            if (IsLoading)
+            {
+                Value = Reader.ReadInt64();
+            }
+            else
+            {
+                Writer.Write(Value);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Value"></param>
         public void Serialize(ref DateTime Value)
         {
             if (IsLoading)

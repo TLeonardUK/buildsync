@@ -62,6 +62,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private ManageServerForm ManageServerForm = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private ManageBuildsForm ManageBuildsForm = null;
 
         /// <summary>
@@ -316,6 +321,20 @@ namespace BuildSync.Client.Forms
                 ManageUsersForm = new ManageUsersForm();
             }
             ManageUsersForm.Show(DockPanel, DockState.Document);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ServerManagerClicked(object sender, EventArgs e)
+        {
+            if (ManageServerForm == null)
+            {
+                ManageServerForm = new ManageServerForm();
+            }
+            ManageServerForm.Show(DockPanel, DockState.Document);
         }
 
         /// <summary>
@@ -718,6 +737,17 @@ namespace BuildSync.Client.Forms
                 {
                     manageUsersToolStripMenuItem.Enabled = false;
                     manageUsersToolStripMenuItem.Text = "User Manager (Permission Required)";
+                }
+            }
+
+            serverManagerToolStripMenuItem.Text = "Server Manager";
+            serverManagerToolStripMenuItem.Enabled = Connected;
+            if (Connected)
+            {
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageServer, ""))
+                {
+                    serverManagerToolStripMenuItem.Enabled = false;
+                    serverManagerToolStripMenuItem.Text = "Server Manager (Permission Required)";
                 }
             }
 

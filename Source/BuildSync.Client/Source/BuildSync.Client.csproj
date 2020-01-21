@@ -279,6 +279,12 @@
     <Compile Include="Forms\ManageBuildsForm.Designer.cs">
       <DependentUpon>ManageBuildsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\ManageServerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ManageServerForm.Designer.cs">
+      <DependentUpon>ManageServerForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\ManageUsersForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -389,6 +395,9 @@
     <EmbeddedResource Include="Forms\ManageBuildsForm.resx">
       <DependentUpon>ManageBuildsForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ManageServerForm.resx">
+      <DependentUpon>ManageServerForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\ManageUsersForm.resx">
       <DependentUpon>ManageUsersForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -490,6 +499,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.network.server.connecting.png" />
     <None Include="Resources\appbar.graph.histogram.png" />
     <None Include="Resources\appbar.link.png" />
     <None Include="Resources\appbar.refresh.png" />

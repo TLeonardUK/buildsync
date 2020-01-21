@@ -31,6 +31,13 @@ namespace BuildSync.Core
             public bool PermissionsNeedUpdate = false;
 
             public IPEndPoint PeerConnectionAddress = null;
+
+            public long TotalDownloaded = 0;
+            public long TotalUploaded = 0;
+            public long DownloadRate = 0;
+            public long UploadRate = 0;
+            public int ConnectedPeerCount = 0;
+            public long DiskUsage = 0;
         }
 
         /// <summary>
@@ -701,6 +708,53 @@ namespace BuildSync.Core
                 NetMessage_GetLicenseInfoResponse ResponseMsg = new NetMessage_GetLicenseInfoResponse();
                 ResponseMsg.License = LicenseManager.ActiveLicense;
                 Connection.Send(ResponseMsg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Server state requested
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_GetServerState)
+            {
+                NetMessage_GetServerStateResponse ResponseMsg = new NetMessage_GetServerStateResponse();
+                
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ClientState SubState = ClientConnection.Metadata as ClientState;
+
+                        NetMessage_GetServerStateResponse.ClientState NewState = new NetMessage_GetServerStateResponse.ClientState();
+                        NewState.Address = SubState.PeerConnectionAddress.Address.ToString();
+                        NewState.DownloadRate = SubState.DownloadRate;
+                        NewState.UploadRate = SubState.UploadRate;
+                        NewState.TotalDownloaded = SubState.TotalDownloaded;
+                        NewState.TotalUploaded = SubState.TotalUploaded;
+                        NewState.ConnectedPeerCount = SubState.ConnectedPeerCount;
+                        NewState.DiskUsage = SubState.DiskUsage;
+
+                        ResponseMsg.ClientStates.Add(NewState);
+                    }
+                }
+
+                Connection.Send(ResponseMsg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Recieved client state update.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_ClientStateUpdate)
+            {
+                NetMessage_ClientStateUpdate Msg = BaseMessage as NetMessage_ClientStateUpdate;
+
+                ClientState State = Connection.Metadata as ClientState;
+
+                State.TotalDownloaded = Msg.TotalDownloaded;
+                State.TotalUploaded = Msg.TotalUploaded;
+                State.DownloadRate = Msg.DownloadRate;
+                State.UploadRate = Msg.UploadRate;
+                State.ConnectedPeerCount = Msg.ConnectedPeerCount;
+                State.DiskUsage = Msg.DiskUsage;
             }
         }
     }

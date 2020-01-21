@@ -91,6 +91,7 @@
             this.Controls.Add(this.downloadFileSystemTree);
             this.Controls.Add(this.RemoveBuildButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.HideOnClose = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(2);
             this.MaximizeBox = false;

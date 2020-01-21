@@ -26,6 +26,13 @@ namespace BuildSync.Core
     /// </summary>
     /// <param name="Connection"></param>
     /// <param name="Message"></param>
+    public delegate void ServerStateRecievedHandler(NetMessage_GetServerStateResponse Response);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Connection"></param>
+    /// <param name="Message"></param>
     public delegate void PermissionsUpdatedHandler();
 
     /// <summary>
@@ -561,6 +568,16 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private ulong LastClientStateUpdateTime = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private const int ClientStateUpdateInterval = 3 * 1000;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private int PeerCycleIndex = 0;
 
         /// <summary>
@@ -611,6 +628,11 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         public event BuildsRecievedHandler OnBuildsRecieved;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event ServerStateRecievedHandler OnServerStateRecieved;
 
         /// <summary>
         /// 
@@ -894,6 +916,14 @@ namespace BuildSync.Core
                     LastBlockListUpdateTime = TimeUtils.Ticks;
                     BlockListUpdatePending = false;
                     ForceBlockListUpdate = false;
+                }
+
+                ElapsedTime = TimeUtils.Ticks - LastClientStateUpdateTime;
+                if (ElapsedTime > ClientStateUpdateInterval)
+                {
+                    SendClientUpdate();
+
+                    LastClientStateUpdateTime = TimeUtils.Ticks;
                 }
             }
             else
@@ -1315,6 +1345,40 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private void SendClientUpdate()
+        {
+            NetMessage_ClientStateUpdate Msg = new NetMessage_ClientStateUpdate();
+            Msg.DownloadRate = NetConnection.GlobalBandwidthStats.RateIn;
+            Msg.UploadRate = NetConnection.GlobalBandwidthStats.RateOut;
+            Msg.TotalDownloaded = NetConnection.GlobalBandwidthStats.TotalIn;
+            Msg.TotalUploaded = NetConnection.GlobalBandwidthStats.TotalOut;
+            Msg.DiskUsage = 0;
+            Msg.ConnectedPeerCount = 0;
+
+            lock (Peers)
+            {
+                for (int i = 0; i < Peers.Count; i++)
+                {
+                    Peer peer = Peers[i];
+                    if (peer.Connection.IsConnected)
+                    {
+                        Msg.ConnectedPeerCount++;
+                    }
+                }
+            }
+
+
+            foreach (ManifestDownloadState Manifest in ManifestDownloadManager.States.States)
+            {
+                Msg.DiskUsage += Manifest.Manifest != null ? Manifest.Manifest.GetTotalSize() : 0;
+            }
+
+            Connection.Send(Msg);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private void SendBlockListUpdate()
         {
             Logger.Log(LogLevel.Info, LogCategory.Main, "Sending block list update.");
@@ -1351,6 +1415,24 @@ namespace BuildSync.Core
 
             Connection.Send(Msg);
             */
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool RequestServerState()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request server state, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetServerState Msg = new NetMessage_GetServerState();
+            Connection.Send(Msg);
+
+            return true;
         }
 
         /// <summary>
@@ -1796,6 +1878,14 @@ namespace BuildSync.Core
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved license info.");
 
                 OnLicenseInfoRecieved?.Invoke(Msg.License);
+            }
+
+            // Receive license info,
+            else if (BaseMessage is NetMessage_GetServerStateResponse)
+            {
+                NetMessage_GetServerStateResponse Msg = BaseMessage as NetMessage_GetServerStateResponse;
+
+                OnServerStateRecieved?.Invoke(Msg);
             }
         }
     }
