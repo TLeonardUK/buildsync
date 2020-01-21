@@ -29,7 +29,7 @@ namespace BuildSync.Core.Utils
 
             try
             {
-                Logger.Log(LogLevel.Error, LogCategory.Transport, "Resolving hostname '{0}' ...", Addr);
+                Logger.Log(LogLevel.Info, LogCategory.Transport, "Resolving hostname '{0}' ...", Addr);
                 Dns.BeginGetHostEntry(Addr, DnsResult =>
                 {                        
                     try

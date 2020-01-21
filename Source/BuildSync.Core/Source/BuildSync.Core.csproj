@@ -51,7 +51,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
+    <OutputPath>..\Intermediate\x86\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -60,7 +60,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
+    <OutputPath>..\Intermediate\x86\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -71,7 +71,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Shipping|x86'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Shipping\</OutputPath>
+    <OutputPath>..\Intermediate\x86\Shipping\</OutputPath>
     <DefineConstants>TRACE;SHIPPING</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>embedded</DebugType>
@@ -79,6 +79,9 @@
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -251,7 +254,7 @@
     <PostBuildEvent>xcopy /iery "$(TargetDir)*.*" "$(SolutionDir)..\Build\Deploy"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>if $(ConfigurationName) == Shipping $(SolutionDir)VersionUpdater\Intermediate\VersionUpdater\bin\$(Configuration)\VersionUpdater.exe $(SolutionDir)BuildSync.Core\Source\Version.cs $(SolutionDir)</PreBuildEvent>
+    <PreBuildEvent>if $(ConfigurationName) == Shipping $(SolutionDir)VersionUpdater\Intermediate\$(Platform)\$(Configuration)\VersionUpdater.exe $(SolutionDir)BuildSync.Core\Source\Version.cs $(SolutionDir)</PreBuildEvent>
   </PropertyGroup>
   <Import Project="..\..\packages\p4api.net.x86.2019.3.189.3442\build\p4api.net.x86.targets" Condition="Exists('..\..\packages\p4api.net.x86.2019.3.189.3442\build\p4api.net.x86.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

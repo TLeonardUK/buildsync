@@ -180,7 +180,7 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
-        private void CompactRanges()
+        public void CompactRanges()
         {
             for (int i = 0; i < Ranges.Count - 1; i++)
             {
@@ -306,7 +306,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="BlockIndex"></param>
         /// <param name="NewState"></param>
-        public void Set(int BlockIndex, bool NewState)
+        public void Set(int BlockIndex, bool NewState, bool DoNotCompact = false)
         {
             if (BlockIndex >= Size)
             {
@@ -345,7 +345,10 @@ namespace BuildSync.Core.Utils
                 }
             }
 
-            CompactRanges();
+            if (!DoNotCompact)
+            {
+                CompactRanges();
+            }
         }
 
         /// <summary>

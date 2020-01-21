@@ -557,12 +557,27 @@ namespace BuildSync.Client
         public static void RecordPeerStates()
         {
             BuildSyncClient.Peer[] AllPeers = Program.NetClient.AllPeers;
+
+            foreach (PeerSettingsRecord Record in Settings.PeerRecords)
+            {
+                Record.AverageRateIn = 0;
+                Record.AverageRateOut = 0;
+
+                Record.TargetInFlightData = 0;
+                Record.CurrentInFlightData = 0;
+            }
+
             foreach (BuildSyncClient.Peer Peer in AllPeers)
             {
-                if (Peer.Connection.IsConnected && Peer.Connection.Address != null)
+                if (Peer.Connection.Address == null)
                 {
-                    PeerSettingsRecord Record = Settings.GetOrCreatePeerRecord(Peer.Connection.Address.Address.ToString());
+                    continue;
+                }
 
+                PeerSettingsRecord Record = Settings.GetOrCreatePeerRecord(Peer.Connection.Address.Address.ToString());
+
+                if (Peer.Connection.IsConnected)
+                {
                     long TotalIn = Peer.Connection.BandwidthStats.TotalIn;
                     long TotalOut = Peer.Connection.BandwidthStats.TotalOut;
 
@@ -579,6 +594,9 @@ namespace BuildSync.Client
 
                     Record.PeakRateIn = Math.Max(Record.PeakRateIn, Record.AverageRateIn);
                     Record.PeakRateOut = Math.Max(Record.PeakRateOut, Record.AverageRateOut);
+
+                    Record.TargetInFlightData = Peer.GetMaxInFlightData(BuildSyncClient.TargetMillisecondsOfDataInFlight);
+                    Record.CurrentInFlightData = Record.TargetInFlightData - Peer.GetAvailableInFlightData(BuildSyncClient.TargetMillisecondsOfDataInFlight);
                 }
             }
         }

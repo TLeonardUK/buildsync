@@ -252,7 +252,7 @@ namespace BuildSync.Core
                 long MaxInFlightBytes = 0;
                 if (InBlockRecieveLatency < 5 || InAverageBlockSize < 1024)
                 {
-                    MaxInFlightBytes = BuildManifest.BlockSize * 30;
+                    MaxInFlightBytes = BuildManifest.BlockSize * 1;
                 }
                 else
                 {
@@ -398,7 +398,7 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
-            public void RemoveActiveBlockDownload(Guid ManifestId, int BlockIndex)
+            public void RemoveActiveBlockDownload(Guid ManifestId, int BlockIndex, bool WasSuccess)
             {
                 lock (ActiveBlockDownloads)
                 {
@@ -411,7 +411,10 @@ namespace BuildSync.Core
                         {
                             if (!Download.Recieved)
                             {
-                                UpdateLatency(Download);
+                                if (WasSuccess)
+                                {
+                                    UpdateLatency(Download);
+                                }
                                 ActiveBlockDownloadSize -= Download.Size;
                                 Download.Recieved = true;
                                 ActiveBlockDownloads[i] = Download;
@@ -493,7 +496,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private const int TargetMillisecondsOfDataInFlight = 3000;
+        public const int TargetMillisecondsOfDataInFlight = 3000;
 
         /// <summary>
         /// 
@@ -1106,11 +1109,15 @@ namespace BuildSync.Core
                             continue;
                         }
 
+                        if (!Peer.HasBlock(Item))
+                        {
+                            continue;
+                        }
+
                         long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
                         long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
 
-                        if (LeastLoadedPeer == null || ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && Peer.ActiveBlockDownloadSize < LeastLoadedPeerAvailableBandwidth))
-                        //if (LeastLoadedPeer == null || Peer.ActiveBlockDownloads.Count < 256)
+                        if ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && (LeastLoadedPeer == null || Peer.ActiveBlockDownloadSize < LeastLoadedPeerAvailableBandwidth))
                         {
                             LeastLoadedPeer = Peer;
                             LeastLoadedPeerAvailableBandwidth = Peer.ActiveBlockDownloadSize;
@@ -1129,7 +1136,9 @@ namespace BuildSync.Core
 
                         LeastLoadedPeer.AddActiveBlockDownload(Item);
 
-                       // Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}, from peer {4}.", Msg.ManifestId, Msg.BlockIndex, BlockInfo.TotalSize, LeastLoadedPeer.ActiveBlockDownloadSize, HostnameCache.GetHostname(LeastLoadedPeer.Connection.Address.Address.ToString()));
+                        long MaxBandwidth = LeastLoadedPeer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
+                        long BandwidthAvailable = LeastLoadedPeer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
+                        //Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}, from peer {4} (Avail:{5} Max:{6}).", Msg.ManifestId, Msg.BlockIndex, BlockInfo.TotalSize, LeastLoadedPeer.ActiveBlockDownloadSize, HostnameCache.GetHostname(LeastLoadedPeer.Connection.Address.Address.ToString()), BandwidthAvailable, MaxBandwidth);
                     }
 
                     // Try and find a peer with space in its download queue for this item.
@@ -1381,7 +1390,7 @@ namespace BuildSync.Core
         /// </summary>
         private void SendBlockListUpdate()
         {
-            Logger.Log(LogLevel.Info, LogCategory.Main, "Sending block list update.");
+            Logger.Log(LogLevel.Verbose, LogCategory.Main, "Sending block list update.");
 
             BlockListState State = ManifestDownloadManager.GetBlockListState();
 
@@ -1393,12 +1402,12 @@ namespace BuildSync.Core
             {
                 if (peer.Connection.IsConnected)
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "\tSent to peer: " + peer.Connection.Address.ToString());
+                    Logger.Log(LogLevel.Verbose, LogCategory.Main, "\tSent to peer: " + peer.Connection.Address.ToString());
                     peer.Connection.Send(Msg);
                 }
             }
 
-            Logger.Log(LogLevel.Info, LogCategory.Main, "\tSent to server.");
+            Logger.Log(LogLevel.Verbose, LogCategory.Main, "\tSent to server.");
             Connection.Send(Msg);
 
             /*
@@ -1768,6 +1777,8 @@ namespace BuildSync.Core
                         {
                             if (!bSuccess)
                             {
+                                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to retrieve requested block {0} in manifest {1} for peer {2}.", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
+
                                 ManifestDownloadManager.MarkAllBlockFilesAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
                                 //ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
                                 Response.Data.SetNull();
@@ -1848,7 +1859,7 @@ namespace BuildSync.Core
                                 }
 
                                 // Remove active download marker for this block.
-                                peer.RemoveActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex);
+                                peer.RemoveActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex, bSuccess);
                             });
                         }
                     };

@@ -393,13 +393,13 @@ namespace BuildSync.Core.Downloads
             State.ManifestId = Manifest.Guid;
             State.Priority = 2;
             State.Manifest = Manifest;
-            State.State = ManifestDownloadProgressState.Complete;
+            State.State = Available ? ManifestDownloadProgressState.Complete : ManifestDownloadProgressState.Validating;
             State.LocalFolder = Path.Combine(StorageRootPath, State.ManifestId.ToString());
-            State.LastActive = Available ? DateTime.Now : (DateTime.Now - new TimeSpan(1000, 0, 0));
+            State.LastActive = DateTime.Now;
 
             // We have everything.
             State.BlockStates.Resize((int)Manifest.BlockCount);
-            State.BlockStates.SetAll(Available);
+            State.BlockStates.SetAll(true);
 
             StoreFileCompletedStates(State);
 
@@ -1423,9 +1423,9 @@ namespace BuildSync.Core.Downloads
                 List<int> blocksIndexes = State.Manifest.GetFileBlocks(SubInfo.File.Path);
                 foreach (int index in blocksIndexes)
                 {
-                    State.BlockStates.Set(index, false);
-
+                    State.BlockStates.Set(index, false, true);
                 }
+                State.BlockStates.CompactRanges();
             }
 
             StateDirtyCount++;
