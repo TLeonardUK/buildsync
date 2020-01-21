@@ -772,18 +772,20 @@ namespace BuildSync.Core
                     if (ClientConnection.Metadata != null)
                     {
                         ClientState SubState = ClientConnection.Metadata as ClientState;
+                        if (SubState.PeerConnectionAddress != null)
+                        {
+                            NetMessage_GetServerStateResponse.ClientState NewState = new NetMessage_GetServerStateResponse.ClientState();
+                            NewState.Address = SubState.PeerConnectionAddress.Address.ToString();
+                            NewState.DownloadRate = SubState.DownloadRate;
+                            NewState.UploadRate = SubState.UploadRate;
+                            NewState.TotalDownloaded = SubState.TotalDownloaded;
+                            NewState.TotalUploaded = SubState.TotalUploaded;
+                            NewState.ConnectedPeerCount = SubState.ConnectedPeerCount;
+                            NewState.DiskUsage = SubState.DiskUsage;
+                            NewState.Version = SubState.Version;
 
-                        NetMessage_GetServerStateResponse.ClientState NewState = new NetMessage_GetServerStateResponse.ClientState();
-                        NewState.Address = SubState.PeerConnectionAddress.Address.ToString();
-                        NewState.DownloadRate = SubState.DownloadRate;
-                        NewState.UploadRate = SubState.UploadRate;
-                        NewState.TotalDownloaded = SubState.TotalDownloaded;
-                        NewState.TotalUploaded = SubState.TotalUploaded;
-                        NewState.ConnectedPeerCount = SubState.ConnectedPeerCount;
-                        NewState.DiskUsage = SubState.DiskUsage;
-                        NewState.Version = SubState.Version;
-
-                        ResponseMsg.ClientStates.Add(NewState);
+                            ResponseMsg.ClientStates.Add(NewState);
+                        }
                     }
                 }
 
