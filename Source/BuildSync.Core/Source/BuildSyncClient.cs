@@ -531,7 +531,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        public const int MaxPeerConnections = 20;
+        public const int MaxPeerConnections = 30;
 
         /// <summary>
         /// 
@@ -1259,6 +1259,11 @@ namespace BuildSync.Core
                         }
                     }
 
+                    if (peer == null)
+                    {
+                        continue;
+                    }
+
                     // Attempt connection if time has elapsed.
                     if (!peer.Connection.IsConnected && !peer.Connection.IsConnecting && !peer.RemoteInitiated)
                     {
@@ -1761,7 +1766,7 @@ namespace BuildSync.Core
             {
                 NetMessage_BlockListUpdate Msg = BaseMessage as NetMessage_BlockListUpdate;
 
-                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved block list update from: {0}", Connection.Address.ToString());
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block list update from: {0}", Connection.Address.ToString());
 
                 Peer peer = GetPeerByConnection(Connection);
                 if (peer != null)

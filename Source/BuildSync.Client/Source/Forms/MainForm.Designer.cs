@@ -83,6 +83,7 @@
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.aToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.DockPanel = new WeifenLuo.WinFormsUI.Docking.DockPanel();
+            this.PollTimer = new System.Windows.Forms.Timer(this.components);
             this.statusStrip.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.notifyIconContextMenu.SuspendLayout();
@@ -196,20 +197,20 @@
             // 
             this.addDownloadToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
             this.addDownloadToolStripMenuItem.Name = "addDownloadToolStripMenuItem";
-            this.addDownloadToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
+            this.addDownloadToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.addDownloadToolStripMenuItem.Text = "Add Download ...";
             this.addDownloadToolStripMenuItem.Click += new System.EventHandler(this.AddDownloadClicked);
             // 
             // toolStripSeparator4
             // 
             this.toolStripSeparator4.Name = "toolStripSeparator4";
-            this.toolStripSeparator4.Size = new System.Drawing.Size(200, 6);
+            this.toolStripSeparator4.Size = new System.Drawing.Size(192, 6);
             // 
             // pauseAllDownloadsToolStripMenuItem
             // 
             this.pauseAllDownloadsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
             this.pauseAllDownloadsToolStripMenuItem.Name = "pauseAllDownloadsToolStripMenuItem";
-            this.pauseAllDownloadsToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
+            this.pauseAllDownloadsToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.pauseAllDownloadsToolStripMenuItem.Text = "Pause All Downloads";
             this.pauseAllDownloadsToolStripMenuItem.Click += new System.EventHandler(this.PauseAllClicked);
             // 
@@ -217,33 +218,33 @@
             // 
             this.resumeAllDownloadsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_play;
             this.resumeAllDownloadsToolStripMenuItem.Name = "resumeAllDownloadsToolStripMenuItem";
-            this.resumeAllDownloadsToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
+            this.resumeAllDownloadsToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.resumeAllDownloadsToolStripMenuItem.Text = "Resume All Downloads";
             this.resumeAllDownloadsToolStripMenuItem.Click += new System.EventHandler(this.ResumeAllClicked);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(200, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(192, 6);
             // 
             // preferencesToolStripMenuItem
             // 
             this.preferencesToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_settings;
             this.preferencesToolStripMenuItem.Name = "preferencesToolStripMenuItem";
-            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
+            this.preferencesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.preferencesToolStripMenuItem.Text = "Preferences ...";
             this.preferencesToolStripMenuItem.Click += new System.EventHandler(this.PreferencesClicked);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(200, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(192, 6);
             // 
             // quitToolStripMenuItem
             // 
             this.quitToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_close;
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(203, 30);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.QuitClicked);
             // 
@@ -262,7 +263,7 @@
             // 
             this.viewConsoleToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_console;
             this.viewConsoleToolStripMenuItem.Name = "viewConsoleToolStripMenuItem";
-            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.viewConsoleToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             this.viewConsoleToolStripMenuItem.Text = "Console Window";
             this.viewConsoleToolStripMenuItem.Click += new System.EventHandler(this.ViewConsoleClicked);
             // 
@@ -270,7 +271,7 @@
             // 
             this.viewPeersToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_people_multiple;
             this.viewPeersToolStripMenuItem.Name = "viewPeersToolStripMenuItem";
-            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.viewPeersToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             this.viewPeersToolStripMenuItem.Text = "Peer Explorer";
             this.viewPeersToolStripMenuItem.Click += new System.EventHandler(this.ViewPeersClicked);
             // 
@@ -278,7 +279,7 @@
             // 
             this.viewManifestsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_cabinet_files_variant;
             this.viewManifestsToolStripMenuItem.Name = "viewManifestsToolStripMenuItem";
-            this.viewManifestsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.viewManifestsToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             this.viewManifestsToolStripMenuItem.Text = "Manifest Explorer";
             this.viewManifestsToolStripMenuItem.Click += new System.EventHandler(this.ViewManifestsClicked);
             // 
@@ -286,7 +287,7 @@
             // 
             this.statisticsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_graph_histogram;
             this.statisticsToolStripMenuItem.Name = "statisticsToolStripMenuItem";
-            this.statisticsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.statisticsToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             this.statisticsToolStripMenuItem.Text = "Statistics";
             this.statisticsToolStripMenuItem.Click += new System.EventHandler(this.StatisticsClicked);
             // 
@@ -305,7 +306,7 @@
             // 
             this.manageBuildsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_box;
             this.manageBuildsToolStripMenuItem.Name = "manageBuildsToolStripMenuItem";
-            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.manageBuildsToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             this.manageBuildsToolStripMenuItem.Text = "Build Manager";
             this.manageBuildsToolStripMenuItem.Click += new System.EventHandler(this.ManageBuildsClicked);
             // 
@@ -313,7 +314,7 @@
             // 
             this.manageUsersToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_people;
             this.manageUsersToolStripMenuItem.Name = "manageUsersToolStripMenuItem";
-            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.manageUsersToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             this.manageUsersToolStripMenuItem.Text = "User Manager";
             this.manageUsersToolStripMenuItem.Click += new System.EventHandler(this.ManageUsersClicked);
             // 
@@ -321,7 +322,7 @@
             // 
             this.serverManagerToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_network_server_connecting;
             this.serverManagerToolStripMenuItem.Name = "serverManagerToolStripMenuItem";
-            this.serverManagerToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.serverManagerToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             this.serverManagerToolStripMenuItem.Text = "Server Manager";
             this.serverManagerToolStripMenuItem.Click += new System.EventHandler(this.ServerManagerClicked);
             // 
@@ -329,7 +330,7 @@
             // 
             this.pushUpdateToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_arrow_up;
             this.pushUpdateToolStripMenuItem.Name = "pushUpdateToolStripMenuItem";
-            this.pushUpdateToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.pushUpdateToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             this.pushUpdateToolStripMenuItem.Text = "Push Update";
             this.pushUpdateToolStripMenuItem.Click += new System.EventHandler(this.PushUpdateClicked);
             // 
@@ -348,20 +349,20 @@
             // 
             this.helpTopicsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_book_perspective_help;
             this.helpTopicsToolStripMenuItem.Name = "helpTopicsToolStripMenuItem";
-            this.helpTopicsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.helpTopicsToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
             this.helpTopicsToolStripMenuItem.Text = "View Help ...";
             this.helpTopicsToolStripMenuItem.Click += new System.EventHandler(this.ViewHelpClickled);
             // 
             // toolStripSeparator7
             // 
             this.toolStripSeparator7.Name = "toolStripSeparator7";
-            this.toolStripSeparator7.Size = new System.Drawing.Size(185, 6);
+            this.toolStripSeparator7.Size = new System.Drawing.Size(136, 6);
             // 
             // viewLicenseMenuToolstrip
             // 
             this.viewLicenseMenuToolstrip.Image = global::BuildSync.Client.Properties.Resources.appbar_key;
             this.viewLicenseMenuToolstrip.Name = "viewLicenseMenuToolstrip";
-            this.viewLicenseMenuToolstrip.Size = new System.Drawing.Size(188, 30);
+            this.viewLicenseMenuToolstrip.Size = new System.Drawing.Size(139, 22);
             this.viewLicenseMenuToolstrip.Text = "Licensing ...";
             this.viewLicenseMenuToolstrip.Click += new System.EventHandler(this.ViewLicenseClicked);
             // 
@@ -369,7 +370,7 @@
             // 
             this.aboutToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_question;
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
             this.aboutToolStripMenuItem.Text = "About ...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutClicked);
             // 
@@ -538,6 +539,12 @@
             this.DockPanel.Size = new System.Drawing.Size(953, 278);
             this.DockPanel.TabIndex = 7;
             // 
+            // PollTimer
+            // 
+            this.PollTimer.Enabled = true;
+            this.PollTimer.Interval = 20;
+            this.PollTimer.Tick += new System.EventHandler(this.PollTimerTick);
+            // 
             // MainForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -620,6 +627,7 @@
         private System.Windows.Forms.ToolStripMenuItem serverManagerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem adminBaseToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem manageBuildsToolStripMenuItem;
+        private System.Windows.Forms.Timer PollTimer;
     }
 }
 

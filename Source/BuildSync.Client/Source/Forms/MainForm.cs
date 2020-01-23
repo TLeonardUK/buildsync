@@ -789,6 +789,16 @@ namespace BuildSync.Client.Forms
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PollTimerTick(object sender, EventArgs e)
+        {
+            Program.OnPoll();
+        }
+
         #endregion
     }
 }

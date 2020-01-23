@@ -180,32 +180,39 @@ namespace BuildSync.Client
 
                     OnStart();
 
+            /*
                     PollTimer = new System.Timers.Timer(20);
                     PollTimer.Elapsed += (object sender, ElapsedEventArgs e) =>
                     {
                         if (Monitor.TryEnter(PollTimer))
                         {
-                            // Make sure it invokes on main thread, maybe spend some time
-                            // make all the ui->program interaction thread safe?
-                            if (AppForm != null && AppForm.IsHandleCreated && !AppForm.IsDisposed && !AppForm.Disposing)
+                            try
                             {
-                                try
+                                // Make sure it invokes on main thread, maybe spend some time
+                                // make all the ui->program interaction thread safe?
+                                if (AppForm != null && AppForm.IsHandleCreated && !AppForm.IsDisposed && !AppForm.Disposing)
                                 {
-                                    AppForm.Invoke((MethodInvoker)(() =>
+                                    try
                                     {
-                                        OnPoll();
-                                    }));
-                                }
-                                catch (ObjectDisposedException)
-                                {
-                                    // Ignore ...
+                                        AppForm.Invoke((MethodInvoker)(() =>
+                                        {
+                                            OnPoll();
+                                        }));
+                                    }
+                                    catch (ObjectDisposedException)
+                                    {
+                                        // Ignore ...
+                                    }
                                 }
                             }
-
-                            Monitor.Exit(PollTimer);
+                            finally
+                            {
+                                Monitor.Exit(PollTimer);
+                            }
                         }
                     };
                     PollTimer.Start();
+            */
 
                     AppForm = new MainForm();
                     Application.Run(AppForm);
