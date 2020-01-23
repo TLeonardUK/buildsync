@@ -1402,7 +1402,7 @@ namespace BuildSync.Core.Downloads
 
                 // If we doin't have a manifest, just mark everything as not having it, someone probably deleted
                 // manifests locally :S
-                if (State.Manifest == null)
+                if (State != null && State.Manifest == null)
                 {
                     State.BlockStates.SetAll(false);
                     StateDirtyCount++;

@@ -490,6 +490,28 @@ namespace BuildSync.Client.Forms
         private void ClientSizeHasChanged(object sender, EventArgs e)
         {
             ShowInTaskbar = (WindowState != FormWindowState.Minimized);
+            if (ShowInTaskbar)
+            {
+                MainDownloadList.Invalidate();
+                Console.WriteLine("Redrawing...");
+                DockPanel.Update();
+                DockPanel.Invalidate();
+                DockPanel.Refresh();
+                DockPanel.DocumentStyle = DocumentStyle.DockingMdi;
+                foreach (DockPane Pane in DockPanel.Panes)
+                {
+                    Pane.Update();
+                    Pane.Invalidate();
+                    Pane.Refresh();
+                    Pane.Activate();
+                }
+                foreach (DockContent Content in DockPanel.Documents)
+                {
+                    Content.Update();
+                    Content.Invalidate();
+                    Content.Refresh();
+                }
+            }
         }
 
         /// <summary>

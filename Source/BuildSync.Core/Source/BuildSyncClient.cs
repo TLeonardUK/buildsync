@@ -591,6 +591,11 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private int PeerBlockRequestShuffleIndex = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public HandshakeResultType HandshakeResult
         {
             get;
@@ -1103,7 +1108,7 @@ namespace BuildSync.Core
                     long LeastLoadedPeerAvailableBandwidth = 0;
                     for (int j = 0; j < Peers.Count; j++)
                     {
-                        Peer Peer = Peers[j];
+                        Peer Peer = Peers[(j + PeerBlockRequestShuffleIndex) % Peers.Count];
                         if (!Peer.Connection.IsReadyForData)
                         {
                             continue;
@@ -1122,6 +1127,12 @@ namespace BuildSync.Core
                             LeastLoadedPeer = Peer;
                             LeastLoadedPeerAvailableBandwidth = Peer.ActiveBlockDownloadSize;
                         }
+                    }
+
+                    PeerBlockRequestShuffleIndex++;
+                    if (PeerBlockRequestShuffleIndex > Peers.Count)
+                    {
+                        PeerBlockRequestShuffleIndex = 0;
                     }
 
                     if (LeastLoadedPeer != null)

@@ -31,6 +31,8 @@ namespace BuildSync.Client.Forms
         public ManageServerForm()
         {
             InitializeComponent();
+
+            WindowUtils.EnableDoubleBuffering(MainListView);
         }
 
         /// <summary>
