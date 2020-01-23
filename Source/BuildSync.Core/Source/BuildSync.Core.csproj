@@ -210,6 +210,7 @@
     <Compile Include="Scm\ScmManager.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />
+    <Compile Include="Utils\ListViewColumnSorter.cs" />
     <Compile Include="Utils\RateTracker.cs" />
     <Compile Include="Utils\CommandIPC.cs" />
     <Compile Include="Utils\Crc32.cs" />

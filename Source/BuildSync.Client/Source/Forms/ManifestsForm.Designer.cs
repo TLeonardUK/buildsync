@@ -56,7 +56,6 @@
             this.columnHeader8});
             this.mainListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mainListView.FullRowSelect = true;
-            this.mainListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.mainListView.HideSelection = false;
             this.mainListView.Location = new System.Drawing.Point(0, 0);
             this.mainListView.Name = "mainListView";
@@ -64,6 +63,7 @@
             this.mainListView.TabIndex = 0;
             this.mainListView.UseCompatibleStateImageBehavior = false;
             this.mainListView.View = System.Windows.Forms.View.Details;
+            this.mainListView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.ColumnClicked);
             // 
             // columnHeader1
             // 
@@ -107,7 +107,6 @@
             // 
             // UpdateTimer
             // 
-            this.UpdateTimer.Enabled = true;
             this.UpdateTimer.Interval = 1000;
             this.UpdateTimer.Tick += new System.EventHandler(this.UpdateTimerTick);
             // 
@@ -127,7 +126,9 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Manifest Explorer";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
             this.Load += new System.EventHandler(this.OnLoaded);
+            this.Shown += new System.EventHandler(this.OnShown);
             this.ResumeLayout(false);
 
         }

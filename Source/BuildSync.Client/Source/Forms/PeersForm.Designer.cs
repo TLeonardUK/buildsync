@@ -39,10 +39,10 @@
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.UserImageList = new System.Windows.Forms.ImageList(this.components);
-            this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.UserImageList = new System.Windows.Forms.ImageList(this.components);
+            this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // MainListView
@@ -68,7 +68,6 @@
             this.MainListView.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
             listViewGroup1,
             listViewGroup2});
-            this.MainListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.MainListView.HideSelection = false;
             this.MainListView.HotTracking = true;
             this.MainListView.HoverSelection = true;
@@ -80,6 +79,7 @@
             this.MainListView.TabIndex = 0;
             this.MainListView.UseCompatibleStateImageBehavior = false;
             this.MainListView.View = System.Windows.Forms.View.Details;
+            this.MainListView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.ColumnClicked);
             // 
             // columnHeader1
             // 
@@ -111,18 +111,6 @@
             this.columnHeader3.Text = "Last Seen";
             this.columnHeader3.Width = 140;
             // 
-            // UserImageList
-            // 
-            this.UserImageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("UserImageList.ImageStream")));
-            this.UserImageList.TransparentColor = System.Drawing.Color.Transparent;
-            this.UserImageList.Images.SetKeyName(0, "appbar.user.png");
-            // 
-            // ListUpdateTimer
-            // 
-            this.ListUpdateTimer.Enabled = true;
-            this.ListUpdateTimer.Interval = 1000;
-            this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
-            // 
             // columnHeader7
             // 
             this.columnHeader7.Text = "Target In-Flight Data";
@@ -132,6 +120,17 @@
             // 
             this.columnHeader8.Text = "Current In-Flight Data";
             this.columnHeader8.Width = 120;
+            // 
+            // UserImageList
+            // 
+            this.UserImageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("UserImageList.ImageStream")));
+            this.UserImageList.TransparentColor = System.Drawing.Color.Transparent;
+            this.UserImageList.Images.SetKeyName(0, "appbar.user.png");
+            // 
+            // ListUpdateTimer
+            // 
+            this.ListUpdateTimer.Interval = 1000;
+            this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
             // 
             // PeersForm
             // 

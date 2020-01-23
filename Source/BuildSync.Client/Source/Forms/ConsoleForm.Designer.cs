@@ -50,7 +50,6 @@
             // 
             // UpdateTimer
             // 
-            this.UpdateTimer.Enabled = true;
             this.UpdateTimer.Tick += new System.EventHandler(this.TimerTick);
             // 
             // ConsoleForm

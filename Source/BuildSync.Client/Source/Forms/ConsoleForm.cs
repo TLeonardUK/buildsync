@@ -74,6 +74,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void Closing(object sender, FormClosingEventArgs e)
         {
+            UpdateTimer.Enabled = false;
             Logger.UnregisterSink(Sink);
         }
 
@@ -84,6 +85,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
+            UpdateTimer.Enabled = true;
             Sink = new TextBoxLogSink(this);
             Logger.RegisterSink(Sink);
         }

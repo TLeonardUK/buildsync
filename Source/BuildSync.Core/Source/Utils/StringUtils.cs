@@ -16,6 +16,27 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        /// <returns></returns>
+        public static string StripNonNumericTrailingPostfix(string Input)
+        {
+            string Result = "";
+            for (int i = 0; i < Input.Length; i++)
+            {
+                if (Char.IsNumber(Input[i]))
+                {
+                    Result += Input[i];
+                }
+                else
+                {
+                    break;
+                }
+            }            
+            return Result.Trim();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Rate"></param>
         /// <returns></returns>
         public static string FormatAsTransferRate(long RateBytes, bool AsBits = false)

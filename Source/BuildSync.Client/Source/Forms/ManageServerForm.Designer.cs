@@ -30,8 +30,8 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManageServerForm));
-            System.Windows.Forms.ListViewGroup listViewGroup3 = new System.Windows.Forms.ListViewGroup("Connected", System.Windows.Forms.HorizontalAlignment.Left);
-            System.Windows.Forms.ListViewGroup listViewGroup4 = new System.Windows.Forms.ListViewGroup("Disconnected", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Connected", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Disconnected", System.Windows.Forms.HorizontalAlignment.Left);
             this.ButtonImageIndex = new System.Windows.Forms.ImageList(this.components);
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.MainListView = new System.Windows.Forms.ListView();
@@ -42,13 +42,13 @@
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.label1 = new System.Windows.Forms.Label();
             this.MaxBandwidthBox = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.RefreshTimer = new System.Windows.Forms.Timer(this.components);
             this.BandwithGraph = new BuildSync.Core.Controls.Graph.GraphControl();
-            this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.MaxBandwidthBox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -85,14 +85,13 @@
             this.columnHeader8});
             this.MainListView.FullRowSelect = true;
             this.MainListView.GridLines = true;
-            listViewGroup3.Header = "Connected";
-            listViewGroup3.Name = "Connected";
-            listViewGroup4.Header = "Disconnected";
-            listViewGroup4.Name = "Disconnected";
+            listViewGroup1.Header = "Connected";
+            listViewGroup1.Name = "Connected";
+            listViewGroup2.Header = "Disconnected";
+            listViewGroup2.Name = "Disconnected";
             this.MainListView.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup3,
-            listViewGroup4});
-            this.MainListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            listViewGroup1,
+            listViewGroup2});
             this.MainListView.HideSelection = false;
             this.MainListView.HotTracking = true;
             this.MainListView.HoverSelection = true;
@@ -105,6 +104,7 @@
             this.MainListView.TabIndex = 1;
             this.MainListView.UseCompatibleStateImageBehavior = false;
             this.MainListView.View = System.Windows.Forms.View.Details;
+            this.MainListView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.ColumnClicked);
             // 
             // columnHeader1
             // 
@@ -140,6 +140,11 @@
             // 
             this.columnHeader7.Text = "Disk Usage";
             this.columnHeader7.Width = 100;
+            // 
+            // columnHeader8
+            // 
+            this.columnHeader8.Text = "Version";
+            this.columnHeader8.Width = 80;
             // 
             // label1
             // 
@@ -188,7 +193,6 @@
             // 
             // RefreshTimer
             // 
-            this.RefreshTimer.Enabled = true;
             this.RefreshTimer.Interval = 1000;
             this.RefreshTimer.Tick += new System.EventHandler(this.RefreshTicked);
             // 
@@ -205,11 +209,6 @@
         null};
             this.BandwithGraph.Size = new System.Drawing.Size(556, 104);
             this.BandwithGraph.TabIndex = 3;
-            // 
-            // columnHeader8
-            // 
-            this.columnHeader8.Text = "Version";
-            this.columnHeader8.Width = 80;
             // 
             // ManageServerForm
             // 

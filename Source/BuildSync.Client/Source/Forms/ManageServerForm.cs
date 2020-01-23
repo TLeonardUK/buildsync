@@ -23,6 +23,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
+
+        /// <summary>
+        /// 
+        /// </summary>
         private bool ApplyingServerState = false;
 
         /// <summary>
@@ -33,6 +38,8 @@ namespace BuildSync.Client.Forms
             InitializeComponent();
 
             WindowUtils.EnableDoubleBuffering(MainListView);
+
+            MainListView.ListViewItemSorter = ColumnSorter;
         }
 
         /// <summary>
@@ -42,6 +49,8 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
+            RefreshTimer.Enabled = true;
+
             Program.NetClient.OnServerStateRecieved += ServerStateRecieved;
             Program.NetClient.RequestServerState();
 
@@ -74,6 +83,8 @@ namespace BuildSync.Client.Forms
         private void OnClosed(object sender, FormClosedEventArgs e)
         {
             Program.NetClient.OnServerStateRecieved -= ServerStateRecieved;
+
+            RefreshTimer.Enabled = false;
         }
 
         /// <summary>
@@ -168,6 +179,47 @@ namespace BuildSync.Client.Forms
         private void MaxBandwidthBoxChanged(object sender, EventArgs e)
         {
             Program.NetClient.SetServerMaxBandwidth((long)MaxBandwidthBox.Value * 1024l);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ColumnClicked(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == ColumnSorter.SortColumn)
+            {
+                if (ColumnSorter.Order == SortOrder.Ascending)
+                {
+                    ColumnSorter.Order = SortOrder.Descending;
+                }
+                else
+                {
+                    ColumnSorter.Order = SortOrder.Ascending;
+                }
+            }
+            else
+            {
+                ColumnSorter.SortColumn = e.Column;
+                ColumnSorter.Order = SortOrder.Ascending;
+
+                if (e.Column == 1 || // Download Speed
+                    e.Column == 2 || // Upload Speed
+                    e.Column == 3 || // Total Downloaded
+                    e.Column == 4 || // Total Uploaded
+                    e.Column == 5 || // Connected Peer Count
+                    e.Column == 6)   // Disk Usage
+                {
+                    ColumnSorter.SortType = typeof(float);
+                }
+                else
+                {
+                    ColumnSorter.SortType = typeof(string);
+                }
+            }
+
+            MainListView.Sort();
         }
     }
 }

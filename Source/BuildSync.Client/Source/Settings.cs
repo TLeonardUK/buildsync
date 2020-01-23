@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Drawing;
 using System.Threading.Tasks;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Downloads;
@@ -67,6 +68,9 @@ namespace BuildSync.Client
 #endif
         public bool AlwaysRunInstallBeforeLaunching { get; set; } = true;
         public bool RunOnStartup { get; set; } = true;
+
+        public byte[] LayoutState { get; set; } = null;
+        public Size LayoutSize { get; set; } = Size.Empty;
 
         public Guid LastAutoUpdateManifest { get; set; } = Guid.Empty;
 

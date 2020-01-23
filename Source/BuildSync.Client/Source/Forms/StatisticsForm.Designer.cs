@@ -42,7 +42,6 @@
             // 
             // SampleTimer
             // 
-            this.SampleTimer.Enabled = true;
             this.SampleTimer.Interval = 1000;
             this.SampleTimer.Tick += new System.EventHandler(this.GetSamples);
             // 
@@ -104,6 +103,7 @@
             this.Text = "Statistics";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OnClosing);
             this.Load += new System.EventHandler(this.OnLoaded);
+            this.Shown += new System.EventHandler(this.OnShown);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();

@@ -21,9 +21,18 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
+
+        /// <summary>
+        /// 
+        /// </summary>
         public PeersForm()
         {
             InitializeComponent();
+
+            WindowUtils.EnableDoubleBuffering(MainListView);
+
+            MainListView.ListViewItemSorter = ColumnSorter;
         }
         
         /// <summary>
@@ -33,7 +42,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
-
+            ListUpdateTimer.Enabled = true;
         }
 
         /// <summary>
@@ -43,7 +52,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnClosed(object sender, FormClosedEventArgs e)
         {
-
+            ListUpdateTimer.Enabled = false;
         }
 
         /// <summary>
@@ -107,6 +116,47 @@ namespace BuildSync.Client.Forms
                 Item.SubItems[6].Text = StringUtils.FormatAsSize((long)Peer.TargetInFlightData);
                 Item.SubItems[7].Text = StringUtils.FormatAsSize((long)Peer.CurrentInFlightData);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ColumnClicked(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == ColumnSorter.SortColumn)
+            {
+                if (ColumnSorter.Order == SortOrder.Ascending)
+                {
+                    ColumnSorter.Order = SortOrder.Descending;
+                }
+                else
+                {
+                    ColumnSorter.Order = SortOrder.Ascending;
+                }
+            }
+            else
+            {
+                ColumnSorter.SortColumn = e.Column;
+                ColumnSorter.Order = SortOrder.Ascending;
+
+                if (e.Column == 1 || // Download Speed
+                    e.Column == 2 || // Upload Speed
+                    e.Column == 3 || // Total Downloaded
+                    e.Column == 4 || // Total Uploaded
+                    e.Column == 6 || // Target In-Flight
+                    e.Column == 7)   // Current In-Flight
+                {
+                    ColumnSorter.SortType = typeof(float);
+                }
+                else
+                {
+                    ColumnSorter.SortType = typeof(string);
+                }
+            }
+
+            MainListView.Sort();
         }
     }
 }

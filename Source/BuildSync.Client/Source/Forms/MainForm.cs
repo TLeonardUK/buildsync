@@ -79,6 +79,21 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private DownloadList MainDownloadList = null;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool WasMinimized = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool DisableLayoutStoring = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private DeserializeDockContent DeserializedDockContent = null;
+
         #endregion
         #region Methods
 
@@ -88,6 +103,109 @@ namespace BuildSync.Client.Forms
         public MainForm()
         {
             InitializeComponent();
+
+            MainDownloadList = new DownloadList();
+            StatsForm = new StatisticsForm();
+            ManageBuildsForm = new ManageBuildsForm();
+            ManageUsersForm = new ManageUsersForm();
+            ManageServerForm = new ManageServerForm();
+            ConsoleOutputForm = new ConsoleForm();
+            PeersForm = new PeersForm();
+            ManifestsForm = new ManifestsForm();
+
+            DeserializedDockContent = new DeserializeDockContent(GetLayoutContentFromPersistString);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="persistString"></param>
+        /// <returns></returns>
+        private IDockContent GetLayoutContentFromPersistString(string persistString)
+        {
+            if (persistString == typeof(DownloadList).ToString())
+            {
+                return MainDownloadList;
+            }
+            else if (persistString == typeof(StatisticsForm).ToString())
+            {
+                return StatsForm;
+            }
+            else if (persistString == typeof(ManageBuildsForm).ToString())
+            {
+                return ManageBuildsForm;
+            }
+            else if (persistString == typeof(ManageUsersForm).ToString())
+            {
+                return ManageUsersForm;
+            }
+            else if (persistString == typeof(ManageServerForm).ToString())
+            {
+                return ManageServerForm;
+            }
+            else if (persistString == typeof(ConsoleForm).ToString())
+            {
+                return ConsoleOutputForm;
+            }
+            else if (persistString == typeof(PeersForm).ToString())
+            {
+                return PeersForm;
+            }
+            else if (persistString == typeof(ManifestsForm).ToString())
+            {
+                return ManifestsForm;
+            }
+
+            Logger.Log(LogLevel.Error, LogCategory.Main, "Dock layout deserialization failed due to unknown form: {0}", persistString);
+            return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool RestoreLayout()
+        {
+            if (Program.Settings.LayoutState != null)
+            {
+                using (MemoryStream Stream = new MemoryStream(Program.Settings.LayoutState))
+                {
+                    this.Size = Program.Settings.LayoutSize;
+                    CloseAllContent();
+                    DockPanel.LoadFromXml(Stream, DeserializedDockContent);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void CloseAllContent()
+        {
+            foreach (DockContent contents in DockPanel.Contents.ToArray())
+            {
+                contents.DockPanel = null;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void StoreLayout(Size mainSize)
+        {
+            if (DisableLayoutStoring)
+            {
+                return;
+            }
+
+            using (MemoryStream Stream = new MemoryStream())
+            {
+                DockPanel.SaveAsXml(Stream, System.Text.Encoding.UTF8);
+                Program.Settings.LayoutState = Stream.ToArray();
+                Program.Settings.LayoutSize = mainSize;
+            }
         }
 
         /// <summary>
@@ -97,6 +215,17 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void FormLoaded(object sender, EventArgs e)
         {
+            DockPanel.Theme = new VS2015LightTheme();
+
+            if (!RestoreLayout())
+            {
+                MainDownloadList.Show(DockPanel, DockState.Document);
+                MainDownloadList.ContextMenuStrip = downloadListContextMenu;
+
+                StatsForm.Show(DockPanel, DockState.Document);
+
+                MainDownloadList.Activate();
+            }
         }
 
         /// <summary>
@@ -106,29 +235,6 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void FormShown(object sender, EventArgs e)
         {
-            DockPanel.Theme = new VS2015LightTheme();
-
-            MainDownloadList = new DownloadList();
-            MainDownloadList.Show(DockPanel, DockState.Document);
-            MainDownloadList.ContextMenuStrip = downloadListContextMenu;
-
-            //ManifestsForm = new ManifestsForm();
-            //ManifestsForm.Show(DockPanel, DockState.DockBottomAutoHide);
-            //ManifestsForm.Hide();
-
-            StatsForm = new StatisticsForm();
-            StatsForm.Show(DockPanel, DockState.Document);
-
-            MainDownloadList.Activate();
-
-            //ConsoleOutputForm = new ConsoleForm();
-            //ConsoleOutputForm.Show(DockPanel, DockState.DockBottomAutoHide);
-            //ConsoleOutputForm.Hide();
-
-            //PeersForm = new PeersForm();
-            //PeersForm.Show(DockPanel, DockState.DockBottomAutoHide);
-            //PeersForm.Hide();
-
             RefreshState();
 
             if (Program.Settings.FirstRun)
@@ -161,20 +267,6 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void PublishBuildClicked(object sender, EventArgs e)
         {
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ManageBuildsClicked(object sender, EventArgs e)
-        {
-            if (ManageBuildsForm == null)
-            {
-                ManageBuildsForm = new ManageBuildsForm();
-            }
-            ManageBuildsForm.Show(DockPanel, DockState.DockRight);
         }
 
         /// <summary>
@@ -310,34 +402,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ManageUsersClicked(object sender, EventArgs e)
-        {
-            if (ManageUsersForm == null)
-            {
-                ManageUsersForm = new ManageUsersForm();
-            }
-            ManageUsersForm.Show(DockPanel, DockState.Document);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ServerManagerClicked(object sender, EventArgs e)
-        {
-            if (ManageServerForm == null)
-            {
-                ManageServerForm = new ManageServerForm();
-            }
-            ManageServerForm.Show(DockPanel, DockState.Document);
-        }
-
-        /// <summary>
         ///     Invoked when the user clicks the settings menu item.
         /// </summary>
         /// <param name="sender">Object that invoked this event.</param>
@@ -372,25 +436,73 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="Content"></param>
+        private void ShowContent(DockContent Content, DockState DefaultDockState)
+        {
+            if (Content.DockState == DockState.Unknown)
+            {
+                Content.Show(DockPanel, DefaultDockState);
+            }
+
+            Content.Show();
+            if (Content.DockState == DockState.DockLeftAutoHide ||
+                Content.DockState == DockState.DockRightAutoHide ||
+                Content.DockState == DockState.DockTopAutoHide ||
+                Content.DockState == DockState.DockBottomAutoHide)
+            {
+                DockPanel.ActiveAutoHideContent = Content;
+            }
+            Content.Activate();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ManageBuildsClicked(object sender, EventArgs e)
+        {
+            ShowContent(ManageBuildsForm, DockState.DockRight);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ManageUsersClicked(object sender, EventArgs e)
+        {
+            ShowContent(ManageUsersForm, DockState.Document);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ServerManagerClicked(object sender, EventArgs e)
+        {
+            ShowContent(ManageServerForm, DockState.Document);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DownloadListClicked(object sender, EventArgs e)
+        {
+            ShowContent(MainDownloadList, DockState.Document);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ViewConsoleClicked(object sender, EventArgs e)
         {
-            if (ConsoleOutputForm == null)
-            {
-                ConsoleOutputForm = new ConsoleForm();
-                ConsoleOutputForm.Show(DockPanel, DockState.DockBottom);
-            }
-
-            ConsoleOutputForm.Show();
-            if (ConsoleOutputForm.DockState == DockState.DockLeftAutoHide ||
-                ConsoleOutputForm.DockState == DockState.DockRightAutoHide ||
-                ConsoleOutputForm.DockState == DockState.DockTopAutoHide ||
-                ConsoleOutputForm.DockState == DockState.DockBottomAutoHide)
-            {
-                DockPanel.ActiveAutoHideContent = ConsoleOutputForm;
-            }
-            ConsoleOutputForm.Activate();
+            ShowContent(ConsoleOutputForm, DockState.DockBottom);
         }
 
         /// <summary>
@@ -400,15 +512,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void StatisticsClicked(object sender, EventArgs e)
         {
-            StatsForm.Show();
-            if (StatsForm.DockState == DockState.DockLeftAutoHide ||
-                StatsForm.DockState == DockState.DockRightAutoHide ||
-                StatsForm.DockState == DockState.DockTopAutoHide ||
-                StatsForm.DockState == DockState.DockBottomAutoHide)
-            {
-                DockPanel.ActiveAutoHideContent = StatsForm;
-            }
-            StatsForm.Activate();
+            ShowContent(StatsForm, DockState.Document);
         }
 
         /// <summary>
@@ -418,21 +522,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewPeersClicked(object sender, EventArgs e)
         {
-            if (PeersForm == null)
-            {
-                PeersForm = new PeersForm();
-                PeersForm.Show(DockPanel, DockState.DockBottom);
-            }
-
-            PeersForm.Show();
-            if (PeersForm.DockState == DockState.DockLeftAutoHide ||
-                PeersForm.DockState == DockState.DockRightAutoHide ||
-                PeersForm.DockState == DockState.DockTopAutoHide ||
-                PeersForm.DockState == DockState.DockBottomAutoHide)
-            {
-                DockPanel.ActiveAutoHideContent = PeersForm;
-            }
-            PeersForm.Activate();
+            ShowContent(PeersForm, DockState.DockBottom);
         }
 
         /// <summary>
@@ -442,21 +532,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewManifestsClicked(object sender, EventArgs e)
         {
-            if (ManifestsForm == null)
-            {
-                ManifestsForm = new ManifestsForm();
-                ManifestsForm.Show(DockPanel, DockState.DockBottom);
-            }
-
-            ManifestsForm.Show();
-            if (ManifestsForm.DockState == DockState.DockLeftAutoHide ||
-                ManifestsForm.DockState == DockState.DockRightAutoHide ||
-                ManifestsForm.DockState == DockState.DockTopAutoHide ||
-                ManifestsForm.DockState == DockState.DockBottomAutoHide)
-            {
-                DockPanel.ActiveAutoHideContent = ManifestsForm;
-            }
-            ManifestsForm.Activate();
+            ShowContent(ManifestsForm, DockState.DockBottom);
         }
 
         /// <summary>
@@ -466,6 +542,8 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            StoreLayout(this.Size);
+
             if (ForcedExit)
             {
                 return;
@@ -490,26 +568,20 @@ namespace BuildSync.Client.Forms
         private void ClientSizeHasChanged(object sender, EventArgs e)
         {
             ShowInTaskbar = (WindowState != FormWindowState.Minimized);
-            if (ShowInTaskbar)
+            if (WindowState != FormWindowState.Minimized)
             {
-                MainDownloadList.Invalidate();
-                Console.WriteLine("Redrawing...");
-                DockPanel.Update();
-                DockPanel.Invalidate();
-                DockPanel.Refresh();
-                DockPanel.DocumentStyle = DocumentStyle.DockingMdi;
-                foreach (DockPane Pane in DockPanel.Panes)
+                if (WasMinimized)
                 {
-                    Pane.Update();
-                    Pane.Invalidate();
-                    Pane.Refresh();
-                    Pane.Activate();
+                    RestoreLayout();
+                    WasMinimized = false;
                 }
-                foreach (DockContent Content in DockPanel.Documents)
+            }
+            else if (WindowState == FormWindowState.Minimized)
+            {
+                if (!WasMinimized)
                 {
-                    Content.Update();
-                    Content.Invalidate();
-                    Content.Refresh();
+                    StoreLayout(this.RestoreBounds.Size);
+                    WasMinimized = true;
                 }
             }
         }
@@ -809,6 +881,29 @@ namespace BuildSync.Client.Forms
             {
                 totalDiskDownBandwidthLabel.Text = string.Format("{0}", StringUtils.FormatAsTransferRate(AsyncIOQueue.GlobalBandwidthStats.RateIn));
             }
+
+            // Show/Hide autoupdate stuff
+            if (Program.AutoUpdateAvailable)
+            {
+                StoreLayout(this.Size);
+                DisableLayoutStoring = true;
+
+                UpdatePanel.Visible = true;
+                DockPanel.Visible = false;
+                fileToolStripMenuItem.Enabled = false;
+                viewToolStripMenuItem.Enabled = false;
+                adminBaseToolStripMenuItem.Enabled = false;
+                helpToolStripMenuItem.Enabled = false;
+
+                peerCountLabel.Text = "Update is pending";
+                peerCountLabel.ForeColor = Color.Red;
+
+                CloseAllContent();
+            }
+            else
+            {
+                UpdatePanel.Visible = false;
+            }
         }
 
         /// <summary>
@@ -819,6 +914,16 @@ namespace BuildSync.Client.Forms
         private void PollTimerTick(object sender, EventArgs e)
         {
             Program.OnPoll();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void AutoUpdaterClicked(object sender, EventArgs e)
+        {
+            Program.InstallAutoUpdate();
         }
 
         #endregion

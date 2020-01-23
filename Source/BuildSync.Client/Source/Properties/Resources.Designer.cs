@@ -83,6 +83,16 @@ namespace BuildSync.Client.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap appbar_arrow_up_down {
+            get {
+                object obj = ResourceManager.GetObject("appbar.arrow.up.down", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap appbar_book_perspective_help {
             get {
                 object obj = ResourceManager.GetObject("appbar.book.perspective.help", resourceCulture);

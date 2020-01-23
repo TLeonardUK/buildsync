@@ -229,8 +229,19 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
+        private void OnShown(object sender, EventArgs e)
+        {
+            SampleTimer.Enabled = true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnClosing(object sender, FormClosingEventArgs e)
         {
+            SampleTimer.Enabled = false;
         }
 
         /// <summary>

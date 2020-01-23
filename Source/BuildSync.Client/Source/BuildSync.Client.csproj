@@ -499,6 +499,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.arrow.up.down.png" />
     <None Include="Resources\appbar.network.server.connecting.png" />
     <None Include="Resources\appbar.graph.histogram.png" />
     <None Include="Resources\appbar.link.png" />

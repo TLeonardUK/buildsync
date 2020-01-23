@@ -136,6 +136,11 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
+        public static bool AutoUpdateAvailable { get; private set; } = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static string AppDataDir
         {
             get
@@ -621,9 +626,14 @@ namespace BuildSync.Client
                 {
                     if (Settings.LastAutoUpdateManifest != Downloader.ManifestId)
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.Main, "Installing new update: {0}", Downloader.Manifest.VirtualPath);
-                        InstallAutoUpdate(Downloader);
+                        //Logger.Log(LogLevel.Info, LogCategory.Main, "Installing new update: {0}", Downloader.Manifest.VirtualPath);
+                        AutoUpdateAvailable = true;
+                        //InstallAutoUpdate();
                     }
+                }
+                else
+                {
+                    AutoUpdateAvailable = false;
                 }
             }
 #endif
@@ -632,8 +642,20 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        public static void InstallAutoUpdate(ManifestDownloadState AutoUpdateDownload)
+        public static void InstallAutoUpdate()
         {
+            ManifestDownloadState AutoUpdateDownload = null;
+            if (InternalUpdateDownload != null)
+            {
+                AutoUpdateDownload = Program.ManifestDownloadManager.GetDownload(InternalUpdateDownload.ActiveManifestId);
+            }
+
+            if (AutoUpdateDownload == null)
+            {
+                Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to install update, no internal download available.");
+                return;
+            }
+            
             string InstallerPath = Path.Combine(AutoUpdateDownload.LocalFolder, "installer.msi");
             if (!File.Exists(InstallerPath))
             {
@@ -649,12 +671,13 @@ namespace BuildSync.Client
                 // Boot up the installer.
                 try
                 {
-                    Process.Start(InstallerPath, "/passive /norestart REINSTALL=ALL REINSTALLMODE=A MSIRMSHUTDOWN=1 MSIDISABLERMRESTART=0 ADDLOCAL=All");
+                    //Process.Start(InstallerPath, "/passive /norestart REINSTALL=ALL REINSTALLMODE=A MSIRMSHUTDOWN=1 MSIDISABLERMRESTART=0 ADDLOCAL=All");
+                    Process.Start(InstallerPath);
                     Application.Exit();
                 }
                 catch (Exception Ex)
                 {
-                    Console.WriteLine("Failed to install update '{0}' due to error: {1}", InstallerPath, Ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to install update '{0}' due to error: {1}", InstallerPath, Ex.Message);
 
                     Settings.LastAutoUpdateManifest = Guid.Empty;
                     SaveSettings(true);
