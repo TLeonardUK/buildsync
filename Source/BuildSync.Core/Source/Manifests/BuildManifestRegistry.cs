@@ -120,6 +120,14 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
+        public void PruneUnseenManifests()
+        {
+            // Find manifests that no peer has had data for in x days and delete them.
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void PruneManifests()
         {
             if (Manifests.Count <= MaximumManifests)

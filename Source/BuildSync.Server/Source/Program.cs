@@ -261,6 +261,7 @@ namespace BuildSync.Server
 
             NetServer = new BuildSyncServer();
             NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager, LicenseMgr);
+            NetServer.BandwidthLimit = Settings.MaxBandwidth;
         }
 
         /// <summary>
@@ -272,6 +273,9 @@ namespace BuildSync.Server
             LicenseMgr.Poll();
 
             NetServer.MaxConnectedClients = LicenseMgr.ActiveLicense.MaxSeats;
+            Settings.MaxBandwidth = NetServer.BandwidthLimit;
+
+            BuildRegistry.PruneUnseenManifests();
 
             PollIpcServer();
 

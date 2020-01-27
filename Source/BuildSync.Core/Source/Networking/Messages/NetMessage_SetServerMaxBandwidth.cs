@@ -9,7 +9,7 @@ namespace BuildSync.Core.Networking.Messages
     /// <summary>
     /// 
     /// </summary>
-    public class NetMessage_GetServerMaxBandwidth : NetMessage
+    public class NetMessage_SetServerMaxBandwidth : NetMessage
     {
         /// <summary>
         /// 

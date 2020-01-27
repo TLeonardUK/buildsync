@@ -813,7 +813,7 @@ namespace BuildSync.Core
             // ------------------------------------------------------------------------------
             // Changing server max bandwidth
             // ------------------------------------------------------------------------------
-            else if (BaseMessage is NetMessage_GetServerMaxBandwidth)
+            else if (BaseMessage is NetMessage_SetServerMaxBandwidth)
             {
                 ClientState State = Connection.Metadata as ClientState;
 
@@ -823,7 +823,7 @@ namespace BuildSync.Core
                     return;
                 }
 
-                NetMessage_GetServerMaxBandwidth Msg = BaseMessage as NetMessage_GetServerMaxBandwidth;
+                NetMessage_SetServerMaxBandwidth Msg = BaseMessage as NetMessage_SetServerMaxBandwidth;
                 BandwidthLimit = Msg.BandwidthLimit;
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' changed global bandwidth limit to {1}.", State.Username, StringUtils.FormatAsTransferRate(Msg.BandwidthLimit));

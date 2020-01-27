@@ -17,5 +17,6 @@ namespace BuildSync.Server
         public int MaximumManifests { get; set; } = 500;
         public bool RunOnStartup { get; set; } = true;
         public List<User> Users { get; set; } = new List<User>();
+        public long MaxBandwidth { get; set; } = 0;
     }
 }

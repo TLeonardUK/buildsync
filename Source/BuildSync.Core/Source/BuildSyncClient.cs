@@ -1548,7 +1548,7 @@ namespace BuildSync.Core
                 return false;
             }
 
-            NetMessage_GetServerMaxBandwidth Msg = new NetMessage_GetServerMaxBandwidth();
+            NetMessage_SetServerMaxBandwidth Msg = new NetMessage_SetServerMaxBandwidth();
             Msg.BandwidthLimit = MaxBandwidth;
             Connection.Send(Msg);
 
