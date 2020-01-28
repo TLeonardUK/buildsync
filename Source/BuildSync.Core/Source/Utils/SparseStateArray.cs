@@ -147,7 +147,7 @@ namespace BuildSync.Core.Utils
             bool[] Array = ToArray();
             bool[] OtherArray = Other.ToArray();
             bool[] Union = new bool[Size];
-            for (int i = 0; i < Size; i++)
+            for (int i = 0; i < Other.Size; i++)
             {
                 Union[i] = Array[i] || OtherArray[i];
             }

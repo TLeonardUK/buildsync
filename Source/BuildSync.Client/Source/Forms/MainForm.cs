@@ -217,10 +217,11 @@ namespace BuildSync.Client.Forms
         {
             DockPanel.Theme = new VS2015LightTheme();
 
+            MainDownloadList.ContextMenuStrip = downloadListContextMenu;
+
             if (!RestoreLayout())
             {
                 MainDownloadList.Show(DockPanel, DockState.Document);
-                MainDownloadList.ContextMenuStrip = downloadListContextMenu;
 
                 StatsForm.Show(DockPanel, DockState.Document);
 
