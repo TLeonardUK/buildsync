@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 using System.Text;
 using BuildSync.Core.Utils;
@@ -93,6 +94,89 @@ namespace BuildSync.Core.Utils
     /// <summary>
     /// 
     /// </summary>
+    public class Statistic_DiskOutLatency : Statistic
+    {
+        public Statistic_DiskOutLatency()
+        {
+            Name = @"IO\Disk Read Latency (ms)";
+            MaxLabel = "1000";
+            MaxValue = 1000.0f;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample((float)AsyncIOQueue.OutLatency.Get());
+        }
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_DiskInLatency : Statistic
+    {
+        public Statistic_DiskInLatency()
+        {
+            Name = @"IO\Disk Write Latency (ms)";
+            MaxLabel = "1000";
+            MaxValue = 1000.0f;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample((float)AsyncIOQueue.InLatency.Get());
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_IOQueueSize : Statistic
+    {
+        public Statistic_IOQueueSize()
+        {
+            Name = @"IO\Task Queue Size";
+            MaxLabel = "50";
+            MaxValue = 50.0f;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample((float)AsyncIOQueue.TaskQueueCount);
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_IOTaskProcessTime : Statistic
+    {
+        public Statistic_IOTaskProcessTime()
+        {
+            Name = @"IO\Task Process Time (ms)";
+            MaxLabel = "50";
+            MaxValue = 50.0f;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample((float)AsyncIOQueue.TaskProcessTime.Get());
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public class AsyncIOQueue
     {
         public enum TaskType
@@ -110,6 +194,7 @@ namespace BuildSync.Core.Utils
             public long Size;
             public long DataOffset;
             public byte[] Data;
+            public ulong QueueTime;
             public IOCompleteCallbackHandler Callback;
         }
 
@@ -123,19 +208,25 @@ namespace BuildSync.Core.Utils
         }
 
         private ConcurrentQueue<Task> TaskQueue = new ConcurrentQueue<Task>();
+        public static int TaskQueueCount = 0;
+
         private Thread TaskThread = null;
         private bool IsRunning = false;
         private object WakeObject = new object();
 
         private const int MaxStreamAge = 10 * 1000;
-        private const int MaxStreams = 16;
+        private const int MaxStreams = 20;
         private const int StreamBufferSize = 256 * 1024;
-        private const int StreamMaxConcurrentOps = 8;
+        private const int StreamMaxConcurrentOps = 20;
 
         private List<ActiveStream> ActiveStreams = new List<ActiveStream>();
         private Dictionary<string, ActiveStream> ActiveStreamsByPath = new Dictionary<string, ActiveStream>();
 
         public static RateTracker GlobalBandwidthStats = new RateTracker();
+
+        public static RollingAverage OutLatency = new RollingAverage(25);
+        public static RollingAverage InLatency = new RollingAverage(25);
+        public static RollingAverage TaskProcessTime = new RollingAverage(5);        
 
         private static long GlobalQueuedOut = 0;
         private static long GlobalQueuedIn = 0;
@@ -206,6 +297,8 @@ namespace BuildSync.Core.Utils
                         {
                             continue;
                         }
+
+                        Interlocked.Decrement(ref TaskQueueCount);
                     }
                     else
                     {
@@ -216,18 +309,24 @@ namespace BuildSync.Core.Utils
                     Interlocked.Increment(ref ActiveTasks);
                 }
 
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+
                 if (!RunTask(NewTask))
                 {
                     lock (WakeObject)
                     {
+                        Interlocked.Increment(ref TaskQueueCount);
                         TaskQueue.Enqueue(NewTask);
                         Monitor.Wait(WakeObject, 1000);
                     }
                 }
 
+                CloseOldStreams();
                 Interlocked.Decrement(ref ActiveTasks);
 
-                CloseOldStreams();
+                watch.Stop();
+                TaskProcessTime.Add(watch.ElapsedMilliseconds);
             }
         }
 
@@ -301,9 +400,12 @@ namespace BuildSync.Core.Utils
                     // If we need to write to this file and we are only open for read, drain event queue and reopen.
                     if (!ExistingStream.CanWrite && RequireWrite)
                     {
+                        Logger.Log(LogLevel.Info, LogCategory.IO, "Stalling while draining read queue and reopening for write: '{0}'", Path);
+
+                        // This is not ideal, we should remove this if practical, it wastes processing time.
                         while (ExistingStream.ActiveOperations > 0)
                         {
-                            Thread.Sleep(10);
+                            Thread.Sleep(0);
                         }
 
                         ExistingStream.Stream.Close();
@@ -356,6 +458,7 @@ namespace BuildSync.Core.Utils
                     ActiveStream NewStm = new ActiveStream();
                     NewStm.LastAccessed = CurrentTicks;
                     NewStm.Path = Path;
+                    NewStm.CanWrite = RequireWrite;
                     NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous/* | FileOptions.WriteThrough*/);
                     ActiveStreams.Add(NewStm);
                     ActiveStreamsByPath.Add(NewStm.Path, NewStm);
@@ -485,6 +588,9 @@ namespace BuildSync.Core.Utils
 
                                 Stm.Stream.EndWrite(Result);
 
+                                ulong ElapsedTime = TimeUtils.Ticks - Work.QueueTime;
+                                InLatency.Add((double)ElapsedTime);
+
                                 Work.Callback?.Invoke(true);
                             }
                             catch (Exception Ex)
@@ -565,6 +671,9 @@ namespace BuildSync.Core.Utils
                                 return;
                             }
 
+                            ulong ElapsedTime = TimeUtils.Ticks - Work.QueueTime;
+                            OutLatency.Add((double)ElapsedTime);
+
                             Work.Callback?.Invoke(true);
                         }
                         catch (Exception Ex)
@@ -604,7 +713,8 @@ namespace BuildSync.Core.Utils
         /// <param name="Size"></param>
         public void DeleteDir(string InPath, IOCompleteCallbackHandler InCallback)
         {
-            TaskQueue.Enqueue(new Task { Type = TaskType.DeleteDir, Path = InPath, Callback = InCallback });
+            Interlocked.Increment(ref TaskQueueCount);
+            TaskQueue.Enqueue(new Task { Type = TaskType.DeleteDir, Path = InPath, Callback = InCallback, QueueTime = TimeUtils.Ticks });
             WakeThread();
         }
 
@@ -617,9 +727,8 @@ namespace BuildSync.Core.Utils
         public void Write(string InPath, long InOffset, long InSize, byte[] InData, long InDataOffset, IOCompleteCallbackHandler InCallback)
         {
             Interlocked.Add(ref GlobalQueuedIn, InSize);
-            //Console.WriteLine("####### START WRITE[offset={0} size={1}] {2}", InOffset, InSize, InPath);
-
-            TaskQueue.Enqueue(new Task { Type = TaskType.Write, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, DataOffset = InDataOffset, Callback = InCallback });
+            Interlocked.Increment(ref TaskQueueCount);
+            TaskQueue.Enqueue(new Task { Type = TaskType.Write, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, DataOffset = InDataOffset, Callback = InCallback, QueueTime = TimeUtils.Ticks });
             WakeThread();
         }
 
@@ -632,7 +741,8 @@ namespace BuildSync.Core.Utils
         public void Read(string InPath, long InOffset, long InSize, byte[] InData, long InDataOffset, IOCompleteCallbackHandler InCallback)
         {
             Interlocked.Add(ref GlobalQueuedOut, InSize);
-            TaskQueue.Enqueue(new Task { Type = TaskType.Read, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, DataOffset = InDataOffset, Callback = InCallback });
+            Interlocked.Increment(ref TaskQueueCount);
+            TaskQueue.Enqueue(new Task { Type = TaskType.Read, Path = InPath, Offset = InOffset, Size = InSize, Data = InData, DataOffset = InDataOffset, Callback = InCallback, QueueTime = TimeUtils.Ticks });
             WakeThread();
         }
     }

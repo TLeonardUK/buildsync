@@ -136,12 +136,12 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        private const int IdealDownloadQueueSizeBytes = 150 * 1024 * 1024;
+        private const int IdealDownloadQueueSizeBytes = 200 * 1024 * 1024;
 
         /// <summary>
         /// 
         /// </summary>
-        private const int MaxDownloadQueueItems = 250;
+        private const int MaxDownloadQueueItems = 200;
 
         /// <summary>
         /// 

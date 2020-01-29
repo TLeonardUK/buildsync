@@ -231,12 +231,12 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
-            public RollingAverage BlockRecieveLatency = new RollingAverage(100);
+            public RollingAverage BlockRecieveLatency = new RollingAverage(20);
 
             /// <summary>
             /// 
             /// </summary>
-            public RollingAverage AverageBlockSize = new RollingAverage(100);
+            public RollingAverage AverageBlockSize = new RollingAverage(20);
 
             /// <summary>
             /// 
@@ -259,7 +259,7 @@ namespace BuildSync.Core
                     MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMsOfData / InBlockRecieveLatency) * InAverageBlockSize));
                 }
 
-                return MaxInFlightBytes;
+                return MaxInFlightBytes;// * 5;
             }
 
             /// <summary>
@@ -361,6 +361,7 @@ namespace BuildSync.Core
             private void UpdateLatency(ManifestPendingDownloadBlock Download)
             {
                 ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+                //Console.WriteLine("Recieved block {0} in {1} ms", Download.BlockIndex, Elapsed);
                 BlockRecieveLatency.Add(Elapsed);
                 AverageBlockSize.Add(Download.Size);
             }
@@ -496,7 +497,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        public const int TargetMillisecondsOfDataInFlight = 3000;
+        public const int TargetMillisecondsOfDataInFlight = 2000;
 
         /// <summary>
         /// 

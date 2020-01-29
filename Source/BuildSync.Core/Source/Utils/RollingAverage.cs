@@ -15,6 +15,7 @@ namespace BuildSync.Core.Utils
         {
             MaxSamples = SampleCount;
         }
+
         public double GetStandardDeviation(bool as_sample = false)
         {
             // Get the mean.
