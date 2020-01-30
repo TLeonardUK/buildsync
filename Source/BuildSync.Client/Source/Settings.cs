@@ -39,7 +39,9 @@ namespace BuildSync.Client
         public float PeakRateOut { get; set; } = 0;
         public DateTime LastSeen { get; set; } = DateTime.Now;
         public float TargetInFlightData { get; set; } = 0;
-        public float CurrentInFlightData { get; set; } = 0;        
+        public float CurrentInFlightData { get; set; } = 0;
+        public long Ping { get; set; } = 0;
+        public long BestPing { get; set; } = 0;
 
         internal long TotalInTracker = -1;
         internal long TotalOutTracker = -1;

@@ -43,6 +43,7 @@
             this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SuspendLayout();
             // 
             // MainListView
@@ -57,7 +58,8 @@
             this.columnHeader2,
             this.columnHeader3,
             this.columnHeader7,
-            this.columnHeader8});
+            this.columnHeader8,
+            this.columnHeader9});
             this.MainListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.MainListView.FullRowSelect = true;
             this.MainListView.GridLines = true;
@@ -73,7 +75,7 @@
             this.MainListView.HoverSelection = true;
             this.MainListView.Location = new System.Drawing.Point(0, 0);
             this.MainListView.Name = "MainListView";
-            this.MainListView.Size = new System.Drawing.Size(1028, 204);
+            this.MainListView.Size = new System.Drawing.Size(1168, 204);
             this.MainListView.SmallImageList = this.UserImageList;
             this.MainListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.MainListView.TabIndex = 0;
@@ -132,10 +134,14 @@
             this.ListUpdateTimer.Interval = 1000;
             this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
             // 
+            // columnHeader9
+            // 
+            this.columnHeader9.Text = "Ping";
+            // 
             // PeersForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(1028, 204);
+            this.ClientSize = new System.Drawing.Size(1168, 204);
             this.Controls.Add(this.MainListView);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.HideOnClose = true;
@@ -166,5 +172,6 @@
         private System.Windows.Forms.ImageList UserImageList;
         private System.Windows.Forms.ColumnHeader columnHeader7;
         private System.Windows.Forms.ColumnHeader columnHeader8;
+        private System.Windows.Forms.ColumnHeader columnHeader9;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Threading;
 using BuildSync.Core.Utils;
@@ -181,6 +182,15 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        public struct PendingBlockRequest
+        {
+            public NetMessage_GetBlock Message;
+            public NetConnection Requester;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public class Peer
         {
             /// <summary>
@@ -238,6 +248,16 @@ namespace BuildSync.Core
             /// </summary>
             public RollingAverage AverageBlockSize = new RollingAverage(20);
 
+            /// <summary>
+            /// 
+            /// </summary>
+            public ConcurrentQueue<PendingBlockRequest> BlockRequestQueue = new ConcurrentQueue<PendingBlockRequest>();
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public ulong LastBlockRequestFulfillTime = TimeUtils.Ticks;
+
             public ulong LastPrintTime = TimeUtils.Ticks;
 
             /// <summary>
@@ -263,12 +283,12 @@ namespace BuildSync.Core
                 }
 
                 return MaxInFlightBytes;// * 5;
-#elif true
+#elif false
 
                 // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
                 const double TrendUpwardsFactor = 2;
 
-                double LinkCapacityBytesPerSecond = Connection.BandwidthStats.PeakRateIn / TrendUpwardsFactor; 
+                double LinkCapacityBytesPerSecond = Connection.BandwidthStats.RateIn / TrendUpwardsFactor; 
                 double LatencySeconds = Connection.BestPing / 1000.0f;
                 if (LatencySeconds == 0)
                 {
@@ -278,7 +298,7 @@ namespace BuildSync.Core
                 double BandwidthDelayProductBytes = LinkCapacityBytesPerSecond * LatencySeconds;
                 long MaxInFlightBytes = (long)BandwidthDelayProductBytes;
 
-                // Cap to minimum of one block.
+                // Cap to minimum of a couple ofs, so we always have one being sent out and one before processed.
                 MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
 
                 // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
@@ -289,6 +309,26 @@ namespace BuildSync.Core
                     Console.WriteLine("a={0} b={1} bytes={2}", StringUtils.FormatAsTransferRate((long)LinkCapacityBytesPerSecond), LatencySeconds, StringUtils.FormatAsSize(MaxInFlightBytes));
                     LastPrintTime = TimeUtils.Ticks;
                 }
+
+                return MaxInFlightBytes;
+#elif true
+                // Keep at least 1 second of data in flight.
+                double RealTargetMsOfData = Math.Max(TargetMsOfData, Connection.BestPing * 2.0f);
+
+                const double TrendUpwardsFactor = 1.5f;
+                double TargetSecondsOfData = RealTargetMsOfData / 1000.0;
+                long TargetInFlight = (long)(Connection.BandwidthStats.PeakRateIn * TargetSecondsOfData);
+
+                long MaxInFlightBytes = TargetInFlight;
+
+                // Cap to minimum of a couple of 2 blocks, so we always have one being sent out and one before processed.
+                MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
+
+                // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
+                MaxInFlightBytes = (long)(MaxInFlightBytes * TrendUpwardsFactor);
+
+                // Round to next largest block size.
+                MaxInFlightBytes = ((MaxInFlightBytes + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize) * BuildManifest.BlockSize;
 
                 return MaxInFlightBytes;
 #else
@@ -531,7 +571,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        public const int TargetMillisecondsOfDataInFlight = 2000;
+        public const int TargetMillisecondsOfDataInFlight = 200;
 
         /// <summary>
         /// 
@@ -627,6 +667,16 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         private int PeerBlockRequestShuffleIndex = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private int ActivePeerRequests = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private const int MaxConcurrentPeerRequests = 16;
 
         /// <summary>
         /// 
@@ -1005,7 +1055,7 @@ namespace BuildSync.Core
             }
 
             UpdateBlockDownloads();
-
+            UpdatePeerRequests();
 
             //ulong elapsed = TimeUtils.Ticks - time;
             //time = TimeUtils.Ticks;
@@ -1066,6 +1116,83 @@ namespace BuildSync.Core
             ListenConnection.BeginListen(Port, false);
 
             LastListenAttempt = TimeUtils.Ticks;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void UpdatePeerRequests()
+        {
+            while (ActivePeerRequests < MaxConcurrentPeerRequests)
+            {
+                Peer BestPeer = null;
+                ulong BestPeerElapsed = ulong.MaxValue;
+
+                lock (Peers)
+                {
+                    // Find peer with the longest time since one if its requests were fulfilled.
+                    foreach (Peer peer in Peers)
+                    {
+                        if (peer.BlockRequestQueue.Count > 0 && peer.Connection.IsReadyForData)
+                        {
+                            ulong Elapsed = TimeUtils.Ticks - peer.LastBlockRequestFulfillTime;
+                            if (Elapsed < BestPeerElapsed)
+                            {
+                                BestPeer = peer;
+                                BestPeerElapsed = Elapsed;
+                            }
+                        }
+                    }
+                }
+
+                if (BestPeer != null)
+                {
+                    BestPeer.LastBlockRequestFulfillTime = TimeUtils.Ticks;
+                    Interlocked.Increment(ref ActivePeerRequests);
+
+                    PendingBlockRequest Request;
+                    if (BestPeer.BlockRequestQueue.TryDequeue(out Request))
+                    {
+                        NetMessage_GetBlockResponse Response = new NetMessage_GetBlockResponse();
+                        Response.ManifestId = Request.Message.ManifestId;
+                        Response.BlockIndex = Request.Message.BlockIndex;
+
+                        BlockAccessCompleteHandler Callback = (bool bSuccess) =>
+                        {
+                            Interlocked.Decrement(ref ActivePeerRequests);
+
+                            lock (DeferredActions)
+                            {
+                                DeferredActions.Enqueue(() =>
+                                {
+                                    if (!bSuccess)
+                                    {
+                                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to retrieve requested block {0} in manifest {1} for peer {2}.", Request.Message.BlockIndex, Request.Message.ManifestId.ToString(), Request.Requester.Address.ToString());
+
+                                        ManifestDownloadManager.MarkAllBlockFilesAsUnavailable(Request.Message.ManifestId, Request.Message.BlockIndex);
+                                        //ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
+                                        Response.Data.SetNull();
+                                    }
+
+                                    if (Request.Requester.IsConnected)
+                                    {
+                                        Request.Requester.Send(Response);
+                                    }
+
+                                    Response.Data.SetNull(); // Free data it's been serialized by this point.
+
+                                });
+                            }
+                        };
+
+                        ManifestDownloadManager.GetBlockData(Request.Message.ManifestId, Request.Message.BlockIndex, ref Response.Data, Callback);
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
         }
 
         /// <summary>
@@ -1833,41 +1960,16 @@ namespace BuildSync.Core
             {
                 NetMessage_GetBlock Msg = BaseMessage as NetMessage_GetBlock;
 
-                //Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
-
-                NetMessage_GetBlockResponse Response = new NetMessage_GetBlockResponse();
-                Response.ManifestId = Msg.ManifestId;
-                Response.BlockIndex = Msg.BlockIndex;
-
-                BlockAccessCompleteHandler Callback = (bool bSuccess) =>
+                Peer peer = GetPeerByConnection(Connection);
+                if (peer != null)
                 {
+                    PendingBlockRequest Request;
+                    Request.Message = Msg;
+                    Request.Requester = Connection;
+                    peer.BlockRequestQueue.Enqueue(Request);
+                }
 
-                    lock (DeferredActions)
-                    {
-                        DeferredActions.Enqueue(() =>
-                        {
-                            if (!bSuccess)
-                            {
-                                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to retrieve requested block {0} in manifest {1} for peer {2}.", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
-
-                                ManifestDownloadManager.MarkAllBlockFilesAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
-                                //ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
-                                Response.Data.SetNull();
-                            }
-
-                            if (Connection.IsConnected)
-                            {
-                                Connection.Send(Response);
-                            }
-
-                            Response.Data.SetNull(); // Free data it's been serialized by this point.
-
-                        });
-                    }
-
-                };
-
-                ManifestDownloadManager.GetBlockData(Msg.ManifestId, Msg.BlockIndex, ref Response.Data, Callback);
+                //PendingBlockRequestQueue.Add(new PendingBlockRequest { Msg, Connection });
             }
 
             // Peer provided block of data we requested.

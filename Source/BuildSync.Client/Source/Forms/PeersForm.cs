@@ -97,7 +97,7 @@ namespace BuildSync.Client.Forms
 
                 if (Item == null)
                 {
-                    Item = new ListViewItem(new string[8]);
+                    Item = new ListViewItem(new string[9]);
                     Item.Tag = Peer;
                     Item.ImageIndex = 0;
                     Item.StateImageIndex = 0;
@@ -115,6 +115,7 @@ namespace BuildSync.Client.Forms
                 Item.SubItems[5].Text = Peer.LastSeen.ToString("dd/MM/yyyy HH:mm");
                 Item.SubItems[6].Text = StringUtils.FormatAsSize((long)Peer.TargetInFlightData);
                 Item.SubItems[7].Text = StringUtils.FormatAsSize((long)Peer.CurrentInFlightData);
+                Item.SubItems[8].Text = string.Format("{0}ms ({1}ms)", Peer.Ping, Peer.BestPing);
             }
         }
 

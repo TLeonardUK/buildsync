@@ -601,14 +601,17 @@ namespace BuildSync.Client
                     Record.TotalInTracker = TotalIn;
                     Record.TotalOutTracker = TotalOut;
 
-                    Record.AverageRateIn = (Record.AverageRateIn * 0.5f) + (Peer.Connection.BandwidthStats.RateIn * 0.5f);
-                    Record.AverageRateOut = (Record.AverageRateOut * 0.5f) + (Peer.Connection.BandwidthStats.RateOut * 0.5f);
+                    Record.AverageRateIn = Peer.Connection.BandwidthStats.RateIn;// (Record.AverageRateIn * 0.5f) + (Peer.Connection.BandwidthStats.RateIn * 0.5f);
+                    Record.AverageRateOut = Peer.Connection.BandwidthStats.RateOut;// (Record.AverageRateOut * 0.5f) + (Peer.Connection.BandwidthStats.RateOut * 0.5f);
 
                     Record.PeakRateIn = Math.Max(Record.PeakRateIn, Record.AverageRateIn);
                     Record.PeakRateOut = Math.Max(Record.PeakRateOut, Record.AverageRateOut);
 
                     Record.TargetInFlightData = Peer.GetMaxInFlightData(BuildSyncClient.TargetMillisecondsOfDataInFlight);
                     Record.CurrentInFlightData = Record.TargetInFlightData - Peer.GetAvailableInFlightData(BuildSyncClient.TargetMillisecondsOfDataInFlight);
+
+                    Record.Ping = (long)Peer.Connection.Ping.Get();
+                    Record.BestPing = (long)Peer.Connection.BestPing;
                 }
             }
         }
@@ -673,7 +676,6 @@ namespace BuildSync.Client
                 {
                     //Process.Start(InstallerPath, "/passive /norestart REINSTALL=ALL REINSTALLMODE=A MSIRMSHUTDOWN=1 MSIDISABLERMRESTART=0 ADDLOCAL=All");
                     Process.Start(InstallerPath);
-                    Application.Exit();
                 }
                 catch (Exception Ex)
                 {
@@ -682,6 +684,8 @@ namespace BuildSync.Client
                     Settings.LastAutoUpdateManifest = Guid.Empty;
                     SaveSettings(true);
                 }
+
+                Application.Exit();
             }
         }
 
