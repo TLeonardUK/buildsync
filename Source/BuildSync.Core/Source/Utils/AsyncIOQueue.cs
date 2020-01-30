@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define EMULATE_IO
+
+using System;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
@@ -573,6 +575,14 @@ namespace BuildSync.Core.Utils
                 Interlocked.Increment(ref Stm.ActiveOperations);
                 lock (Stm)
                 {
+#if EMULATE_IO
+                    GlobalBandwidthStats.In(Work.Size);
+
+                    Work.Callback?.Invoke(true);
+                    Interlocked.Add(ref GlobalQueuedIn, -Work.Size);
+                    Interlocked.Decrement(ref Stm.ActiveOperations);
+#else
+
                     try
                     {
                         //Console.WriteLine("####### WRITING[offset={0} size={1}, stream={2}] {3}", Work.Offset, Work.Size, Stm.Stream.ToString(), Work.Path);
@@ -616,12 +626,22 @@ namespace BuildSync.Core.Utils
                         Interlocked.Add(ref GlobalQueuedIn, -Work.Size);
                         Interlocked.Decrement(ref Stm.ActiveOperations);
                     }
+#endif
                 }
             }
             else if (Work.Type == TaskType.Read)
             {
                 Interlocked.Increment(ref Stm.ActiveOperations);
+
+#if EMULATE_IO
+                GlobalBandwidthStats.Out(Work.Size);
+
+                Work.Callback?.Invoke(true);
+                Interlocked.Add(ref GlobalQueuedOut, -Work.Size);
+                Interlocked.Decrement(ref Stm.ActiveOperations);
+#else
                 ReadWithOffset(Stm, Work, 0);
+#endif
             }
             else if (Work.Type == TaskType.DeleteDir)
             {

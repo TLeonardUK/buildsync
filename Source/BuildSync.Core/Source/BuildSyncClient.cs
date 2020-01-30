@@ -238,6 +238,8 @@ namespace BuildSync.Core
             /// </summary>
             public RollingAverage AverageBlockSize = new RollingAverage(20);
 
+            public ulong LastPrintTime = TimeUtils.Ticks;
+
             /// <summary>
             /// 
             /// </summary>
@@ -246,6 +248,7 @@ namespace BuildSync.Core
             public long GetMaxInFlightData(int TargetMsOfData)
             {
                 // Calculate a rough idea for how many bytes we should have in flight at a given time.
+#if false
                 double InBlockRecieveLatency = BlockRecieveLatency.Get();
                 double InAverageBlockSize = AverageBlockSize.Get();
 
@@ -260,6 +263,37 @@ namespace BuildSync.Core
                 }
 
                 return MaxInFlightBytes;// * 5;
+#elif true
+
+                // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
+                const double TrendUpwardsFactor = 2;
+
+                double LinkCapacityBytesPerSecond = Connection.BandwidthStats.PeakRateIn / TrendUpwardsFactor; 
+                double LatencySeconds = Connection.BestPing / 1000.0f;
+                if (LatencySeconds == 0)
+                {
+                    LatencySeconds = 0.001f;
+                }
+
+                double BandwidthDelayProductBytes = LinkCapacityBytesPerSecond * LatencySeconds;
+                long MaxInFlightBytes = (long)BandwidthDelayProductBytes;
+
+                // Cap to minimum of one block.
+                MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
+
+                // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
+                MaxInFlightBytes = (long)(MaxInFlightBytes * TrendUpwardsFactor);
+
+                if (TimeUtils.Ticks - LastPrintTime > 1000)
+                {
+                    Console.WriteLine("a={0} b={1} bytes={2}", StringUtils.FormatAsTransferRate((long)LinkCapacityBytesPerSecond), LatencySeconds, StringUtils.FormatAsSize(MaxInFlightBytes));
+                    LastPrintTime = TimeUtils.Ticks;
+                }
+
+                return MaxInFlightBytes;
+#else
+                return 128 * 1024 * 1024; // Gigabit of data. We limit the actual amount based on our local link speed.
+#endif
             }
 
             /// <summary>
@@ -1075,7 +1109,7 @@ namespace BuildSync.Core
                 {
                     peer.PruneTimeoutDownloads();
                 }
-                
+
                 for (int i = 0; i < ManifestDownloadManager.DownloadQueue.Count; i++)
                 {
                     ManifestPendingDownloadBlock Item = ManifestDownloadManager.DownloadQueue[i];

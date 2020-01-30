@@ -520,7 +520,7 @@ namespace BuildSync.Core.Manifests
 
                         if (BlockChecksums[BlockIndex] != Crc32.Compute(Buffer, (int)BufferLength))
                         {
-                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block {0} failed checksum, block contains following sub-blocks:");
+                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block {0} failed checksum, block contains following sub-blocks:", BlockIndex);
 
                             for (int SubBlock = 0; SubBlock < BInfo.SubBlocks.Count; SubBlock++)
                             {

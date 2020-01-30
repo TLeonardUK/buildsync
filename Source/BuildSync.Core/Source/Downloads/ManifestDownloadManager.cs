@@ -1,4 +1,6 @@
 ﻿//#define CHECKSUM_EACH_BLOCK
+#define CONSTANT_REDOWNLOAD
+//#define LARGE_DOWNLOAD_QUEUE
 
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
@@ -136,12 +138,20 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+#if LARGE_DOWNLOAD_QUEUE
+        private const int IdealDownloadQueueSizeBytes = 1000 * 1024 * 1024;
+#else
         private const int IdealDownloadQueueSizeBytes = 200 * 1024 * 1024;
+#endif
 
         /// <summary>
         /// 
         /// </summary>
+#if LARGE_DOWNLOAD_QUEUE
+        private const int MaxDownloadQueueItems = 1000;
+#else
         private const int MaxDownloadQueueItems = 200;
+#endif
 
         /// <summary>
         /// 
@@ -784,14 +794,27 @@ namespace BuildSync.Core.Downloads
                     {
                         if (State.BlockStates.AreAllSet(true))
                         {
+#if CONSTANT_REDOWNLOAD
+                            State.BlockStates.SetAll(false);
+#else
                             if (SkipValidation)
                             {
-                                ChangeState(State, ManifestDownloadProgressState.Complete);
+                                if (State.InstallOnComplete)
+                                {
+                                    ChangeState(State, ManifestDownloadProgressState.Installing);
+                                }
+                                else
+                                {
+                                    ChangeState(State, ManifestDownloadProgressState.Complete);
+                                }
+
+                                StoreFileCompletedStates(State);
                             }
                             else
                             {
                                 ChangeState(State, ManifestDownloadProgressState.Validating);
                             }
+#endif
                         }
 
                         break;

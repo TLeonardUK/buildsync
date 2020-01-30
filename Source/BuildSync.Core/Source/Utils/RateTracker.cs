@@ -22,6 +22,9 @@ namespace BuildSync.Core.Utils
         private double BandwidthSent = 0;
         private double BandwidthRecieved = 0;
 
+        private double PeakBandwidthSent = 0;
+        private double PeakBandwidthRecieved = 0;
+
         private RollingAverage AverageSent = new RollingAverage(10);
         private RollingAverage AverageRecieved = new RollingAverage(10);
 
@@ -51,6 +54,36 @@ namespace BuildSync.Core.Utils
                 {
                     Update();
                     return (long)BandwidthSent;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long PeakRateIn
+        {
+            get
+            {
+                lock (LockObject)
+                {
+                    Update();
+                    return (long)PeakBandwidthRecieved;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long PeakRateOut
+        {
+            get
+            {
+                lock (LockObject)
+                {
+                    Update();
+                    return (long)PeakBandwidthSent;
                 }
             }
         }
@@ -119,8 +152,8 @@ namespace BuildSync.Core.Utils
         private void Update()
         { 
             // Calculate bandwidth.
-            ulong Elapsed = TimeUtils.Ticks - BandwidthTimeStart;            
-            if (Elapsed > 1000)
+            ulong Elapsed = TimeUtils.Ticks - BandwidthTimeStart;
+            if (Elapsed > 250)
             {
                 if (BandwidthTimeStart == 0)
                 {
@@ -130,13 +163,25 @@ namespace BuildSync.Core.Utils
                 long Sent = TotalBytesSent - BandwidthTimeStartBytesSent;
                 long Recieved = TotalBytesRecieved - BandwidthTimeStartBytesRecieved;
 
-                double Delta = Elapsed / 1000.0;
+                double Delta = 1000.0  / (Elapsed == 0 ? 1 : Elapsed);
 
-                AverageSent.Add(Sent * Delta);
-                AverageRecieved.Add(Recieved* Delta);
+                double SentPs = Sent * Delta;
+                double RecievedPs = Recieved * Delta;
+
+                AverageSent.Add(SentPs);
+                AverageRecieved.Add(RecievedPs);
 
                 BandwidthSent = AverageSent.Get();// (BandwidthSent * 0.5) + ((Sent * Delta) * 0.5);
                 BandwidthRecieved = AverageRecieved.Get();// (BandwidthRecieved * 0.5) + ((Recieved * Delta) * 0.5);
+
+                if (SentPs > PeakBandwidthSent)
+                {
+                    PeakBandwidthSent = SentPs;
+                }
+                if (RecievedPs > PeakBandwidthRecieved)
+                {
+                    PeakBandwidthRecieved = RecievedPs;
+                }
 
                 BandwidthTimeStartBytesSent = TotalBytesSent;
                 BandwidthTimeStartBytesRecieved = TotalBytesRecieved;

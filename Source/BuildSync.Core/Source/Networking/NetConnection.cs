@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define FAKE_LATENCY
+
+using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -208,8 +210,8 @@ namespace BuildSync.Core.Networking
         private bool ShouldDisconnectDueToError = false;
         private ulong DisconnectTimeout = 0;
 
-        private ulong LastKeepAliveSendTime = 0;
-        private const int KeepAliveInterval = 30 * 1000;
+        private ulong LastPingSendTime = 0;
+        private const int PingInterval = 1 * 1000;
 
         public NetMessage_Handshake Handshake { get; internal set; }
         private bool HandshakeFailed = false;
@@ -221,6 +223,10 @@ namespace BuildSync.Core.Networking
         {
             public byte[] Data;
             public int BufferSize;
+
+#if FAKE_LATENCY
+            public ulong SendTimeFakeLatency;
+#endif
         }
 
         private ConcurrentQueue<MessageQueueEntry> SendQueue = new ConcurrentQueue<MessageQueueEntry>();
@@ -236,9 +242,20 @@ namespace BuildSync.Core.Networking
 
         internal static ConcurrentBag<byte[]> MessageBuffers = new ConcurrentBag<byte[]>();
         internal static int MessageBufferCount = 0;
+
+#if FAKE_LATENCY
+        internal const int MaxMessageBuffers = 512;
+#else
         internal const int MaxMessageBuffers = 64;
+#endif
 
         private ulong MaxClientsExceededPurgeTime = 0;
+
+#if FAKE_LATENCY
+        private Random FakeLatencyRandom = new Random();
+        private const int FakeLatencyBase = 1000;
+        private const int FakeLatencyJitter = 50;
+#endif
 
         private NetMessage MessageHeaderTempStorage = new NetMessage();
 
@@ -278,6 +295,16 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         public RateTracker BandwidthStats = new RateTracker();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public RollingAverage Ping = new RollingAverage(10);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ulong BestPing = 0;
 
         /// <summary>
         /// 
@@ -590,11 +617,11 @@ namespace BuildSync.Core.Networking
 
             if (!IsListening && IsReadyForData)
             {
-                ulong Elapsed = TimeUtils.Ticks - LastKeepAliveSendTime;
-                if (Elapsed > KeepAliveInterval)
+                ulong Elapsed = TimeUtils.Ticks - LastPingSendTime;
+                if (Elapsed > PingInterval)
                 {
-                    Send(new NetMessage_KeepAlive());
-                    LastKeepAliveSendTime = TimeUtils.Ticks;
+                    Send(new NetMessage_Ping());
+                    LastPingSendTime = TimeUtils.Ticks;
                 }
             }
 
@@ -952,6 +979,7 @@ namespace BuildSync.Core.Networking
                         }
                         else
                         {
+
                             Interlocked.Add(ref SendQueueBytes, -SendData.BufferSize);
                         }
                     }
@@ -961,6 +989,15 @@ namespace BuildSync.Core.Networking
                         continue;
                     }
                 }
+
+#if FAKE_LATENCY
+                ulong CurrentTime = TimeUtils.Ticks;
+                if (CurrentTime < SendData.SendTimeFakeLatency)
+                {
+                    ulong TimeLeft = SendData.SendTimeFakeLatency - CurrentTime;
+                    Thread.Sleep((int)TimeLeft);
+                }
+#endif
 
                 GlobalPacketStats.Out(1);
 
@@ -988,7 +1025,13 @@ namespace BuildSync.Core.Networking
 
                 Message.Cleanup();
 
+#if FAKE_LATENCY
+                int Latency = FakeLatencyBase + FakeLatencyRandom.Next(0, FakeLatencyJitter);
+                SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength, SendTimeFakeLatency = TimeUtils.Ticks + (ulong)Latency });
+#else
                 SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength });
+#endif
+
                 Interlocked.Add(ref SendQueueBytes, BufferLength);
 
                 lock (SendQueueWakeObject)
@@ -1280,6 +1323,29 @@ namespace BuildSync.Core.Networking
                     HandshakeFailed = (HandshakeResult.ResultType != HandshakeResultType.Success);
                     HandshakeFinished = true;
                 }
+                else if (Message is NetMessage_Ping)
+                {
+                    NetMessage_Ping Msg = Message as NetMessage_Ping;
+
+                    NetMessage_Pong Response = new NetMessage_Pong();
+                    Response.Timestamp = Msg.Timestamp;
+
+                    Send(Response);
+                }
+                else if (Message is NetMessage_Pong)
+                {
+                    NetMessage_Pong Msg = Message as NetMessage_Pong;
+
+                    ulong Now = TimeUtils.Ticks;
+                    ulong Timestamp = Msg.Timestamp;
+                    ulong Elapsed = Math.Max(5, Now - Timestamp);
+
+                    if (Elapsed < BestPing || BestPing == 0)
+                    {
+                        BestPing = Elapsed;
+                    }
+                    Ping.Add(Elapsed);
+                }
                 else if (Message is NetMessage_Handshake)
                 {
                     NetMessage_Handshake Msg = Message as NetMessage_Handshake;
@@ -1322,7 +1388,8 @@ namespace BuildSync.Core.Networking
                     CleanupHandled = true;
                     lock (EventQueue)
                     {
-                        EventQueue.Enqueue(() => { 
+                        EventQueue.Enqueue(() =>
+                        {
                             OnMessageRecieved?.Invoke(this, Message);
                             if (!Message.DoesRecieverHandleCleanup)
                             {
