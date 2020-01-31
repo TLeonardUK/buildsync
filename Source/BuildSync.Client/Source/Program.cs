@@ -254,6 +254,17 @@ namespace BuildSync.Client
 
             CurrentStoragePath = Settings.StoragePath;
 
+            if (Settings.ActiveStatistics.Count > 0)
+            {
+                lock (Statistic.Instances)
+                {
+                    foreach (var pair in Statistic.Instances)
+                    {
+                        pair.Value.DefaultShown = Settings.ActiveStatistics.Contains(pair.Value.Name);
+                    }
+                }
+            }
+
             Settings.Save(SettingsPath);
 
             ApplySettings();
@@ -401,6 +412,8 @@ namespace BuildSync.Client
         /// </summary>
         public static void OnStart()
         {
+            Statistic.Instantiate();
+
             ScmManager = new ScmManager();
             IOQueue = new AsyncIOQueue();
             ManifestDownloadManager = new ManifestDownloadManager();

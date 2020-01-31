@@ -229,7 +229,7 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         /// <param name="Value"></param>
-        public bool Serialize(ref NetCachedArray Value, bool FailIfNoMemory = false)
+        public bool Serialize(ref NetCachedArray Value, int Capacity, bool FailIfNoMemory = false)
         {
             if (IsLoading)
             {
@@ -240,7 +240,7 @@ namespace BuildSync.Core.Networking
                 }
                 else
                 {
-                    if (!Value.Resize(Length, FailIfNoMemory))
+                    if (!Value.Resize(Length, Capacity, FailIfNoMemory))
                     {
                         FailedOutOfMemory = true;
                         return false;

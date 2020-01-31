@@ -1,5 +1,5 @@
 ﻿//#define CHECKSUM_EACH_BLOCK
-#define CONSTANT_REDOWNLOAD
+//#define CONSTANT_REDOWNLOAD
 //#define LARGE_DOWNLOAD_QUEUE
 
 using BuildSync.Core.Manifests;
@@ -1202,7 +1202,7 @@ namespace BuildSync.Core.Downloads
             WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
             WriteState.WasSuccess = true;
 
-            if (!Data.Resize((int)BlockInfo.TotalSize, true))
+            if (!Data.Resize((int)BlockInfo.TotalSize, (int)BuildManifest.BlockSize, true))
             {
                 FailedOutOfMemory = true;
                 return false;

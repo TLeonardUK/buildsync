@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Manifests;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -44,7 +45,7 @@ namespace BuildSync.Core.Networking.Messages
 
             // TODO: Modify this so it stores a reference to the deserializing buffer
             // rather than doing a pointless and time consuming copy.
-            if (!serializer.Serialize(ref Data, true))
+            if (!serializer.Serialize(ref Data, (int)BuildManifest.BlockSize, true))
             {
                 return;
             }

@@ -1188,6 +1188,8 @@ namespace BuildSync.Core
                     PendingBlockRequest Request;
                     if (BestPeer.BlockRequestQueue.TryDequeue(out Request))
                     {
+                        //Console.WriteLine("[Processing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
+
                         BestPeer.LastBlockRequestFulfillTime = TimeUtils.Ticks;
                         Interlocked.Increment(ref ActivePeerRequests);
 
@@ -1229,6 +1231,7 @@ namespace BuildSync.Core
                         // If we don't have enough memory available to store this block in memory right now then requeue and stop trying to fulfill peer requests, none will has memory yet.
                         if (!Ret && FailedOutOfMemory)
                         {
+                            //Console.WriteLine("[Requeing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
                             Interlocked.Decrement(ref ActivePeerRequests);
                             BestPeer.BlockRequestQueue.Enqueue(Request);
                             return;
@@ -2014,6 +2017,7 @@ namespace BuildSync.Core
                     Request.Message = Msg;
                     Request.Requester = Connection;
                     peer.BlockRequestQueue.Enqueue(Request);
+                    //Console.WriteLine("[Enqueing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
                 }
 
                 //PendingBlockRequestQueue.Add(new PendingBlockRequest { Msg, Connection });
@@ -2068,6 +2072,8 @@ namespace BuildSync.Core
                     {
                         Msg.Cleanup();
 
+                        //Console.WriteLine("[Finished] BlockIndex={0} Manifest={1}", Msg.BlockIndex, Msg.ManifestId.ToString());
+
                         lock (DeferredActions)
                         {
                             DeferredActions.Enqueue(() =>
@@ -2084,6 +2090,7 @@ namespace BuildSync.Core
                         }
                     };
 
+                    //Console.WriteLine("[Recieved] BlockIndex={0} Manifest={1}", Msg.BlockIndex, Msg.ManifestId.ToString());
                     if (!ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, Callback))
                     {
                         Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved invalid block data from: {0}", HostnameCache.GetHostname(Connection.Address.Address.ToString()));

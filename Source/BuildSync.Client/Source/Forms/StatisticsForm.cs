@@ -155,8 +155,6 @@ namespace BuildSync.Client.Forms
         {
             InitializeComponent();
 
-            Statistic.Instantiate();
-
             lock (Statistic.Instances)
             {
                 foreach (var pair in Statistic.Instances)
@@ -180,6 +178,8 @@ namespace BuildSync.Client.Forms
             List<Statistic> VisibleStats = new List<Statistic>();
             GetCheckedStats(StatsTreeView.Nodes, VisibleStats);
 
+            Program.Settings.ActiveStatistics.Clear();
+
             // Add non-visible statistics.
             foreach (Statistic stat in VisibleStats)
             {
@@ -202,6 +202,8 @@ namespace BuildSync.Client.Forms
                     Control.Tag = stat;
                     StatPanel.Controls.Add(Control);
                 }
+
+                Program.Settings.ActiveStatistics.Add(stat.Name);
             }
 
             // Remove none visible statistics.
@@ -222,6 +224,8 @@ namespace BuildSync.Client.Forms
                     StatPanel.Controls.Remove(control);
                 }
             }
+
+            Program.SaveSettings();
         }
 
         /// <summary>

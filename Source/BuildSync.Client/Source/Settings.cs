@@ -74,6 +74,8 @@ namespace BuildSync.Client
         public byte[] LayoutState { get; set; } = null;
         public Size LayoutSize { get; set; } = Size.Empty;
 
+        public List<string> ActiveStatistics { get; set; } = new List<string>();
+
         public Guid LastAutoUpdateManifest { get; set; } = Guid.Empty;
 
         public bool SkipValidation { get; set; } = false;
