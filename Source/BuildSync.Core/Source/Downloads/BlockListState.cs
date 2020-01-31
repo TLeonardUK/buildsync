@@ -191,6 +191,8 @@ namespace BuildSync.Core.Downloads
                     bool TmpState = Range.State;
                     serializer.Serialize(ref TmpState);
                     Range.State = TmpState;
+
+                    State.BlockState.Ranges[j] = Range;
                 }
             }
         }

@@ -35,7 +35,7 @@ namespace BuildSync.Core.Downloads
     /// <summary>
     /// 
     /// </summary>
-    public class ManifestDownloadRequiredBlock
+    public struct ManifestDownloadRequiredBlock
     {
         public Guid ManifestId;
         public int RangeStart;
@@ -46,11 +46,11 @@ namespace BuildSync.Core.Downloads
     /// <summary>
     /// 
     /// </summary>
-    public class ManifestDownloadQueue
+    public struct ManifestDownloadQueue
     {
         public Guid ManifestId;
-        public int HighestPriority = -1;
-        public List<ManifestDownloadRequiredBlock> ToDownloadBlocks = new List<ManifestDownloadRequiredBlock>();
+        public int HighestPriority;
+        public List<ManifestDownloadRequiredBlock> ToDownloadBlocks;
     };
 
     /// <summary>
@@ -109,7 +109,7 @@ namespace BuildSync.Core.Downloads
         {
             get;
             private set;
-        }
+        } = new List<ManifestPendingDownloadBlock>();
 
         /// <summary>
         /// 
@@ -262,6 +262,17 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         private const int SplitIndexUpdateInterval = 5 * 60 * 1000;
+
+        private struct LastFileWriteTimeCacheEntry
+        {
+            public DateTime LastModified;
+            public ulong LastCacheUpdate;
+        }
+
+        private Dictionary<string, LastFileWriteTimeCacheEntry> LastFileWriteCache = new Dictionary<string, LastFileWriteTimeCacheEntry>();
+        private const int MaxLastFileWriteCacheEntryDuration = 5 * 1000;
+
+        private List<ManifestDownloadQueue> ManifestQueues = new List<ManifestDownloadQueue>();
 
         /// <summary>
         /// 
@@ -902,15 +913,6 @@ namespace BuildSync.Core.Downloads
             }
         }
 
-        private struct LastFileWriteTimeCacheEntry
-        {
-            public DateTime LastModified;
-            public ulong LastCacheUpdate;
-        }
-
-        private Dictionary<string, LastFileWriteTimeCacheEntry> LastFileWriteCache = new Dictionary<string, LastFileWriteTimeCacheEntry>();
-        private const int MaxLastFileWriteCacheEntryDuration = 5 * 1000;
-
         /// <summary>
         /// 
         /// </summary>
@@ -1168,8 +1170,10 @@ namespace BuildSync.Core.Downloads
         /// <param name="ManifestId"></param>
         /// <param name="BlockIndex"></param>
         /// <param name="Data"></param>
-        public bool GetBlockData(Guid ManifestId, int BlockIndex, ref NetCachedArray Data, BlockAccessCompleteHandler Callback)
+        public bool GetBlockData(Guid ManifestId, int BlockIndex, ref NetCachedArray Data, BlockAccessCompleteHandler Callback, out bool FailedOutOfMemory)
         {
+            FailedOutOfMemory = false;
+
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State == null || State.Manifest == null)
             {
@@ -1198,7 +1202,11 @@ namespace BuildSync.Core.Downloads
             WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
             WriteState.WasSuccess = true;
 
-            Data.Resize((int)BlockInfo.TotalSize);
+            if (!Data.Resize((int)BlockInfo.TotalSize, true))
+            {
+                FailedOutOfMemory = true;
+                return false;
+            }
 
             byte[] DataBuffer = Data.Data;
 
@@ -1288,7 +1296,7 @@ namespace BuildSync.Core.Downloads
             // Ensure we have block.
             if (State.BlockStates.Get(BlockIndex))
             {
-                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block data for block we not have.");
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block data for block we already have, block {0} in {1}.", BlockIndex, ManifestId.ToString());
                 Callback?.Invoke(false);
                 return false;
             }
@@ -1467,6 +1475,10 @@ namespace BuildSync.Core.Downloads
             AvailableBlocks = InAvailableBlocks;
         }
 
+        bool[] AvailableBlockQueue = new bool[0];
+        bool[] CurrentBlockQueue = new bool[0];
+        bool[] ToDownloadBlockQueue = new bool[0];
+
         /// <summary>
         /// 
         /// </summary>
@@ -1485,7 +1497,7 @@ namespace BuildSync.Core.Downloads
             }
 
             // Create queues of blocks that we want.
-            List<ManifestDownloadQueue> ManifestQueues = new List<ManifestDownloadQueue>();
+            ManifestQueues.Clear();
 
             foreach (ManifestDownloadState State in StateCollection.States)
             {
@@ -1495,30 +1507,33 @@ namespace BuildSync.Core.Downloads
                     ManifestDownloadQueue DownloadQueue = new ManifestDownloadQueue();
                     DownloadQueue.HighestPriority = State.Priority;
                     DownloadQueue.ManifestId = State.ManifestId;
+                    DownloadQueue.ToDownloadBlocks = new List<ManifestDownloadRequiredBlock>();
                     ManifestQueues.Add(DownloadQueue);
 
                     // Grab a list of available blocks for this 
-                    bool[] Available = null;
+                    bool bFound = false;
                     foreach (ManifestBlockListState AState in AvailableBlocks.States)
                     {
                         if (AState.Id == State.ManifestId)
                         {
-                            Available = AState.BlockState.ToArray();
+                            AState.BlockState.ToArray(ref AvailableBlockQueue);
+                            bFound = true;
+                            break;
                         }
                     }
 
-                    if (Available == null || Available.Length != State.BlockStates.Size)
+                    if (!bFound || AvailableBlockQueue.Length != State.BlockStates.Size)
                     {
                         continue;
                     }
 
-                    bool[] Current = State.BlockStates.ToArray();
-                    bool[] ToDownload = new bool[Available.Length];
+                    State.BlockStates.ToArray(ref CurrentBlockQueue);
+                    Array.Resize(ref ToDownloadBlockQueue, AvailableBlockQueue.Length);
 
                     // Make list of blocks that are available and blocks that we don't have. aka. our download list.
-                    for (int i = 0; i < Available.Length; i++)
+                    for (int i = 0; i < AvailableBlockQueue.Length; i++)
                     {
-                        ToDownload[i] = Available[i] && !Current[i];
+                        ToDownloadBlockQueue[i] = AvailableBlockQueue[i] && !CurrentBlockQueue[i];
                     }
 
                     // Generate the ranges to download.
@@ -1528,9 +1543,9 @@ namespace BuildSync.Core.Downloads
 
                     // Split at a random place and download the second segment first. This speeds up the rate at which peers have blocks available to seed. And stops
                     // the first seeder being hammered.
-                    int ThisSplitIndex = SplitIndex % ToDownload.Length;
-                    DownloadRanges.AddArray(ToDownload, ThisSplitIndex, ToDownload.Length - ThisSplitIndex);
-                    DownloadRanges.AddArray(ToDownload, 0, ThisSplitIndex);
+                    int ThisSplitIndex = SplitIndex % ToDownloadBlockQueue.Length;
+                    DownloadRanges.AddArray(ToDownloadBlockQueue, ThisSplitIndex, ToDownloadBlockQueue.Length - ThisSplitIndex);
+                    DownloadRanges.AddArray(ToDownloadBlockQueue, 0, ThisSplitIndex);
 
                     if (DownloadRanges.Ranges != null)
                     {
@@ -1557,7 +1572,7 @@ namespace BuildSync.Core.Downloads
             // Now to generate the actual download priority queue.
             // To do this we go through each manifest in priority order. The higher the priority the more blocks they get to add to the queue.
             // Keep going until queue is at max size.
-            DownloadQueue = new List<ManifestPendingDownloadBlock>();
+            DownloadQueue.Clear();
 
             BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
             long TotalSize = 0;
@@ -1581,6 +1596,8 @@ namespace BuildSync.Core.Downloads
                         TotalSize += BlockInfo.TotalSize;
 
                         Block.RangeStart++;
+                        Queue.ToDownloadBlocks[0] = Block; // It's a struct so reassign.
+
                         if (Block.RangeStart > Block.RangeEnd)
                         {
                             Queue.ToDownloadBlocks.RemoveAt(0);

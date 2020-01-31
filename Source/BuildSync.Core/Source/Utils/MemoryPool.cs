@@ -48,7 +48,7 @@ namespace BuildSync.Core.Utils
             }
         }
 
-        public static byte[] AllocBuffer(int Size)
+        public static byte[] AllocBuffer(int Size, bool FailIfNoMemory = false)
         {
             lock (Buckets)
             {
@@ -62,15 +62,24 @@ namespace BuildSync.Core.Utils
                             {
                                 byte[] Result = bucket.Buffers[bucket.Buffers.Count - 1];
                                 bucket.Buffers.RemoveAt(bucket.Buffers.Count - 1);
+
+                                //PrintStatus();
                                 return Result;
                             }
                             else
                             {
-                                byte[] Result = new byte[bucket.Size];
-                                bucket.TotalAllocated++;
-                                Interlocked.Add(ref MemoryAllocated, bucket.Size);
+                                if (FailIfNoMemory)
+                                {
+                                    return null;
+                                }
+                                else
+                                {
+                                    byte[] Result = new byte[bucket.Size];
+                                    bucket.TotalAllocated++;
+                                    Interlocked.Add(ref MemoryAllocated, bucket.Size);
 
-                                return Result;
+                                    return Result;
+                                }
                             }
                         }
                     }
@@ -90,6 +99,8 @@ namespace BuildSync.Core.Utils
                     if (Buffer.Length == bucket.Size)
                     {
                         bucket.Buffers.Add(Buffer);
+
+                        //PrintStatus();
                         return;
                     }
                 }
@@ -105,7 +116,10 @@ namespace BuildSync.Core.Utils
             {
                 foreach (Bucket bucket in Buckets)
                 {
-                    Console.WriteLine("Size={0} Count={1} Size={2}", StringUtils.FormatAsSize(bucket.Size), bucket.TotalAllocated, StringUtils.FormatAsSize(bucket.Size * bucket.TotalAllocated));
+                    if (bucket.TotalAllocated > 0)
+                    {
+                        Console.WriteLine("Size={0} Count={1} Free={2} Size={3}", StringUtils.FormatAsSize(bucket.Size), bucket.TotalAllocated, bucket.Buffers.Count, StringUtils.FormatAsSize(bucket.Size * bucket.TotalAllocated));
+                    }
                 }
             }
         }

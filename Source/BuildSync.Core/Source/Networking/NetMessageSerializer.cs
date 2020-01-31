@@ -14,6 +14,12 @@ namespace BuildSync.Core.Networking
         private BinaryReader Reader;
         private BinaryWriter Writer;
 
+        public bool FailedOutOfMemory
+        {
+            get;
+            set;
+        } = false;
+
         public bool IsLoading
         {
             get { return (Reader != null); }
@@ -173,12 +179,16 @@ namespace BuildSync.Core.Networking
         /// <param name="Value"></param>
         public void Serialize(ref Guid Value)
         {
-            byte[] GuidBytes = Value.ToByteArray();
-            Serialize(ref GuidBytes);
-
             if (IsLoading)
             {
+                byte[] GuidBytes = new byte[16];
+                Reader.BaseStream.Read(GuidBytes, 0, 16);
                 Value = new Guid(GuidBytes);
+            }
+            else
+            {
+                byte[] GuidBytes = Value.ToByteArray();
+                Writer.BaseStream.Write(GuidBytes, 0, GuidBytes.Length);
             }
         }
 
@@ -219,7 +229,7 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         /// <param name="Value"></param>
-        public void Serialize(ref NetCachedArray Value)
+        public bool Serialize(ref NetCachedArray Value, bool FailIfNoMemory = false)
         {
             if (IsLoading)
             {
@@ -230,7 +240,11 @@ namespace BuildSync.Core.Networking
                 }
                 else
                 {
-                    Value.Resize(Length);
+                    if (!Value.Resize(Length, FailIfNoMemory))
+                    {
+                        FailedOutOfMemory = true;
+                        return false;
+                    }
                     Reader.BaseStream.Read(Value.Data, 0, Length);
                 }
             }
@@ -246,6 +260,8 @@ namespace BuildSync.Core.Networking
                     Writer.BaseStream.Write(Value.Data, 0, Value.Length);
                 }
             }
+
+            return true;
         }
     }
 }

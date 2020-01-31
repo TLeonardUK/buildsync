@@ -27,6 +27,8 @@ namespace BuildSync.Core.Utils
         public const UInt32 DefaultPolynomial = 0xedb88320u;
         public const UInt32 DefaultSeed = 0xffffffffu;
 
+        public const int BufferSize = 256 * 1024;
+
         static UInt32[] defaultTable;
 
         readonly UInt32 seed;
@@ -134,8 +136,7 @@ namespace BuildSync.Core.Utils
         public byte[] ComputeLargeStreamHash(Stream Stream, RateTracker Tracker, ChecksumProgressEventHandler Callback)
         {
             // Buffer size optimized for reading massive files.
-            const int BufferSize = 256 * 1024;
-            byte[] buffer = MemoryPool.AllocBuffer(BufferSize);
+            byte[] buffer = MemoryPool.AllocBuffer(BufferSize, false);
             int bytesRead;
             do
             {

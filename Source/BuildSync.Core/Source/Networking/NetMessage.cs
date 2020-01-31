@@ -104,8 +104,10 @@ namespace BuildSync.Core.Networking
             return HeaderSize + PayloadSize;
         }
 
-        public static NetMessage FromByteArray(byte[] Buffer)
+        public static NetMessage FromByteArray(byte[] Buffer, out bool WasMemoryAvailable)
         {
+            WasMemoryAvailable = true;
+
             if (MessageTypes.Count == 0)
             {
                 LoadMessageTypes();
@@ -144,7 +146,14 @@ namespace BuildSync.Core.Networking
                         //Stopwatch stop = new Stopwatch();
                         //stop.Start();
 
-                        Msg.SerializePayload(new NetMessageSerializer(dataReader));
+                        NetMessageSerializer Serializer = new NetMessageSerializer(dataReader);
+                        Msg.SerializePayload(Serializer);
+
+                        if (Serializer.FailedOutOfMemory)
+                        {
+                            WasMemoryAvailable = false;
+                            return null;
+                        }
 
                         //stop.Stop();
                         //Console.WriteLine("  - deserialize {0}", ((float)stop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));

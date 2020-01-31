@@ -177,6 +177,38 @@ namespace BuildSync.Core
     /// <summary>
     /// 
     /// </summary>
+    public class Statistic_PendingBlockRequests : Statistic
+    {
+        public Statistic_PendingBlockRequests()
+        {
+            Name = @"Peers\Pending Block Requests";
+            MaxLabel = "128";
+            MaxValue = 128;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_ActiveBlockRequests : Statistic
+    {
+        public Statistic_ActiveBlockRequests()
+        {
+            Name = @"Peers\Active Block Requests";
+            MaxLabel = "128";
+            MaxValue = 128;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     public class BuildSyncClient
     {
         /// <summary>
@@ -676,7 +708,7 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
-        private const int MaxConcurrentPeerRequests = 16;
+        private const int MaxConcurrentPeerRequests = 32;
 
         /// <summary>
         /// 
@@ -895,9 +927,9 @@ namespace BuildSync.Core
 
             ListenConnection.OnClientConnect += PeerConnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 64);
-            MemoryPool.PreallocateBuffers(256 * 1024, 16);
-            NetConnection.PreallocateBuffers(64);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 128);
+            MemoryPool.PreallocateBuffers(Crc32.BufferSize, 16);
+            NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers);
         }
 
         /// <summary>
@@ -1070,12 +1102,14 @@ namespace BuildSync.Core
                 long BlocksInFlight = 0;
                 double AverageBlockLatency = 0;
                 double AverageBlockSize = 0;
+                long PendingBlockRequests = 0;
                 foreach (Peer peer in Peers)
                 {
                     DataInFlight += peer.ActiveBlockDownloadSize;
                     BlocksInFlight += peer.ActiveBlockDownloads.Count;
                     AverageBlockSize += peer.AverageBlockSize.Get();
                     AverageBlockLatency += peer.BlockRecieveLatency.Get();
+                    PendingBlockRequests += peer.BlockRequestQueue.Count;
                 }
 
                 if (Peers.Count > 0)
@@ -1090,6 +1124,10 @@ namespace BuildSync.Core
                 Statistic.Get<Statistic_BlocksInFlight>().AddSample(BlocksInFlight);
                 Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float)AverageBlockLatency);
                 Statistic.Get<Statistic_AverageBlockSize>().AddSample((float)AverageBlockSize / 1024 / 1024);
+                
+                Statistic.Get<Statistic_ActiveBlockRequests>().AddSample(ActivePeerRequests);
+                Statistic.Get<Statistic_PendingBlockRequests>().AddSample(PendingBlockRequests);
+                
 
                 BlockRequestFailureRate = 0;
                 BlockListUpdateRate = 0;
@@ -1147,12 +1185,12 @@ namespace BuildSync.Core
 
                 if (BestPeer != null)
                 {
-                    BestPeer.LastBlockRequestFulfillTime = TimeUtils.Ticks;
-                    Interlocked.Increment(ref ActivePeerRequests);
-
                     PendingBlockRequest Request;
                     if (BestPeer.BlockRequestQueue.TryDequeue(out Request))
                     {
+                        BestPeer.LastBlockRequestFulfillTime = TimeUtils.Ticks;
+                        Interlocked.Increment(ref ActivePeerRequests);
+
                         NetMessage_GetBlockResponse Response = new NetMessage_GetBlockResponse();
                         Response.ManifestId = Request.Message.ManifestId;
                         Response.BlockIndex = Request.Message.BlockIndex;
@@ -1185,7 +1223,16 @@ namespace BuildSync.Core
                             }
                         };
 
-                        ManifestDownloadManager.GetBlockData(Request.Message.ManifestId, Request.Message.BlockIndex, ref Response.Data, Callback);
+                        bool FailedOutOfMemory = false;
+                        bool Ret = ManifestDownloadManager.GetBlockData(Request.Message.ManifestId, Request.Message.BlockIndex, ref Response.Data, Callback, out FailedOutOfMemory);
+
+                        // If we don't have enough memory available to store this block in memory right now then requeue and stop trying to fulfill peer requests, none will has memory yet.
+                        if (!Ret && FailedOutOfMemory)
+                        {
+                            Interlocked.Decrement(ref ActivePeerRequests);
+                            BestPeer.BlockRequestQueue.Enqueue(Request);
+                            return;
+                        }
                     }
                 }
                 else
@@ -1994,7 +2041,6 @@ namespace BuildSync.Core
                     }
 
                     Interlocked.Increment(ref BlockRequestFailureRate);
-
                     Msg.Cleanup();
 
                     return;
@@ -2013,6 +2059,7 @@ namespace BuildSync.Core
                         Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved unexpected block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
 
                         Interlocked.Increment(ref BlockRequestFailureRate);
+                        Msg.Cleanup();
 
                         return;
                     }

@@ -36,9 +36,9 @@ namespace BuildSync.Core.Networking
             internal set;
         }
 
-        private byte[] AllocBuffer(int Size)
+        private byte[] AllocBuffer(int Size, bool FailIfNoMemory)
         {
-            return MemoryPool.AllocBuffer(Size);
+            return MemoryPool.AllocBuffer(Size, FailIfNoMemory);
         }
 
         private void ReleaseBuffer(byte[] Buffer)
@@ -46,21 +46,26 @@ namespace BuildSync.Core.Networking
             MemoryPool.ReleaseBuffer(Buffer);
         }
 
-        public void Resize(int NewSize)
+        public bool Resize(int NewSize, bool FailIfNoMemory)
         {
             if (Data != null && Data.Length < NewSize)
             {
                 Length = NewSize;
-                return;
+                return true;
             }
 
             byte[] OldData = Data;
-            Data = AllocBuffer(NewSize);
+            Data = AllocBuffer(NewSize, FailIfNoMemory);
+            if (Data == null)
+            {
+                return false;
+            }
             if (OldData != null)
             {
                 ReleaseBuffer(OldData);
             }
             Length = NewSize;
+            return true;
         }
 
         public void SetNull()

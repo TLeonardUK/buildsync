@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define DO_VALIDATION
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -11,7 +13,7 @@ namespace BuildSync.Core.Utils
     public class SparseStateArray
     {
         [Serializable]
-        public class Range
+        public struct Range
         {
             public int Start { get; set; }
             public int End { get; set; }
@@ -20,6 +22,22 @@ namespace BuildSync.Core.Utils
 
         public List<Range> Ranges { get; set; }
         public int Size { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Validate()
+        {
+            int LastEnd = 0;
+            foreach (Range range in Ranges)
+            {
+                if (range.Start < LastEnd)
+                {
+                    throw new InvalidOperationException("Sparse array has failed validation, something got corrupt ...");
+                }
+                LastEnd = range.End;
+            }
+        }
 
         /// <summary>
         /// 
@@ -36,6 +54,25 @@ namespace BuildSync.Core.Utils
                 }
             }
             return Result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public void ToArray(ref bool[] Result)
+        {
+            if (Result.Length != Size)
+            {
+                Array.Resize(ref Result, Size);
+            }
+            foreach (Range range in Ranges)
+            {
+                for (int i = range.Start; i <= range.End; i++)
+                {
+                    Result[i] = range.State;
+                }
+            }
         }
 
         /// <summary>
@@ -74,6 +111,10 @@ namespace BuildSync.Core.Utils
 
                 RangeStart = RangeEnd;
             }
+
+#if DO_VALIDATION
+            Validate();
+#endif
         }
 
         /// <summary>
@@ -153,6 +194,10 @@ namespace BuildSync.Core.Utils
             }
 
             FromArray(Union);
+
+#if DO_VALIDATION
+            Validate();
+#endif
         }
 
         /// <summary>
@@ -190,10 +235,16 @@ namespace BuildSync.Core.Utils
                 if (Range.State == NextRange.State)
                 {
                     Range.End = NextRange.End;
+                    Ranges[i] = Range;
+
                     Ranges.RemoveAt(i + 1);
                     i--;
                 }
             }
+
+#if DO_VALIDATION
+            Validate();
+#endif
         }
 
         /// <summary>
@@ -267,6 +318,8 @@ namespace BuildSync.Core.Utils
                     else if (range.End >= NewSize)
                     {
                         range.End = NewSize - 1;
+                        Ranges[i] = range;
+
                         break;
                     }
                 }
@@ -290,6 +343,7 @@ namespace BuildSync.Core.Utils
                     if (LastRange.State == false)
                     {
                         LastRange.End = NewSize - 1;
+                        Ranges[Ranges.Count - 1] = LastRange;
                     }
                     else
                     {
@@ -299,6 +353,10 @@ namespace BuildSync.Core.Utils
             }
 
             Size = NewSize;
+
+#if DO_VALIDATION
+            Validate();
+#endif
         }
 
         /// <summary>
@@ -335,10 +393,12 @@ namespace BuildSync.Core.Utils
                             Ranges.Insert(i + EndOffset, new Range { Start = BlockIndex + 1, End = range.End, State = range.State });
                         }
 
-                        // Remap this range as middle.
+                        // Remap this range as middle.                        
                         range.Start = BlockIndex;
                         range.End = BlockIndex;
                         range.State = NewState;
+
+                        Ranges[i + EndOffset - 1] = range;
                     }
 
                     break;
@@ -349,6 +409,10 @@ namespace BuildSync.Core.Utils
             {
                 CompactRanges();
             }
+
+#if DO_VALIDATION
+            Validate();
+#endif
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿#define EMULATE_IO
+﻿//#define EMULATE_IO
+//#define DISABLE_IO_BUFFERING
 
 using System;
 using System.IO;
@@ -217,9 +218,11 @@ namespace BuildSync.Core.Utils
         private object WakeObject = new object();
 
         private const int MaxStreamAge = 10 * 1000;
-        private const int MaxStreams = 20;
-        private const int StreamBufferSize = 256 * 1024;
-        private const int StreamMaxConcurrentOps = 20;
+        private const int MaxStreams = 8;
+        //private const int StreamMaxConcurrentOps = 20;
+        private const int StreamMaxConcurrentOps = 8;
+        private const int AverageStreamOpSizeHeuristic = 1 * 1024 * 1024;
+        private const int StreamBufferSize = 64 * 1024;// StreamMaxConcurrentOps * AverageStreamOpSizeHeuristic;
 
         private List<ActiveStream> ActiveStreams = new List<ActiveStream>();
         private Dictionary<string, ActiveStream> ActiveStreamsByPath = new Dictionary<string, ActiveStream>();
@@ -461,7 +464,12 @@ namespace BuildSync.Core.Utils
                     NewStm.LastAccessed = CurrentTicks;
                     NewStm.Path = Path;
                     NewStm.CanWrite = RequireWrite;
-                    NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous/* | FileOptions.WriteThrough*/);
+#if DISABLE_IO_BUFFERING
+                    FileOptions FileFlagNoBuffering = (FileOptions)0x20000000;
+                    NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous | FileOptions.WriteThrough | FileFlagNoBuffering);
+#else
+                    NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous);
+#endif
                     ActiveStreams.Add(NewStm);
                     ActiveStreamsByPath.Add(NewStm.Path, NewStm);
 
