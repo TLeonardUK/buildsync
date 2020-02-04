@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DownloadListItem));
             this.MainPanel = new System.Windows.Forms.Panel();
+            this.blockStatusPanel = new BuildSync.Client.Controls.BlockStatusPanel();
             this.collapseButton = new System.Windows.Forms.Button();
             this.ProgressBar = new System.Windows.Forms.ProgressBar();
             this.NameLabel = new System.Windows.Forms.Label();
@@ -48,7 +49,6 @@
             this.RemoveButton = new System.Windows.Forms.Button();
             this.SettingsButton = new System.Windows.Forms.Button();
             this.blockRefreshTimer = new System.Windows.Forms.Timer(this.components);
-            this.blockStatusPanel = new BuildSync.Client.Controls.BlockStatusPanel();
             this.MainPanel.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
@@ -69,9 +69,19 @@
             this.MainPanel.Location = new System.Drawing.Point(4, 4);
             this.MainPanel.Margin = new System.Windows.Forms.Padding(2);
             this.MainPanel.Name = "MainPanel";
-            this.MainPanel.Size = new System.Drawing.Size(602, 146);
+            this.MainPanel.Size = new System.Drawing.Size(602, 46);
             this.MainPanel.TabIndex = 0;
             this.MainPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.MainPanel_Paint);
+            // 
+            // blockStatusPanel
+            // 
+            this.blockStatusPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.blockStatusPanel.BackColor = System.Drawing.SystemColors.Control;
+            this.blockStatusPanel.Location = new System.Drawing.Point(0, 45);
+            this.blockStatusPanel.Name = "blockStatusPanel";
+            this.blockStatusPanel.Size = new System.Drawing.Size(602, 101);
+            this.blockStatusPanel.TabIndex = 9;
             // 
             // collapseButton
             // 
@@ -268,16 +278,6 @@
             this.blockRefreshTimer.Enabled = true;
             this.blockRefreshTimer.Tick += new System.EventHandler(this.BlockRefreshTimer);
             // 
-            // blockStatusPanel
-            // 
-            this.blockStatusPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.blockStatusPanel.BackColor = System.Drawing.SystemColors.Control;
-            this.blockStatusPanel.Location = new System.Drawing.Point(0, 45);
-            this.blockStatusPanel.Name = "blockStatusPanel";
-            this.blockStatusPanel.Size = new System.Drawing.Size(602, 101);
-            this.blockStatusPanel.TabIndex = 9;
-            // 
             // DownloadListItem
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -286,7 +286,7 @@
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "DownloadListItem";
             this.Padding = new System.Windows.Forms.Padding(4, 4, 4, 0);
-            this.Size = new System.Drawing.Size(610, 150);
+            this.Size = new System.Drawing.Size(610, 50);
             this.MainPanel.ResumeLayout(false);
             this.MainPanel.PerformLayout();
             this.flowLayoutPanel1.ResumeLayout(false);
