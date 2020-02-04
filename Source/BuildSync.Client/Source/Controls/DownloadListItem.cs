@@ -26,6 +26,11 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        private bool Collapsed = true;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private bool InternalSelected = false;
         public bool Selected
         {
@@ -50,6 +55,10 @@ namespace BuildSync.Client.Controls
         public DownloadListItem()
         {
             InitializeComponent();
+
+            WindowUtils.EnableDoubleBuffering(MainPanel);
+
+            //CollapseButtonClicked(null, null);
         }
 
         /// <summary>
@@ -177,6 +186,8 @@ namespace BuildSync.Client.Controls
                 NameLabel.Text = State.Name;
             }
 
+            blockStatusPanel.State = State;
+
             ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(State.ActiveManifestId);
             if (Downloader != null)
             {
@@ -220,12 +231,28 @@ namespace BuildSync.Client.Controls
                             }
                         case ManifestDownloadProgressState.Initializing:
                             {
-                                SetStatus("Allocating Disk Space", StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.InitializeProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                                double SecondsToInitialize = (double)Downloader.InitializeBytesRemaining / (double)Downloader.InitializeRateStats.RateIn;
+                                if (Downloader.InitializeRateStats.RateIn == 0)
+                                {
+                                    SecondsToInitialize = 0;
+                                }
+
+                                string Status = string.Format("Allocating Disk Space - {0}", StringUtils.FormatAsDuration((long)SecondsToInitialize));
+
+                                SetStatus(Status, StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.InitializeProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Validating:
                             {
-                                SetStatus("Validating", StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.ValidateProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                                long SecondsToValidate = (long)((double)Downloader.ValidateBytesRemaining / (double)Downloader.ValidateRateStats.RateOut);
+                                if (Downloader.ValidateRateStats.RateOut == 0)
+                                {
+                                    SecondsToValidate = 0;
+                                }
+
+                                string Status = string.Format("Validating - {0}", StringUtils.FormatAsDuration(SecondsToValidate));
+
+                                SetStatus(Status, StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.ValidateProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
                                 break;
                             }
                         case ManifestDownloadProgressState.Installing:
@@ -236,6 +263,10 @@ namespace BuildSync.Client.Controls
                         case ManifestDownloadProgressState.Downloading:
                             {
                                 long SecondsToDownload = (long)((double)Downloader.BytesRemaining / (double)Downloader.BandwidthStats.RateIn);
+                                if (Downloader.BandwidthStats.RateIn == 0)
+                                {
+                                    SecondsToDownload = 0;
+                                }
 
                                 string Status = "";
                                 StateColoring StatusColor = StateColoring.Info;
@@ -243,7 +274,7 @@ namespace BuildSync.Client.Controls
                                 {
                                     if (Program.NetClient.IsConnected)
                                     {
-                                        Status = "Locating Blocks";
+                                        Status = "Locating Data";
                                     }
                                     else
                                     {
@@ -253,7 +284,7 @@ namespace BuildSync.Client.Controls
                                 }
                                 else
                                 {
-                                    Status = StringUtils.FormatAsDuration(SecondsToDownload);
+                                    Status = string.Format("Downloading - {0}", StringUtils.FormatAsDuration(SecondsToDownload));
                                 }
 
                                 SetStatus(Status, StatusColor, Downloader.Manifest.VirtualPath, Downloader.Progress * 100, true, LaunchOption.Pause, UpRate, DownRate);
@@ -375,13 +406,44 @@ namespace BuildSync.Client.Controls
         /// <param name="e"></param>
         private void MainPanel_Paint(object sender, PaintEventArgs e)
         {
-            if (Selected)
+            //if (Selected)
+            //{
+            //    ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, SystemColors.ActiveBorder, ButtonBorderStyle.Solid);
+            //}
+            //else
+            //{
+                ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, SystemColors.ControlLight, ButtonBorderStyle.Solid);
+            //}
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CollapseButtonClicked(object sender, EventArgs e)
+        {
+            Collapsed = !Collapsed;
+            if (Collapsed)
             {
-                ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, SystemColors.ActiveBorder, ButtonBorderStyle.Solid);
+                Size = new Size(610, 50);
             }
             else
             {
-                ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, SystemColors.ControlLight, ButtonBorderStyle.Solid);
+                Size = new Size(610, 150);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BlockRefreshTimer(object sender, EventArgs e)
+        {
+            if (!Collapsed)
+            {
+                blockStatusPanel.Refresh();
             }
         }
     }

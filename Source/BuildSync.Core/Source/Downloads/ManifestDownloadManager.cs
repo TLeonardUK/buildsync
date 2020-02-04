@@ -1,5 +1,5 @@
 ﻿//#define CHECKSUM_EACH_BLOCK
-#define CONSTANT_REDOWNLOAD
+//#define CONSTANT_REDOWNLOAD
 //#define LARGE_DOWNLOAD_QUEUE
 
 using BuildSync.Core.Manifests;
@@ -729,9 +729,13 @@ namespace BuildSync.Core.Downloads
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Initializing directory: {0}", State.LocalFolder);
-                                        State.Manifest.InitializeDirectory(State.LocalFolder, IOQueue, (float Progress) =>
+                                        State.InitializeRateStats.Reset();
+                                        State.Manifest.InitializeDirectory(State.LocalFolder, IOQueue, (long BytesWritten, long TotalBytes) =>
                                         {
-                                            State.InitializeProgress = Progress;
+                                            State.InitializeProgress = (float)BytesWritten / (float)TotalBytes;
+                                            State.InitializeRateStats.In(BytesWritten - State.InitializeRateStats.TotalIn);
+                                            State.InitializeBytesRemaining = TotalBytes - BytesWritten;
+                                            return !State.Paused;
                                         });
                                         ChangeState(State, ManifestDownloadProgressState.Downloading);
                                     }
@@ -855,8 +859,12 @@ namespace BuildSync.Core.Downloads
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
-                                        List<int> FailedBlocks = State.Manifest.Validate(State.LocalFolder, AsyncIOQueue.GlobalBandwidthStats, IOQueue, (float Progress) => {
-                                            State.ValidateProgress = Progress; 
+                                        State.ValidateRateStats.Reset();
+                                        List<int> FailedBlocks = State.Manifest.Validate(State.LocalFolder, State.ValidateRateStats, IOQueue, (long BytesRead, long TotalBytes) => {
+                                            State.ValidateProgress = (float)BytesRead / (float)TotalBytes;
+                                            State.ValidateRateStats.Out(BytesRead - State.ValidateRateStats.TotalOut);
+                                            State.ValidateBytesRemaining = TotalBytes - BytesRead;
+                                            return !State.Paused;
                                         });
                                         if (FailedBlocks.Count == 0)
                                         {

@@ -165,6 +165,12 @@
     <Compile Include="Commands\CommandLineConfigureOptions.cs" />
     <Compile Include="Commands\CommandLineDeleteOptions.cs" />
     <Compile Include="Commands\CommandLineListOptions.cs" />
+    <Compile Include="Controls\BlockStatusPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\BlockStatusPanel.Designer.cs">
+      <DependentUpon>BlockStatusPanel.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\DownloadFileSystemTree.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -338,6 +344,9 @@
     <Compile Include="Tasks\PublishBuildTask.cs" />
     <Compile Include="Tasks\MoveStorageTask.cs" />
     <Compile Include="Settings.cs" />
+    <EmbeddedResource Include="Controls\BlockStatusPanel.resx">
+      <DependentUpon>BlockStatusPanel.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\DownloadFileSystemTree.resx">
       <DependentUpon>DownloadFileSystemTree.cs</DependentUpon>
     </EmbeddedResource>

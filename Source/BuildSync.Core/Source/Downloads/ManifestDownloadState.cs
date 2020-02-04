@@ -210,5 +210,37 @@ namespace BuildSync.Core.Downloads
                 }
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonIgnore]
+        public long ValidateBytesRemaining
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        public RateTracker ValidateRateStats = new RateTracker();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonIgnore]
+        public long InitializeBytesRemaining
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        public RateTracker InitializeRateStats = new RateTracker();
     }
 }

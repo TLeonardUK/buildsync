@@ -20,13 +20,13 @@ namespace BuildSync.Core.Manifests
     /// 
     /// </summary>
     /// <param name="BytesProcessed"></param>
-    public delegate void BuildManfiestValidateProgressCallbackHandler(float OverallProgress);
+    public delegate bool BuildManfiestValidateProgressCallbackHandler(long BytesRead, long TotalBytes);
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="BytesProcessed"></param>
-    public delegate void BuildManfiestInitProgressCallbackHandler(float Progress);
+    public delegate bool BuildManfiestInitProgressCallbackHandler(long BytesWritten, long TotalBytes);
 
     /// <summary>
     /// 
@@ -480,7 +480,13 @@ namespace BuildSync.Core.Manifests
 
                         AsyncIOQueue.GlobalBandwidthStats.In(Size);
 
-                        Callback?.Invoke((float)BytesWritten / (float)TotalBytes);
+                        if (Callback != null)
+                        {
+                            if (!Callback.Invoke(BytesWritten, TotalBytes))
+                            {
+                                return;
+                            }
+                        }
                     }
                 }
             }
@@ -498,6 +504,7 @@ namespace BuildSync.Core.Manifests
             int BlockCounter = 0;
 
             long BytesValidated = 0;
+            bool Aborted = false;
 
             for (int i = 0; i < TaskCount; i++)
             {
@@ -505,7 +512,7 @@ namespace BuildSync.Core.Manifests
                 {
                     byte[] Buffer = new byte[BlockSize];
 
-                    while (true)
+                    while (!Aborted)
                     {
                         int BlockIndex = Interlocked.Increment(ref BlockCounter) - 1;
                         if (BlockIndex >= BlockCount)
@@ -536,10 +543,12 @@ namespace BuildSync.Core.Manifests
 
                         Interlocked.Add(ref BytesValidated, BInfo.TotalSize);
 
-                        float Progress = (float)BytesValidated / (float)TotalSize;
                         if (Callback != null)
                         {
-                            Callback?.Invoke(Progress);
+                            if (!Callback.Invoke(BytesValidated, TotalSize))
+                            {
+                                Aborted = true;
+                            }
                         }
                     }
                 }));

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using BuildSync.Core.Downloads;
 using WeifenLuo.WinFormsUI.Docking;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Controls
 {

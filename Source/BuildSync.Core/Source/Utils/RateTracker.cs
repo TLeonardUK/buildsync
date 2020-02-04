@@ -149,6 +149,31 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        public void Reset()
+        {
+            lock (LockObject)
+            {
+                TotalBytesSent = 0;
+                TotalBytesRecieved = 0;
+
+                BandwidthTimeStart = 0;
+                BandwidthTimeStartBytesSent = 0;
+                BandwidthTimeStartBytesRecieved = 0;
+
+                BandwidthSent = 0;
+                BandwidthRecieved = 0;
+
+                PeakBandwidthSent = 0;
+                PeakBandwidthRecieved = 0;
+
+                RollingAverage AverageSent = new RollingAverage(10);
+                RollingAverage AverageRecieved = new RollingAverage(10);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private void Update()
         { 
             // Calculate bandwidth.
