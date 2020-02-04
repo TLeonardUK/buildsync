@@ -8,6 +8,25 @@ using System.Diagnostics;
 
 namespace BuildSync.Core.Utils
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Statistic_MemoryBlocksFree : Statistic
+    {
+        public Statistic_MemoryBlocksFree()
+        {
+            Name = @"Memory\Blocks Free";
+            MaxLabel = "512";
+            MaxValue = 512.0f;
+            DefaultShown = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(MemoryPool.BlocksFree);
+        }
+    }
+
     public static class MemoryPool
     {
         public class Bucket
@@ -19,6 +38,22 @@ namespace BuildSync.Core.Utils
 
         private static List<Bucket> Buckets = new List<Bucket>();
         private static long MemoryAllocated = 0;
+
+        public static int BlocksFree
+        {
+            get
+            {
+                int Result = 0;
+                lock (Buckets)
+                {
+                    foreach (Bucket bucket in Buckets)
+                    {
+                        Result += bucket.Buffers.Count;
+                    }
+                }
+                return Result;
+            }
+        }
 
         public static void PreallocateBuffers(int Size, int Count)
         {

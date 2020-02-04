@@ -1210,7 +1210,7 @@ namespace BuildSync.Core.Downloads
             WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
             WriteState.WasSuccess = true;
 
-            if (!Data.Resize((int)BlockInfo.TotalSize, true))
+            if (!Data.Resize((int)BlockInfo.TotalSize, (int)BuildManifest.BlockSize, true))
             {
                 FailedOutOfMemory = true;
                 return false;

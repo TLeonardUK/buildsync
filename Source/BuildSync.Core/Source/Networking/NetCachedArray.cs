@@ -46,7 +46,7 @@ namespace BuildSync.Core.Networking
             MemoryPool.ReleaseBuffer(Buffer);
         }
 
-        public bool Resize(int NewSize, bool FailIfNoMemory)
+        public bool Resize(int NewSize, int Capacity, bool FailIfNoMemory)
         {
             if (Data != null && Data.Length < NewSize)
             {
@@ -54,8 +54,10 @@ namespace BuildSync.Core.Networking
                 return true;
             }
 
+            Debug.Assert(NewSize <= Capacity);
+
             byte[] OldData = Data;
-            Data = AllocBuffer(NewSize, FailIfNoMemory);
+            Data = AllocBuffer(Capacity, FailIfNoMemory);
             if (Data == null)
             {
                 return false;
