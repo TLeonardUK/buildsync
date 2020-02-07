@@ -209,14 +209,44 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private void RefreshUsers(List<User> Users)
         {
-            UserListView.Items.Clear();
+            
 
             foreach (User user in Users)
             {
+                if (UserListView.Items[user.Username] != null)
+                {
+                    continue;
+                }
+
                 ListViewItem item = new ListViewItem(user.Username);
                 item.Tag = user;
+                item.Name = user.Username;
                 item.ImageIndex = 0;
                 UserListView.Items.Add(item);
+            }
+
+            List<ListViewItem> OldItems = new List<ListViewItem>();
+            foreach (ListViewItem item in UserListView.Items)
+            {
+                bool Exists = false;
+                foreach (User user in Users)
+                {
+                    if (user.Username == item.Name.ToString())
+                    {
+                        Exists = true;
+                        break;
+                    }
+                }
+
+                if (!Exists)
+                {
+                    OldItems.Add(item);
+                }
+            }
+
+            foreach (ListViewItem item in OldItems)
+            {
+                UserListView.Items.Remove(item);
             }
 
             UserListView.Sort();
@@ -269,6 +299,19 @@ namespace BuildSync.Client.Forms
         private void SaveUser(User ToSave)
         {
             Program.NetClient.SetUserPermissions(ToSave.Username, ToSave.Permissions);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RefreshUserList(object sender, EventArgs e)
+        {
+            if (Visible)
+            {
+                Program.NetClient.RequestUserList();
+            }
         }
     }
 }
