@@ -225,7 +225,7 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         [NonSerialized]
-        public RateTracker ValidateRateStats = new RateTracker();
+        public RateTracker ValidateRateStats = new RateTracker(1000);
 
         /// <summary>
         /// 
@@ -241,6 +241,6 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         [NonSerialized]
-        public RateTracker InitializeRateStats = new RateTracker();
+        public RateTracker InitializeRateStats = new RateTracker(1000);
     }
 }

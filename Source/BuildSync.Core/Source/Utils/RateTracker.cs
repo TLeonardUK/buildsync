@@ -121,6 +121,23 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        public RateTracker()
+        {
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="MaxSamples"></param>
+        public RateTracker(int MaxSamples)
+        {
+            AverageSent = new RollingAverage(MaxSamples);
+            AverageRecieved = new RollingAverage(MaxSamples);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Sent"></param>
         /// <returns></returns>
         public void Out(long Bytes)
