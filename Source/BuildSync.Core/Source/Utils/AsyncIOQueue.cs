@@ -466,9 +466,9 @@ namespace BuildSync.Core.Utils
                     NewStm.CanWrite = RequireWrite;
 #if DISABLE_IO_BUFFERING
                     FileOptions FileFlagNoBuffering = (FileOptions)0x20000000;
-                    NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous | FileOptions.WriteThrough | FileFlagNoBuffering);
+                    NewStm.Stream = new FileStream(Path, FileMode.OpenOrCreate, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous | FileOptions.WriteThrough | FileFlagNoBuffering);
 #else
-                    NewStm.Stream = new FileStream(Path, FileMode.Open, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous);
+                    NewStm.Stream = new FileStream(Path, FileMode.OpenOrCreate, RequireWrite ? FileAccess.ReadWrite : FileAccess.Read, FileShare.ReadWrite, StreamBufferSize, FileOptions.Asynchronous);
 #endif
                     ActiveStreams.Add(NewStm);
                     ActiveStreamsByPath.Add(NewStm.Path, NewStm);

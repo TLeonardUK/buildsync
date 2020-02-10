@@ -133,6 +133,7 @@ namespace BuildSync.Client.Controls
                 {
                     ProgressBar.Style = ProgressBarStyle.Marquee;
                     ProgressBar.Value = 0;
+                    ProgressBar.Refresh();
                 }
             }
             else
@@ -145,6 +146,7 @@ namespace BuildSync.Client.Controls
                 if (ProgressBar.Value != (int)Progress)
                 {
                     ProgressBar.Value = Math.Max(0, Math.Min(100, (int)Progress));
+                    ProgressBar.Refresh();
                 }
             }
 
@@ -198,6 +200,7 @@ namespace BuildSync.Client.Controls
                 {
                     switch (Downloader.State)
                     {
+                        case ManifestDownloadProgressState.DiskError:
                         case ManifestDownloadProgressState.InitializeFailed:
                             {
                                 SetStatus("Disk Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Resume, UpRate, DownRate);

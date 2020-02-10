@@ -44,6 +44,7 @@ namespace BuildSync.Core.Downloads
         Downloading,
         Complete,
         Validating,
+        DiskError,
         InitializeFailed,
         ValidationFailed,
         Installing,
@@ -141,6 +142,12 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         [NonSerialized]
         internal Task InstallTask = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal bool DiskError = false;
 
         /// <summary>
         /// 

@@ -32,6 +32,7 @@
             this.MinimizeToTrayCheckbox = new System.Windows.Forms.CheckBox();
             this.runInstallWhenLaunchingCheckbox = new System.Windows.Forms.CheckBox();
             this.skipVerificationCheckBox = new System.Windows.Forms.CheckBox();
+            this.skipInitialization = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // RunOnStartupCheckbox
@@ -81,17 +82,32 @@
             this.skipVerificationCheckBox.TabIndex = 36;
             this.skipVerificationCheckBox.Text = "Skip validation of builds? (Faster but may not catch any corrupted files)";
             this.skipVerificationCheckBox.UseVisualStyleBackColor = true;
+            this.skipVerificationCheckBox.CheckedChanged += new System.EventHandler(this.StateChanged);
+            // 
+            // skipInitialization
+            // 
+            this.skipInitialization.AutoSize = true;
+            this.skipInitialization.Location = new System.Drawing.Point(16, 135);
+            this.skipInitialization.Margin = new System.Windows.Forms.Padding(2);
+            this.skipInitialization.Name = "skipInitialization";
+            this.skipInitialization.Size = new System.Drawing.Size(444, 17);
+            this.skipInitialization.TabIndex = 37;
+            this.skipInitialization.Text = "Skip pre-allocation of disk space? (May be faster, but will result in less consis" +
+    "tent speeds)";
+            this.skipInitialization.UseVisualStyleBackColor = true;
+            this.skipInitialization.CheckedChanged += new System.EventHandler(this.StateChanged);
             // 
             // GeneralSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.Controls.Add(this.skipInitialization);
             this.Controls.Add(this.skipVerificationCheckBox);
             this.Controls.Add(this.runInstallWhenLaunchingCheckbox);
             this.Controls.Add(this.MinimizeToTrayCheckbox);
             this.Controls.Add(this.RunOnStartupCheckbox);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "GeneralSettings";
-            this.Size = new System.Drawing.Size(519, 138);
+            this.Size = new System.Drawing.Size(519, 167);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -103,5 +119,6 @@
         private System.Windows.Forms.CheckBox MinimizeToTrayCheckbox;
         private System.Windows.Forms.CheckBox runInstallWhenLaunchingCheckbox;
         private System.Windows.Forms.CheckBox skipVerificationCheckBox;
+        private System.Windows.Forms.CheckBox skipInitialization;
     }
 }

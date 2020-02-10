@@ -23,9 +23,12 @@ namespace BuildSync.Client.Controls
         /// </summary>
         public enum CellState
         { 
-            Idle,
+            NotDownloaded,
             Downloading,
-            Downloaded
+            Downloaded,
+            Uploading,
+            Validating,
+            Max
         }
 
         /// <summary>
@@ -41,11 +44,38 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        private Brush[] CellStateBrushes = new Brush[(int)CellState.Max];
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private string[] CellStateNames = new string[(int)CellState.Max];
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private const int LegendWidth = 120;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public BlockStatusPanel()
         {
             InitializeComponent();
 
             WindowUtils.EnableDoubleBuffering(this);
+
+            CellStateBrushes[(int)CellState.NotDownloaded] = SystemBrushes.ControlLight;
+            CellStateBrushes[(int)CellState.Downloading] = Brushes.Orange;
+            CellStateBrushes[(int)CellState.Downloaded] = Brushes.LightGreen;
+            CellStateBrushes[(int)CellState.Uploading] = Brushes.CornflowerBlue;
+            CellStateBrushes[(int)CellState.Validating] = Brushes.Yellow;
+
+            CellStateNames[(int)CellState.NotDownloaded] = "Not Downloaded";
+            CellStateNames[(int)CellState.Downloading] = "Downloading";
+            CellStateNames[(int)CellState.Downloaded] = "Downloaded";
+            CellStateNames[(int)CellState.Uploading] = "Uploading";
+            CellStateNames[(int)CellState.Validating] = "Validating";
         }
 
         /// <summary>
@@ -82,7 +112,7 @@ namespace BuildSync.Client.Controls
             int CellOveralSize = CellSize + CellPadding;
 
             int Rows = (int)Math.Floor((float)(Size.Height - CellPadding * 2 - OuterPadding * 2) / (float)CellOveralSize);
-            int Columns = (int)Math.Floor((float)(Size.Width - CellPadding * 2 - OuterPadding * 2) / (float)CellOveralSize);
+            int Columns = (int)Math.Floor((float)(Size.Width - CellPadding * 2 - OuterPadding * 2 - LegendWidth) / (float)CellOveralSize);
 
             int MaxCells = Rows * Columns;
 
@@ -98,7 +128,7 @@ namespace BuildSync.Client.Controls
             Array.Resize(ref CellStates, CellCount);
             for (int Cell = 0; Cell < CellCount; Cell++)
             {
-                CellStates[Cell] = CellState.Idle;
+                CellStates[Cell] = CellState.NotDownloaded;
 
                 int StartBlock = (Cell * CellDivision);
                 int EndBlock = StartBlock + (CellDivision - 1);
@@ -127,6 +157,30 @@ namespace BuildSync.Client.Controls
                 }
             }
 
+            // Grab most recent downloads.
+            lock (Program.ManifestDownloadManager.RecentBlockChanges)
+            {
+                for (int i = 0; i < Program.ManifestDownloadManager.RecentBlockChanges.Count; i++)
+                {
+                    ManifestRecentBlockChange Item = Program.ManifestDownloadManager.RecentBlockChanges[i];
+                    if (Item.ManifestId == State.ActiveManifestId)
+                    {
+                        int CellIndex = Item.BlockIndex / CellDivision;
+                        if (CellIndex < CellStates.Length)
+                        {
+                            if (Item.Type == ManifestBlockChangeType.Upload)
+                            {
+                                CellStates[CellIndex] = CellState.Uploading;
+                            }
+                            else if (Item.Type == ManifestBlockChangeType.Validate)
+                            {
+                                CellStates[CellIndex] = CellState.Validating;
+                            }
+                        }
+                    }
+                }
+            }
+
             for (int Cell = 0; Cell < CellCount; Cell++)
             {
                 int RowIndex = Cell / Columns;
@@ -136,17 +190,30 @@ namespace BuildSync.Client.Controls
                 int CellY = (RowIndex * CellOveralSize) + CellPadding + OuterPadding;
 
                 CellState State = CellStates[Cell];
-                Brush FillBrush = Brushes.Black;
-                switch (State)
-                {
-                    case CellState.Idle:        FillBrush = SystemBrushes.ControlLight;  break;
-                    case CellState.Downloading: FillBrush = Brushes.Orange;     break;
-                    case CellState.Downloaded:  FillBrush = Brushes.LightGreen; break;
-                }
+                Brush FillBrush = CellStateBrushes[(int)State];
 
                 e.Graphics.FillRectangle(FillBrush, CellX, CellY, CellSize, CellSize);
                 e.Graphics.DrawRectangle(SystemPens.ActiveBorder, CellX, CellY, CellSize, CellSize);
             }
+
+            // Draw the legend.
+            int LegendX = Size.Width - LegendWidth - OuterPadding;
+            int LegendY = OuterPadding + 5;
+
+            //e.Graphics.DrawString("Legend", SystemFonts.DefaultFont, Brushes.Black, LegendX, LegendY);
+            //LegendY += 20;
+
+            for (int i = 0; i < (int)CellState.Max; i++)
+            {
+                Brush FillBrush = CellStateBrushes[i];
+
+                e.Graphics.FillRectangle(FillBrush, LegendX, LegendY, CellSize, CellSize);
+                e.Graphics.DrawRectangle(SystemPens.ActiveBorder, LegendX, LegendY, CellSize, CellSize);
+
+                e.Graphics.DrawString(CellStateNames[i], SystemFonts.DefaultFont, Brushes.Black, LegendX + CellSize + CellPadding, LegendY - 3);
+                LegendY += 16;
+            }
+
         }
 
         /// <summary>

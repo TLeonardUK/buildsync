@@ -30,6 +30,7 @@ namespace BuildSync.Client.Controls.Settings
             MinimizeToTrayCheckbox.Checked = Program.Settings.MinimizeToTrayOnClose;
             runInstallWhenLaunchingCheckbox.Checked = Program.Settings.AlwaysRunInstallBeforeLaunching;
             skipVerificationCheckBox.Checked = Program.Settings.SkipValidation;
+            skipInitialization.Checked = Program.Settings.SkipDiskAllocation;
             SkipValidity = false;
 
             UpdateValidityState();
@@ -60,6 +61,7 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.MinimizeToTrayOnClose = MinimizeToTrayCheckbox.Checked;
             Program.Settings.AlwaysRunInstallBeforeLaunching = runInstallWhenLaunchingCheckbox.Checked;
             Program.Settings.SkipValidation = skipVerificationCheckBox.Checked;
+            Program.Settings.SkipDiskAllocation = skipInitialization.Checked;
         }
 
         /// <summary>

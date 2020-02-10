@@ -402,6 +402,7 @@ namespace BuildSync.Client
 
             // General settings.
             ManifestDownloadManager.SkipValidation = Settings.SkipValidation;
+            ManifestDownloadManager.SkipDiskAllocation = Settings.SkipDiskAllocation;
 
             // General settings.
             ProcessUtils.SetLaunchOnStartup("Build Sync - Client", Settings.RunOnStartup);

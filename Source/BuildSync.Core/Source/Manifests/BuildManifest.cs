@@ -20,7 +20,7 @@ namespace BuildSync.Core.Manifests
     /// 
     /// </summary>
     /// <param name="BytesProcessed"></param>
-    public delegate bool BuildManfiestValidateProgressCallbackHandler(long BytesRead, long TotalBytes);
+    public delegate bool BuildManfiestValidateProgressCallbackHandler(long BytesRead, long TotalBytes, Guid ManifestId, int BlockIndex);
 
     /// <summary>
     /// 
@@ -441,7 +441,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public void InitializeDirectory(string RootPath, AsyncIOQueue IOQueue, BuildManfiestInitProgressCallbackHandler Callback = null)
+        public void InitializeDirectory(string RootPath, AsyncIOQueue IOQueue, bool AllocateFiles, BuildManfiestInitProgressCallbackHandler Callback = null)
         {
             const int WriteChunkSize = 16 * 1024 * 1024;
             byte[] ChunkArray = new byte[WriteChunkSize];
@@ -468,23 +468,26 @@ namespace BuildSync.Core.Manifests
                     Directory.CreateDirectory(FileDir);
                 }
 
-                using (FileStream Stream = File.OpenWrite(FilePath))
+                if (AllocateFiles)
                 {
-                    long BytesRemaining = FileInfo.Size;
-                    while (BytesRemaining > 0)
+                    using (FileStream Stream = File.OpenWrite(FilePath))
                     {
-                        long Size = Math.Min(BytesRemaining, WriteChunkSize);
-                        Stream.Write(ChunkArray, 0, (int)Size);
-                        BytesWritten += Size;
-                        BytesRemaining -= Size;
-
-                        AsyncIOQueue.GlobalBandwidthStats.In(Size);
-
-                        if (Callback != null)
+                        long BytesRemaining = FileInfo.Size;
+                        while (BytesRemaining > 0)
                         {
-                            if (!Callback.Invoke(BytesWritten, TotalBytes))
+                            long Size = Math.Min(BytesRemaining, WriteChunkSize);
+                            Stream.Write(ChunkArray, 0, (int)Size);
+                            BytesWritten += Size;
+                            BytesRemaining -= Size;
+
+                            AsyncIOQueue.GlobalBandwidthStats.In(Size);
+
+                            if (Callback != null)
                             {
-                                return;
+                                if (!Callback.Invoke(BytesWritten, TotalBytes))
+                                {
+                                    return;
+                                }
                             }
                         }
                     }
@@ -545,7 +548,7 @@ namespace BuildSync.Core.Manifests
 
                         if (Callback != null)
                         {
-                            if (!Callback.Invoke(BytesValidated, TotalSize))
+                            if (!Callback.Invoke(BytesValidated, TotalSize, Guid, BlockIndex))
                             {
                                 Aborted = true;
                             }
