@@ -28,6 +28,20 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
+        public bool ManifestLastSeenTimesDirty = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Dictionary<string, DateTime> ManifestLastSeenTimes
+        {
+            get;
+            set;
+        } = new Dictionary<string, DateTime>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void RegisterManifest(BuildManifest Manifest)
         {
             string FilePath = Path.Combine(RootPath, Manifest.Guid.ToString() + ".manifest");
@@ -120,9 +134,59 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public void PruneUnseenManifests()
+        /// <param name="ManifestId"></param>
+        public void MarkAsSeen(Guid ManifestId)
         {
-            // Find manifests that no peer has had data for in x days and delete them.
+            string Id = ManifestId.ToString();
+            lock (ManifestLastSeenTimes)
+            {
+                if (!ManifestLastSeenTimes.ContainsKey(Id))
+                {
+                    ManifestLastSeenTimes.Add(Id, DateTime.UtcNow);
+                }
+                else
+                {
+                    ManifestLastSeenTimes[Id] = DateTime.UtcNow;
+                }
+
+                ManifestLastSeenTimesDirty = true;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void PruneUnseenManifests(int MaxDaysOld)
+        {
+            lock (ManifestLastSeenTimes)
+            {
+                for (int i = 0; i < Manifests.Count; i++)
+                {
+                    BuildManifest Manifest = Manifests[i];
+                    string Id = Manifest.Guid.ToString();
+
+                    if (ManifestLastSeenTimes.ContainsKey(Id))
+                    {
+                        TimeSpan Elapsed = DateTime.UtcNow - ManifestLastSeenTimes[Id];
+                        if (Elapsed.TotalDays > MaxDaysOld)
+                        {
+                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Pruning manifest '{0}' as it's {1} days since it was last seen on any peer.", Manifest.Guid.ToString(), Elapsed.TotalDays);
+
+                            Manifests.RemoveAt(i);
+                            i--;
+
+                            ManifestLastSeenTimesDirty = true;
+                        }
+                    }
+                    else
+                    {
+                        // Put an initial timestamp in for this manifest.
+                        MarkAsSeen(Manifest.Guid);
+
+                        ManifestLastSeenTimesDirty = true;
+                    }
+                }
+            }
         }
 
         /// <summary>

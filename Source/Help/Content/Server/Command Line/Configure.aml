@@ -55,6 +55,16 @@
                       <entry><para>Maximum number of build manifests that can be stored at any time. If more builds are added than this limit then the oldest build in the largest build container will be removed.</para></entry>
                   </row>
                   <row>
+                      <entry><para>MaximumManifestUnseenDays</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>Maximum number of days since a manifest was last seen on a peer, before it is purged.</para></entry>
+                  </row>     
+                  <row>
+                      <entry><para>MaxBandwidth</para></entry>
+                      <entry><para>Integer</para></entry>
+                      <entry><para>Maximum bandwidth in bytes per second that is split across the entire network of peers to cap utilization. 0 is unlimited.</para></entry>
+                  </row>             
+                  <row>
                       <entry><para>RunOnStartup</para></entry>
                       <entry><para>Boolean</para></entry>
                       <entry><para>If the client should automatically start when the user logs in.</para></entry>

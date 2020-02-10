@@ -15,8 +15,10 @@ namespace BuildSync.Server
         public int ServerPort { get; set; } = 12341;
         public string StoragePath { get; set; } = "";
         public int MaximumManifests { get; set; } = 500;
+        public int MaximumManifestUnseenDays { get; set; } = 30;
         public bool RunOnStartup { get; set; } = true;
         public List<User> Users { get; set; } = new List<User>();
         public long MaxBandwidth { get; set; } = 0;
+        public Dictionary<string, DateTime> ManifestLastSeenTimes { get; set; } = new Dictionary<string, DateTime>();
     }
 }

@@ -82,6 +82,16 @@ namespace BuildSync.Server
         /// </summary>
         private const ulong StatusPrintInterval = 60 * 1000;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        private static ulong LastSaveSettingsTime = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private const ulong MinTimeBetweenDirtyManifestSaves = 60 * 1000;
+
         #region Unmanaged Functions
 
         /// <summary>
@@ -159,6 +169,7 @@ namespace BuildSync.Server
                             CtrlType == CtrlTypes.CTRL_SHUTDOWN_EVENT)
                         {
                             Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved close event from console.");
+                            IsClosing = true;
                             return true;
                         }
                         return false;
@@ -229,9 +240,11 @@ namespace BuildSync.Server
         /// </summary>
         public static void SaveSettings()
         {
-            Logger.Log(LogLevel.Info, LogCategory.Main, "Saving settings.");
+            Logger.Log(LogLevel.Verbose, LogCategory.Main, "Saving settings.");
 
             Settings.Save(SettingsPath);
+
+            LastSaveSettingsTime = TimeUtils.Ticks;
         }
 
         /// <summary>
@@ -243,6 +256,7 @@ namespace BuildSync.Server
 
             BuildRegistry = new BuildManifestRegistry();
             BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests);
+            BuildRegistry.ManifestLastSeenTimes = new Dictionary<string, DateTime>(Settings.ManifestLastSeenTimes);
 
             LicenseMgr = new LicenseManager();
             LicenseMgr.Start(Path.Combine(AppDataDir, "License.dat"));
@@ -275,7 +289,14 @@ namespace BuildSync.Server
             NetServer.MaxConnectedClients = LicenseMgr.ActiveLicense.MaxSeats;
             Settings.MaxBandwidth = NetServer.BandwidthLimit;
 
-            BuildRegistry.PruneUnseenManifests();
+            BuildRegistry.PruneUnseenManifests(Settings.MaximumManifestUnseenDays);
+            if (BuildRegistry.ManifestLastSeenTimesDirty && TimeUtils.Ticks - LastSaveSettingsTime > MinTimeBetweenDirtyManifestSaves)
+            {
+                BuildRegistry.ManifestLastSeenTimesDirty = false;
+
+                Settings.ManifestLastSeenTimes = new Dictionary<string, DateTime>(BuildRegistry.ManifestLastSeenTimes);
+                SaveSettings();
+            }
 
             PollIpcServer();
 
@@ -293,6 +314,8 @@ namespace BuildSync.Server
         /// </summary>
         public static void OnStop()
         {
+            SaveSettings();
+
             if (NetServer != null)
             {
                 NetServer.Disconnect();

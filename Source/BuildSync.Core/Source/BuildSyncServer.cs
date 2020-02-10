@@ -550,6 +550,14 @@ namespace BuildSync.Core
                     State.BlockState = Msg.BlockState;
                 }
 
+                if (State.BlockState != null)
+                {
+                    foreach (ManifestBlockListState ManifestState in State.BlockState.States)
+                    {
+                        ManifestRegistry.MarkAsSeen(ManifestState.Id);
+                    }
+                }
+
                 // Dirty all peer states to force an address update (todo: this is shit we should only update relevant peers).
                 List<NetConnection> Clients = ListenConnection.AllClients;
                 foreach (NetConnection ClientConnection in Clients)
