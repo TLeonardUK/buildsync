@@ -217,6 +217,10 @@ namespace BuildSync.Client.Forms
         {
             DockPanel.Theme = new VS2015LightTheme();
 
+#if !SHIPPING
+            Text = "Build Sync - Client (PID " + Process.GetCurrentProcess().Id + ")";
+#endif
+
             MainDownloadList.ContextMenuStrip = downloadListContextMenu;
 
             if (!RestoreLayout())
@@ -927,6 +931,6 @@ namespace BuildSync.Client.Forms
             Program.InstallAutoUpdate();
         }
 
-        #endregion
+#endregion
     }
 }

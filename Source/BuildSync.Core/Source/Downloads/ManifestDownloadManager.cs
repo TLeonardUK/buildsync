@@ -1765,10 +1765,20 @@ namespace BuildSync.Core.Downloads
                         Block.RangeStart++;
                         Queue.ToDownloadBlocks[0] = Block; // It's a struct so reassign.
 
+                        if (TotalSize >= IdealDownloadQueueSizeBytes || DownloadQueue.Count >= MaxDownloadQueueItems)
+                        {
+                            break;
+                        }
+
                         if (Block.RangeStart > Block.RangeEnd)
                         {
                             Queue.ToDownloadBlocks.RemoveAt(0);
                         }
+                    }
+
+                    if (TotalSize >= IdealDownloadQueueSizeBytes || DownloadQueue.Count >= MaxDownloadQueueItems)
+                    {
+                        break;
                     }
                 }
 

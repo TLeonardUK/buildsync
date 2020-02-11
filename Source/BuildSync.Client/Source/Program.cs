@@ -582,7 +582,7 @@ namespace BuildSync.Client
         /// </summary>
         public static void RecordPeerStates()
         {
-            BuildSyncClient.Peer[] AllPeers = Program.NetClient.AllPeers;
+            Peer[] AllPeers = Program.NetClient.AllPeers;
 
             foreach (PeerSettingsRecord Record in Settings.PeerRecords)
             {
@@ -593,7 +593,7 @@ namespace BuildSync.Client
                 Record.CurrentInFlightData = 0;
             }
 
-            foreach (BuildSyncClient.Peer Peer in AllPeers)
+            foreach (Peer Peer in AllPeers)
             {
                 if (Peer.Connection.Address == null)
                 {

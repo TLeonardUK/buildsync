@@ -71,10 +71,10 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ListUpdateTimerTick(object sender, EventArgs e)
         {
-            BuildSyncClient.Peer[] AllPeers = Program.NetClient.AllPeers;
+            Peer[] AllPeers = Program.NetClient.AllPeers;
 
             List<string> ConnectedAddresses = new List<string>();
-            foreach (BuildSyncClient.Peer Peer in AllPeers)
+            foreach (Peer Peer in AllPeers)
             {
                 if (Peer.Connection.IsConnected && Peer.Connection.Address != null)
                 {

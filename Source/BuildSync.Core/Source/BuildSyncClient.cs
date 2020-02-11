@@ -209,372 +209,375 @@ namespace BuildSync.Core
     /// <summary>
     /// 
     /// </summary>
-    public class BuildSyncClient
+    public struct PendingBlockRequest
+    {
+        public NetMessage_GetBlock Message;
+        public NetConnection Requester;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Peer
     {
         /// <summary>
         /// 
         /// </summary>
-        public struct PendingBlockRequest
+        public IPEndPoint Address;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public NetConnection Connection = new NetConnection();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ulong LastConnectionAttemptTime = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool RemoteInitiated = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool WasConnected = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public BlockListState BlockState = new BlockListState();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public const int BlockDownloadTimeout = 60 * 1000;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<ManifestPendingDownloadBlock> ActiveBlockDownloads = new List<ManifestPendingDownloadBlock>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long ActiveBlockDownloadSize = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public RollingAverage BlockRecieveLatency = new RollingAverage(20);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public RollingAverage AverageBlockSize = new RollingAverage(20);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ConcurrentQueue<PendingBlockRequest> BlockRequestQueue = new ConcurrentQueue<PendingBlockRequest>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ulong LastBlockRequestFulfillTime = TimeUtils.Ticks;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ulong LastPrintTime = TimeUtils.Ticks;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="TargetMsOfData"></param>
+        /// <returns></returns>
+        public long GetMaxInFlightData(int TargetMsOfData)
         {
-            public NetMessage_GetBlock Message;
-            public NetConnection Requester;
+            // Calculate a rough idea for how many bytes we should have in flight at a given time.
+#if false
+            double InBlockRecieveLatency = BlockRecieveLatency.Get();
+            double InAverageBlockSize = AverageBlockSize.Get();
+
+            long MaxInFlightBytes = 0;
+            if (InBlockRecieveLatency < 5 || InAverageBlockSize < 1024)
+            {
+                MaxInFlightBytes = BuildManifest.BlockSize * 1;
+            }
+            else
+            {
+                MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMsOfData / InBlockRecieveLatency) * InAverageBlockSize));
+            }
+
+            return MaxInFlightBytes;// * 5;
+#elif false
+
+            // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
+            const double TrendUpwardsFactor = 2;
+
+            double LinkCapacityBytesPerSecond = Connection.BandwidthStats.RateIn / TrendUpwardsFactor; 
+            double LatencySeconds = Connection.BestPing / 1000.0f;
+            if (LatencySeconds == 0)
+            {
+                LatencySeconds = 0.001f;
+            }
+
+            double BandwidthDelayProductBytes = LinkCapacityBytesPerSecond * LatencySeconds;
+            long MaxInFlightBytes = (long)BandwidthDelayProductBytes;
+
+            // Cap to minimum of a couple ofs, so we always have one being sent out and one before processed.
+            MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
+
+            // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
+            MaxInFlightBytes = (long)(MaxInFlightBytes * TrendUpwardsFactor);
+
+            if (TimeUtils.Ticks - LastPrintTime > 1000)
+            {
+                Console.WriteLine("a={0} b={1} bytes={2}", StringUtils.FormatAsTransferRate((long)LinkCapacityBytesPerSecond), LatencySeconds, StringUtils.FormatAsSize(MaxInFlightBytes));
+                LastPrintTime = TimeUtils.Ticks;
+            }
+
+            return MaxInFlightBytes;
+#elif true
+            // Keep at least 1 second of data in flight.
+            double RealTargetMsOfData = Math.Max(TargetMsOfData, Connection.BestPing * 2.0f);
+
+            const double TrendUpwardsFactor = 1.5f;
+            double TargetSecondsOfData = RealTargetMsOfData / 1000.0;
+            long TargetInFlight = (long)(Connection.BandwidthStats.PeakRateIn * TargetSecondsOfData);
+
+            long MaxInFlightBytes = TargetInFlight;
+
+            // Cap to minimum of a couple of 2 blocks, so we always have one being sent out and one before processed.
+            MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
+
+            // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
+            MaxInFlightBytes = (long)(MaxInFlightBytes * TrendUpwardsFactor);
+
+            // Round to next largest block size.
+            MaxInFlightBytes = ((MaxInFlightBytes + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize) * BuildManifest.BlockSize;
+
+            return MaxInFlightBytes;
+#else
+            return 128 * 1024 * 1024; // Gigabit of data. We limit the actual amount based on our local link speed.
+#endif
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public class Peer
+        /// <param name="TargetMsOfData"></param>
+        /// <returns></returns>
+        public long GetAvailableInFlightData(int TargetMsOfData)
         {
-            /// <summary>
-            /// 
-            /// </summary>
-            public IPEndPoint Address;
+            return Math.Max(0, GetMaxInFlightData(TargetMsOfData) - ActiveBlockDownloadSize);
+        }
 
-            /// <summary>
-            /// 
-            /// </summary>
-            public NetConnection Connection = new NetConnection();
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public ulong LastConnectionAttemptTime = 0;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public bool RemoteInitiated = false;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public bool WasConnected = false;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public BlockListState BlockState = new BlockListState();
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public const int BlockDownloadTimeout = 60 * 1000;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public List<ManifestPendingDownloadBlock> ActiveBlockDownloads = new List<ManifestPendingDownloadBlock>();
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public long ActiveBlockDownloadSize = 0;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public RollingAverage BlockRecieveLatency = new RollingAverage(20);
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public RollingAverage AverageBlockSize = new RollingAverage(20);
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public ConcurrentQueue<PendingBlockRequest> BlockRequestQueue = new ConcurrentQueue<PendingBlockRequest>();
-
-            /// <summary>
-            /// 
-            /// </summary>
-            public ulong LastBlockRequestFulfillTime = TimeUtils.Ticks;
-
-            public ulong LastPrintTime = TimeUtils.Ticks;
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="TargetMsOfData"></param>
-            /// <returns></returns>
-            public long GetMaxInFlightData(int TargetMsOfData)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name=""></param>
+        /// <returns></returns>
+        public bool IsDownloadingBlock(ManifestPendingDownloadBlock Block)
+        {
+            lock (ActiveBlockDownloads)
             {
-                // Calculate a rough idea for how many bytes we should have in flight at a given time.
-#if false
-                double InBlockRecieveLatency = BlockRecieveLatency.Get();
-                double InAverageBlockSize = AverageBlockSize.Get();
-
-                long MaxInFlightBytes = 0;
-                if (InBlockRecieveLatency < 5 || InAverageBlockSize < 1024)
+                foreach (ManifestPendingDownloadBlock Download in ActiveBlockDownloads)
                 {
-                    MaxInFlightBytes = BuildManifest.BlockSize * 1;
-                }
-                else
-                {
-                    MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMsOfData / InBlockRecieveLatency) * InAverageBlockSize));
-                }
-
-                return MaxInFlightBytes;// * 5;
-#elif false
-
-                // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
-                const double TrendUpwardsFactor = 2;
-
-                double LinkCapacityBytesPerSecond = Connection.BandwidthStats.RateIn / TrendUpwardsFactor; 
-                double LatencySeconds = Connection.BestPing / 1000.0f;
-                if (LatencySeconds == 0)
-                {
-                    LatencySeconds = 0.001f;
-                }
-
-                double BandwidthDelayProductBytes = LinkCapacityBytesPerSecond * LatencySeconds;
-                long MaxInFlightBytes = (long)BandwidthDelayProductBytes;
-
-                // Cap to minimum of a couple ofs, so we always have one being sent out and one before processed.
-                MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
-
-                // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
-                MaxInFlightBytes = (long)(MaxInFlightBytes * TrendUpwardsFactor);
-
-                if (TimeUtils.Ticks - LastPrintTime > 1000)
-                {
-                    Console.WriteLine("a={0} b={1} bytes={2}", StringUtils.FormatAsTransferRate((long)LinkCapacityBytesPerSecond), LatencySeconds, StringUtils.FormatAsSize(MaxInFlightBytes));
-                    LastPrintTime = TimeUtils.Ticks;
-                }
-
-                return MaxInFlightBytes;
-#elif true
-                // Keep at least 1 second of data in flight.
-                double RealTargetMsOfData = Math.Max(TargetMsOfData, Connection.BestPing * 2.0f);
-
-                const double TrendUpwardsFactor = 1.5f;
-                double TargetSecondsOfData = RealTargetMsOfData / 1000.0;
-                long TargetInFlight = (long)(Connection.BandwidthStats.PeakRateIn * TargetSecondsOfData);
-
-                long MaxInFlightBytes = TargetInFlight;
-
-                // Cap to minimum of a couple of 2 blocks, so we always have one being sent out and one before processed.
-                MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
-
-                // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
-                MaxInFlightBytes = (long)(MaxInFlightBytes * TrendUpwardsFactor);
-
-                // Round to next largest block size.
-                MaxInFlightBytes = ((MaxInFlightBytes + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize) * BuildManifest.BlockSize;
-
-                return MaxInFlightBytes;
-#else
-                return 128 * 1024 * 1024; // Gigabit of data. We limit the actual amount based on our local link speed.
-#endif
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="TargetMsOfData"></param>
-            /// <returns></returns>
-            public long GetAvailableInFlightData(int TargetMsOfData)
-            {
-                return Math.Max(0, GetMaxInFlightData(TargetMsOfData) - ActiveBlockDownloadSize);
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name=""></param>
-            /// <returns></returns>
-            public bool IsDownloadingBlock(ManifestPendingDownloadBlock Block)
-            {
-                lock (ActiveBlockDownloads)
-                {
-                    foreach (ManifestPendingDownloadBlock Download in ActiveBlockDownloads)
+                    if (Download.BlockIndex == Block.BlockIndex && Download.ManifestId == Block.ManifestId)
                     {
-                        if (Download.BlockIndex == Block.BlockIndex && Download.ManifestId == Block.ManifestId)
-                        {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <returns></returns>
-            public bool HasBlock(ManifestPendingDownloadBlock Block)
-            {
-                foreach (ManifestBlockListState ManifestState in BlockState.States)
-                {
-                    if (ManifestState.Id == Block.ManifestId)
-                    {
-                        return ManifestState.BlockState.Get(Block.BlockIndex);
-                    }
-                }
-                return false;
-            }
-
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <returns></returns>
-            public bool SetBlockState(Guid ManifestId, int BlockIndex, bool State)
-            {
-                foreach (ManifestBlockListState ManifestState in BlockState.States)
-                {
-                    if (ManifestState.Id == ManifestId)
-                    {
-                        ManifestState.BlockState.Set(BlockIndex, State);
                         return true;
                     }
                 }
-                return false;
             }
+            return false;
+        }
 
-            /// <summary>
-            /// 
-            /// </summary>
-            public void PruneTimeoutDownloads()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public bool HasBlock(ManifestPendingDownloadBlock Block)
+        {
+            foreach (ManifestBlockListState ManifestState in BlockState.States)
             {
-                lock (ActiveBlockDownloads)
+                if (ManifestState.Id == Block.ManifestId)
                 {
-                    for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                    return ManifestState.BlockState.Get(Block.BlockIndex);
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public bool SetBlockState(Guid ManifestId, int BlockIndex, bool State)
+        {
+            foreach (ManifestBlockListState ManifestState in BlockState.States)
+            {
+                if (ManifestState.Id == ManifestId)
+                {
+                    ManifestState.BlockState.Set(BlockIndex, State);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void PruneTimeoutDownloads()
+        {
+            lock (ActiveBlockDownloads)
+            {
+                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                {
+                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                    ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+                    if (Elapsed > BlockDownloadTimeout)
                     {
-                        ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
-
-                        ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
-                        if (Elapsed > BlockDownloadTimeout)
+                        if (!Download.Recieved)
                         {
-                            if (!Download.Recieved)
-                            {
-                                ActiveBlockDownloadSize -= Download.Size;
+                            ActiveBlockDownloadSize -= Download.Size;
 
-                                Download.Recieved = true;
-                                ActiveBlockDownloads[i] = Download;
-                            }
-
-                            ActiveBlockDownloads.RemoveAt(i);
-                            i--;
+                            Download.Recieved = true;
+                            ActiveBlockDownloads[i] = Download;
                         }
+
+                        ActiveBlockDownloads.RemoveAt(i);
+                        i--;
                     }
                 }
             }
+        }
 
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="Block"></param>
-            private void UpdateLatency(ManifestPendingDownloadBlock Download)
-            {
-                ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
-                //Console.WriteLine("Recieved block {0} in {1} ms", Download.BlockIndex, Elapsed);
-                BlockRecieveLatency.Add(Elapsed);
-                AverageBlockSize.Add(Download.Size);
-            }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Block"></param>
+        private void UpdateLatency(ManifestPendingDownloadBlock Download)
+        {
+            ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+            //Console.WriteLine("Recieved block {0} in {1} ms", Download.BlockIndex, Elapsed);
+            BlockRecieveLatency.Add(Elapsed);
+            AverageBlockSize.Add(Download.Size);
+        }
 
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="ManifestId"></param>
-            /// <param name="BlockIndex"></param>
-            public void MarkActiveBlockDownloadAsRecieved(Guid ManifestId, int BlockIndex)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        /// <param name="BlockIndex"></param>
+        public void MarkActiveBlockDownloadAsRecieved(Guid ManifestId, int BlockIndex)
+        {
+            lock (ActiveBlockDownloads)
             {
-                lock (ActiveBlockDownloads)
+                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
                 {
-                    for (int i = 0; i < ActiveBlockDownloads.Count; i++)
-                    {
-                        ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
 
-                        if (Download.BlockIndex == BlockIndex &&
-                            Download.ManifestId == ManifestId)
+                    if (Download.BlockIndex == BlockIndex &&
+                        Download.ManifestId == ManifestId)
+                    {
+                        if (!Download.Recieved)
                         {
-                            if (!Download.Recieved)
+                            UpdateLatency(Download);
+                            ActiveBlockDownloadSize -= Download.Size;
+                            Download.Recieved = true;
+                            ActiveBlockDownloads[i] = Download;
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void RemoveActiveBlockDownload(Guid ManifestId, int BlockIndex, bool WasSuccess)
+        {
+            lock (ActiveBlockDownloads)
+            {
+                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                {
+                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                    if (Download.BlockIndex == BlockIndex &&
+                        Download.ManifestId == ManifestId)
+                    {
+                        if (!Download.Recieved)
+                        {
+                            if (WasSuccess)
                             {
                                 UpdateLatency(Download);
-                                ActiveBlockDownloadSize -= Download.Size;
-                                Download.Recieved = true;
-                                ActiveBlockDownloads[i] = Download;
                             }
-
-                            break;
+                            ActiveBlockDownloadSize -= Download.Size;
+                            Download.Recieved = true;
+                            ActiveBlockDownloads[i] = Download;
                         }
+
+                        //Console.WriteLine("Removing (for block {0} in manifest {1}) of size {2} total queued {3}.", Download.ManifestId, Download.BlockIndex, Download.Size, ActiveBlockDownloadSize);
+
+                        ActiveBlockDownloads.RemoveAt(i);
+                        break;
                     }
                 }
             }
+        }
 
-            /// <summary>
-            /// 
-            /// </summary>
-            public void RemoveActiveBlockDownload(Guid ManifestId, int BlockIndex, bool WasSuccess)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        /// <param name="BlockIndex"></param>
+        /// <returns></returns>
+        public bool HasActiveBlockDownload(Guid ManifestId, int BlockIndex)
+        {
+            lock (ActiveBlockDownloads)
             {
-                lock (ActiveBlockDownloads)
+                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
                 {
-                    for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                    if (Download.BlockIndex == BlockIndex &&
+                        Download.ManifestId == ManifestId)
                     {
-                        ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
-
-                        if (Download.BlockIndex == BlockIndex &&
-                            Download.ManifestId == ManifestId)
-                        {
-                            if (!Download.Recieved)
-                            {
-                                if (WasSuccess)
-                                {
-                                    UpdateLatency(Download);
-                                }
-                                ActiveBlockDownloadSize -= Download.Size;
-                                Download.Recieved = true;
-                                ActiveBlockDownloads[i] = Download;
-                            }
-
-                            //Console.WriteLine("Removing (for block {0} in manifest {1}) of size {2} total queued {3}.", Download.ManifestId, Download.BlockIndex, Download.Size, ActiveBlockDownloadSize);
-
-                            ActiveBlockDownloads.RemoveAt(i);
-                            break;
-                        }
+                        return true;
                     }
                 }
             }
 
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="ManifestId"></param>
-            /// <param name="BlockIndex"></param>
-            /// <returns></returns>
-            public bool HasActiveBlockDownload(Guid ManifestId, int BlockIndex)
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Block"></param>
+        public void AddActiveBlockDownload(ManifestPendingDownloadBlock Block)
+        {
+            lock (ActiveBlockDownloads)
             {
-                lock (ActiveBlockDownloads)
-                {
-                    for (int i = 0; i < ActiveBlockDownloads.Count; i++)
-                    {
-                        ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
-
-                        if (Download.BlockIndex == BlockIndex &&
-                            Download.ManifestId == ManifestId)
-                        {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
+                ActiveBlockDownloadSize += Block.Size;
+                ActiveBlockDownloads.Add(Block);
             }
+        }
+    };
 
-            /// <summary>
-            /// 
-            /// </summary>
-            /// <param name="Block"></param>
-            public void AddActiveBlockDownload(ManifestPendingDownloadBlock Block)
-            {
-                lock (ActiveBlockDownloads)
-                {
-                    ActiveBlockDownloadSize += Block.Size;
-                    ActiveBlockDownloads.Add(Block);
-                }
-            }
-        };
-
+    /// <summary>
+    /// 
+    /// </summary>
+    public class BuildSyncClient
+    {
         /// <summary>
         /// 
         /// </summary>

@@ -1,4 +1,5 @@
 ﻿//#define FAKE_LATENCY
+//#define TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
 
 using System;
 using System.Diagnostics;
@@ -331,6 +332,11 @@ namespace BuildSync.Core.Networking
         private Random FakeLatencyRandom = new Random();
         private const int FakeLatencyBase = 1000;
         private const int FakeLatencyJitter = 50;
+#endif
+
+#if TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
+        private static Dictionary<string, int> MessageBufferAllocationSites = new Dictionary<string, int>();
+        private static ulong MessageBufferAllocationSitePrintTimer = TimeUtils.Ticks;
 #endif
 
         private NetMessage MessageHeaderTempStorage = new NetMessage();
@@ -1375,7 +1381,7 @@ namespace BuildSync.Core.Networking
             {
                 if (FreeGenericMessageBuffers.TryTake(out Serialized))
                 {
-                    return Serialized;
+                    break;
                 }
 
                 // Try and steal from fallback free queue.
@@ -1385,7 +1391,7 @@ namespace BuildSync.Core.Networking
                     {
                         if (FallbackFreeQueue.TryTake(out Serialized))
                         {
-                            return Serialized;
+                            break;
                         }
                     }
                 }
@@ -1396,14 +1402,56 @@ namespace BuildSync.Core.Networking
                     break;
                 }
 
+                TryPrintMessageBufferAllocationSites();
+
                 Thread.Sleep(1);
             }
 
-            Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
-            Interlocked.Increment(ref GenericMessageBufferCount);
-            Logger.Log(LogLevel.Info, LogCategory.Transport, "Dynamically allocating new generic message buffer, now a total of {0} buffers ({1} in queue).", RecieveMessageBufferCount, FreeRecieveMessageBuffers.Count);
-           
+            if (Serialized == null)
+            {
+                Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                Interlocked.Increment(ref GenericMessageBufferCount);
+                Logger.Log(LogLevel.Info, LogCategory.Transport, "Dynamically allocating new generic message buffer, now a total of {0} buffers ({1} in queue).", RecieveMessageBufferCount, FreeRecieveMessageBuffers.Count);
+            }
+
+#if TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
+            lock (MessageBufferAllocationSites)
+            {
+                if (!MessageBufferAllocationSites.ContainsKey(Site))
+                {
+                    MessageBufferAllocationSites.Add(Site, 0);
+                }
+                MessageBufferAllocationSites[Site] = MessageBufferAllocationSites[Site] + 1;
+
+                TryPrintMessageBufferAllocationSites();
+            }
+#endif
+
             return Serialized;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void TryPrintMessageBufferAllocationSites()
+        {
+            lock (MessageBufferAllocationSites)
+            {
+                ulong Elapsed = TimeUtils.Ticks - MessageBufferAllocationSitePrintTimer;
+                if (Elapsed >= 1000)
+                {
+                    Console.WriteLine("==== Buffer Allocations ====");
+                    int Total = 0;
+                    foreach (string key in MessageBufferAllocationSites.Keys)
+                    {
+                        Console.WriteLine("[{0}] {1}", MessageBufferAllocationSites[key], key);
+                        Total += MessageBufferAllocationSites[key];
+                    }
+                    Console.WriteLine("Sum: {0}", Total);
+
+                    MessageBufferAllocationSitePrintTimer = TimeUtils.Ticks;
+                }
+            }
         }
 
         /// <summary>
@@ -1412,6 +1460,17 @@ namespace BuildSync.Core.Networking
         /// <param name="Buffer"></param>
         private void ReleaseMessageBuffer(byte[] Buffer, string Site, bool ForSend = false)
         {
+#if TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
+            lock (MessageBufferAllocationSites)
+            {
+                if (!MessageBufferAllocationSites.ContainsKey(Site))
+                {
+                    MessageBufferAllocationSites.Add(Site, 0);
+                }
+                MessageBufferAllocationSites[Site] = MessageBufferAllocationSites[Site] - 1;
+            }
+#endif
+
             if (ForSend)
             {
                 lock (FreeSendMessageBuffers)
