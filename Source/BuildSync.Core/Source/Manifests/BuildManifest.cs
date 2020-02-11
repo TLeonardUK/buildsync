@@ -324,11 +324,15 @@ namespace BuildSync.Core.Manifests
         public long GetTotalSizeOfBlocks(SparseStateArray Blocks)
         {
             long Result = 0;
-            for (int i = 0; i < BlockCount; i++)
+
+            foreach (SparseStateArray.Range Range in Blocks.Ranges)
             {
-                if (Blocks.Get(i))
+                if (Range.State)
                 {
-                    Result += BlockInfo[i].TotalSize;
+                    for (int i = Range.Start; i <= Range.End; i++)
+                    {
+                        Result += BlockInfo[i].TotalSize;
+                    }
                 }
             }
 

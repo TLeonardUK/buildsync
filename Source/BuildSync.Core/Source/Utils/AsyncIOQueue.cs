@@ -460,6 +460,12 @@ namespace BuildSync.Core.Utils
                 {
                     Logger.Log(LogLevel.Verbose, LogCategory.IO, "Opening stream for async queue (can write = {0}): {1}", RequireWrite, Path);
 
+                    string DirPath = System.IO.Path.GetDirectoryName(Path);
+                    if (!Directory.Exists(DirPath))
+                    {
+                        Directory.CreateDirectory(DirPath);
+                    }
+
                     ActiveStream NewStm = new ActiveStream();
                     NewStm.LastAccessed = CurrentTicks;
                     NewStm.Path = Path;

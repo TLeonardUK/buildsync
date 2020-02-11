@@ -60,9 +60,9 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <returns></returns>
-        public void ToArray(ref bool[] Result)
+        public void ToArray(ref bool[] Result, ref int ResultLength)
         {
-            if (Result.Length != Size)
+            if (Result.Length < Size)
             {
                 Array.Resize(ref Result, Size);
             }
@@ -73,6 +73,7 @@ namespace BuildSync.Core.Utils
                     Result[i] = range.State;
                 }
             }
+            ResultLength = Size;
         }
 
         /// <summary>

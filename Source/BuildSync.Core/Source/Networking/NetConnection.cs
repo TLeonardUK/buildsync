@@ -1371,7 +1371,7 @@ namespace BuildSync.Core.Networking
             ConcurrentBag<byte[]> FallbackFreeQueue = ForSend ? FreeSendMessageBuffers : FreeRecieveMessageBuffers;
 
             byte[] Serialized = null;
-            while (FreeGenericMessageBuffers.Count > 0 || GenericMessageBufferCount == MaxGenericMessageBuffers)
+            while (true)
             {
                 if (FreeGenericMessageBuffers.TryTake(out Serialized))
                 {
@@ -1390,7 +1390,13 @@ namespace BuildSync.Core.Networking
                     }
                 }
 
-                Thread.Sleep(0);
+                // If we can allocate another buffer do that, else, just keep trying until a buffer is available.
+                if (GenericMessageBufferCount < MaxGenericMessageBuffers)
+                {
+                    break;
+                }
+
+                Thread.Sleep(1);
             }
 
             Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead

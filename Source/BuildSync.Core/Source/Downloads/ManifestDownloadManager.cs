@@ -46,7 +46,7 @@ namespace BuildSync.Core.Downloads
     /// <summary>
     /// 
     /// </summary>
-    public struct ManifestDownloadQueue
+    public class ManifestDownloadQueue
     {
         public Guid ManifestId;
         public int HighestPriority;
@@ -308,15 +308,43 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         private const int SplitIndexUpdateInterval = 60 * 1000;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool[] AvailableBlockQueue = new bool[0];
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool[] CurrentBlockQueue = new bool[0];
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool[] ToDownloadBlockQueue = new bool[0];
+
+        /// <summary>
+        /// 
+        /// </summary>
         private struct LastFileWriteTimeCacheEntry
         {
             public DateTime LastModified;
             public ulong LastCacheUpdate;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         private Dictionary<string, LastFileWriteTimeCacheEntry> LastFileWriteCache = new Dictionary<string, LastFileWriteTimeCacheEntry>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         private const int MaxLastFileWriteCacheEntryDuration = 5 * 1000;
 
+        /// <summary>
+        /// 
+        /// </summary>
         private List<ManifestDownloadQueue> ManifestQueues = new List<ManifestDownloadQueue>();
 
         /// <summary>
@@ -819,7 +847,10 @@ namespace BuildSync.Core.Downloads
                                             State.InitializeBytesRemaining = TotalBytes - BytesWritten;
                                             return !State.Paused;
                                         });
-                                        ChangeState(State, ManifestDownloadProgressState.Downloading);
+                                        if (!State.Paused)
+                                        {
+                                            ChangeState(State, ManifestDownloadProgressState.Downloading);
+                                        }
                                     }
                                     catch (Exception Ex)
                                     {
@@ -961,28 +992,31 @@ namespace BuildSync.Core.Downloads
                                             RecordBlockChange(ManifestId, BlockIndex, ManifestBlockChangeType.Validate);
                                             return !State.Paused;
                                         });
-                                        if (FailedBlocks.Count == 0)
+                                        if (!State.Paused)
                                         {
-                                            if (State.InstallOnComplete)
+                                            if (FailedBlocks.Count == 0)
                                             {
-                                                ChangeState(State, ManifestDownloadProgressState.Installing);
+                                                if (State.InstallOnComplete)
+                                                {
+                                                    ChangeState(State, ManifestDownloadProgressState.Installing);
+                                                }
+                                                else
+                                                {
+                                                    ChangeState(State, ManifestDownloadProgressState.Complete);
+                                                }
+
+                                                StoreFileCompletedStates(State);
                                             }
                                             else
                                             {
-                                                ChangeState(State, ManifestDownloadProgressState.Complete);
-                                            }
+                                                foreach (int Block in FailedBlocks)
+                                                {
+                                                    MarkBlockAsUnavailable(State.ManifestId, Block);
+                                                    //MarkFileAsUnavailable(State.ManifestId, File);
+                                                }
 
-                                            StoreFileCompletedStates(State);
-                                        }
-                                        else
-                                        {
-                                            foreach (int Block in FailedBlocks)
-                                            {
-                                                MarkBlockAsUnavailable(State.ManifestId, Block);
-                                                //MarkFileAsUnavailable(State.ManifestId, File);
+                                                ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
                                             }
-
-                                            ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
                                         }
                                     }
                                     catch (Exception Ex)
@@ -1583,10 +1617,6 @@ namespace BuildSync.Core.Downloads
             AvailableBlocks = InAvailableBlocks;
         }
 
-        bool[] AvailableBlockQueue = new bool[0];
-        bool[] CurrentBlockQueue = new bool[0];
-        bool[] ToDownloadBlockQueue = new bool[0];
-
         /// <summary>
         /// 
         /// </summary>
@@ -1605,18 +1635,38 @@ namespace BuildSync.Core.Downloads
             }
 
             // Create queues of blocks that we want.
-            ManifestQueues.Clear();
+            foreach (ManifestDownloadQueue Queue in ManifestQueues)
+            {
+                Queue.ToDownloadBlocks.Clear();
+            }
 
             foreach (ManifestDownloadState State in StateCollection.States)
             {
                 if (State.State == ManifestDownloadProgressState.Downloading && !State.Paused)
                 {
-                    // Create queue for this manifest.
-                    ManifestDownloadQueue DownloadQueue = new ManifestDownloadQueue();
+                    // Create queue for this manifest if it doesn't exist.
+                    ManifestDownloadQueue DownloadQueue = null;
+                    foreach (ManifestDownloadQueue Queue in ManifestQueues)
+                    {
+                        if (Queue.ManifestId == State.ManifestId)
+                        {
+                            DownloadQueue = Queue;
+                            break;
+                        }
+                    }
+
+                    if (DownloadQueue == null)
+                    {
+                        DownloadQueue = new ManifestDownloadQueue();
+                        DownloadQueue.ToDownloadBlocks = new List<ManifestDownloadRequiredBlock>();
+                        ManifestQueues.Add(DownloadQueue);
+                    }
+
                     DownloadQueue.HighestPriority = State.Priority;
                     DownloadQueue.ManifestId = State.ManifestId;
-                    DownloadQueue.ToDownloadBlocks = new List<ManifestDownloadRequiredBlock>();
                     ManifestQueues.Add(DownloadQueue);
+
+                    int BlockCount = 0;
 
                     // Grab a list of available blocks for this 
                     bool bFound = false;
@@ -1624,22 +1674,25 @@ namespace BuildSync.Core.Downloads
                     {
                         if (AState.Id == State.ManifestId)
                         {
-                            AState.BlockState.ToArray(ref AvailableBlockQueue);
+                            AState.BlockState.ToArray(ref AvailableBlockQueue, ref BlockCount);
                             bFound = true;
                             break;
                         }
                     }
 
-                    if (!bFound || AvailableBlockQueue.Length != State.BlockStates.Size)
+                    if (!bFound || BlockCount != State.BlockStates.Size)
                     {
                         continue;
                     }
 
-                    State.BlockStates.ToArray(ref CurrentBlockQueue);
-                    Array.Resize(ref ToDownloadBlockQueue, AvailableBlockQueue.Length);
+                    State.BlockStates.ToArray(ref CurrentBlockQueue, ref BlockCount);
+                    if (ToDownloadBlockQueue.Length < BlockCount)
+                    {
+                        Array.Resize(ref ToDownloadBlockQueue, BlockCount);
+                    }
 
                     // Make list of blocks that are available and blocks that we don't have. aka. our download list.
-                    for (int i = 0; i < AvailableBlockQueue.Length; i++)
+                    for (int i = 0; i < BlockCount; i++)
                     {
                         ToDownloadBlockQueue[i] = AvailableBlockQueue[i] && !CurrentBlockQueue[i];
                     }
@@ -1651,8 +1704,8 @@ namespace BuildSync.Core.Downloads
 
                     // Split at a random place and download the second segment first. This speeds up the rate at which peers have blocks available to seed. And stops
                     // the first seeder being hammered.
-                    int ThisSplitIndex = SplitIndex % ToDownloadBlockQueue.Length;
-                    DownloadRanges.AddArray(ToDownloadBlockQueue, ThisSplitIndex, ToDownloadBlockQueue.Length - ThisSplitIndex);
+                    int ThisSplitIndex = SplitIndex % BlockCount;
+                    DownloadRanges.AddArray(ToDownloadBlockQueue, ThisSplitIndex, BlockCount - ThisSplitIndex);
                     DownloadRanges.AddArray(ToDownloadBlockQueue, 0, ThisSplitIndex);
 
                     if (DownloadRanges.Ranges != null)

@@ -258,7 +258,7 @@ namespace BuildSync.Core
             /// <summary>
             /// 
             /// </summary>
-            public const int BlockDownloadTimeout = 15 * 1000;
+            public const int BlockDownloadTimeout = 60 * 1000;
 
             /// <summary>
             /// 
@@ -911,6 +911,11 @@ namespace BuildSync.Core
         /// <summary>
         /// 
         /// </summary>
+        private int DownloadQueueIsDirty = 1;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public BuildSyncClient()
         {
             Connection.OnMessageRecieved += HandleMessage;
@@ -1266,12 +1271,26 @@ namespace BuildSync.Core
 
             ManifestDownloadManager.SetAvailableToDownloadBlocks(State);
         }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        private void MarkBlockDownloadsForUpdate()
+        {
+            //DownloadQueueIsDirty = 1;
+        }
 
         /// <summary>
         /// 
         /// </summary>
         private void UpdateBlockDownloads()
         {
+            // TODO: Make this whole function less crap and less cpu consuming.
+            //if (Interlocked.CompareExchange(ref DownloadQueueIsDirty, 0, 1) == 1)
+            //{
+            //    return;
+            //}
+
             ManifestDownloadManager.UpdateBlockQueue();
 
             if (ManifestDownloadManager.DownloadQueue == null)
@@ -1361,53 +1380,7 @@ namespace BuildSync.Core
 
                         long MaxBandwidth = LeastLoadedPeer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
                         long BandwidthAvailable = LeastLoadedPeer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
-                        //Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}, from peer {4} (Avail:{5} Max:{6}).", Msg.ManifestId, Msg.BlockIndex, BlockInfo.TotalSize, LeastLoadedPeer.ActiveBlockDownloadSize, HostnameCache.GetHostname(LeastLoadedPeer.Connection.Address.Address.ToString()), BandwidthAvailable, MaxBandwidth);
                     }
-
-                    // Try and find a peer with space in its download queue for this item.
-                    // Cycle peers to request from so we don't always hit the first if he has everything.
-                    // TODO: If recent request failed, wait.
-                    /*
-                    for (int j = 0; j < Peers.Count; j++)
-                    {
-                        Peer peer = Peers[(j + PeerCycleIndex) % Peers.Count];
-
-                        // Calculate a rough idea for how many bytes we should have in flight at a given time.
-                        double BlockRecieveLatency = peer.BlockRecieveLatency.Get();
-                        double AverageBlockSize = peer.AverageBlockSize.Get();
-
-                        long MaxInFlightBytes = 0;
-                        if (BlockRecieveLatency < 5 || AverageBlockSize < 1024)
-                        {
-                            MaxInFlightBytes = BuildManifest.BlockSize;
-                        }
-                        else
-                        {
-                            MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMillisecondsOfDataInFlight / BlockRecieveLatency) * AverageBlockSize));
-                        }
-
-                        //Console.WriteLine("Target:{0} ({1} mb) Latency:{2} BlockSize:{3} Actual:{4} ({5} mb) TotalDownloads:{6}", MaxInFlightBytes, MaxInFlightBytes / 1024.0f / 1024.0f, BlockRecieveLatency, AverageBlockSize, peer.ActiveBlockDownloadSize, peer.ActiveBlockDownloadSize / 1024.0f / 1024.0f, peer.ActiveBlockDownloads.Count);
-
-                        // TODO: Take disk queue into account.
-
-                        //if ((peer.ActiveBlockDownloadSize + BlockInfo.TotalSize <= MaxInFlightBytes || BlockInfo.TotalSize > MaxInFlightBytes) && peer.HasBlock(Item))
-                        if (peer.ActiveBlockDownloads.Count < 512 && peer.HasBlock(Item))
-                        {
-                            NetMessage_GetBlock Msg = new NetMessage_GetBlock();
-                            Msg.ManifestId = Item.ManifestId;
-                            Msg.BlockIndex = Item.BlockIndex;
-                            peer.Connection.Send(Msg);
-
-                            Item.TimeStarted = TimeUtils.Ticks;
-                            Item.Size = BlockInfo.TotalSize;
-
-                            peer.AddActiveBlockDownload(Item);
-
-                            Console.WriteLine("Adding download (for block {0} in manifest {1}) of size {2} total queued {3}, from peer {4}.", Msg.ManifestId, Msg.BlockIndex, BlockInfo.TotalSize, peer.ActiveBlockDownloadSize, HostnameCache.GetHostname(peer.Connection.Address.Address.ToString()));
-
-                            break;
-                        }
-                    }*/
                 }
 
                 if (Peers.Count > 0)
@@ -1428,7 +1401,11 @@ namespace BuildSync.Core
             {
                 foreach (Peer peer in Peers)
                 {
+#if SHIPPING
+                    if (peer.Address.Address.Equals(EndPoint.Address))
+#else
                     if (peer.Address.Equals(EndPoint))
+#endif
                     {
                         return peer;
                     }
@@ -1902,6 +1879,24 @@ namespace BuildSync.Core
                     peer.RemoteInitiated = true;
                     peer.LastConnectionAttemptTime = 0;
                     Peers.Add(peer);
+                }
+                else
+                {
+                    bool bRemoteHasPriority = (ClientConnection.Address.Port < peer.Connection.Address.Port);
+
+                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}, but we already have a local connection, {1} takes priority.", ClientConnection.Address.ToString(), bRemoteHasPriority ? "REMOTE" : "LOCAL");
+
+                    // The peer with the lowest ip address takes priority.
+                    if (bRemoteHasPriority)
+                    {
+                        // Their connection takes priority.
+                        peer.Connection.Disconnect();
+                    }
+                    else
+                    {
+                        // Our connection takes priority.
+                        ClientConnection.Disconnect();
+                    }
                 }
             }
 

@@ -49,7 +49,7 @@ namespace BuildSync.Core.Utils
                 Result /= 1024;
                 PrefixIndex++;
             }
-            return string.Format("{0:0.##} {1}/s", Result, Prefixes[PrefixIndex]);
+            return string.Format("{0:0.0} {1}/s", Result, Prefixes[PrefixIndex]);
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace BuildSync.Core.Utils
                 Result /= 1024;
                 PrefixIndex++;
             }
-            return string.Format("{0:0.##} {1}", Result, SizePrefixes[PrefixIndex]);
+            return string.Format("{0:0.0} {1}", Result, SizePrefixes[PrefixIndex]);
         }
 
         /// <summary>
