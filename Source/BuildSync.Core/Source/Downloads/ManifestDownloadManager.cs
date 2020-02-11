@@ -766,15 +766,18 @@ namespace BuildSync.Core.Downloads
         private void StoreFileCompletedStates(ManifestDownloadState State)
         {
             // Store timestamps of files so we can determine if someone has modified the files after our validation.
-            State.FileCompletedStates.Clear();
-            foreach (BuildManifestFileInfo FileInfo in State.Manifest.Files)
+            lock (State.FileCompletedStates)
             {
-                string LocalPath = Path.Combine(State.LocalFolder, FileInfo.Path);
+                State.FileCompletedStates.Clear();
+                foreach (BuildManifestFileInfo FileInfo in State.Manifest.Files)
+                {
+                    string LocalPath = Path.Combine(State.LocalFolder, FileInfo.Path);
 
-                ManifestFileCompletedState CompletedState = new ManifestFileCompletedState();
-                CompletedState.Path = FileInfo.Path;
-                CompletedState.ModifiedTimestampOnCompleted = GetFileLastWriteTime(LocalPath);
-                State.FileCompletedStates.Add(CompletedState);
+                    ManifestFileCompletedState CompletedState = new ManifestFileCompletedState();
+                    CompletedState.Path = FileInfo.Path;
+                    CompletedState.ModifiedTimestampOnCompleted = GetFileLastWriteTime(LocalPath);
+                    State.FileCompletedStates.Add(CompletedState);
+                }
             }
         }
 
@@ -1366,14 +1369,17 @@ namespace BuildSync.Core.Downloads
                     }
 
                     // Check file has not been modified since completed.
-                    foreach (ManifestFileCompletedState CompletedState in State.FileCompletedStates)
+                    lock (State.FileCompletedStates)
                     {
-                        if (SubBlockInfo.File.Path == CompletedState.Path)
+                        foreach (ManifestFileCompletedState CompletedState in State.FileCompletedStates)
                         {
-                            if (GetFileLastWriteTime(LocalFile) != CompletedState.ModifiedTimestampOnCompleted)
+                            if (SubBlockInfo.File.Path == CompletedState.Path)
                             {
-                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed as has been modified since it was downloaded, failed to get block data.", BlockIndex, ManifestId.ToString());
-                                WriteState.WasSuccess = false;
+                                if (GetFileLastWriteTime(LocalFile) != CompletedState.ModifiedTimestampOnCompleted)
+                                {
+                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed as has been modified since it was downloaded, failed to get block data.", BlockIndex, ManifestId.ToString());
+                                    WriteState.WasSuccess = false;
+                                }
                             }
                         }
                     }
