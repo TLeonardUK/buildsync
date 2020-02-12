@@ -1,4 +1,26 @@
-﻿using System;
+﻿/*
+  buildsync
+  Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+  
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -22,6 +44,24 @@ namespace BuildSync.Client.Forms
         /// 
         /// </summary>
         private ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private IComparer[] ColumnSorterComparers = new IComparer[] {
+            new CaseInsensitiveComparer(),      // Hostname
+            new TransferRateStringComparer(),   // Down Rate
+            new TransferRateStringComparer(),   // Peak Down Rate
+            new TransferRateStringComparer(),   // Up Rate
+            new TransferRateStringComparer(),   // Peak Up Rate
+            new FileSizeStringComparer(),       // Total Down
+            new FileSizeStringComparer(),       // Total Up
+            new CaseInsensitiveComparer(),      // Last Seen
+            new FileSizeStringComparer(),       // Target In-Flight
+            new FileSizeStringComparer(),       // Current In-Flight
+            new CaseInsensitiveComparer(),      // RTT
+            new CaseInsensitiveComparer()       // Min RTT
+        };
 
         /// <summary>
         /// 
@@ -60,7 +100,7 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Closing(object sender, FormClosingEventArgs e)
+        private void OnStartClosing(object sender, FormClosingEventArgs e)
         {
         }
 
@@ -97,7 +137,7 @@ namespace BuildSync.Client.Forms
 
                 if (Item == null)
                 {
-                    Item = new ListViewItem(new string[9]);
+                    Item = new ListViewItem(new string[12]);
                     Item.Tag = Peer;
                     Item.ImageIndex = 0;
                     Item.StateImageIndex = 0;
@@ -108,14 +148,17 @@ namespace BuildSync.Client.Forms
 
                 Item.Group = ConnectedAddresses.Contains(Peer.Address) ? MainListView.Groups[0] : MainListView.Groups[1];
                 Item.SubItems[0].Text = HostnameCache.GetHostname(Peer.Address);
-                Item.SubItems[1].Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate((long)Peer.AverageRateIn), StringUtils.FormatAsTransferRate((long)Peer.PeakRateIn));
-                Item.SubItems[2].Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate((long)Peer.AverageRateOut), StringUtils.FormatAsTransferRate((long)Peer.PeakRateOut));
-                Item.SubItems[3].Text = StringUtils.FormatAsSize((long)Peer.TotalIn);
-                Item.SubItems[4].Text = StringUtils.FormatAsSize((long)Peer.TotalOut);
-                Item.SubItems[5].Text = Peer.LastSeen.ToString("dd/MM/yyyy HH:mm");
-                Item.SubItems[6].Text = StringUtils.FormatAsSize((long)Peer.TargetInFlightData);
-                Item.SubItems[7].Text = StringUtils.FormatAsSize((long)Peer.CurrentInFlightData);
-                Item.SubItems[8].Text = string.Format("{0}ms ({1}ms)", Peer.Ping, Peer.BestPing);
+                Item.SubItems[1].Text = StringUtils.FormatAsTransferRate((long)Peer.AverageRateIn);
+                Item.SubItems[2].Text = StringUtils.FormatAsTransferRate((long)Peer.PeakRateIn);
+                Item.SubItems[3].Text = StringUtils.FormatAsTransferRate((long)Peer.AverageRateOut);
+                Item.SubItems[4].Text = StringUtils.FormatAsTransferRate((long)Peer.PeakRateOut);
+                Item.SubItems[5].Text = StringUtils.FormatAsSize((long)Peer.TotalIn);
+                Item.SubItems[6].Text = StringUtils.FormatAsSize((long)Peer.TotalOut);
+                Item.SubItems[7].Text = Peer.LastSeen.ToString("dd/MM/yyyy HH:mm");
+                Item.SubItems[8].Text = StringUtils.FormatAsSize((long)Peer.TargetInFlightData);
+                Item.SubItems[9].Text = StringUtils.FormatAsSize((long)Peer.CurrentInFlightData);
+                Item.SubItems[10].Text = string.Format("{0} ms", Peer.Ping);
+                Item.SubItems[10].Text = string.Format("{0} ms", Peer.BestPing);
             }
         }
 
@@ -141,20 +184,7 @@ namespace BuildSync.Client.Forms
             {
                 ColumnSorter.SortColumn = e.Column;
                 ColumnSorter.Order = SortOrder.Ascending;
-
-                if (e.Column == 1 || // Download Speed
-                    e.Column == 2 || // Upload Speed
-                    e.Column == 3 || // Total Downloaded
-                    e.Column == 4 || // Total Uploaded
-                    e.Column == 6 || // Target In-Flight
-                    e.Column == 7)   // Current In-Flight
-                {
-                    ColumnSorter.SortType = typeof(float);
-                }
-                else
-                {
-                    ColumnSorter.SortType = typeof(string);
-                }
+                ColumnSorter.ObjectCompare = ColumnSorterComparers[e.Column];
             }
 
             MainListView.Sort();

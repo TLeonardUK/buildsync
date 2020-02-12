@@ -1,4 +1,25 @@
-﻿using System;
+﻿/*
+  buildsync
+  Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+  
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,8 +30,8 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public static class StringUtils
     {
-        public static string[] RatePrefixes = new string[] { "bits", "Kb", "Mb", "Gb", "Tb" };
-        public static string[] RatePrefixesBytes = new string[] { "bytes", "KB", "MB", "GB", "TB" };
+        public static string[] RatePrefixes = new string[] { "bits/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s" };
+        public static string[] RatePrefixesBytes = new string[] { "bytes/s", "KB/s", "MB/s", "GB/s", "TB/s" };
         public static string[] SizePrefixes = new string[] { "bytes", "KB", "MB", "GB", "TB" };
 
         /// <summary>
@@ -49,7 +70,42 @@ namespace BuildSync.Core.Utils
                 Result /= 1024;
                 PrefixIndex++;
             }
-            return string.Format("{0:0.0} {1}/s", Result, Prefixes[PrefixIndex]);
+            return string.Format("{0:0.0} {1}", Result, Prefixes[PrefixIndex]);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Rate"></param>
+        /// <returns></returns>
+        public static long TransferRateFormatToBytes(string input)
+        {
+            int Multiplier = 1;
+            int PrefixIndex = 0;
+            string Prefix = "";
+            while (PrefixIndex < RatePrefixesBytes.Length - 1)
+            {
+                Prefix = RatePrefixesBytes[PrefixIndex];
+                if (input.EndsWith(Prefix))
+                {
+                    break;
+                }
+
+                Multiplier *= 1024;
+                PrefixIndex++;
+            }
+
+            if (PrefixIndex < RatePrefixesBytes.Length)
+            {
+                double Value = 0;
+                string PrefixRemoved = input.Substring(0, input.Length - Prefix.Length - 1);
+                if (double.TryParse(PrefixRemoved, out Value))
+                {
+                    return (long)(Value * Multiplier);
+                }
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -67,6 +123,41 @@ namespace BuildSync.Core.Utils
                 PrefixIndex++;
             }
             return string.Format("{0:0.0} {1}", Result, SizePrefixes[PrefixIndex]);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Rate"></param>
+        /// <returns></returns>
+        public static long SizeFormatToBytes(string input)
+        {
+            int Multiplier = 1;
+            int PrefixIndex = 0;
+            string Prefix = "";
+            while (PrefixIndex < SizePrefixes.Length - 1)
+            {
+                Prefix = SizePrefixes[PrefixIndex];
+                if (input.EndsWith(Prefix))
+                {
+                    break;
+                }
+
+                Multiplier *= 1024;
+                PrefixIndex++;
+            }
+
+            if (PrefixIndex < SizePrefixes.Length)
+            {
+                double Value = 0;
+                string PrefixRemoved = input.Substring(0, input.Length - Prefix.Length - 1);
+                if (double.TryParse(PrefixRemoved, out Value))
+                {
+                    return (long)(Value * Multiplier);
+                }
+            }
+
+            return 0;
         }
 
         /// <summary>

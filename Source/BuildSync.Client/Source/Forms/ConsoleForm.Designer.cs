@@ -67,7 +67,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Console Window";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Closing);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OnStartClosing);
             this.Shown += new System.EventHandler(this.OnShown);
             this.ResumeLayout(false);
             this.PerformLayout();

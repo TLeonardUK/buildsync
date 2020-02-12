@@ -1,4 +1,26 @@
-﻿using System;
+﻿/*
+  buildsync
+  Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+  
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -28,7 +50,16 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        private bool ApplyingServerState = false;
+        private IComparer[] ColumnSorterComparers = new IComparer[] {
+            new CaseInsensitiveComparer(),      // Hostname
+            new TransferRateStringComparer(),   // Download Speed
+            new TransferRateStringComparer(),   // Upload Speed
+            new FileSizeStringComparer(),       // Total Downloaded
+            new FileSizeStringComparer(),       // Total Uploaded
+            new CaseInsensitiveComparer(),      // Connected Peer Count
+            new FileSizeStringComparer(),       // Disk Usage
+            new CaseInsensitiveComparer()       // Version
+        };
 
         /// <summary>
         /// 
@@ -69,7 +100,7 @@ namespace BuildSync.Client.Forms
                 series.YAxis.AutoAdjustMax = true;
                 series.YAxis.FormatMaxLabelAsTransferRate = true;
                 series.MinimumInterval = 1.0f / 2.0f;
-                series.YAxis.Max = 1024l;
+                series.YAxis.Max = 1024L;
                 series.YAxis.GridInterval = series.YAxis.Max / 10;
                 BandwithGraph.Series = new GraphSeries[1] { series };
             }
@@ -103,7 +134,6 @@ namespace BuildSync.Client.Forms
         /// <param name="Users"></param>
         private void ServerStateRecieved(NetMessage_GetServerStateResponse Msg)
         {
-            ApplyingServerState = true;
             MaxBandwidthBox.Value = Msg.BandwidthLimit / 1024;
 
             // Add new items.
@@ -167,8 +197,6 @@ namespace BuildSync.Client.Forms
                 TotalBandwidth += State.DownloadRate;
             }
             BandwithGraph.Series[0].AddDataPoint(Environment.TickCount / 1000.0f, TotalBandwidth);
-
-            ApplyingServerState = false;
         }
 
         /// <summary>
@@ -178,7 +206,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void MaxBandwidthBoxChanged(object sender, EventArgs e)
         {
-            Program.NetClient.SetServerMaxBandwidth((long)MaxBandwidthBox.Value * 1024l);
+            Program.NetClient.SetServerMaxBandwidth((long)MaxBandwidthBox.Value * 1024L);
         }
 
         /// <summary>
@@ -203,20 +231,7 @@ namespace BuildSync.Client.Forms
             {
                 ColumnSorter.SortColumn = e.Column;
                 ColumnSorter.Order = SortOrder.Ascending;
-
-                if (e.Column == 1 || // Download Speed
-                    e.Column == 2 || // Upload Speed
-                    e.Column == 3 || // Total Downloaded
-                    e.Column == 4 || // Total Uploaded
-                    e.Column == 5 || // Connected Peer Count
-                    e.Column == 6)   // Disk Usage
-                {
-                    ColumnSorter.SortType = typeof(float);
-                }
-                else
-                {
-                    ColumnSorter.SortType = typeof(string);
-                }
+                ColumnSorter.ObjectCompare = ColumnSorterComparers[e.Column];
             }
 
             MainListView.Sort();

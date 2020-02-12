@@ -41,9 +41,12 @@
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
-            this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader11 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader12 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SuspendLayout();
             // 
             // MainListView
@@ -53,13 +56,16 @@
             this.MainListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader4,
+            this.columnHeader10,
             this.columnHeader5,
+            this.columnHeader11,
             this.columnHeader6,
             this.columnHeader2,
             this.columnHeader3,
             this.columnHeader7,
             this.columnHeader8,
-            this.columnHeader9});
+            this.columnHeader9,
+            this.columnHeader12});
             this.MainListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.MainListView.FullRowSelect = true;
             this.MainListView.GridLines = true;
@@ -85,28 +91,28 @@
             // 
             // columnHeader1
             // 
-            this.columnHeader1.Text = "Address";
+            this.columnHeader1.Text = "Hostname";
             this.columnHeader1.Width = 190;
             // 
             // columnHeader4
             // 
-            this.columnHeader4.Text = "Download Speed";
-            this.columnHeader4.Width = 130;
+            this.columnHeader4.Text = "Down Rate";
+            this.columnHeader4.Width = 75;
             // 
             // columnHeader5
             // 
-            this.columnHeader5.Text = "Upload Speed";
-            this.columnHeader5.Width = 130;
+            this.columnHeader5.Text = "Up Rate";
+            this.columnHeader5.Width = 75;
             // 
             // columnHeader6
             // 
-            this.columnHeader6.Text = "Total Downloaded";
-            this.columnHeader6.Width = 100;
+            this.columnHeader6.Text = "Total Down";
+            this.columnHeader6.Width = 75;
             // 
             // columnHeader2
             // 
-            this.columnHeader2.Text = "Total Uploaded";
-            this.columnHeader2.Width = 100;
+            this.columnHeader2.Text = "Total Up";
+            this.columnHeader2.Width = 75;
             // 
             // columnHeader3
             // 
@@ -115,13 +121,17 @@
             // 
             // columnHeader7
             // 
-            this.columnHeader7.Text = "Target In-Flight Data";
-            this.columnHeader7.Width = 110;
+            this.columnHeader7.Text = "Target In-Flight";
+            this.columnHeader7.Width = 90;
             // 
             // columnHeader8
             // 
-            this.columnHeader8.Text = "Current In-Flight Data";
-            this.columnHeader8.Width = 120;
+            this.columnHeader8.Text = "Current In-Flight";
+            this.columnHeader8.Width = 90;
+            // 
+            // columnHeader9
+            // 
+            this.columnHeader9.Text = "RTT";
             // 
             // UserImageList
             // 
@@ -134,9 +144,19 @@
             this.ListUpdateTimer.Interval = 1000;
             this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
             // 
-            // columnHeader9
+            // columnHeader10
             // 
-            this.columnHeader9.Text = "Ping";
+            this.columnHeader10.Text = "Peak Down Rate";
+            this.columnHeader10.Width = 100;
+            // 
+            // columnHeader11
+            // 
+            this.columnHeader11.Text = "Peak Up Rate";
+            this.columnHeader11.Width = 100;
+            // 
+            // columnHeader12
+            // 
+            this.columnHeader12.Text = "Min RTT";
             // 
             // PeersForm
             // 
@@ -152,7 +172,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Peer Explorer";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Closing);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OnStartClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
             this.Shown += new System.EventHandler(this.OnShown);
             this.ResumeLayout(false);
@@ -173,5 +193,8 @@
         private System.Windows.Forms.ColumnHeader columnHeader7;
         private System.Windows.Forms.ColumnHeader columnHeader8;
         private System.Windows.Forms.ColumnHeader columnHeader9;
+        private System.Windows.Forms.ColumnHeader columnHeader10;
+        private System.Windows.Forms.ColumnHeader columnHeader11;
+        private System.Windows.Forms.ColumnHeader columnHeader12;
     }
 }

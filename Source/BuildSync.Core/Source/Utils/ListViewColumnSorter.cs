@@ -1,4 +1,25 @@
-﻿using System;
+﻿/*
+  buildsync
+  Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+  
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,10 +45,6 @@ namespace BuildSync.Core.Utils
         /// Specifies the order in which to sort (i.e. 'Ascending').
         /// </summary>
         private SortOrder OrderOfSort;
-        /// <summary>
-        /// Case insensitive comparer object
-        /// </summary>
-        private CaseInsensitiveComparer ObjectCompare;
 
         /// <summary>
         /// Class constructor.  Initializes various elements
@@ -63,24 +80,7 @@ namespace BuildSync.Core.Utils
             string YText = listviewY.SubItems[ColumnToSort].Text;
 
             // Compare the two items
-            if (SortType == typeof(string))
-            {
-                compareResult = ObjectCompare.Compare(XText, YText);
-            }
-            else if (SortType == typeof(float))
-            {
-                float XValue = 0.0f;
-                float YValue = 0.0f;
-
-                float.TryParse(StringUtils.StripNonNumericTrailingPostfix(XText), out XValue);
-                float.TryParse(StringUtils.StripNonNumericTrailingPostfix(YText), out YValue);
-
-                compareResult = XValue.CompareTo(YValue);
-            }
-            else
-            {
-                throw new Exception("Unknown sort type.");
-            }
+            compareResult = ObjectCompare.Compare(XText, YText);
 
             // Calculate correct return value based on object comparison
             if (OrderOfSort == SortOrder.Ascending)
@@ -131,12 +131,12 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        ///     The datatype the column should be interpreted as when sorting.
+        ///     The comparison function to use for sorting.
         /// </summary>
-        public Type SortType
+        public IComparer ObjectCompare
         {
             get;
             set;
-        } = typeof(string);
+        } = null;
     }
 }

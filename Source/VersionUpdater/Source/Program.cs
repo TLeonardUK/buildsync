@@ -1,14 +1,41 @@
-﻿using System;
+﻿/*
+  buildsync
+  Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+  
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace VersionUpdater
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class Program
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Contents"></param>
+        /// <param name="TagName"></param>
+        /// <param name="NewValue"></param>
+        /// <returns></returns>
         public static string PatchAssemblyTag(string Contents, string TagName, string NewValue)
         {
             string Tag = "[assembly: " + TagName + "(";
@@ -31,6 +58,14 @@ namespace VersionUpdater
             return Contents.Substring(0, TagIndex) + NewValue + Contents.Substring(EndTagIndex);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Contents"></param>
+        /// <param name="TagStart"></param>
+        /// <param name="TagEnd"></param>
+        /// <param name="NewValue"></param>
+        /// <returns></returns>
         public static string PatchFullTag(string Contents, string TagStart, string TagEnd, string NewValue)
         {
             int TagIndex = Contents.IndexOf(TagStart);
@@ -51,6 +86,12 @@ namespace VersionUpdater
             return Contents.Substring(0, TagIndex) + NewValue + Contents.Substring(EndTagIndex);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Contents"></param>
+        /// <param name="Name"></param>
+        /// <returns></returns>
         public static string GetVariableValue(string Contents, string Name)
         {
             string Tag = Name + " = ";
@@ -74,6 +115,13 @@ namespace VersionUpdater
             return Result;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Contents"></param>
+        /// <param name="Name"></param>
+        /// <param name="Value"></param>
+        /// <returns></returns>
         public static string SetVariableValue(string Contents, string Name, string Value)
         {
             string Tag = Name + " = ";
@@ -96,6 +144,10 @@ namespace VersionUpdater
             return Contents.Substring(0, TagIndex) + Value + Contents.Substring(EndTagIndex);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Args"></param>
         public static void Main(string[] Args)
         {
             if (Args.Length != 2)

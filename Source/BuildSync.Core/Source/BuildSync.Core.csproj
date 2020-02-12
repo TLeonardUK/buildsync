@@ -212,6 +212,7 @@
     <Compile Include="Scm\ScmManager.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />
+    <Compile Include="Utils\CompareUtils.cs" />
     <Compile Include="Utils\InstallUtils.cs" />
     <Compile Include="Utils\ListUtils.cs" />
     <Compile Include="Utils\ListViewColumnSorter.cs" />

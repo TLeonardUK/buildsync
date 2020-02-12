@@ -1,5 +1,27 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+/*
+  buildsync
+  Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+  
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -24,6 +46,20 @@ namespace BuildSync.Client.Forms
         /// 
         /// </summary>
         private ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private IComparer[] ColumnSorterComparers = new IComparer[] {
+            new CaseInsensitiveComparer(),      // Id
+            new CaseInsensitiveComparer(),      // Virtual Path
+            new CaseInsensitiveComparer(),      // Local Path
+            new CaseInsensitiveComparer(),      // Progress
+            new CaseInsensitiveComparer(),      // State
+            new FileSizeStringComparer(),       // Disk Usage
+            new TransferRateStringComparer(),   // Download Speed
+            new TransferRateStringComparer()    // Upload Speed
+        };
 
         /// <summary>
         /// 
@@ -154,18 +190,7 @@ namespace BuildSync.Client.Forms
             {
                 ColumnSorter.SortColumn = e.Column;
                 ColumnSorter.Order = SortOrder.Ascending;
-
-                if (e.Column == 3 || // Progress
-                    e.Column == 5 || // Total Size
-                    e.Column == 6 || // Upload
-                    e.Column == 7)   // Download
-                {
-                    ColumnSorter.SortType = typeof(float);
-                }
-                else
-                {
-                    ColumnSorter.SortType = typeof(string);
-                }
+                ColumnSorter.ObjectCompare = ColumnSorterComparers[e.Column];
             }
 
             mainListView.Sort();
