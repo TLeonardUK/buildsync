@@ -366,17 +366,17 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        public static RateTracker GlobalBandwidthStats = new RateTracker();
+        public static RateTracker GlobalBandwidthStats = new RateTracker(100);
 
         /// <summary>
         /// 
         /// </summary>
-        public static RateTracker GlobalPacketStats = new RateTracker();
+        public static RateTracker GlobalPacketStats = new RateTracker(100);
 
         /// <summary>
         /// 
         /// </summary>
-        public RateTracker BandwidthStats = new RateTracker();
+        public RateTracker BandwidthStats = new RateTracker(100);
 
         /// <summary>
         /// 

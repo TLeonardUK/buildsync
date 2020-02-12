@@ -227,7 +227,7 @@ namespace BuildSync.Core.Utils
         private List<ActiveStream> ActiveStreams = new List<ActiveStream>();
         private Dictionary<string, ActiveStream> ActiveStreamsByPath = new Dictionary<string, ActiveStream>();
 
-        public static RateTracker GlobalBandwidthStats = new RateTracker();
+        public static RateTracker GlobalBandwidthStats = new RateTracker(100);
 
         public static RollingAverage OutLatency = new RollingAverage(25);
         public static RollingAverage InLatency = new RollingAverage(25);
