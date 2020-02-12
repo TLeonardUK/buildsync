@@ -641,7 +641,7 @@ namespace BuildSync.Client
                 ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(InternalUpdateDownload.ActiveManifestId);
                 if (Downloader != null && Downloader.State == ManifestDownloadProgressState.Complete && Downloader.Manifest != null)
                 {
-                    if (Settings.LastAutoUpdateManifest != Downloader.ManifestId)
+                    if (AppVersion.VersionString != VirtualFileSystem.GetNodeName(Downloader.Manifest.VirtualPath))
                     {
                         //Logger.Log(LogLevel.Info, LogCategory.Main, "Installing new update: {0}", Downloader.Manifest.VirtualPath);
                         AutoUpdateAvailable = true;
@@ -681,25 +681,26 @@ namespace BuildSync.Client
             }
             else
             {
-                // Save the last manifest we installed.
-                Settings.LastAutoUpdateManifest = AutoUpdateDownload.ManifestId;
-                SaveSettings(true);
-
                 // Boot up the installer.
                 try
                 {
+                    Program.IOQueue.CloseAllStreamsInDirectory(AutoUpdateDownload.LocalFolder);
+
+                    Process p = new Process();
+                    p.StartInfo.FileName = "msiexec";
+                    p.StartInfo.Arguments = "/i \"" + InstallerPath + "\"";
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.WorkingDirectory = AutoUpdateDownload.LocalFolder;
+                    p.Start();
+                    
                     //Process.Start(InstallerPath, "/passive /norestart REINSTALL=ALL REINSTALLMODE=A MSIRMSHUTDOWN=1 MSIDISABLERMRESTART=0 ADDLOCAL=All");
-                    Process.Start(InstallerPath);
+
+                    Application.Exit();
                 }
                 catch (Exception Ex)
                 {
                     Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to install update '{0}' due to error: {1}", InstallerPath, Ex.Message);
-
-                    Settings.LastAutoUpdateManifest = Guid.Empty;
-                    SaveSettings(true);
                 }
-
-                Application.Exit();
             }
         }
 

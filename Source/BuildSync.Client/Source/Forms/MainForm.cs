@@ -283,38 +283,42 @@ namespace BuildSync.Client.Forms
         {
             OpenFileDialog Dialog = new OpenFileDialog();
             Dialog.Title = "Select Update File";
-            Dialog.Filter = "Installer File (*.msi)|*.msi|All files (*.*)|*.*";
+            Dialog.Filter = "Installer File (*.msi)|*.msi";
             //Dialog.InitialDirectory = Environment.CurrentDirectory;
             Dialog.CheckFileExists = true;
             Dialog.ShowHelp = true;
 
             if (Dialog.ShowDialog(this) == DialogResult.OK)
             {
+                string msiVersion = InstallUtils.GetMsiProperty(Dialog.FileName, "ProductVersion");
+                if (msiVersion.Length == 0)
+                {
+                    MessageBox.Show("Failed to retrieve version data from msi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
                 BuildsRecievedHandler Handler = null;                
                 Handler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) => {
 
                     Program.NetClient.OnBuildsRecieved -= Handler;
 
                     // Find the next sequential build index.
-                    string NewVirtualPath = "";
-                    for (int i = 0; true; i++)
+                    string NewVirtualPath = RootPath + "/" + msiVersion;
+
+                    bool Exists = false;
+                    foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
                     {
-                        NewVirtualPath = RootPath + "/" + i.ToString();
-
-                        bool Exists = false;
-                        foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
+                        if (Build.VirtualPath.ToUpper() == NewVirtualPath.ToUpper())
                         {
-                            if (Build.VirtualPath.ToUpper() == NewVirtualPath.ToUpper())
-                            {
-                                Exists = true;
-                                break;
-                            }
-                        }
-
-                        if (!Exists)
-                        {
+                            Exists = true;
                             break;
                         }
+                    }
+
+                    if (Exists)
+                    {
+                        MessageBox.Show("Version is already uploaded.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                     }
 
                     // Publish a folder.

@@ -31,6 +31,7 @@ namespace BuildSync.Client.Controls.Settings
             runInstallWhenLaunchingCheckbox.Checked = Program.Settings.AlwaysRunInstallBeforeLaunching;
             skipVerificationCheckBox.Checked = Program.Settings.SkipValidation;
             skipInitialization.Checked = Program.Settings.SkipDiskAllocation;
+            showInternalDownloadsCheckBox.Checked = Program.Settings.ShowInternalDownloads;
             SkipValidity = false;
 
             UpdateValidityState();
@@ -62,6 +63,7 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.AlwaysRunInstallBeforeLaunching = runInstallWhenLaunchingCheckbox.Checked;
             Program.Settings.SkipValidation = skipVerificationCheckBox.Checked;
             Program.Settings.SkipDiskAllocation = skipInitialization.Checked;
+            Program.Settings.ShowInternalDownloads = showInternalDownloadsCheckBox.Checked;
         }
 
         /// <summary>

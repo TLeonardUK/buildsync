@@ -3,7 +3,7 @@
   <?define ComponentRules="OneToOne"?>
   <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
   <?define SourceDir="..\..\Build\Deploy"?>
-  <Module Id="BuildSync" Language="1033" Version="1.0.0.297">
+  <Module Id="BuildSync" Language="1033" Version="1.0.0.320">
     <Package Id="2bfad680-e708-481c-9cd4-f285482e7ace" Manufacturer="Tim Leonard" InstallerVersion="200" Description="Tool for distributing application builds" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" />
@@ -48,6 +48,9 @@
         </Component>
         <Component Id="owcF06498D8F3D12EBEB0A2F60F5A025866" Guid="b86a3853-ad9d-7880-e66f-c889a1f6936b">
           <File Id="owfF06498D8F3D12EBEB0A2F60F5A025866" Source="$(var.SourceDir)\Microsoft.Bcl.AsyncInterfaces.dll" KeyPath="yes" />
+        </Component>
+		<Component Id="owcF06498D8F3D12EBEB0A2F60F5A025836" Guid="b86a3853-ad9d-7880-e66f-c889a1f6933b">
+          <File Id="owfF06498D8F3D12EBEB0A2F60F5A025836" Source="$(var.SourceDir)\Microsoft.Deployment.WindowsInstaller.dll" KeyPath="yes" />
         </Component>
         <Component Id="owcF03BAA7D34C5BF86184D75575A3A607E" Guid="3d43fdd9-068f-f4da-58bb-df2d7ad213b8">
           <File Id="owfF03BAA7D34C5BF86184D75575A3A607E" Source="$(var.SourceDir)\Microsoft.Bcl.AsyncInterfaces.xml" KeyPath="yes" />

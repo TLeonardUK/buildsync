@@ -66,6 +66,12 @@ namespace BuildSync.Core.Users
         /// <returns></returns>
         public bool HasPermission(UserPermissionType Type, string Path, bool IgnoreInheritedPermissions = false, bool AllowIfHavePermissionToSubPath = false)
         {
+            // We can always view internal paths (ones that start with $), these are used for updates etc.
+            if (Path.StartsWith("$") && Type == UserPermissionType.Access)
+            {
+                return true;
+            }
+
             Path = VirtualFileSystem.Normalize(Path).ToLower();
             string[] SplitPath = Path.Split('/');
             foreach (UserPermission Permission in Permissions)

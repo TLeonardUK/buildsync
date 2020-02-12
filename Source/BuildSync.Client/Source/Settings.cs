@@ -76,10 +76,9 @@ namespace BuildSync.Client
 
         public List<string> ActiveStatistics { get; set; } = new List<string>();
 
-        public Guid LastAutoUpdateManifest { get; set; } = Guid.Empty;
-
         public bool SkipValidation { get; set; } = false;
         public bool SkipDiskAllocation { get; set; } = false;
+        public bool ShowInternalDownloads { get; set; } = false;
 
         public List<PeerSettingsRecord> PeerRecords { get; set; } = new List<PeerSettingsRecord>();
 

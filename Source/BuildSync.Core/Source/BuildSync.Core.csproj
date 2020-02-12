@@ -99,6 +99,7 @@
     <Reference Include="Microsoft.CodeAnalysis.Scripting, Version=3.4.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.CodeAnalysis.Scripting.Common.3.4.0\lib\netstandard2.0\Microsoft.CodeAnalysis.Scripting.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Deployment.WindowsInstaller, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ce35f76fcda82bad, processorArchitecture=MSIL" />
     <Reference Include="p4api.net, Version=2019.3.189.3442, Culture=neutral, PublicKeyToken=f6b9b9d036c873e1, processorArchitecture=x86">
       <HintPath>..\..\packages\p4api.net.x86.2019.3.189.3442\lib\net40\p4api.net.dll</HintPath>
     </Reference>
@@ -211,6 +212,7 @@
     <Compile Include="Scm\ScmManager.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />
+    <Compile Include="Utils\InstallUtils.cs" />
     <Compile Include="Utils\ListUtils.cs" />
     <Compile Include="Utils\ListViewColumnSorter.cs" />
     <Compile Include="Utils\RateTracker.cs" />

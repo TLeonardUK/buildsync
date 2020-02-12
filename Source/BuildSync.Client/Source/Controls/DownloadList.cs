@@ -105,7 +105,7 @@ namespace BuildSync.Client.Controls
                     }
                 }
 
-                if (!Exists && !State.IsInternal)
+                if (!Exists && (!State.IsInternal || Program.Settings.ShowInternalDownloads))
                 {
                     DownloadListItem NewItem = new DownloadListItem();
                     NewItem.State = State;

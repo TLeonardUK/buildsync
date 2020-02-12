@@ -321,8 +321,8 @@ namespace BuildSync.Core.Networking
         // downloaded from, a couple each should surfice, one for reading and one for processing. This should only become an issue
         // if we have a processing backlog. And in that case I think something else is wrong as all the data should be quick to parse into
         // a seperate NetMessage structure.
-        internal const int MaxRecieveMessageBuffers = 2;
-        internal const int MaxSendMessageBuffers = 2;
+        internal const int MaxRecieveMessageBuffers = 32;
+        internal const int MaxSendMessageBuffers = 32;
         internal const int MaxGenericMessageBuffers = 64;
 #endif
 
@@ -759,8 +759,10 @@ namespace BuildSync.Core.Networking
             ListenAddress = new IPEndPoint(WindowUtils.GetLocalIPAddress(), Port);
 
             Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 512 * 1024);
-            Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 512 * 1024);
+            Socket.SendBufferSize = 128 * 1024;
+            Socket.SendTimeout = 2000;
+            Socket.ReceiveBufferSize = 128 * 1024;
+            Socket.ReceiveTimeout = 2000;
             Socket.NoDelay = true;
 
             if (ReuseAddresses)
@@ -785,9 +787,10 @@ namespace BuildSync.Core.Networking
                     try
                     {
                         Socket ClientSocket = Socket.EndAccept(Result);
-
-                        ClientSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 512 * 1024);
-                        ClientSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 512 * 1024);
+                        ClientSocket.SendBufferSize = 128 * 1024;
+                        ClientSocket.SendTimeout = 2000;
+                        ClientSocket.ReceiveBufferSize = 128 * 1024;
+                        ClientSocket.ReceiveTimeout = 2000;
                         ClientSocket.NoDelay = true;
 
                         Logger.Log(LogLevel.Info, LogCategory.Transport, "Client connected from {0}", ClientSocket.RemoteEndPoint.ToString());
@@ -1029,6 +1032,7 @@ namespace BuildSync.Core.Networking
                 }
 
                 SendThread.Join();
+                SendThread = null;
             }
 
             if (ProcessThread != null)
@@ -1402,7 +1406,9 @@ namespace BuildSync.Core.Networking
                     break;
                 }
 
+#if TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
                 TryPrintMessageBufferAllocationSites();
+#endif
 
                 Thread.Sleep(1);
             }
@@ -1430,6 +1436,7 @@ namespace BuildSync.Core.Networking
             return Serialized;
         }
 
+#if TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
         /// <summary>
         /// 
         /// </summary>
@@ -1453,6 +1460,7 @@ namespace BuildSync.Core.Networking
                 }
             }
         }
+#endif
 
         /// <summary>
         /// 
