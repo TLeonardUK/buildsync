@@ -19,18 +19,19 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Controls.Graph
 {
     /// <summary>
-    ///     Control that is used to display data to the user in the form of a stacked area chart (line chart with area below the lines filled in).
+    ///     Control that is used to display data to the user in the form of a stacked area chart (line chart with area below
+    ///     the lines filled in).
     /// </summary>
     public partial class GraphControl : UserControl
     {
@@ -40,20 +41,10 @@ namespace BuildSync.Core.Controls.Graph
         private bool drawLabels = true;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Graph" /> class.
-        /// </summary>
-        public GraphControl()
-        {
-            this.InitializeComponent();
-
-            WindowUtils.EnableDoubleBuffering(mainPanel);
-        }
-
-        /// <summary>
         ///     Gets or sets a value indicating whether if grid lines are drawn in th ebackground of the graph.
         /// </summary>
         /// <remarks>
-        ///     The interval of the grid lines is defined in each value of the graphs <see cref="Series"/>.
+        ///     The interval of the grid lines is defined in each value of the graphs <see cref="Series" />.
         /// </remarks>
         public bool DrawGridLines { get; set; } = true;
 
@@ -62,7 +53,7 @@ namespace BuildSync.Core.Controls.Graph
         /// </summary>
         public bool DrawLabels
         {
-            get { return drawLabels; }
+            get => drawLabels;
             set
             {
                 if (drawLabels == false)
@@ -72,16 +63,21 @@ namespace BuildSync.Core.Controls.Graph
 
                 drawLabels = value;
 
-                if (!drawLabels && this.mainPanel != null)
+                if (!drawLabels && mainPanel != null)
                 {
-                    this.mainPanel.Dock = DockStyle.Fill;
-                    this.graphNameLabel.Visible = false;
-                    this.xSeriesMaxLabel.Visible = false;
-                    this.xSeriesMinLabel.Visible = false;
-                    this.ySeriesMaxLabel.Visible = false;
+                    mainPanel.Dock = DockStyle.Fill;
+                    graphNameLabel.Visible = false;
+                    xSeriesMaxLabel.Visible = false;
+                    xSeriesMinLabel.Visible = false;
+                    ySeriesMaxLabel.Visible = false;
                 }
             }
         }
+
+        /// <summary>
+        ///     Gets or sets the color used to render grid lines.
+        /// </summary>
+        public Color GridColor { get; set; } = Color.FromArgb(255, 223, 238, 246);
 
         /// <summary>
         ///     Gets or sets the set of data series that are drawn on the graph.
@@ -92,12 +88,140 @@ namespace BuildSync.Core.Controls.Graph
         public GraphSeries[] Series { get; set; }
 
         /// <summary>
-        ///     Gets or sets the color used to render grid lines.
+        ///     Initializes a new instance of the <see cref="Graph" /> class.
         /// </summary>
-        public Color GridColor { get; set; } = Color.FromArgb(255, 223, 238, 246);
+        public GraphControl()
+        {
+            InitializeComponent();
+
+            WindowUtils.EnableDoubleBuffering(mainPanel);
+        }
 
         /// <summary>
-        ///     Paints a data series onto the control. 
+        ///     Paints the graph onto the given graphics context in the given clip bounds..
+        /// </summary>
+        /// <param name="graphics"></param>
+        /// <param name="clipRactangle"></param>
+        public void PaintControl(Graphics graphics, Rectangle clipRactangle)
+        {
+            Brush backgroundBrush = Brushes.White;
+            Pen gridPen = Pens.LightGray;
+
+            Rectangle clipArea = new Rectangle(
+                clipRactangle.X,
+                clipRactangle.Y,
+                clipRactangle.Width - 1,
+                clipRactangle.Height - 1
+            );
+
+            // Default mode looks like ass with a high-noise graph.
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            // Fill background with a white canvas.
+            graphics.FillRectangle(backgroundBrush, clipArea);
+
+            // Can't do anything else without some graph series!
+            Pen primaryOutlinePen = Pens.Black;
+            if (Series != null && Series.Length != 0)
+            {
+                // Draw each series.
+                foreach (GraphSeries series in Series)
+                {
+                    if (series != null)
+                    {
+                        PaintSeries(series, graphics, clipArea);
+                    }
+                }
+
+                GraphSeries primarySeries = Series[0];
+                if (primarySeries == null)
+                {
+                    return;
+                }
+
+                primaryOutlinePen = new Pen(primarySeries.Outline);
+
+                graphNameLabel.Text = primarySeries.Name;
+                xSeriesMaxLabel.Text = primarySeries.XAxis.MaxLabel;
+                xSeriesMinLabel.Text = primarySeries.XAxis.MinLabel;
+                ySeriesMaxLabel.Text = primarySeries.YAxis.MaxLabel;
+
+                if (DrawGridLines)
+                {
+                    List<GraphDataPoint> primarySeriesData = primarySeries.Data;
+
+                    // Draw a grid overlaid and following series 1 along the x-axis.
+                    float xRange = primarySeries.XAxis.Max - primarySeries.XAxis.Min;
+                    float xGridLineSteps = clipArea.Width / (xRange / primarySeries.XAxis.GridInterval);
+                    float xGridLinePosition = clipArea.Width;
+
+                    if (primarySeriesData.Count > 0)
+                    {
+                        float gridIntervalRemainder = primarySeriesData.Last().X % primarySeries.XAxis.GridInterval;
+                        xGridLinePosition = clipArea.Width - gridIntervalRemainder / xRange * clipArea.Width;
+                    }
+
+                    for (int steps = 0; steps < 1000 && xGridLinePosition >= 0.0f; steps++)
+                    {
+                        graphics.DrawLine(
+                            gridPen,
+                            clipArea.X + xGridLinePosition,
+                            clipArea.Y,
+                            clipArea.X + xGridLinePosition,
+                            clipArea.Y + clipArea.Height
+                        );
+
+                        xGridLinePosition -= xGridLineSteps;
+                    }
+
+                    // Draw a grid overlaid and following series 1 along the y-axis.
+                    float yRange = primarySeries.YAxis.Max - primarySeries.YAxis.Min;
+                    float yGridLineSteps = clipArea.Height / (yRange / primarySeries.YAxis.GridInterval);
+                    float yGridLinePosition = 0;
+                    for (int steps = 0; steps < 1000 && yGridLinePosition < clipArea.Height; steps++)
+                    {
+                        graphics.DrawLine(
+                            gridPen,
+                            clipArea.X,
+                            clipArea.Y + yGridLinePosition,
+                            clipArea.X + clipArea.Width,
+                            clipArea.Y + yGridLinePosition
+                        );
+
+                        yGridLinePosition += yGridLineSteps;
+                    }
+                }
+            }
+
+            // Draw the outline of the graph in the primary series color.
+            graphics.DrawRectangle(primaryOutlinePen, clipArea);
+        }
+
+        /// <summary>
+        ///     Event handler for the Paint event of the main graph panel. Renders
+        ///     the actual graph to the control.
+        /// </summary>
+        /// <param name="sender">Object that invoked this event.</param>
+        /// <param name="e">Event specific arguments.</param>
+        private void OnPanelPaint(object sender, PaintEventArgs e)
+        {
+            PaintControl(e.Graphics, e.ClipRectangle);
+        }
+
+        /// <summary>
+        ///     Event handler for the refresh timer tick. Causes the control to be invalidated
+        ///     and repainted at the next opportunity. Used to control refresh rate of the control.
+        /// </summary>
+        /// <param name="sender">Object that invoked this event.</param>
+        /// <param name="e">Event specific arguments.</param>
+        private void OnTimerTicked(object sender, EventArgs e)
+        {
+            mainPanel.Invalidate();
+            mainPanel.Refresh();
+        }
+
+        /// <summary>
+        ///     Paints a data series onto the control.
         /// </summary>
         /// <param name="series">Data series to paint.</param>
         /// <param name="graphics">Graphics objects to paint using.</param>
@@ -129,10 +253,10 @@ namespace BuildSync.Core.Controls.Graph
 
             foreach (GraphDataPoint point in data)
             {
-                float xOffset = ((point.X - xMinValue) - series.XAxis.Min) / xFullRange;
+                float xOffset = (point.X - xMinValue - series.XAxis.Min) / xFullRange;
                 float yScalar = Math.Min(1.0f, Math.Max(0.0f, (point.Y - series.YAxis.Min) / yFullRange));
-                float vertX = polygonX + (area.Width * xOffset);
-                float vertY = (area.Y + area.Height) - (area.Height * yScalar);
+                float vertX = polygonX + area.Width * xOffset;
+                float vertY = area.Y + area.Height - area.Height * yScalar;
 
                 polygon[vertIndex++] = new PointF(vertX, vertY);
             }
@@ -149,125 +273,6 @@ namespace BuildSync.Core.Controls.Graph
             // Draw our fancy new polygon.
             graphics.FillPolygon(new SolidBrush(series.Fill), polygon);
             graphics.DrawPolygon(outlinePen, polygon);
-        }
-
-        /// <summary>
-        ///     Event handler for the Paint event of the main graph panel. Renders
-        ///     the actual graph to the control.
-        /// </summary>
-        /// <param name="sender">Object that invoked this event.</param>
-        /// <param name="e">Event specific arguments.</param>
-        private void OnPanelPaint(object sender, PaintEventArgs e)
-        {
-            PaintControl(e.Graphics, e.ClipRectangle);
-        }
-
-        /// <summary>
-        ///     Paints the graph onto the given graphics context in the given clip bounds..
-        /// </summary>
-        /// <param name="graphics"></param>
-        /// <param name="clipRactangle"></param>
-        public void PaintControl(Graphics graphics, Rectangle clipRactangle)
-        {
-            Brush backgroundBrush = Brushes.White;
-            Pen gridPen = Pens.LightGray;
-
-            Rectangle clipArea = new Rectangle(
-                clipRactangle.X,
-                clipRactangle.Y,
-                clipRactangle.Width - 1,
-                clipRactangle.Height - 1);
-
-            // Default mode looks like ass with a high-noise graph.
-            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-            // Fill background with a white canvas.
-            graphics.FillRectangle(backgroundBrush, clipArea);
-
-            // Can't do anything else without some graph series!
-            Pen primaryOutlinePen = Pens.Black;
-            if (this.Series != null && this.Series.Length != 0)
-            {
-                // Draw each series.
-                foreach (GraphSeries series in this.Series)
-                {
-                    if (series != null)
-                    {
-                        this.PaintSeries(series, graphics, clipArea);
-                    }
-                }
-
-                GraphSeries primarySeries = this.Series[0];
-                if (primarySeries == null)
-                {
-                    return;
-                }
-                primaryOutlinePen = new Pen(primarySeries.Outline);
-
-                this.graphNameLabel.Text = primarySeries.Name;
-                this.xSeriesMaxLabel.Text = primarySeries.XAxis.MaxLabel;
-                this.xSeriesMinLabel.Text = primarySeries.XAxis.MinLabel;
-                this.ySeriesMaxLabel.Text = primarySeries.YAxis.MaxLabel;
-
-                if (this.DrawGridLines)
-                {
-                    List<GraphDataPoint> primarySeriesData = primarySeries.Data;
-
-                    // Draw a grid overlaid and following series 1 along the x-axis.
-                    float xRange = primarySeries.XAxis.Max - primarySeries.XAxis.Min;
-                    float xGridLineSteps = clipArea.Width / (xRange / primarySeries.XAxis.GridInterval);
-                    float xGridLinePosition = clipArea.Width;
-
-                    if (primarySeriesData.Count > 0)
-                    {
-                        float gridIntervalRemainder = primarySeriesData.Last().X % primarySeries.XAxis.GridInterval;
-                        xGridLinePosition = clipArea.Width - ((gridIntervalRemainder / xRange) * clipArea.Width);
-                    }
-
-                    for (int steps = 0; steps < 1000 && xGridLinePosition >= 0.0f; steps++)
-                    {
-                        graphics.DrawLine(
-                            gridPen,
-                            clipArea.X + xGridLinePosition,
-                            clipArea.Y,
-                            clipArea.X + xGridLinePosition,
-                            clipArea.Y + clipArea.Height);
-
-                        xGridLinePosition -= xGridLineSteps;
-                    }
-
-                    // Draw a grid overlaid and following series 1 along the y-axis.
-                    float yRange = primarySeries.YAxis.Max - primarySeries.YAxis.Min;
-                    float yGridLineSteps = clipArea.Height / (yRange / primarySeries.YAxis.GridInterval);
-                    float yGridLinePosition = 0;
-                    for (int steps = 0; steps < 1000 && yGridLinePosition < clipArea.Height; steps++)
-                    {
-                        graphics.DrawLine(
-                            gridPen,
-                            clipArea.X,
-                            clipArea.Y + yGridLinePosition,
-                            clipArea.X + clipArea.Width,
-                            clipArea.Y + yGridLinePosition);
-
-                        yGridLinePosition += yGridLineSteps;
-                    }
-                }
-            }
-
-            // Draw the outline of the graph in the primary series color.
-            graphics.DrawRectangle(primaryOutlinePen, clipArea);
-        }
-
-        /// <summary>
-        ///     Event handler for the refresh timer tick. Causes the control to be invalidated
-        ///     and repainted at the next opportunity. Used to control refresh rate of the control.
-        /// </summary>
-        /// <param name="sender">Object that invoked this event.</param>
-        /// <param name="e">Event specific arguments.</param>
-        private void OnTimerTicked(object sender, EventArgs e)
-        {
-            this.mainPanel.Invalidate();
-            this.mainPanel.Refresh();
         }
     }
 }

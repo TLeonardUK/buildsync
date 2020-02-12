@@ -19,25 +19,23 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Client.Tasks;
 using System;
 using System.Windows.Forms;
+using BuildSync.Client.Tasks;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class MoveStorageDirectoryForm : Form
     {
-        private string OldDirectory = "";
-        private string NewDirectory = "";
-        private bool Finished = false;
+        private bool Finished;
 
-        private MoveStorageTask MoveTask = new MoveStorageTask();
+        private readonly MoveStorageTask MoveTask = new MoveStorageTask();
+        private readonly string NewDirectory = "";
+        private readonly string OldDirectory = "";
 
         /// <summary>
-        /// 
         /// </summary>
         public MoveStorageDirectoryForm(string InOldDirectory, string InNewDirectory)
         {
@@ -48,7 +46,26 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Message"></param>
+        /// <param name="Progress"></param>
+        /// <param name="TotalMessage"></param>
+        /// <param name="TotalProgress"></param>
+        public void SetProgress(string Message, float Progress, float TotalProgress)
+        {
+            Invoke(
+                (MethodInvoker) (() =>
+                {
+                    TaskProgressLabel.Text = Message;
+                    TaskProgressBar.Value = (int) (Progress * 100);
+
+                    TotalProgressLabel.Text = "Total Progress";
+                    TotalProgressBar.Value = (int) (TotalProgress * 100);
+                })
+            );
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -62,26 +79,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Message"></param>
-        /// <param name="Progress"></param>
-        /// <param name="TotalMessage"></param>
-        /// <param name="TotalProgress"></param>
-        public void SetProgress(string Message, float Progress, float TotalProgress)
-        {
-            Invoke((MethodInvoker)(() =>
-            {
-                TaskProgressLabel.Text = Message;
-                TaskProgressBar.Value = (int)(Progress * 100);
-
-                TotalProgressLabel.Text = "Total Progress";
-                TotalProgressBar.Value = (int)(TotalProgress * 100);
-            }));
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -246,7 +243,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -256,54 +252,54 @@ namespace BuildSync.Client.Forms
             switch (MoveTask.State)
             {
                 case MoveStorageState.WaitingForIOQueueToDrain:
-                    {
-                        Message = "Waiting for io queue to empty";
-                        break;
-                    }
+                {
+                    Message = "Waiting for io queue to empty";
+                    break;
+                }
                 case MoveStorageState.WaitingForDownloadInitToFinish:
-                    {
-                        Message = "Waiting for download initialization to finish.";
-                        break;
-                    }
+                {
+                    Message = "Waiting for download initialization to finish.";
+                    break;
+                }
                 case MoveStorageState.WaitingForDownloadValidationToFinish:
-                    {
-                        Message = "Waiting for download validation to finish.";
-                        break;
-                    }
+                {
+                    Message = "Waiting for download validation to finish.";
+                    break;
+                }
                 case MoveStorageState.WaitingForDownloadInstallToFinish:
-                    {
-                        Message = "Waiting for download install to finish.";
-                        break;
-                    }
+                {
+                    Message = "Waiting for download install to finish.";
+                    break;
+                }
                 case MoveStorageState.CopyingFiles:
-                    {
-                        Message = "Copying: " + MoveTask.CurrentFile;
-                        break;
-                    }
+                {
+                    Message = "Copying: " + MoveTask.CurrentFile;
+                    break;
+                }
                 case MoveStorageState.CleaningUpOldDirectory:
-                    {
-                        Message = "Cleaning up old directory.";
-                        break;
-                    }
+                {
+                    Message = "Cleaning up old directory.";
+                    break;
+                }
                 case MoveStorageState.Success:
-                    {
-                        DialogResult = DialogResult.OK;
-                        Finished = true;
-                        UpdateTimer.Enabled = false;
-                        Close();
-                        return;
-                    }
+                {
+                    DialogResult = DialogResult.OK;
+                    Finished = true;
+                    UpdateTimer.Enabled = false;
+                    Close();
+                    return;
+                }
                 case MoveStorageState.FailedDiskError:
                 case MoveStorageState.Failed:
                 default:
-                    {
-                        DialogResult = DialogResult.Abort;
-                        Finished = true;
-                        UpdateTimer.Enabled = false;
-                        MessageBox.Show("Failed to change storage directory due to disk error.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        Close();
-                        return;
-                    }
+                {
+                    DialogResult = DialogResult.Abort;
+                    Finished = true;
+                    UpdateTimer.Enabled = false;
+                    MessageBox.Show("Failed to change storage directory due to disk error.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Close();
+                    return;
+                }
             }
 
             SetProgress(Message, MoveTask.SubProgress, MoveTask.Progress);

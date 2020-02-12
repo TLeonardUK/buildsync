@@ -19,39 +19,36 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Manifests;
 using System;
+using BuildSync.Core.Manifests;
 
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_GetBlockResponse : NetMessage
     {
-        public override bool DoesRecieverHandleCleanup
-        {
-            get
-            {
-                return true;
-            }
-        }
+        /// <summary>
+        /// </summary>
+        public int BlockIndex;
 
         /// <summary>
-        /// 
+        /// </summary>
+        public NetCachedArray Data = new NetCachedArray();
+
+        /// <summary>
         /// </summary>
         public Guid ManifestId;
 
         /// <summary>
         /// 
         /// </summary>
-        public int BlockIndex;
+        public override bool DoesRecieverHandleCleanup => true;
 
         /// <summary>
         /// 
         /// </summary>
-        public NetCachedArray Data = new NetCachedArray();
-
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref ManifestId);
@@ -62,19 +59,20 @@ namespace BuildSync.Core.Networking.Messages
 
             // TODO: Modify this so it stores a reference to the deserializing buffer
             // rather than doing a pointless and time consuming copy.
-            if (!serializer.Serialize(ref Data, (int)BuildManifest.BlockSize, true))
+            if (!serializer.Serialize(ref Data, (int) BuildManifest.BlockSize, true))
             {
-                return;
             }
 
             // totalstop.Stop();
             // Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to {0} data: {1}", serializer.IsLoading ? "read" : "write", ((float)totalstop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         internal override void Cleanup()
         {
             Data.SetNull();
         }
-
     }
 }

@@ -25,17 +25,14 @@ using System.Net;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_RelevantPeerListUpdate : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public List<IPEndPoint> PeerAddresses = new List<IPEndPoint>();
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)

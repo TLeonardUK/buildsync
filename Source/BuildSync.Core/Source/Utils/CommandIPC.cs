@@ -27,17 +27,17 @@ using System.Text;
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Response"></param>
     public delegate void RecievePartialIPCResponseEventHandler(string Response);
 
     /// <summary>
-    /// 
     /// </summary>
     public class CommandIPCWriter : TextWriter
     {
-        private CommandIPC Ipc;
+        private readonly CommandIPC Ipc;
+
+        public override Encoding Encoding => Encoding.Unicode;
 
         public CommandIPCWriter(CommandIPC InIpc)
         {
@@ -53,27 +53,20 @@ namespace BuildSync.Core.Utils
         {
             Ipc.Respond(value);
         }
-
-        public override Encoding Encoding
-        {
-            get { return Encoding.Unicode; }
-        }
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class CommandIPC
     {
-        private string PipeName = "";
-        private bool IsClient = false;
+        private readonly bool IsClient;
+        private readonly string PipeName = "";
 
-        private NamedPipeServerStream PipeServer = null;
-        private BinaryWriter ServerWriter = null;
-        private BinaryReader ServerReader = null;
+        private NamedPipeServerStream PipeServer;
+        private BinaryReader ServerReader;
+        private BinaryWriter ServerWriter;
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Name"></param>
         public CommandIPC(string InName, bool InIsClient)
@@ -99,114 +92,28 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        private void BeginAccept()
+        public void EndResponse()
         {
-            PipeServer.BeginWaitForConnection((IAsyncResult Result) =>
-            {
-                try
-                {
-                    PipeServer.EndWaitForConnection(Result);
-                }
-                catch (Exception Ex)
-                {
-                    Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to wait for pipe connection with error: {0}", Ex.Message);
-                }
-
-                if (!PipeServer.IsConnected)
-                {
-                    BeginAccept();
-                }
-
-            }, null);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        ~CommandIPC()
-        {
-            if (PipeServer != null)
-            {
-                ServerWriter.Close();
-                ServerReader.Close();
-
-                ServerWriter = null;
-                ServerReader = null;
-
-                if (PipeServer.IsConnected)
-                {
-                    PipeServer.WaitForPipeDrain();
-                    PipeServer.Disconnect();
-                }
-                PipeServer.Close();
-                PipeServer = null;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Command"></param>
-        /// <param name="Args"></param>
-        /// <returns></returns>
-        public bool Send(string Command, string[] Args, out string Result, RecievePartialIPCResponseEventHandler StreamHandler = null)
-        {
-            Result = "";
-
             try
             {
-                using (NamedPipeClientStream PipeClient = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
-                {
-                    PipeClient.Connect(3000);
+                ServerWriter.Write(true);
+                ServerWriter.Flush();
 
-                    using (BinaryWriter Writer = new BinaryWriter(PipeClient))
-                    {
-                        using (BinaryReader Reader = new BinaryReader(PipeClient))
-                        {
-                            // Send command.
-                            //Console.WriteLine("Sending: " + Command);
-                            Writer.Write(Command);
-                            Writer.Write(Args.Length);
-                            foreach (string arg in Args)
-                            {
-                                Writer.Write(arg);
-                            }
-                            Writer.Flush();
-
-                            // Read response.
-                            while (true)
-                            {
-                                bool Final = Reader.ReadBoolean();
-                                if (!Final)
-                                {
-                                    string Block = Reader.ReadString();
-                                    StreamHandler?.Invoke(Block);
-
-                                    Result += Block;
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                            //Console.WriteLine("Response: " + Result);
-                        }
-                    }
-                }
+                PipeServer.WaitForPipeDrain();
+                PipeServer.Disconnect();
             }
             catch (Exception Ex)
             {
-                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to send ipc command with error: {0}", Ex.Message);
-                return false;
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to respond to ipc command with error: {0}", Ex.Message);
             }
-
-            return true;
+            finally
+            {
+                BeginAccept();
+            }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Command"></param>
         /// <param name="Args"></param>
@@ -246,7 +153,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Command"></param>
         /// <param name="Args"></param>
@@ -266,25 +172,110 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        public void EndResponse()
+        /// <param name="Command"></param>
+        /// <param name="Args"></param>
+        /// <returns></returns>
+        public bool Send(string Command, string[] Args, out string Result, RecievePartialIPCResponseEventHandler StreamHandler = null)
         {
+            Result = "";
+
             try
             {
-                ServerWriter.Write(true);
-                ServerWriter.Flush();
+                using (NamedPipeClientStream PipeClient = new NamedPipeClientStream(".", PipeName, PipeDirection.InOut, PipeOptions.Asynchronous))
+                {
+                    PipeClient.Connect(3000);
 
-                PipeServer.WaitForPipeDrain();
-                PipeServer.Disconnect();
+                    using (BinaryWriter Writer = new BinaryWriter(PipeClient))
+                    {
+                        using (BinaryReader Reader = new BinaryReader(PipeClient))
+                        {
+                            // Send command.
+                            //Console.WriteLine("Sending: " + Command);
+                            Writer.Write(Command);
+                            Writer.Write(Args.Length);
+                            foreach (string arg in Args)
+                            {
+                                Writer.Write(arg);
+                            }
+
+                            Writer.Flush();
+
+                            // Read response.
+                            while (true)
+                            {
+                                bool Final = Reader.ReadBoolean();
+                                if (!Final)
+                                {
+                                    string Block = Reader.ReadString();
+                                    StreamHandler?.Invoke(Block);
+
+                                    Result += Block;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
+                            //Console.WriteLine("Response: " + Result);
+                        }
+                    }
+                }
             }
             catch (Exception Ex)
             {
-                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to respond to ipc command with error: {0}", Ex.Message);
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to send ipc command with error: {0}", Ex.Message);
+                return false;
             }
-            finally
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        private void BeginAccept()
+        {
+            PipeServer.BeginWaitForConnection(
+                Result =>
+                {
+                    try
+                    {
+                        PipeServer.EndWaitForConnection(Result);
+                    }
+                    catch (Exception Ex)
+                    {
+                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to wait for pipe connection with error: {0}", Ex.Message);
+                    }
+
+                    if (!PipeServer.IsConnected)
+                    {
+                        BeginAccept();
+                    }
+                }, null
+            );
+        }
+
+        /// <summary>
+        /// </summary>
+        ~CommandIPC()
+        {
+            if (PipeServer != null)
             {
-                BeginAccept();
+                ServerWriter.Close();
+                ServerReader.Close();
+
+                ServerWriter = null;
+                ServerReader = null;
+
+                if (PipeServer.IsConnected)
+                {
+                    PipeServer.WaitForPipeDrain();
+                    PipeServer.Disconnect();
+                }
+
+                PipeServer.Close();
+                PipeServer = null;
             }
         }
     }

@@ -23,37 +23,33 @@
 //#define CONSTANT_REDOWNLOAD
 //#define LARGE_DOWNLOAD_QUEUE
 
-using BuildSync.Core.Manifests;
-using BuildSync.Core.Networking;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using BuildSync.Core.Manifests;
+using BuildSync.Core.Networking;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Downloads
 {
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="ManifestId"></param>
     public delegate void ManifestRequestedHandler(Guid ManifestId);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="ManifestId"></param>
     public delegate void DownloadErrorHandler(Guid ManifestId);
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void BlockAccessCompleteHandler(bool bSuccess);
 
     /// <summary>
-    /// 
     /// </summary>
     public struct ManifestDownloadRequiredBlock
     {
@@ -64,17 +60,15 @@ namespace BuildSync.Core.Downloads
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class ManifestDownloadQueue
     {
-        public Guid ManifestId;
         public int HighestPriority;
+        public Guid ManifestId;
         public List<ManifestDownloadRequiredBlock> ToDownloadBlocks;
-    };
+    }
 
     /// <summary>
-    /// 
     /// </summary>
     public struct ManifestPendingDownloadBlock
     {
@@ -88,16 +82,14 @@ namespace BuildSync.Core.Downloads
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public enum ManifestBlockChangeType
     {
         Upload,
-        Validate,
+        Validate
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public struct ManifestRecentBlockChange
     {
@@ -110,89 +102,70 @@ namespace BuildSync.Core.Downloads
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class ManifestDownloadManager
     {
         /// <summary>
-        /// 
+        /// </summary>
+        public class BlockIOState
+        {
+            public int SubBlocksRemaining;
+            public bool WasSuccess;
+        }
+
+        /// <summary>
         /// </summary>
         public event ManifestRequestedHandler OnManifestRequested;
 
         /// <summary>
-        /// 
         /// </summary>
         public event DownloadErrorHandler OnDownloadError;
 
         /// <summary>
-        /// 
         /// </summary>
         private ManifestDownloadStateCollection StateCollection = new ManifestDownloadStateCollection();
 
         /// <summary>
-        /// 
         /// </summary>
-        private BuildManifestRegistry ManifestRegistry = null;
+        private BuildManifestRegistry ManifestRegistry;
 
         /// <summary>
-        /// 
         /// </summary>
-        public AsyncIOQueue IOQueue = null;
+        public AsyncIOQueue IOQueue;
 
         /// <summary>
-        /// 
         /// </summary>
-        private BlockListState AvailableBlocks = null;
+        private BlockListState AvailableBlocks;
 
         /// <summary>
-        /// 
         /// </summary>
-        public List<ManifestPendingDownloadBlock> DownloadQueue
-        {
-            get;
-            private set;
-        } = new List<ManifestPendingDownloadBlock>();
+        public List<ManifestPendingDownloadBlock> DownloadQueue { get; } = new List<ManifestPendingDownloadBlock>();
 
         /// <summary>
-        /// 
         /// </summary>
-        public List<ManifestRecentBlockChange> RecentBlockChanges
-        {
-            get;
-            private set;
-        } = new List<ManifestRecentBlockChange>();
+        public List<ManifestRecentBlockChange> RecentBlockChanges { get; } = new List<ManifestRecentBlockChange>();
 
         /// <summary>
-        /// 
         /// </summary>
         private const int RecentBlockChangeDuration = 1 * 1000;
 
         /// <summary>
-        /// 
         /// </summary>
         private string StorageRootPath = "";
 
         /// <summary>
-        /// 
         /// </summary>
-        private List<string> PendingOrphanCleanups = new List<string>();
+        private readonly List<string> PendingOrphanCleanups = new List<string>();
 
         /// <summary>
-        /// 
         /// </summary>
-        public long StorageMaxSize
-        {
-            get;
-            set;
-        }
+        public long StorageMaxSize { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
         private const int ManifestRequestInterval = 30 * 1000;
 
         /// <summary>
-        /// 
         /// </summary>
 #if LARGE_DOWNLOAD_QUEUE
         private const int IdealDownloadQueueSizeBytes = 1000 * 1024 * 1024;
@@ -201,7 +174,6 @@ namespace BuildSync.Core.Downloads
 #endif
 
         /// <summary>
-        /// 
         /// </summary>
 #if LARGE_DOWNLOAD_QUEUE
         private const int MaxDownloadQueueItems = 1000;
@@ -210,12 +182,12 @@ namespace BuildSync.Core.Downloads
 #endif
 
         /// <summary>
-        /// 
         /// </summary>
         private bool InternalTrafficEnabled = true;
+
         public bool TrafficEnabled
         {
-            get { return InternalTrafficEnabled; }
+            get => InternalTrafficEnabled;
             set
             {
                 if (InternalTrafficEnabled != value)
@@ -224,75 +196,43 @@ namespace BuildSync.Core.Downloads
                     {
                         DownloadQueue.Clear();
                     }
+
                     InternalTrafficEnabled = value;
                 }
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool DownloadInitializationInProgress
-        {
-            get;
-            private set;
-        }
+        public bool DownloadInitializationInProgress { get; private set; }
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool DownloadValidationInProgress
-        {
-            get;
-            private set;
-        }
+        public bool DownloadValidationInProgress { get; private set; }
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool DownloadInstallInProgress
-        {
-            get;
-            private set;
-        }
+        public bool DownloadInstallInProgress { get; private set; }
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool AreStatesDirty
-        {
-            get;
-            set;
-        }
+        public bool AreStatesDirty { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool SkipValidation
-        {
-            get;
-            set;
-        } = false;
+        public bool SkipValidation { get; set; } = false;
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool SkipDiskAllocation
-        {
-            get;
-            set;
-        } = false;
+        public bool SkipDiskAllocation { get; set; } = false;
 
         /// <summary>
-        /// 
         /// </summary>
-        private int Internal_StateDirtyCount = 0;
+        private int Internal_StateDirtyCount;
+
         public int StateDirtyCount
         {
-            get
-            {
-                return Internal_StateDirtyCount;
-            }
+            get => Internal_StateDirtyCount;
             set
             {
                 Internal_StateDirtyCount = value;
@@ -301,50 +241,38 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        public ManifestDownloadStateCollection States
-        {
-            get { return StateCollection; }
-        }
+        public ManifestDownloadStateCollection States => StateCollection;
 
         /// <summary>
-        /// 
         /// </summary>
-        private List<Guid> BlockedDownloadManifestIds = new List<Guid>();
+        private readonly List<Guid> BlockedDownloadManifestIds = new List<Guid>();
 
         /// <summary>
-        /// 
         /// </summary>
-        private ulong SplitIndexLastUpdatedTimer = 0;
+        private ulong SplitIndexLastUpdatedTimer;
 
         /// <summary>
-        /// 
         /// </summary>
         private int SplitIndex = -1;
 
         /// <summary>
-        /// 
         /// </summary>
         private const int SplitIndexUpdateInterval = 60 * 1000;
 
         /// <summary>
-        /// 
         /// </summary>
         private bool[] AvailableBlockQueue = new bool[0];
 
         /// <summary>
-        /// 
         /// </summary>
         private bool[] CurrentBlockQueue = new bool[0];
 
         /// <summary>
-        /// 
         /// </summary>
         private bool[] ToDownloadBlockQueue = new bool[0];
 
         /// <summary>
-        /// 
         /// </summary>
         private struct LastFileWriteTimeCacheEntry
         {
@@ -353,22 +281,18 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        private Dictionary<string, LastFileWriteTimeCacheEntry> LastFileWriteCache = new Dictionary<string, LastFileWriteTimeCacheEntry>();
+        private readonly Dictionary<string, LastFileWriteTimeCacheEntry> LastFileWriteCache = new Dictionary<string, LastFileWriteTimeCacheEntry>();
 
         /// <summary>
-        /// 
         /// </summary>
         private const int MaxLastFileWriteCacheEntryDuration = 5 * 1000;
 
         /// <summary>
-        /// 
         /// </summary>
-        private List<ManifestDownloadQueue> ManifestQueues = new List<ManifestDownloadQueue>();
+        private readonly List<ManifestDownloadQueue> ManifestQueues = new List<ManifestDownloadQueue>();
 
         /// <summary>
-        /// 
         /// </summary>
         public void RecordBlockChange(Guid ManifestId, int BlockIndex, ManifestBlockChangeType Type)
         {
@@ -385,7 +309,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void PruneBlockChanges()
         {
@@ -405,7 +328,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public BlockListState GetBlockListState(bool ReturnEmptyIfTrafficDisabled = true)
         {
@@ -425,7 +347,7 @@ namespace BuildSync.Core.Downloads
 
                 ManifestBlockListState ManifestState = new ManifestBlockListState();
                 ManifestState.Id = Downloader.ManifestId;
-                ManifestState.IsActive = (Downloader.State == ManifestDownloadProgressState.Downloading && !Downloader.Paused);
+                ManifestState.IsActive = Downloader.State == ManifestDownloadProgressState.Downloading && !Downloader.Paused;
                 ManifestState.BlockState = Downloader.BlockStates;
 
                 Result.States[i] = ManifestState;
@@ -435,7 +357,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestDownloader"></param>
         /// <param name="Config"></param>
@@ -473,7 +394,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="NewDirectory"></param>
         public void UpdateStoragePath(string NewDirectory)
@@ -489,7 +409,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         /// <returns></returns>
@@ -499,7 +418,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         public void BlockDownload(Guid ManifestId)
@@ -511,7 +429,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         public void UnblockDownload(Guid ManifestId)
@@ -523,7 +440,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Priority"></param>
@@ -541,6 +457,7 @@ namespace BuildSync.Core.Downloads
                 State = new ManifestDownloadState();
                 State.Id = Guid.NewGuid();
             }
+
             State.ManifestId = Manifest.Guid;
             State.Priority = 2;
             State.Manifest = Manifest;
@@ -549,7 +466,7 @@ namespace BuildSync.Core.Downloads
             State.LastActive = DateTime.Now;
 
             // We have everything.
-            State.BlockStates.Resize((int)Manifest.BlockCount);
+            State.BlockStates.Resize((int) Manifest.BlockCount);
             State.BlockStates.SetAll(true);
 
             StoreFileCompletedStates(State);
@@ -563,7 +480,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Priority"></param>
@@ -601,7 +517,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Priority"></param>
@@ -624,7 +539,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Priority"></param>
@@ -649,7 +563,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Priority"></param>
@@ -674,7 +587,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         public void PauseDownload(Guid ManifestId)
@@ -695,7 +607,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         public void ResumeDownload(Guid ManifestId)
@@ -716,7 +627,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Manifest"></param>
         public ManifestDownloadState GetDownload(Guid ManifestId)
@@ -728,11 +638,11 @@ namespace BuildSync.Core.Downloads
                     return State;
                 }
             }
+
             return null;
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="State"></param>
         private void PerformInstallation(ManifestDownloadState State)
@@ -744,7 +654,7 @@ namespace BuildSync.Core.Downloads
             }
 
             BuildSettings Settings;
-            if (!BuildSettings.Load<BuildSettings>(ConfigFilePath, out Settings))
+            if (!SettingsBase.Load(ConfigFilePath, out Settings))
             {
                 throw new Exception("The included buildsync.json file could not be loaded, it may be malformed.");
             }
@@ -780,7 +690,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="State"></param>
         private void StoreFileCompletedStates(ManifestDownloadState State)
@@ -802,7 +711,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="State"></param>
         private void ClearFileCompletedStates(ManifestDownloadState State)
@@ -812,7 +720,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="State"></param>
         private void PollDownload(ManifestDownloadState State)
@@ -826,50 +733,53 @@ namespace BuildSync.Core.Downloads
             {
                 // Request manifest from central server.
                 case ManifestDownloadProgressState.RetrievingManifest:
+                {
+                    State.Manifest = ManifestRegistry.GetManifestById(State.ManifestId);
+                    if (State.Manifest != null)
                     {
-                        State.Manifest = ManifestRegistry.GetManifestById(State.ManifestId);
-                        if (State.Manifest != null)
-                        {
-                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrieved manifest for download '{0}', starting download.", State.Id);
-                            ChangeState(State, ManifestDownloadProgressState.Initializing);
-                            State.BlockStates.Resize((int)State.Manifest.BlockCount);
+                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrieved manifest for download '{0}', starting download.", State.Id);
+                        ChangeState(State, ManifestDownloadProgressState.Initializing);
+                        State.BlockStates.Resize((int) State.Manifest.BlockCount);
 
-                            StateDirtyCount++;
-                        }
-                        else
-                        {
-                            // Request manifest from server.
-                            ulong Elapsed = TimeUtils.Ticks - State.LastManifestRequestTime;
-                            if (State.LastManifestRequestTime == 0 || Elapsed > ManifestRequestInterval)
-                            {
-                                OnManifestRequested?.Invoke(State.ManifestId);
-                                State.LastManifestRequestTime = TimeUtils.Ticks;
-                            }
-                        }
-
-                        break;
+                        StateDirtyCount++;
                     }
+                    else
+                    {
+                        // Request manifest from server.
+                        ulong Elapsed = TimeUtils.Ticks - State.LastManifestRequestTime;
+                        if (State.LastManifestRequestTime == 0 || Elapsed > ManifestRequestInterval)
+                        {
+                            OnManifestRequested?.Invoke(State.ManifestId);
+                            State.LastManifestRequestTime = TimeUtils.Ticks;
+                        }
+                    }
+
+                    break;
+                }
 
                 // Create all the files in the directory.
                 case ManifestDownloadProgressState.Initializing:
+                {
+                    if (State.InitializeTask == null)
                     {
-                        if (State.InitializeTask == null)
+                        if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
                         {
-                            if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
-                            {
-                                State.InitializeTask = Task.Run(() =>
+                            State.InitializeTask = Task.Run(
+                                () =>
                                 {
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Initializing directory: {0}", State.LocalFolder);
                                         State.InitializeRateStats.Reset();
-                                        State.Manifest.InitializeDirectory(State.LocalFolder, IOQueue, !SkipDiskAllocation, (long BytesWritten, long TotalBytes) =>
-                                        {
-                                            State.InitializeProgress = BytesWritten / (float)TotalBytes;
-                                            State.InitializeRateStats.In(BytesWritten - State.InitializeRateStats.TotalIn);
-                                            State.InitializeBytesRemaining = TotalBytes - BytesWritten;
-                                            return !State.Paused;
-                                        });
+                                        State.Manifest.InitializeDirectory(
+                                            State.LocalFolder, IOQueue, !SkipDiskAllocation, (BytesWritten, TotalBytes) =>
+                                            {
+                                                State.InitializeProgress = BytesWritten / (float) TotalBytes;
+                                                State.InitializeRateStats.In(BytesWritten - State.InitializeRateStats.TotalIn);
+                                                State.InitializeBytesRemaining = TotalBytes - BytesWritten;
+                                                return !State.Paused;
+                                            }
+                                        );
                                         if (!State.Paused)
                                         {
                                             ChangeState(State, ManifestDownloadProgressState.Downloading);
@@ -884,32 +794,34 @@ namespace BuildSync.Core.Downloads
                                     {
                                         State.InitializeTask = null;
                                     }
-                                });
-                            }
-                            else
-                            {
-                                ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
-                                Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to initialize, unable to close all streams to directory.");
-                            }
+                                }
+                            );
                         }
-
-                        break;
+                        else
+                        {
+                            ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
+                            Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to initialize, unable to close all streams to directory.");
+                        }
                     }
+
+                    break;
+                }
 
                 // Restarting from an initialization failure, try again.
                 case ManifestDownloadProgressState.InitializeFailed:
-                    {
-                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying initialization after resume from error.");
-                        ChangeState(State, ManifestDownloadProgressState.Initializing);
-                        break;
-                    }
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying initialization after resume from error.");
+                    ChangeState(State, ManifestDownloadProgressState.Initializing);
+                    break;
+                }
 
                 // Installing all launch modes on device.
                 case ManifestDownloadProgressState.Installing:
+                {
+                    if (State.InstallTask == null)
                     {
-                        if (State.InstallTask == null)
-                        {
-                            State.InstallTask = Task.Run(() =>
+                        State.InstallTask = Task.Run(
+                            () =>
                             {
                                 try
                                 {
@@ -926,96 +838,101 @@ namespace BuildSync.Core.Downloads
                                 {
                                     State.InstallTask = null;
                                 }
-                            });
-                        }
-
-                        break;
+                            }
+                        );
                     }
+
+                    break;
+                }
 
                 // Restarting from an install failure, try again.
                 case ManifestDownloadProgressState.InstallFailed:
-                    {
-                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying install after resume from error.");
-                        ChangeState(State, ManifestDownloadProgressState.Installing);
-                        break;
-                    }
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying install after resume from error.");
+                    ChangeState(State, ManifestDownloadProgressState.Installing);
+                    break;
+                }
 
                 // Get downloading them blocks.
                 case ManifestDownloadProgressState.Downloading:
+                {
+                    if (State.DiskError)
                     {
-                        if (State.DiskError)
-                        {
-                            ChangeState(State, ManifestDownloadProgressState.DiskError, true);
-                        }
-                        if (State.BlockStates.AreAllSet(true))
-                        {
+                        ChangeState(State, ManifestDownloadProgressState.DiskError, true);
+                    }
+
+                    if (State.BlockStates.AreAllSet(true))
+                    {
 #if CONSTANT_REDOWNLOAD
                             State.BlockStates.SetAll(false);
 #else
-                            if (SkipValidation)
+                        if (SkipValidation)
+                        {
+                            if (State.InstallOnComplete)
                             {
-                                if (State.InstallOnComplete)
-                                {
-                                    ChangeState(State, ManifestDownloadProgressState.Installing);
-                                }
-                                else
-                                {
-                                    ChangeState(State, ManifestDownloadProgressState.Complete);
-                                }
-
-                                StoreFileCompletedStates(State);
+                                ChangeState(State, ManifestDownloadProgressState.Installing);
                             }
                             else
                             {
-                                ChangeState(State, ManifestDownloadProgressState.Validating);
+                                ChangeState(State, ManifestDownloadProgressState.Complete);
                             }
-#endif
-                        }
 
-                        break;
+                            StoreFileCompletedStates(State);
+                        }
+                        else
+                        {
+                            ChangeState(State, ManifestDownloadProgressState.Validating);
+                        }
+#endif
                     }
+
+                    break;
+                }
 
                 // Restarting from an download disk error, try again.
                 case ManifestDownloadProgressState.DiskError:
-                    {
-                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying download after resume from error.");
-                        ChangeState(State, ManifestDownloadProgressState.Downloading);
-                        break;
-                    }
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying download after resume from error.");
+                    ChangeState(State, ManifestDownloadProgressState.Downloading);
+                    break;
+                }
 
                 // Download complete, just monitor for needing to switch back to downloading if we loose blocks.
                 case ManifestDownloadProgressState.Complete:
+                {
+                    if (!State.BlockStates.AreAllSet(true))
                     {
-                        if (!State.BlockStates.AreAllSet(true))
-                        {
-                            ChangeState(State, ManifestDownloadProgressState.Downloading);
-                        }
-
-                        break;
+                        ChangeState(State, ManifestDownloadProgressState.Downloading);
                     }
+
+                    break;
+                }
 
                 // Check all the file checksums match, if any fail, requeue all their blocks.
                 case ManifestDownloadProgressState.Validating:
+                {
+                    if (State.ValidationTask == null)
                     {
-                        if (State.ValidationTask == null)
+                        // Close all async io streams to the download we are working on.
+                        if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
                         {
-                            // Close all async io streams to the download we are working on.
-                            if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
-                            {
-                                State.ValidationTask = Task.Run(() =>
+                            State.ValidationTask = Task.Run(
+                                () =>
                                 {
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
                                         State.ValidateRateStats.Reset();
-                                        List<int> FailedBlocks = State.Manifest.Validate(State.LocalFolder, State.ValidateRateStats, IOQueue, (long BytesRead, long TotalBytes, Guid ManifestId, int BlockIndex) =>
-                                        {
-                                            State.ValidateProgress = BytesRead / (float)TotalBytes;
-                                            State.ValidateRateStats.Out(BytesRead - State.ValidateRateStats.TotalOut);
-                                            State.ValidateBytesRemaining = TotalBytes - BytesRead;
-                                            RecordBlockChange(ManifestId, BlockIndex, ManifestBlockChangeType.Validate);
-                                            return !State.Paused;
-                                        });
+                                        List<int> FailedBlocks = State.Manifest.Validate(
+                                            State.LocalFolder, State.ValidateRateStats, IOQueue, (BytesRead, TotalBytes, ManifestId, BlockIndex) =>
+                                            {
+                                                State.ValidateProgress = BytesRead / (float) TotalBytes;
+                                                State.ValidateRateStats.Out(BytesRead - State.ValidateRateStats.TotalOut);
+                                                State.ValidateBytesRemaining = TotalBytes - BytesRead;
+                                                RecordBlockChange(ManifestId, BlockIndex, ManifestBlockChangeType.Validate);
+                                                return !State.Paused;
+                                            }
+                                        );
                                         if (!State.Paused)
                                         {
                                             if (FailedBlocks.Count == 0)
@@ -1052,30 +969,30 @@ namespace BuildSync.Core.Downloads
                                     {
                                         State.ValidationTask = null;
                                     }
-                                });
-                            }
-                            else
-                            {
-                                ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
-                                Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to validate, unable to close all streams to directory.");
-                            }
+                                }
+                            );
                         }
-
-                        break;
+                        else
+                        {
+                            ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
+                            Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to validate, unable to close all streams to directory.");
+                        }
                     }
+
+                    break;
+                }
 
                 // Restarting from an validation failure, try again.
                 case ManifestDownloadProgressState.ValidationFailed:
-                    {
-                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying downloading after resume from validation error.");
-                        ChangeState(State, ManifestDownloadProgressState.Downloading);
-                        break;
-                    }
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying downloading after resume from validation error.");
+                    ChangeState(State, ManifestDownloadProgressState.Downloading);
+                    break;
+                }
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Path"></param>
         /// <returns></returns>
@@ -1112,7 +1029,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Path"></param>
         /// <returns></returns>
@@ -1124,13 +1040,14 @@ namespace BuildSync.Core.Downloads
             {
                 ulong time = TimeUtils.Ticks;
                 List<string> KeysToRemove = new List<string>();
-                foreach (var pair in LastFileWriteCache)
+                foreach (KeyValuePair<string, LastFileWriteTimeCacheEntry> pair in LastFileWriteCache)
                 {
                     if (FileUtils.NormalizePath(pair.Key) == NormalizedPath)
                     {
                         KeysToRemove.Add(pair.Key);
                     }
                 }
+
                 foreach (string key in KeysToRemove)
                 {
                     LastFileWriteCache.Remove(key);
@@ -1139,7 +1056,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="NewState"></param>
         private void ChangeState(ManifestDownloadState State, ManifestDownloadProgressState NewState, bool IsError = false)
@@ -1162,7 +1078,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void Poll()
         {
@@ -1197,7 +1112,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void PruneDiskSpace()
         {
@@ -1252,7 +1166,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void CleanUpOrphanBuilds()
         {
@@ -1274,10 +1187,7 @@ namespace BuildSync.Core.Downloads
                                 if (!PendingOrphanCleanups.Contains(Dir))
                                 {
                                     PendingOrphanCleanups.Add(Dir);
-                                    IOQueue.DeleteDir(Dir, (bool bSuccess) =>
-                                    {
-                                        PendingOrphanCleanups.Remove(Dir);
-                                    });
+                                    IOQueue.DeleteDir(Dir, bSuccess => { PendingOrphanCleanups.Remove(Dir); });
                                 }
                             }
                         }
@@ -1297,7 +1207,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         /// <param name="BlockIndex"></param>
@@ -1321,16 +1230,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        public class BlockIOState
-        {
-            public int SubBlocksRemaining = 0;
-            public bool WasSuccess = false;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         /// <param name="BlockIndex"></param>
@@ -1367,7 +1266,7 @@ namespace BuildSync.Core.Downloads
             WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
             WriteState.WasSuccess = true;
 
-            if (!Data.Resize((int)BlockInfo.TotalSize, (int)BuildManifest.BlockSize, true))
+            if (!Data.Resize((int) BlockInfo.TotalSize, (int) BuildManifest.BlockSize, true))
             {
                 FailedOutOfMemory = true;
                 return false;
@@ -1380,36 +1279,37 @@ namespace BuildSync.Core.Downloads
                 BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
 
                 string LocalFile = Path.Combine(State.LocalFolder, SubBlockInfo.File.Path);
-                IOQueue.Read(LocalFile, SubBlockInfo.FileOffset, SubBlockInfo.FileSize, Data.Data, SubBlockInfo.OffsetInBlock, (bool bSuccess) =>
-                {
-                    if (bSuccess)
+                IOQueue.Read(
+                    LocalFile, SubBlockInfo.FileOffset, SubBlockInfo.FileSize, Data.Data, SubBlockInfo.OffsetInBlock, bSuccess =>
                     {
-                        State.BandwidthStats.Out(SubBlockInfo.FileSize);
-                    }
-                    else
-                    {
-                        WriteState.WasSuccess = false;
-                    }
-
-                    // Check file has not been modified since completed.
-                    lock (State.FileCompletedStates)
-                    {
-                        foreach (ManifestFileCompletedState CompletedState in State.FileCompletedStates)
+                        if (bSuccess)
                         {
-                            if (SubBlockInfo.File.Path == CompletedState.Path)
+                            State.BandwidthStats.Out(SubBlockInfo.FileSize);
+                        }
+                        else
+                        {
+                            WriteState.WasSuccess = false;
+                        }
+
+                        // Check file has not been modified since completed.
+                        lock (State.FileCompletedStates)
+                        {
+                            foreach (ManifestFileCompletedState CompletedState in State.FileCompletedStates)
                             {
-                                if (GetFileLastWriteTime(LocalFile) != CompletedState.ModifiedTimestampOnCompleted)
+                                if (SubBlockInfo.File.Path == CompletedState.Path)
                                 {
-                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed as has been modified since it was downloaded, failed to get block data.", BlockIndex, ManifestId.ToString());
-                                    WriteState.WasSuccess = false;
+                                    if (GetFileLastWriteTime(LocalFile) != CompletedState.ModifiedTimestampOnCompleted)
+                                    {
+                                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed as has been modified since it was downloaded, failed to get block data.", BlockIndex, ManifestId.ToString());
+                                        WriteState.WasSuccess = false;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if (Interlocked.Decrement(ref WriteState.SubBlocksRemaining) == 0)
-                    {
-                        // Checksum block to make sure nobody has balls it up.
+                        if (Interlocked.Decrement(ref WriteState.SubBlocksRemaining) == 0)
+                        {
+                            // Checksum block to make sure nobody has balls it up.
 #if CHECKSUM_EACH_BLOCK
                         if (State.Manifest.BlockChecksums != null)
                         {
@@ -1421,18 +1321,18 @@ namespace BuildSync.Core.Downloads
                         }
 #endif
 
-                        RecordBlockChange(ManifestId, BlockIndex, ManifestBlockChangeType.Upload);
+                            RecordBlockChange(ManifestId, BlockIndex, ManifestBlockChangeType.Upload);
 
-                        Callback?.Invoke(WriteState.WasSuccess);
+                            Callback?.Invoke(WriteState.WasSuccess);
+                        }
                     }
-                });
+                );
             }
 
             return true;
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         /// <param name="BlockIndex"></param>
@@ -1480,29 +1380,31 @@ namespace BuildSync.Core.Downloads
                 BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
 
                 string LocalFile = Path.Combine(State.LocalFolder, SubBlockInfo.File.Path);
-                IOQueue.Write(LocalFile, SubBlockInfo.FileOffset, SubBlockInfo.FileSize, Data.Data, SubBlockInfo.OffsetInBlock, (bool bSuccess) =>
-                {
-                    if (bSuccess)
+                IOQueue.Write(
+                    LocalFile, SubBlockInfo.FileOffset, SubBlockInfo.FileSize, Data.Data, SubBlockInfo.OffsetInBlock, bSuccess =>
                     {
-                        State.BandwidthStats.In(SubBlockInfo.FileSize);
-                    }
-                    else
-                    {
-                        State.DiskError = true;
-                        WriteState.WasSuccess = false;
-                    }
+                        if (bSuccess)
+                        {
+                            State.BandwidthStats.In(SubBlockInfo.FileSize);
+                        }
+                        else
+                        {
+                            State.DiskError = true;
+                            WriteState.WasSuccess = false;
+                        }
 
-                    if (Interlocked.Decrement(ref WriteState.SubBlocksRemaining) == 0)
-                    {
-                        Callback?.Invoke(WriteState.WasSuccess);
+                        if (Interlocked.Decrement(ref WriteState.SubBlocksRemaining) == 0)
+                        {
+                            Callback?.Invoke(WriteState.WasSuccess);
+                        }
                     }
-                });
+                );
             }
+
             return true;
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         public void MarkBlockAsComplete(Guid ManifestId, int BlockIndex)
@@ -1527,7 +1429,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         public void MarkFileAsUnavailable(Guid ManifestId, string Path)
@@ -1544,6 +1445,7 @@ namespace BuildSync.Core.Downloads
             {
                 State.BlockStates.Set(i, false);
             }
+
             StateDirtyCount++;
 
             if (State.State == ManifestDownloadProgressState.Complete && BlockIndices.Count > 0)
@@ -1553,7 +1455,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         public void MarkBlockAsUnavailable(Guid ManifestId, int BlockIndex)
@@ -1592,7 +1493,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         public void MarkAllBlockFilesAsUnavailable(Guid ManifestId, int BlockIndex)
@@ -1627,6 +1527,7 @@ namespace BuildSync.Core.Downloads
                 {
                     State.BlockStates.Set(index, false, true);
                 }
+
                 State.BlockStates.CompactRanges();
             }
 
@@ -1639,7 +1540,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void SetAvailableToDownloadBlocks(BlockListState InAvailableBlocks)
         {
@@ -1647,7 +1547,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void UpdateBlockQueue()
         {
@@ -1659,7 +1558,7 @@ namespace BuildSync.Core.Downloads
             // Update split index periodically.
             if (SplitIndex == -1 || TimeUtils.Ticks - SplitIndexLastUpdatedTimer > SplitIndexUpdateInterval)
             {
-                SplitIndex = (new Random(Environment.TickCount)).Next();
+                SplitIndex = new Random(Environment.TickCount).Next();
                 SplitIndexLastUpdatedTimer = TimeUtils.Ticks;
             }
 
@@ -1778,11 +1677,11 @@ namespace BuildSync.Core.Downloads
                     {
                         ManifestDownloadRequiredBlock Block = Queue.ToDownloadBlocks[0];
 
-                        DownloadQueue.Add(new ManifestPendingDownloadBlock { BlockIndex = Block.RangeStart, ManifestId = Queue.ManifestId });
+                        DownloadQueue.Add(new ManifestPendingDownloadBlock {BlockIndex = Block.RangeStart, ManifestId = Queue.ManifestId});
                         BlocksAdded = true;
 
                         bool Result = GetBlockInfo(Queue.ManifestId, Block.RangeStart, ref BlockInfo);
-                        Debug.Assert(Result == true);
+                        Debug.Assert(Result);
 
                         TotalSize += BlockInfo.TotalSize;
 

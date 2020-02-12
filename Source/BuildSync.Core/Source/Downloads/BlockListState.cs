@@ -19,59 +19,41 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Networking;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
+using BuildSync.Core.Networking;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Downloads
 {
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class ManifestBlockListState
     {
         /// <summary>
-        /// 
-        /// </summary>
-        public Guid Id;
-
-        /// <summary>
-        /// 
         /// </summary>
         public SparseStateArray BlockState = new SparseStateArray();
 
         /// <summary>
-        /// 
+        /// </summary>
+        public Guid Id;
+
+        /// <summary>
         /// </summary>
         public bool IsActive;
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class BlockListState
     {
         /// <summary>
-        /// 
         /// </summary>
         public ManifestBlockListState[] States = new ManifestBlockListState[0];
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Base"></param>
-        /// <returns></returns>
-        public BlockListState GetDelta(BlockListState Base)
-        {
-            // Todo: something ...
-            return this;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Base"></param>
         /// <returns></returns>
@@ -82,51 +64,16 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Base"></param>
         /// <returns></returns>
-        public void Union(BlockListState Other)
+        public BlockListState GetDelta(BlockListState Base)
         {
-            foreach (ManifestBlockListState OtherState in Other.States)
-            {
-                ManifestBlockListState OwnState = GetStateById(OtherState.Id);
-                if (OwnState == null)
-                {
-                    OwnState = new ManifestBlockListState();
-                    OwnState.Id = OtherState.Id;
-                    OwnState.IsActive = true;
-                    OwnState.BlockState = OtherState.BlockState.Clone();
-
-                    Array.Resize(ref States, States.Length + 1);
-                    States[States.Length - 1] = OwnState;
-                }
-                else
-                {
-                    OwnState.BlockState.Union(OtherState.BlockState);
-                }
-            }
+            // Todo: something ...
+            return this;
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Id"></param>
-        /// <returns></returns>
-        private ManifestBlockListState GetStateById(Guid Id)
-        {
-            foreach (ManifestBlockListState State in States)
-            {
-                if (State.Id == Id)
-                {
-                    return State;
-                }
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="NeededBlocks"></param>
         /// <returns></returns>
@@ -157,7 +104,6 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="serializer"></param>
         public void Serialize(NetMessageSerializer serializer)
@@ -196,6 +142,7 @@ namespace BuildSync.Core.Downloads
                     {
                         State.BlockState.Ranges.Add(new SparseStateArray.Range());
                     }
+
                     SparseStateArray.Range Range = State.BlockState.Ranges[j];
 
                     int TempStart = Range.Start;
@@ -213,6 +160,49 @@ namespace BuildSync.Core.Downloads
                     State.BlockState.Ranges[j] = Range;
                 }
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Base"></param>
+        /// <returns></returns>
+        public void Union(BlockListState Other)
+        {
+            foreach (ManifestBlockListState OtherState in Other.States)
+            {
+                ManifestBlockListState OwnState = GetStateById(OtherState.Id);
+                if (OwnState == null)
+                {
+                    OwnState = new ManifestBlockListState();
+                    OwnState.Id = OtherState.Id;
+                    OwnState.IsActive = true;
+                    OwnState.BlockState = OtherState.BlockState.Clone();
+
+                    Array.Resize(ref States, States.Length + 1);
+                    States[States.Length - 1] = OwnState;
+                }
+                else
+                {
+                    OwnState.BlockState.Union(OtherState.BlockState);
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Id"></param>
+        /// <returns></returns>
+        private ManifestBlockListState GetStateById(Guid Id)
+        {
+            foreach (ManifestBlockListState State in States)
+            {
+                if (State.Id == Id)
+                {
+                    return State;
+                }
+            }
+
+            return null;
         }
     }
 }

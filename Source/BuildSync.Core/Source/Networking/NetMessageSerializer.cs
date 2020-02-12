@@ -25,26 +25,17 @@ using System.IO;
 namespace BuildSync.Core.Networking
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessageSerializer
     {
-        private BinaryReader Reader;
-        private BinaryWriter Writer;
+        private readonly BinaryReader Reader;
+        private readonly BinaryWriter Writer;
 
-        public bool FailedOutOfMemory
-        {
-            get;
-            set;
-        } = false;
+        public bool FailedOutOfMemory { get; set; }
 
-        public bool IsLoading
-        {
-            get { return (Reader != null); }
-        }
+        public bool IsLoading => Reader != null;
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Reader"></param>
         public NetMessageSerializer(BinaryReader InReader)
@@ -53,7 +44,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Writer"></param>
         public NetMessageSerializer(BinaryWriter InWriter)
@@ -62,25 +52,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Value"></param>
-        public void SerializeEnum<T>(ref T Value)
-        {
-            int Id = (int)(object)Value;
-            if (IsLoading)
-            {
-                Id = Reader.ReadInt32();
-            }
-            else
-            {
-                Writer.Write(Id);
-            }
-            Value = (T)(object)Id;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref int Value)
@@ -96,7 +67,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref long Value)
@@ -112,7 +82,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref ulong Value)
@@ -128,7 +97,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref DateTime Value)
@@ -144,7 +112,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref bool Value)
@@ -160,7 +127,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref float Value)
@@ -176,7 +142,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref string Value)
@@ -192,7 +157,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref Guid Value)
@@ -211,7 +175,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public void Serialize(ref byte[] Value)
@@ -244,7 +207,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Value"></param>
         public bool Serialize(ref NetCachedArray Value, int Capacity, bool FailIfNoMemory = false)
@@ -263,6 +225,7 @@ namespace BuildSync.Core.Networking
                         FailedOutOfMemory = true;
                         return false;
                     }
+
                     Reader.BaseStream.Read(Value.Data, 0, Length);
                 }
             }
@@ -280,6 +243,24 @@ namespace BuildSync.Core.Networking
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Value"></param>
+        public void SerializeEnum<T>(ref T Value)
+        {
+            int Id = (int) (object) Value;
+            if (IsLoading)
+            {
+                Id = Reader.ReadInt32();
+            }
+            else
+            {
+                Writer.Write(Id);
+            }
+
+            Value = (T) (object) Id;
         }
     }
 }

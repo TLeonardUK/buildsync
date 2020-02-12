@@ -19,27 +19,24 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Scm;
-using BuildSync.Core.Utils;
-using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.IO;
 using System.Windows.Forms;
+using BuildSync.Core.Scm;
+using BuildSync.Core.Utils;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class AddScmWorkspaceForm : Form
     {
         /// <summary>
-        /// 
         /// </summary>
-        public ScmWorkspaceSettings Settings { get; private set; } = null;
+        public ScmWorkspaceSettings Settings { get; private set; }
 
         /// <summary>
-        /// 
         /// </summary>
         public AddScmWorkspaceForm()
         {
@@ -47,55 +44,13 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private void ValidateState()
-        {
-            AddButton.Enabled = (
-                StringUtils.IsValidNetAddress(ServerNameTextBox.Text) &&
-                (PasswordTextBox.Text.Trim().Length == 0 || UsernameTextBox.Text.Trim().Length > 0) &&
-                Directory.Exists(LocalFolderTextBox.Text)
-            );
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void DataStateChanged(object sender, EventArgs e)
-        {
-            ValidateState();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void BrowseClicked(object sender, EventArgs e)
-        {
-            CommonOpenFileDialog Dialog = new CommonOpenFileDialog();
-            Dialog.AllowNonFileSystemItems = true;
-            Dialog.Multiselect = true;
-            Dialog.IsFolderPicker = true;
-            Dialog.Title = "Select Workspace Folder";
-
-            if (Dialog.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                LocalFolderTextBox.Text = Dialog.FileName;
-            }
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void AddClicked(object sender, EventArgs e)
         {
             Settings = new ScmWorkspaceSettings();
-            Settings.ProviderType = (ScmProviderType)WorkspaceTypeComboBox.SelectedIndex;
+            Settings.ProviderType = (ScmProviderType) WorkspaceTypeComboBox.SelectedIndex;
             Settings.Server = ServerNameTextBox.Text.Trim();
             Settings.Username = UsernameTextBox.Text.Trim();
             Settings.Password = PasswordTextBox.Text.Trim();
@@ -116,7 +71,33 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BrowseClicked(object sender, EventArgs e)
+        {
+            CommonOpenFileDialog Dialog = new CommonOpenFileDialog();
+            Dialog.AllowNonFileSystemItems = true;
+            Dialog.Multiselect = true;
+            Dialog.IsFolderPicker = true;
+            Dialog.Title = "Select Workspace Folder";
+
+            if (Dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                LocalFolderTextBox.Text = Dialog.FileName;
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DataStateChanged(object sender, EventArgs e)
+        {
+            ValidateState();
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -128,7 +109,17 @@ namespace BuildSync.Client.Forms
             {
                 WorkspaceTypeComboBox.Items.Add(str);
             }
+
             WorkspaceTypeComboBox.SelectedIndex = 0;
+        }
+
+        /// <summary>
+        /// </summary>
+        private void ValidateState()
+        {
+            AddButton.Enabled = StringUtils.IsValidNetAddress(ServerNameTextBox.Text) &&
+                                (PasswordTextBox.Text.Trim().Length == 0 || UsernameTextBox.Text.Trim().Length > 0) &&
+                                Directory.Exists(LocalFolderTextBox.Text);
         }
     }
 }

@@ -21,62 +21,29 @@
 
 namespace BuildSync.Core.Utils
 {
-
     /// <summary>
-    /// 
     /// </summary>
     public class RateTracker
     {
-        private object LockObject = new object();
-
-        private long TotalBytesSent = 0;
-        private long TotalBytesRecieved = 0;
-
-        private ulong BandwidthTimeStart = 0;
-        private long BandwidthTimeStartBytesSent = 0;
-        private long BandwidthTimeStartBytesRecieved = 0;
-
-        private double BandwidthSent = 0;
-        private double BandwidthRecieved = 0;
-
-        private double PeakBandwidthSent = 0;
-        private double PeakBandwidthRecieved = 0;
-
-        private RollingAverage AverageSent = new RollingAverage(10);
         private RollingAverage AverageRecieved = new RollingAverage(10);
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public long RateIn
-        {
-            get
-            {
-                lock (LockObject)
-                {
-                    Update();
-                    return (long)BandwidthRecieved;
-                }
-            }
-        }
+        private RollingAverage AverageSent = new RollingAverage(10);
+        private double BandwidthRecieved;
+
+        private double BandwidthSent;
+
+        private ulong BandwidthTimeStart;
+        private long BandwidthTimeStartBytesRecieved;
+        private long BandwidthTimeStartBytesSent;
+        private readonly object LockObject = new object();
+        private double PeakBandwidthRecieved;
+
+        private double PeakBandwidthSent;
+        private long TotalBytesRecieved;
+
+        private long TotalBytesSent;
 
         /// <summary>
-        /// 
-        /// </summary>
-        public long RateOut
-        {
-            get
-            {
-                lock (LockObject)
-                {
-                    Update();
-                    return (long)BandwidthSent;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         public long PeakRateIn
         {
@@ -85,13 +52,12 @@ namespace BuildSync.Core.Utils
                 lock (LockObject)
                 {
                     Update();
-                    return (long)PeakBandwidthRecieved;
+                    return (long) PeakBandwidthRecieved;
                 }
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public long PeakRateOut
         {
@@ -100,13 +66,40 @@ namespace BuildSync.Core.Utils
                 lock (LockObject)
                 {
                     Update();
-                    return (long)PeakBandwidthSent;
+                    return (long) PeakBandwidthSent;
                 }
             }
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public long RateIn
+        {
+            get
+            {
+                lock (LockObject)
+                {
+                    Update();
+                    return (long) BandwidthRecieved;
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        public long RateOut
+        {
+            get
+            {
+                lock (LockObject)
+                {
+                    Update();
+                    return (long) BandwidthSent;
+                }
+            }
+        }
+
+        /// <summary>
         /// </summary>
         public long TotalIn
         {
@@ -121,7 +114,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public long TotalOut
         {
@@ -136,14 +128,12 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public RateTracker()
         {
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="MaxSamples"></param>
         public RateTracker(int MaxSamples)
@@ -153,21 +143,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Sent"></param>
-        /// <returns></returns>
-        public void Out(long Bytes)
-        {
-            lock (LockObject)
-            {
-                TotalBytesSent += Bytes;
-                Update();
-            }
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Sent"></param>
         /// <returns></returns>
@@ -181,7 +156,19 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Sent"></param>
+        /// <returns></returns>
+        public void Out(long Bytes)
+        {
+            lock (LockObject)
+            {
+                TotalBytesSent += Bytes;
+                Update();
+            }
+        }
+
+        /// <summary>
         /// </summary>
         public void Reset()
         {
@@ -200,13 +187,12 @@ namespace BuildSync.Core.Utils
                 PeakBandwidthSent = 0;
                 PeakBandwidthRecieved = 0;
 
-                RollingAverage AverageSent = new RollingAverage(10);
-                RollingAverage AverageRecieved = new RollingAverage(10);
+                AverageSent = new RollingAverage(10);
+                AverageRecieved = new RollingAverage(10);
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void Update()
         {
@@ -230,13 +216,14 @@ namespace BuildSync.Core.Utils
                 AverageSent.Add(SentPs);
                 AverageRecieved.Add(RecievedPs);
 
-                BandwidthSent = AverageSent.Get();// (BandwidthSent * 0.5) + ((Sent * Delta) * 0.5);
-                BandwidthRecieved = AverageRecieved.Get();// (BandwidthRecieved * 0.5) + ((Recieved * Delta) * 0.5);
+                BandwidthSent = AverageSent.Get(); // (BandwidthSent * 0.5) + ((Sent * Delta) * 0.5);
+                BandwidthRecieved = AverageRecieved.Get(); // (BandwidthRecieved * 0.5) + ((Recieved * Delta) * 0.5);
 
                 if (SentPs > PeakBandwidthSent)
                 {
                     PeakBandwidthSent = SentPs;
                 }
+
                 if (RecievedPs > PeakBandwidthRecieved)
                 {
                     PeakBandwidthRecieved = RecievedPs;

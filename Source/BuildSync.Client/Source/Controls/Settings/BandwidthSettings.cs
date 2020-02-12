@@ -24,15 +24,20 @@ using System;
 namespace BuildSync.Client.Controls.Settings
 {
     /// <summary>
-    ///     Control thats displayed in the <see cref="SettingsForm"/> to allow the user to configure all
+    ///     Control thats displayed in the <see cref="SettingsForm" /> to allow the user to configure all
     ///     bandwidth settings.
     /// </summary>
     public partial class BandwidthSettings : SettingsControlBase
     {
-        private bool SkipValidity = false;
+        private readonly bool SkipValidity;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="BandwidthSettings"/> class.
+        ///     Gets the title displayed over the settings when this control is displayed.
+        /// </summary>
+        public override string GroupName => "Bandwidth Settings";
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="BandwidthSettings" /> class.
         /// </summary>
         public BandwidthSettings()
         {
@@ -51,18 +56,15 @@ namespace BuildSync.Client.Controls.Settings
         }
 
         /// <summary>
-        ///     Gets the title displayed over the settings when this control is displayed.
         /// </summary>
-        public override string GroupName
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StateChanged(object sender, EventArgs e)
         {
-            get
-            {
-                return "Bandwidth Settings";
-            }
+            UpdateValidityState();
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void UpdateValidityState()
         {
@@ -71,22 +73,12 @@ namespace BuildSync.Client.Controls.Settings
                 return;
             }
 
-            Program.Settings.BandwidthMaxUp = (long)MaxUploadBandwidthBox.Value * 1024;
-            Program.Settings.BandwidthMaxDown = (long)MaxDownloadBandwidthBox.Value * 1024;
-            Program.Settings.BandwidthStartTimeHour = (int)BandwidthTimespanStartHourBox.Value;
-            Program.Settings.BandwidthStartTimeMin = (int)BandwidthTimespanStartMinBox.Value;
-            Program.Settings.BandwidthEndTimeHour = (int)BandwidthTimespanEndHourBox.Value;
-            Program.Settings.BandwidthEndTimeMin = (int)BandwidthTimespanEndMinBox.Value;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void StateChanged(object sender, EventArgs e)
-        {
-            UpdateValidityState();
+            Program.Settings.BandwidthMaxUp = (long) MaxUploadBandwidthBox.Value * 1024;
+            Program.Settings.BandwidthMaxDown = (long) MaxDownloadBandwidthBox.Value * 1024;
+            Program.Settings.BandwidthStartTimeHour = (int) BandwidthTimespanStartHourBox.Value;
+            Program.Settings.BandwidthStartTimeMin = (int) BandwidthTimespanStartMinBox.Value;
+            Program.Settings.BandwidthEndTimeHour = (int) BandwidthTimespanEndHourBox.Value;
+            Program.Settings.BandwidthEndTimeMin = (int) BandwidthTimespanEndMinBox.Value;
         }
     }
 }

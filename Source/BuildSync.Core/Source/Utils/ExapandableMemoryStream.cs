@@ -25,7 +25,6 @@ using System.Reflection;
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     public class ExpandableMemoryStream : MemoryStream
     {

@@ -24,15 +24,20 @@ using System;
 namespace BuildSync.Client.Controls.Settings
 {
     /// <summary>
-    ///     Control thats displayed in the <see cref="SettingsForm"/> to allow the user to configure all
+    ///     Control thats displayed in the <see cref="SettingsForm" /> to allow the user to configure all
     ///     general settings.
     /// </summary>
     public partial class GeneralSettings : SettingsControlBase
     {
-        private bool SkipValidity = false;
+        private readonly bool SkipValidity;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="GeneralSettings"/> class.
+        ///     Gets the title displayed over the settings when this control is displayed.
+        /// </summary>
+        public override string GroupName => "General Settings";
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="GeneralSettings" /> class.
         /// </summary>
         public GeneralSettings()
         {
@@ -51,18 +56,15 @@ namespace BuildSync.Client.Controls.Settings
         }
 
         /// <summary>
-        ///     Gets the title displayed over the settings when this control is displayed.
         /// </summary>
-        public override string GroupName
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StateChanged(object sender, EventArgs e)
         {
-            get
-            {
-                return "General Settings";
-            }
+            UpdateValidityState();
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void UpdateValidityState()
         {
@@ -77,16 +79,6 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.SkipValidation = skipVerificationCheckBox.Checked;
             Program.Settings.SkipDiskAllocation = skipInitialization.Checked;
             Program.Settings.ShowInternalDownloads = showInternalDownloadsCheckBox.Checked;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void StateChanged(object sender, EventArgs e)
-        {
-            UpdateValidityState();
         }
     }
 }

@@ -19,23 +19,19 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using Microsoft.Win32;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     public static class ProcessUtils
     {
-        [DllImport("kernel32.dll")]
-        private static extern bool AttachConsole(int dwProcessId);
         private const int ATTACH_PARENT_PROCESS = -1;
 
         /// <summary>
-        /// 
         /// </summary>
         public static void AttachToParentConsole()
         {
@@ -43,7 +39,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Launch"></param>
         public static void SetLaunchOnStartup(string AppName, bool Launch)
@@ -59,5 +54,8 @@ namespace BuildSync.Core.Utils
                 rk.DeleteValue(AppName, false);
             }
         }
+
+        [DllImport("kernel32.dll")]
+        private static extern bool AttachConsole(int dwProcessId);
     }
 }

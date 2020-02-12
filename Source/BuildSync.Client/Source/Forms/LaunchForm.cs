@@ -19,30 +19,37 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Downloads;
-using BuildSync.Core.Manifests;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BuildSync.Core.Downloads;
+using BuildSync.Core.Manifests;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Forms
 {
-
     /// <summary>
-    /// 
     /// </summary>
     public partial class LaunchForm : Form
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public ManifestDownloadState Downloader;
-        public DownloadState DownloadState;
-
-        private BuildSettings Settings;
 
         /// <summary>
         /// 
+        /// </summary>
+        public DownloadState DownloadState;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private BuildSettings Settings;
+
+        /// <summary>
         /// </summary>
         public LaunchForm()
         {
@@ -50,7 +57,15 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FormHasClosed(object sender, FormClosedEventArgs e)
+        {
+            Program.SaveSettings();
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name=""></param>
         private bool Install(BuildLaunchMode Mode)
@@ -58,14 +73,16 @@ namespace BuildSync.Client.Forms
             string ResultMessage = "";
             bool Success = true;
 
-            Task work = Task.Run(() =>
-            {
-                Success = Mode.Install(Downloader.LocalFolder, ref ResultMessage);
-                if (Success)
+            Task work = Task.Run(
+                () =>
                 {
-                    Downloader.Installed = true;
+                    Success = Mode.Install(Downloader.LocalFolder, ref ResultMessage);
+                    if (Success)
+                    {
+                        Downloader.Installed = true;
+                    }
                 }
-            });
+            );
 
             ProgressForm form = new ProgressForm(work);
             form.ShowDialog();
@@ -79,7 +96,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name=""></param>
         private void Launch(BuildLaunchMode Mode)
@@ -102,75 +118,21 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnShown(object sender, EventArgs e)
+        private void LaunchClicked(object sender, EventArgs e)
         {
-            string ConfigFilePath = Path.Combine(Downloader.LocalFolder, "buildsync.json");
-            if (!File.Exists(ConfigFilePath))
+            if (ModesTreeView.SelectedNode == null)
             {
-                MessageBox.Show("Build has no configured launch settings. Ensure a buildsync.json file is added to all builds.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
                 return;
             }
 
-            if (!BuildSettings.Load<BuildSettings>(ConfigFilePath, out Settings))
-            {
-                MessageBox.Show("The included buildsync.json file could not be loaded, it may be malformed.", "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
-            }
-
-            List<BuildLaunchMode> Modes;
-            try
-            {
-                Modes = Settings.Compile();
-
-                // Add various internal variables to pass in bits of info.
-                foreach (BuildLaunchMode Mode in Modes)
-                {
-                    Mode.AddStringVariable("INSTALL_DEVICE_NAME", DownloadState.InstallDeviceName);
-                    Mode.AddStringVariable("BUILD_DIR", Downloader.LocalFolder);
-                }
-            }
-            catch (InvalidOperationException Ex)
-            {
-                MessageBox.Show("Error encountered while evaluating launch settings:\n\n" + Ex.Message, "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
-            }
-
-            if (Modes.Count == 0)
-            {
-                MessageBox.Show("None of the launch modes are usable.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
-            }
-            else if (Modes.Count == 1 && Modes[0].Variables.Count == 0)
-            {
-                // Instant launch, nothing for us to select really.
-                Launch(Modes[0]);
-            }
-            else
-            {
-                // Show options to launch.
-                foreach (BuildLaunchMode Mode in Modes)
-                {
-                    TreeNode Node = new TreeNode();
-                    Node.Text = Mode.Name;
-                    Node.Tag = Mode;
-                    ModesTreeView.Nodes.Add(Node);
-                }
-
-                // Select first mode.
-                ModesTreeView.SelectedNode = ModesTreeView.Nodes[0];
-            }
+            BuildLaunchMode Mode = ModesTreeView.SelectedNode.Tag as BuildLaunchMode;
+            Launch(Mode);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -217,45 +179,45 @@ namespace BuildSync.Client.Forms
                     switch (Var.DataType)
                     {
                         case BuildLaunchVariableDataType.String:
+                        {
+                            if (Var.Options.Count == 0)
                             {
-                                if (Var.Options.Count == 0)
-                                {
-                                    GridObj.Add(new DynamicPropertyGridProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Var.Value, Var.Value, false, true));
-                                }
-                                else
-                                {
-                                    GridObj.Add(new DynamicPropertyGridOptionsProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Var.Value, Var.Value, false, true, Var.Options));
-                                }
-
-                                break;
+                                GridObj.Add(new DynamicPropertyGridProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Var.Value, Var.Value, false, true));
                             }
+                            else
+                            {
+                                GridObj.Add(new DynamicPropertyGridOptionsProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Var.Value, Var.Value, false, true, Var.Options));
+                            }
+
+                            break;
+                        }
                         case BuildLaunchVariableDataType.Float:
-                            {
-                                float Value = 0.0f;
-                                float.TryParse(Var.Value, out Value);
+                        {
+                            float Value = 0.0f;
+                            float.TryParse(Var.Value, out Value);
 
-                                GridObj.Add(new DynamicPropertyGridRangedProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true, Var.MinValue, Var.MaxValue));
+                            GridObj.Add(new DynamicPropertyGridRangedProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true, Var.MinValue, Var.MaxValue));
 
-                                break;
-                            }
+                            break;
+                        }
                         case BuildLaunchVariableDataType.Int:
-                            {
-                                int Value = 0;
-                                int.TryParse(Var.Value, out Value);
+                        {
+                            int Value = 0;
+                            int.TryParse(Var.Value, out Value);
 
-                                GridObj.Add(new DynamicPropertyGridRangedProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true, Var.MinValue, Var.MaxValue));
+                            GridObj.Add(new DynamicPropertyGridRangedProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true, Var.MinValue, Var.MaxValue));
 
-                                break;
-                            }
+                            break;
+                        }
                         case BuildLaunchVariableDataType.Bool:
-                            {
-                                bool Value = false;
-                                bool.TryParse(Var.Value, out Value);
+                        {
+                            bool Value = false;
+                            bool.TryParse(Var.Value, out Value);
 
-                                GridObj.Add(new DynamicPropertyGridProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true));
+                            GridObj.Add(new DynamicPropertyGridProperty(Var.Name, Var.FriendlyName, Var.FriendlyDescription, Var.FriendlyCategory, Value, Value, false, true));
 
-                                break;
-                            }
+                            break;
+                        }
                     }
                 }
             }
@@ -264,23 +226,81 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void LaunchClicked(object sender, EventArgs e)
+        private void OnShown(object sender, EventArgs e)
         {
-            if (ModesTreeView.SelectedNode == null)
+            string ConfigFilePath = Path.Combine(Downloader.LocalFolder, "buildsync.json");
+            if (!File.Exists(ConfigFilePath))
             {
+                MessageBox.Show("Build has no configured launch settings. Ensure a buildsync.json file is added to all builds.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Close();
                 return;
             }
 
-            BuildLaunchMode Mode = ModesTreeView.SelectedNode.Tag as BuildLaunchMode;
-            Launch(Mode);
+            if (!SettingsBase.Load(ConfigFilePath, out Settings))
+            {
+                MessageBox.Show("The included buildsync.json file could not be loaded, it may be malformed.", "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Close();
+                return;
+            }
+
+            List<BuildLaunchMode> Modes;
+            try
+            {
+                Modes = Settings.Compile();
+
+                // Add various internal variables to pass in bits of info.
+                foreach (BuildLaunchMode Mode in Modes)
+                {
+                    Mode.AddStringVariable("INSTALL_DEVICE_NAME", DownloadState.InstallDeviceName);
+                    Mode.AddStringVariable("BUILD_DIR", Downloader.LocalFolder);
+                }
+            }
+            catch (InvalidOperationException Ex)
+            {
+                MessageBox.Show("Error encountered while evaluating launch settings:\n\n" + Ex.Message, "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Close();
+                return;
+            }
+
+            if (Modes.Count == 0)
+            {
+                MessageBox.Show("None of the launch modes are usable.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Close();
+            }
+            else if (Modes.Count == 1 && Modes[0].Variables.Count == 0)
+            {
+                // Instant launch, nothing for us to select really.
+                Launch(Modes[0]);
+            }
+            else
+            {
+                // Show options to launch.
+                foreach (BuildLaunchMode Mode in Modes)
+                {
+                    TreeNode Node = new TreeNode();
+                    Node.Text = Mode.Name;
+                    Node.Tag = Mode;
+                    ModesTreeView.Nodes.Add(Node);
+                }
+
+                // Select first mode.
+                ModesTreeView.SelectedNode = ModesTreeView.Nodes[0];
+            }
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="e"></param>
+        private void PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        {
+            StoreSettings();
+        }
+
+        /// <summary>
         /// </summary>
         private void StoreSettings()
         {
@@ -330,33 +350,14 @@ namespace BuildSync.Client.Forms
             {
                 LaunchSettings.Values.Add(Var.Name, Var.Value);
             }
+
             Program.Settings.LaunchSettings.Add(LaunchSettings);
 
             // If over max launch settings prune.
-            while (Program.Settings.LaunchSettings.Count > BuildSync.Client.Settings.MaxLaunchSettings)
+            while (Program.Settings.LaunchSettings.Count > Client.Settings.MaxLaunchSettings)
             {
                 Program.Settings.LaunchSettings.RemoveAt(0);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="e"></param>
-        private void PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
-        {
-            StoreSettings();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void FormHasClosed(object sender, FormClosedEventArgs e)
-        {
-            Program.SaveSettings();
         }
     }
 }

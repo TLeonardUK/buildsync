@@ -19,23 +19,27 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Cmd
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class Program
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Args"></param>
         public static void Main(string[] Args)
         {
             try
             {
                 CommandIPC Ipc = new CommandIPC("buildsync-client", true);
 
-                RecievePartialIPCResponseEventHandler ResponseHandler = (string Response) =>
-                {
-                    Console.Write(Response);
-                };
+                RecievePartialIPCResponseEventHandler ResponseHandler = Response => { Console.Write(Response); };
 
                 string Result = "";
                 if (!Ipc.Send("RunCommand", Args, out Result, ResponseHandler))

@@ -25,17 +25,20 @@ using System.Linq;
 
 namespace BuildSync.Core.Utils
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public static class ListUtils
     {
         /// <summary>
-        /// 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="listToClone"></param>
         /// <returns></returns>
-        public static IList<T> Clone<T>(this IList<T> listToClone) where T : ICloneable
+        public static IList<T> Clone<T>(this IList<T> listToClone)
+            where T : ICloneable
         {
-            return listToClone.Select(item => (T)item.Clone()).ToList();
+            return listToClone.Select(item => (T) item.Clone()).ToList();
         }
     }
 }

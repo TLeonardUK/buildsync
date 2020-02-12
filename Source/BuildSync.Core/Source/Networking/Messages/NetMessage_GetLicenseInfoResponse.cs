@@ -24,15 +24,17 @@ using BuildSync.Core.Licensing;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_GetLicenseInfoResponse : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public License License = new License();
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref License.LicensedTo);

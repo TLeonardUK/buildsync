@@ -29,7 +29,6 @@ namespace BuildSync.Server.Commands
     public class CommandLineListUsersOptions
     {
         /// <summary>
-        /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
@@ -45,12 +44,13 @@ namespace BuildSync.Server.Commands
                     {
                         Permissions += ",";
                     }
-                    Permissions += Permission.Type.ToString() + "@\"" + Permission.VirtualPath + "\"";
+
+                    Permissions += Permission.Type + "@\"" + Permission.VirtualPath + "\"";
                 }
 
                 IpcClient.Respond(string.Format(Format, user.Username, Permissions));
-
             }
+
             IpcClient.Respond("");
 
             Program.SaveSettings();

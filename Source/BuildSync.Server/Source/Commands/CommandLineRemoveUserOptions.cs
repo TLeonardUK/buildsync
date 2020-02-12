@@ -32,7 +32,6 @@ namespace BuildSync.Server.Commands
         public string Username { get; set; } = "";
 
         /// <summary>
-        /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {

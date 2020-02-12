@@ -19,111 +19,49 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Manifests
 {
     /// <summary>
-    /// 
     /// </summary>
     public class BuildManifestRegistry
     {
-        private string RootPath;
-        private int MaximumManifests;
-
         /// <summary>
-        /// 
-        /// </summary>
-        public List<BuildManifest> Manifests = new List<BuildManifest>();
-
-        /// <summary>
-        /// 
         /// </summary>
         public VirtualFileSystem ManifestFileSystem = new VirtualFileSystem();
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool ManifestLastSeenTimesDirty = false;
+        public bool ManifestLastSeenTimesDirty;
 
         /// <summary>
-        /// 
         /// </summary>
-        public Dictionary<string, DateTime> ManifestLastSeenTimes
-        {
-            get;
-            set;
-        } = new Dictionary<string, DateTime>();
+        public List<BuildManifest> Manifests = new List<BuildManifest>();
+
+        private int MaximumManifests;
+        private string RootPath;
 
         /// <summary>
-        /// 
         /// </summary>
-        public void RegisterManifest(BuildManifest Manifest)
+        public Dictionary<string, DateTime> ManifestLastSeenTimes { get; set; } = new Dictionary<string, DateTime>();
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Manifest"></param>
+        public void AddManifest(BuildManifest Manifest)
         {
-            string FilePath = Path.Combine(RootPath, Manifest.Guid.ToString() + ".manifest");
+            ManifestFileSystem.InsertNode(Manifest.VirtualPath, DateTime.UtcNow, Manifest);
+            Manifests.Add(Manifest);
 
-            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Registering manifest: {0}", FilePath);
-
-            Manifest.WriteToFile(FilePath);
-            AddManifest(Manifest);
+            PruneManifests();
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        public void UnregisterManifest(Guid ManifestId)
-        {
-            BuildManifest Manifest = GetManifestById(ManifestId);
-            if (Manifest == null)
-            {
-                return;
-            }
-
-            string FilePath = Path.Combine(RootPath, ManifestId.ToString() + ".manifest");
-            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Unregistering manifest: {0}", FilePath);
-
-            try
-            {
-                File.Delete(FilePath);
-            }
-            catch (Exception Ex)
-            {
-                Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to delete unregistered manifest file {0} with error: {1}", FilePath, Ex.Message);
-            }
-
-            ManifestFileSystem.RemoveNode(Manifest.VirtualPath);
-            Manifests.Remove(Manifest);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<string> GetVirtualPathChildren(string Path)
-        {
-            return ManifestFileSystem.GetChildrenNames(Path);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        /// <returns></returns>
-        public BuildManifest GetManifestByPath(string Path)
-        {
-            VirtualFileSystemNode Node = ManifestFileSystem.GetNodeByPath(Path);
-            if (Node != null)
-            {
-                return Node.Metadata as BuildManifest;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Id"></param>
         /// <returns></returns>
@@ -136,23 +74,33 @@ namespace BuildSync.Core.Manifests
                     return Manifest;
                 }
             }
+
             return null;
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <param name="Manifest"></param>
-        public void AddManifest(BuildManifest Manifest)
+        /// <param name="Path"></param>
+        /// <returns></returns>
+        public BuildManifest GetManifestByPath(string Path)
         {
-            ManifestFileSystem.InsertNode(Manifest.VirtualPath, DateTime.UtcNow, Manifest);
-            Manifests.Add(Manifest);
+            VirtualFileSystemNode Node = ManifestFileSystem.GetNodeByPath(Path);
+            if (Node != null)
+            {
+                return Node.Metadata as BuildManifest;
+            }
 
-            PruneManifests();
+            return null;
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public List<string> GetVirtualPathChildren(string Path)
+        {
+            return ManifestFileSystem.GetChildrenNames(Path);
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="ManifestId"></param>
         public void MarkAsSeen(Guid ManifestId)
@@ -174,7 +122,96 @@ namespace BuildSync.Core.Manifests
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public void Open(string Path, int InMaxManifests)
+        {
+            MaximumManifests = InMaxManifests;
+
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading build manfiests from: {0}", Path);
+
+            UpdateStoragePath(Path);
+
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+
+            string[] ManifestFilePaths = Directory.GetFiles(Path, "*.manifest", SearchOption.AllDirectories);
+            foreach (string FilePath in ManifestFilePaths)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading manifest: {0}", FilePath);
+
+                try
+                {
+                    BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath);
+                    AddManifest(Manifest);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read manifest '{0}', due to error {1}, deleting manifest.", FilePath, ex.Message);
+                    File.Delete(FilePath);
+                }
+            }
+
+            watch.Stop();
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loaded all manifests in {0}ms", watch.ElapsedMilliseconds);
+
+            PruneManifests();
+        }
+
+        /// <summary>
+        /// </summary>
+        public void PruneManifests()
+        {
+            if (Manifests.Count <= MaximumManifests)
+            {
+                return;
+            }
+
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Pruning manifests to max limits");
+
+            // Create a flat list of folders and all builds they contain, we will prune starting from the
+            // folders with the largest number of builds.
+            Dictionary<string, List<BuildManifest>> Folders = new Dictionary<string, List<BuildManifest>>();
+            foreach (BuildManifest Manifest in Manifests)
+            {
+                string Folder = VirtualFileSystem.GetParentPath(Manifest.VirtualPath);
+                if (!Folders.ContainsKey(Folder))
+                {
+                    Folders.Add(Folder, new List<BuildManifest>());
+                }
+
+                List<BuildManifest> List = Folders[Folder];
+                List.Add(Manifest);
+            }
+
+            // Sort all folders.
+            foreach (KeyValuePair<string, List<BuildManifest>> Entry in Folders)
+            {
+                Entry.Value.Sort((Item1, Item2) => -Item1.CreateTime.CompareTo(Item2.CreateTime));
+            }
+
+            // Prune until we are back in space constraints.
+            while (Manifests.Count > MaximumManifests)
+            {
+                // Find folder with the most entries.
+                List<BuildManifest> Folder = null;
+                foreach (KeyValuePair<string, List<BuildManifest>> Entry in Folders)
+                {
+                    if (Folder == null || Entry.Value.Count > Folder.Count)
+                    {
+                        Folder = Entry.Value;
+                    }
+                }
+
+                // Last entry is oldests.
+                BuildManifest Manifest = Folder[Folder.Count - 1];
+                Folder.RemoveAt(Folder.Count - 1);
+
+                UnregisterManifest(Manifest.Guid);
+            }
+        }
+
+        /// <summary>
         /// </summary>
         public void PruneUnseenManifests(int MaxDaysOld)
         {
@@ -210,61 +247,44 @@ namespace BuildSync.Core.Manifests
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        public void PruneManifests()
+        public void RegisterManifest(BuildManifest Manifest)
         {
-            if (Manifests.Count <= MaximumManifests)
+            string FilePath = Path.Combine(RootPath, Manifest.Guid + ".manifest");
+
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Registering manifest: {0}", FilePath);
+
+            Manifest.WriteToFile(FilePath);
+            AddManifest(Manifest);
+        }
+
+        /// <summary>
+        /// </summary>
+        public void UnregisterManifest(Guid ManifestId)
+        {
+            BuildManifest Manifest = GetManifestById(ManifestId);
+            if (Manifest == null)
             {
                 return;
             }
 
-            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Pruning manifests to max limits");
+            string FilePath = Path.Combine(RootPath, ManifestId + ".manifest");
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Unregistering manifest: {0}", FilePath);
 
-            // Create a flat list of folders and all builds they contain, we will prune starting from the
-            // folders with the largest number of builds.
-            Dictionary<string, List<BuildManifest>> Folders = new Dictionary<string, List<BuildManifest>>();
-            foreach (BuildManifest Manifest in Manifests)
+            try
             {
-                string Folder = VirtualFileSystem.GetParentPath(Manifest.VirtualPath);
-                if (!Folders.ContainsKey(Folder))
-                {
-                    Folders.Add(Folder, new List<BuildManifest>());
-                }
-
-                List<BuildManifest> List = Folders[Folder];
-                List.Add(Manifest);
+                File.Delete(FilePath);
+            }
+            catch (Exception Ex)
+            {
+                Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to delete unregistered manifest file {0} with error: {1}", FilePath, Ex.Message);
             }
 
-            // Sort all folders.
-            foreach (var Entry in Folders)
-            {
-                Entry.Value.Sort((Item1, Item2) => -Item1.CreateTime.CompareTo(Item2.CreateTime));
-            }
-
-            // Prune until we are back in space constraints.
-            while (Manifests.Count > MaximumManifests)
-            {
-                // Find folder with the most entries.
-                List<BuildManifest> Folder = null;
-                foreach (var Entry in Folders)
-                {
-                    if (Folder == null || Entry.Value.Count > Folder.Count)
-                    {
-                        Folder = Entry.Value;
-                    }
-                }
-
-                // Last entry is oldests.
-                BuildManifest Manifest = Folder[Folder.Count - 1];
-                Folder.RemoveAt(Folder.Count - 1);
-
-                UnregisterManifest(Manifest.Guid);
-            }
+            ManifestFileSystem.RemoveNode(Manifest.VirtualPath);
+            Manifests.Remove(Manifest);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="NewDirectory"></param>
         public void UpdateStoragePath(string NewDirectory)
@@ -275,44 +295,6 @@ namespace BuildSync.Core.Manifests
             {
                 Directory.CreateDirectory(RootPath);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public void Open(string Path, int InMaxManifests)
-        {
-            MaximumManifests = InMaxManifests;
-
-            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading build manfiests from: {0}", Path);
-
-            UpdateStoragePath(Path);
-
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-
-            string[] ManifestFilePaths = Directory.GetFiles(Path, "*.manifest", SearchOption.AllDirectories);
-            foreach (string FilePath in ManifestFilePaths)
-            {
-                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading manifest: {0}", FilePath);
-
-                try
-                {
-                    BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath);
-                    AddManifest(Manifest);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read manifest '{0}', due to error {1}, deleting manifest.", FilePath, ex.Message);
-                    File.Delete(FilePath);
-                }
-            }
-
-            watch.Stop();
-            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loaded all manifests in {0}ms", watch.ElapsedMilliseconds);
-
-            PruneManifests();
         }
     }
 }

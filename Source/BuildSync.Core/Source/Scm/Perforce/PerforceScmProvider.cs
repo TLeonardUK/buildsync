@@ -19,93 +19,61 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
-using Perforce.P4;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using BuildSync.Core.Utils;
+using Perforce.P4;
 
 namespace BuildSync.Core.Scm.Perforce
 {
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Repo"></param>
     public delegate void PerforceCommandHandler(Repository Repo);
 
     /// <summary>
-    /// 
     /// </summary>
     public class PerforceScmProvider : IScmProvider
     {
         /// <summary>
-        /// 
-        /// </summary>
-        private BlockingCollection<PerforceCommandHandler> CommandQueue = new BlockingCollection<PerforceCommandHandler>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private Server ServerInstance = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private Repository Repository = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Server { get; private set; } = "";
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Username { get; private set; } = "";
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Password { get; private set; } = "";
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Root { get; private set; } = "";
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private Thread CommandThread = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private ulong LastRequestedSyncTime = 0;
-
-        /// <summary>
-        /// 
         /// </summary>
         private const int SYNC_TIME_RECHECK_INTERVAL = 2 * 60 * 1000;
 
         /// <summary>
-        /// 
-        /// </summary>
-        private DateTime SyncTime = DateTime.MinValue;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool SyncTimeRequesting = false;
-
-        /// <summary>
-        /// 
         /// </summary>
         private string ClientName = "";
 
         /// <summary>
-        /// 
+        /// </summary>
+        private readonly BlockingCollection<PerforceCommandHandler> CommandQueue = new BlockingCollection<PerforceCommandHandler>();
+
+        /// <summary>
+        /// </summary>
+        private Thread CommandThread;
+
+        /// <summary>
+        /// </summary>
+        private ulong LastRequestedSyncTime;
+
+        /// <summary>
+        /// </summary>
+        private Repository Repository;
+
+        /// <summary>
+        /// </summary>
+        private Server ServerInstance;
+
+        /// <summary>
+        /// </summary>
+        private DateTime SyncTime = DateTime.MinValue;
+
+        /// <summary>
+        /// </summary>
+        private bool SyncTimeRequesting;
+
+        /// <summary>
         /// </summary>
         /// <param name="InServerName"></param>
         /// <param name="InUsername"></param>
@@ -123,41 +91,122 @@ namespace BuildSync.Core.Scm.Perforce
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public string Server { get; } = "";
+
+        /// <summary>
+        /// </summary>
+        public string Username { get; } = "";
+
+        /// <summary>
+        /// </summary>
+        public string Password { get; } = "";
+
+        /// <summary>
+        /// </summary>
+        public string Root { get; } = "";
+
+        /// <summary>
         /// </summary>
         public void Poll()
         {
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <returns></returns>
+        public DateTime GetSyncTime()
+        {
+            if (ClientName == string.Empty)
+            {
+                return DateTime.MinValue;
+            }
+
+            if (SyncTimeRequesting == false)
+            {
+                SyncTimeRequesting = true;
+
+                ulong Current = TimeUtils.Ticks;
+                ulong Elapsed = Current - LastRequestedSyncTime;
+                if (Elapsed > SYNC_TIME_RECHECK_INTERVAL)
+                {
+                    QueueAndAwaitCommand(
+                        Repo =>
+                        {
+                            try
+                            {
+                                Logger.Log(LogLevel.Info, LogCategory.Scm, "Requesting sync time of perforce workspace: {0}", ClientName);
+
+                                ChangesCmdOptions Options = new ChangesCmdOptions(ChangesCmdFlags.IncludeTime, null, 1, ChangeListStatus.Submitted, null);
+
+                                FileSpec FilePath = new FileSpec(new DepotPath("//..."), VersionSpec.Have);
+                                IList<Changelist> Changes = Repo.GetChangelists(Options, FilePath);
+                                if (Changes.Count > 0)
+                                {
+                                    SyncTime = Changes[0].ModifiedDate;
+                                    Logger.Log(LogLevel.Info, LogCategory.Scm, "Workspace '{0}' last have changeset has timestamp {1}", ClientName, SyncTime.ToString());
+                                }
+                            }
+                            finally
+                            {
+                                SyncTimeRequesting = false;
+                            }
+                        }
+                    );
+                }
+
+                LastRequestedSyncTime = Current;
+            }
+
+            return SyncTime;
+        }
+
+        /// <summary>
+        /// </summary>
+        public void Terminate()
+        {
+            CommandQueue.CompleteAdding();
+            CommandThread.Join();
+            CommandThread = null;
+
+            if (Repository != null)
+            {
+                Repository.Connection.Disconnect(null);
+            }
+
+            Repository = null;
+            ServerInstance = null;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Callback"></param>
         public void QueueAndAwaitCommand(PerforceCommandHandler Callback)
         {
             ManualResetEvent Event = new ManualResetEvent(false);
 
-            QueueCommand((Repository Repo) =>
-            {
-                try
+            QueueCommand(
+                Repo =>
                 {
-                    Callback(Repo);
+                    try
+                    {
+                        Callback(Repo);
+                    }
+                    catch (Exception Ex)
+                    {
+                        Logger.Log(LogLevel.Error, LogCategory.Scm, "Encountered exception while running perforce command: {0}", Ex.Message);
+                    }
+                    finally
+                    {
+                        Event.Set();
+                    }
                 }
-                catch (Exception Ex)
-                {
-                    Logger.Log(LogLevel.Error, LogCategory.Scm, "Encountered exception while running perforce command: {0}", Ex.Message);
-                }
-                finally
-                {
-                    Event.Set();
-                }
-            });
+            );
 
             Event.WaitOne();
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Callback"></param>
         public void QueueCommand(PerforceCommandHandler Callback)
@@ -166,7 +215,6 @@ namespace BuildSync.Core.Scm.Perforce
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <returns></returns>
         public void UpdateClientName()
@@ -191,7 +239,6 @@ namespace BuildSync.Core.Scm.Perforce
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void CommandThreadEntry()
         {
@@ -244,72 +291,6 @@ namespace BuildSync.Core.Scm.Perforce
                     Logger.Log(LogLevel.Error, LogCategory.Scm, "Encountered exception while running perforce command: {0}", Ex.Message);
                 }
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public DateTime GetSyncTime()
-        {
-            if (ClientName == string.Empty)
-            {
-                return DateTime.MinValue;
-            }
-
-            if (SyncTimeRequesting == false)
-            {
-                SyncTimeRequesting = true;
-
-                ulong Current = TimeUtils.Ticks;
-                ulong Elapsed = Current - LastRequestedSyncTime;
-                if (Elapsed > SYNC_TIME_RECHECK_INTERVAL)
-                {
-                    QueueAndAwaitCommand((Repository Repo) =>
-                    {
-                        try
-                        {
-                            Logger.Log(LogLevel.Info, LogCategory.Scm, "Requesting sync time of perforce workspace: {0}", ClientName);
-
-                            ChangesCmdOptions Options = new ChangesCmdOptions(ChangesCmdFlags.IncludeTime, null, 1, ChangeListStatus.Submitted, null, 0);
-
-                            FileSpec FilePath = new FileSpec(new DepotPath("//..."), VersionSpec.Have);
-                            IList<Changelist> Changes = Repo.GetChangelists(Options, FilePath);
-                            if (Changes.Count > 0)
-                            {
-                                SyncTime = Changes[0].ModifiedDate;
-                                Logger.Log(LogLevel.Info, LogCategory.Scm, "Workspace '{0}' last have changeset has timestamp {1}", ClientName, SyncTime.ToString());
-                            }
-                        }
-                        finally
-                        {
-                            SyncTimeRequesting = false;
-                        }
-                    });
-                }
-
-                LastRequestedSyncTime = Current;
-            }
-
-            return SyncTime;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Terminate()
-        {
-            CommandQueue.CompleteAdding();
-            CommandThread.Join();
-            CommandThread = null;
-
-            if (Repository != null)
-            {
-                Repository.Connection.Disconnect(null);
-            }
-
-            Repository = null;
-            ServerInstance = null;
         }
     }
 }

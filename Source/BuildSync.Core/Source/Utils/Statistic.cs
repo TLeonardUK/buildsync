@@ -19,37 +19,67 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Controls.Graph;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using BuildSync.Core.Controls.Graph;
 
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     public abstract class Statistic
     {
-        public string Name = @"IO\Untitled (MB/s)";
+        public static Dictionary<Type, Statistic> Instances = new Dictionary<Type, Statistic>();
+        public bool DefaultShown = false;
         public string MaxLabel = "128 MB/s";
         public float MaxValue = 128.0f;
-        public bool DefaultShown = false;
+        public string Name = @"IO\Untitled (MB/s)";
 
         public GraphSeries Series = new GraphSeries();
 
-        public static Dictionary<Type, Statistic> Instances = new Dictionary<Type, Statistic>();
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Value"></param>
         public void AddSample(float Value)
         {
             Series.MinimumInterval = 1.0f / 2.0f;
             Series.AddDataPoint(Environment.TickCount / 1000.0f, Value);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+
         public virtual void Gather()
         {
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T Get<T>()
+            where T : Statistic
+        {
+            lock (Instances)
+            {
+                if (!Instances.ContainsKey(typeof(T)))
+                {
+                    Statistic stat = Activator.CreateInstance(typeof(T)) as Statistic;
+                    Instances.Add(typeof(T), stat);
+                    return (T) stat;
+                }
+
+                return (T) Instances[typeof(T)];
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static void Instantiate()
         {
             lock (Instances)
@@ -69,31 +99,12 @@ namespace BuildSync.Core.Utils
                                 }
                             }
                         }
-
                     }
                     catch (ReflectionTypeLoadException)
                     {
                         // Skip this assembly, for some reason any runtime generated (via dynamic complilation) assemblies
                         // cannot have their types examined.
                     }
-                }
-            }
-        }
-
-        public static T Get<T>()
-            where T : Statistic
-        {
-            lock (Instances)
-            {
-                if (!Instances.ContainsKey(typeof(T)))
-                {
-                    Statistic stat = Activator.CreateInstance(typeof(T)) as Statistic;
-                    Instances.Add(typeof(T), stat);
-                    return (T)stat;
-                }
-                else
-                {
-                    return (T)Instances[typeof(T)];
                 }
             }
         }

@@ -19,8 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Cmd
 {
@@ -32,10 +32,7 @@ namespace BuildSync.Cmd
             {
                 CommandIPC Ipc = new CommandIPC("buildsync-server", true);
 
-                RecievePartialIPCResponseEventHandler ResponseHandler = (string Response) =>
-                {
-                    Console.Write(Response);
-                };
+                RecievePartialIPCResponseEventHandler ResponseHandler = Response => { Console.Write(Response); };
 
                 string Result = "";
                 if (!Ipc.Send("RunCommand", Args, out Result, ResponseHandler))

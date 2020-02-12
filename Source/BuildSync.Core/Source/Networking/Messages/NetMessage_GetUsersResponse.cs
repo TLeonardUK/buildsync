@@ -19,21 +19,23 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Users;
 using System.Collections.Generic;
+using BuildSync.Core.Users;
 
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_GetUsersResponse : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public List<User> Users = new List<User>();
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             int Count = Users.Count;

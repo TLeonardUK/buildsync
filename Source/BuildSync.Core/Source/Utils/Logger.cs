@@ -27,19 +27,17 @@ using System.IO;
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     public enum LogLevel
     {
-        Verbose,    // Debug information
-        Info,       // General logs and useful information
-        Display,    // Logs that should always display for the purpose of command line processing.
-        Warning,    // Problems which may not be desirable but which will not cause an issue.
-        Error       // Problems which will cause a direct issue.
+        Verbose, // Debug information
+        Info, // General logs and useful information
+        Display, // Logs that should always display for the purpose of command line processing.
+        Warning, // Problems which may not be desirable but which will not cause an issue.
+        Error // Problems which will cause a direct issue.
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public enum LogCategory
     {
@@ -55,24 +53,43 @@ namespace BuildSync.Core.Utils
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public abstract class LogSink
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public abstract void Close();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Level"></param>
+        /// <param name="Category"></param>
+        /// <param name="Message"></param>
+        /// <param name="RawMessage"></param>
         public abstract void Log(LogLevel Level, LogCategory Category, string Message, string RawMessage);
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class ConsoleLogSink : LogSink
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public override void Close()
         {
             // Nothing to do
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Level"></param>
+        /// <param name="Category"></param>
+        /// <param name="Message"></param>
+        /// <param name="RawMessage"></param>
         public override void Log(LogLevel Level, LogCategory Category, string Message, string RawMessage)
         {
             if (Logger.DisplayOutputOnly)
@@ -92,13 +109,16 @@ namespace BuildSync.Core.Utils
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class FileLogSink : LogSink
     {
-        private FileStream Stream = null;
-        private StreamWriter Writer = null;
+        private FileStream Stream;
+        private StreamWriter Writer;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="FilePath"></param>
         public FileLogSink(string FilePath)
         {
             for (int i = 0; i < 10; i++)
@@ -128,11 +148,9 @@ namespace BuildSync.Core.Utils
             }
         }
 
-        ~FileLogSink()
-        {
-            Close();
-        }
-
+        /// <summary>
+        /// 
+        /// </summary>
         public override void Close()
         {
             if (Writer != null)
@@ -140,64 +158,11 @@ namespace BuildSync.Core.Utils
                 Writer.Close();
                 Writer = null;
             }
+
             if (Stream != null)
             {
                 Stream.Close();
                 Stream = null;
-            }
-
-        }
-
-        public override void Log(LogLevel Level, LogCategory Category, string Message, string RawMessage)
-        {
-            if (Writer != null)
-            {
-                Writer.WriteLine(Message);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public static class Logger
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        private static List<LogSink> Sinks = new List<LogSink>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public static LogLevel MaximumVerbosity = LogLevel.Info;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public static bool DisplayOutputOnly = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Sink"></param>
-        public static void RegisterSink(LogSink Sink)
-        {
-            lock (Sinks)
-            {
-                Sinks.Add(Sink);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Sink"></param>
-        public static void UnregisterSink(LogSink Sink)
-        {
-            lock (Sinks)
-            {
-                Sinks.Remove(Sink);
             }
         }
 
@@ -206,11 +171,50 @@ namespace BuildSync.Core.Utils
         /// </summary>
         /// <param name="Level"></param>
         /// <param name="Category"></param>
+        /// <param name="Message"></param>
+        /// <param name="RawMessage"></param>
+        public override void Log(LogLevel Level, LogCategory Category, string Message, string RawMessage)
+        {
+            if (Writer != null)
+            {
+                Writer.WriteLine(Message);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        ~FileLogSink()
+        {
+            Close();
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public static class Logger
+    {
+        /// <summary>
+        /// </summary>
+        public static bool DisplayOutputOnly;
+
+        /// <summary>
+        /// </summary>
+        public static LogLevel MaximumVerbosity = LogLevel.Info;
+
+        /// <summary>
+        /// </summary>
+        private static readonly List<LogSink> Sinks = new List<LogSink>();
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Level"></param>
+        /// <param name="Category"></param>
         /// <param name="Format"></param>
         /// <param name="Arguments"></param>
         public static void Log(LogLevel Level, LogCategory Category, string Format, params object[] Arguments)
         {
-            if ((int)Level < (int)MaximumVerbosity)
+            if ((int) Level < (int) MaximumVerbosity)
             {
                 return;
             }
@@ -230,7 +234,17 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Sink"></param>
+        public static void RegisterSink(LogSink Sink)
+        {
+            lock (Sinks)
+            {
+                Sinks.Add(Sink);
+            }
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="LoggingFolder"></param>
         public static void SetupStandardLogging(string LoggingFolder, bool InCommandLineMode)
@@ -246,7 +260,7 @@ namespace BuildSync.Core.Utils
             RegisterSink(new ConsoleLogSink());
             RegisterSink(new FileLogSink(Path.Combine(LoggingFolder, "program.log")));
 
-            AppDomain.CurrentDomain.ProcessExit += (object sender, EventArgs e) =>
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
             {
                 lock (Sinks)
                 {
@@ -254,9 +268,21 @@ namespace BuildSync.Core.Utils
                     {
                         Sink.Close();
                     }
+
                     Sinks.Clear();
                 }
             };
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Sink"></param>
+        public static void UnregisterSink(LogSink Sink)
+        {
+            lock (Sinks)
+            {
+                Sinks.Remove(Sink);
+            }
         }
     }
 }

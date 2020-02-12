@@ -22,8 +22,6 @@
 //#define FAKE_LATENCY
 //#define TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
 
-using BuildSync.Core.Networking.Messages;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -31,54 +29,48 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Networking
 {
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     /// <param name="Message"></param>
     public delegate void MessageRecievedHandler(NetConnection Connection, NetMessage Message);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     public delegate void DisconnectHandler(NetConnection Connection);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     public delegate void ConnectHandler(NetConnection Connection);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     public delegate void ConnectFailedHandler(NetConnection Connection);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     public delegate void HandshakeFailedHandler(NetConnection Connection, HandshakeResultType ErrorType);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     public delegate void ClientConnectHandler(NetConnection Connection, NetConnection ClientConnection);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     public delegate void ClientDisconnectHandler(NetConnection Connection, NetConnection ClientConnection);
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_BandwidthIn : Statistic
     {
@@ -97,7 +89,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_BandwidthOut : Statistic
     {
@@ -116,7 +107,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_TotalIn : Statistic
     {
@@ -138,7 +128,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_TotalOut : Statistic
     {
@@ -160,7 +149,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_AvailableRecieveMessageBuffers : Statistic
     {
@@ -179,7 +167,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_AvailableSendMessageBuffers : Statistic
     {
@@ -198,7 +185,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_AvailableGenericMessageBuffers : Statistic
     {
@@ -217,7 +203,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_PacketsIn : Statistic
     {
@@ -236,7 +221,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_PacketsOut : Statistic
     {
@@ -255,7 +239,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_RequestFailures : Statistic
     {
@@ -278,28 +261,25 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class NetConnection
     {
         private Socket Socket;
-        private bool Connecting = false;
-        private bool Listening = false;
-        private List<NetConnection> Clients = new List<NetConnection>();
+        private readonly List<NetConnection> Clients = new List<NetConnection>();
 
-        private bool ShouldDisconnectDueToError = false;
-        private ulong DisconnectTimeout = 0;
+        private bool ShouldDisconnectDueToError;
+        private ulong DisconnectTimeout;
 
-        private ulong LastPingSendTime = 0;
+        private ulong LastPingSendTime;
         private const int PingInterval = 1 * 1000;
 
         public NetMessage_Handshake Handshake { get; internal set; }
-        private bool HandshakeFailed = false;
-        private bool HandshakeFinished = false;
+        private bool HandshakeFailed;
+        private bool HandshakeFinished;
 
-        private Queue<Action> EventQueue = new Queue<Action>();
+        private readonly Queue<Action> EventQueue = new Queue<Action>();
 
-        public static int ProcessFailuresDueToMemory = 0;
+        public static int ProcessFailuresDueToMemory;
 
         public struct MessageQueueEntry
         {
@@ -311,24 +291,24 @@ namespace BuildSync.Core.Networking
 #endif
         }
 
-        private ConcurrentQueue<MessageQueueEntry> SendQueue = new ConcurrentQueue<MessageQueueEntry>();
-        private object SendQueueWakeObject = new object();
-        private long SendQueueBytes = 0;
+        private readonly ConcurrentQueue<MessageQueueEntry> SendQueue = new ConcurrentQueue<MessageQueueEntry>();
+        private readonly object SendQueueWakeObject = new object();
+        private long SendQueueBytes;
         private Thread SendThread;
-        private bool IsSendingThreadRunning = false;
-        private bool IsSendingThreadTerminating = false;
-        private object SendThreadQueueLock = new object();
+        private bool IsSendingThreadRunning;
+        private bool IsSendingThreadTerminating;
+        private readonly object SendThreadQueueLock = new object();
 
-        private BlockingCollection<MessageQueueEntry> ProcessBufferQueue = null;
+        private BlockingCollection<MessageQueueEntry> ProcessBufferQueue;
         private Thread ProcessThread;
 
         internal static ConcurrentBag<byte[]> FreeRecieveMessageBuffers = new ConcurrentBag<byte[]>();
         internal static ConcurrentBag<byte[]> FreeSendMessageBuffers = new ConcurrentBag<byte[]>();
         internal static ConcurrentBag<byte[]> FreeGenericMessageBuffers = new ConcurrentBag<byte[]>();
 
-        internal static int RecieveMessageBufferCount = 0;
-        internal static int SendMessageBufferCount = 0;
-        internal static int GenericMessageBufferCount = 0;
+        internal static int RecieveMessageBufferCount;
+        internal static int SendMessageBufferCount;
+        internal static int GenericMessageBufferCount;
 
 #if FAKE_LATENCY
         internal const int MaxRecieveMessageBuffers = 2;
@@ -344,7 +324,7 @@ namespace BuildSync.Core.Networking
         internal const int MaxGenericMessageBuffers = 64;
 #endif
 
-        private ulong MaxClientsExceededPurgeTime = 0;
+        private ulong MaxClientsExceededPurgeTime;
 
 #if FAKE_LATENCY
         private Random FakeLatencyRandom = new Random();
@@ -357,7 +337,7 @@ namespace BuildSync.Core.Networking
         private static ulong MessageBufferAllocationSitePrintTimer = TimeUtils.Ticks;
 #endif
 
-        private NetMessage MessageHeaderTempStorage = new NetMessage();
+        private readonly NetMessage MessageHeaderTempStorage = new NetMessage();
 
         public enum AsyncCallType
         {
@@ -369,142 +349,105 @@ namespace BuildSync.Core.Networking
             Count
         }
 
-        private int[] OutstandingAsyncCalls = new int[(int)AsyncCallType.Count];
+        private readonly int[] OutstandingAsyncCalls = new int[(int) AsyncCallType.Count];
 
         /// <summary>
-        /// 
         /// </summary>
         public static BandwidthThrottler GlobalBandwidthThrottleIn = new BandwidthThrottler();
 
         /// <summary>
-        /// 
         /// </summary>
         public static BandwidthThrottler GlobalBandwidthThrottleOut = new BandwidthThrottler();
 
         /// <summary>
-        /// 
         /// </summary>
         public static RateTracker GlobalBandwidthStats = new RateTracker(100);
 
         /// <summary>
-        /// 
         /// </summary>
         public static RateTracker GlobalPacketStats = new RateTracker(100);
 
         /// <summary>
-        /// 
         /// </summary>
         public RateTracker BandwidthStats = new RateTracker(100);
 
         /// <summary>
-        /// 
         /// </summary>
         public RollingAverage Ping = new RollingAverage(10);
 
         /// <summary>
-        /// 
         /// </summary>
-        public ulong BestPing = 0;
+        public ulong BestPing;
 
         /// <summary>
-        /// 
         /// </summary>
         public object Metadata = null;
 
         /// <summary>
-        /// 
         /// </summary>
         public int MaxConnectedClients = int.MaxValue;
 
         /// <summary>
-        /// 
         /// </summary>
         public IPEndPoint Address;
 
         /// <summary>
-        /// 
         /// </summary>
         public IPEndPoint ListenAddress;
 
         /// <summary>
-        /// 
         /// </summary>
-        public NetConnection ParentConnection = null;
+        public NetConnection ParentConnection;
 
         /// <summary>
-        /// 
         /// </summary>
         public event MessageRecievedHandler OnMessageRecieved;
 
         /// <summary>
-        /// 
         /// </summary>
         public event DisconnectHandler OnDisconnect;
 
         /// <summary>
-        /// 
         /// </summary>
         public event ConnectHandler OnConnect;
 
         /// <summary>
-        /// 
         /// </summary>
         public event ConnectFailedHandler OnConnectFailed;
 
         /// <summary>
-        /// 
         /// </summary>
         public event HandshakeFailedHandler OnHandshakeResult;
 
         /// <summary>
-        /// 
         /// </summary>
         public event ClientConnectHandler OnClientConnect;
 
         /// <summary>
-        /// 
         /// </summary>
         public event ClientDisconnectHandler OnClientDisconnect;
 
         /// <summary>
-        /// 
         /// </summary>
         public event MessageRecievedHandler OnClientMessageRecieved;
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool IsConnected
-        {
-            get { return Socket?.Connected ?? false; }
-        }
+        public bool IsConnected => Socket?.Connected ?? false;
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool IsReadyForData
-        {
-            get { return IsConnected && Handshake != null && !HandshakeFailed && HandshakeFinished; }
-        }
+        public bool IsReadyForData => IsConnected && Handshake != null && !HandshakeFailed && HandshakeFinished;
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool IsConnecting
-        {
-            get { return Connecting; }
-        }
+        public bool IsConnecting { get; private set; }
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool IsListening
-        {
-            get { return Listening; }
-        }
+        public bool IsListening { get; private set; }
 
         /// <summary>
-        /// 
         /// </summary>
         public List<NetConnection> AllClients
         {
@@ -518,35 +461,25 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        public int SendQueueSize
-        {
-            get
-            {
-                return (int)SendQueueBytes;
-            }
-        }
+        public int SendQueueSize => (int) SendQueueBytes;
 
         /// <summary>
-        /// 
         /// </summary>
         public NetConnection()
         {
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public NetConnection(Socket InSocket, NetConnection InParent)
         {
             Socket = InSocket;
-            Address = (IPEndPoint)Socket.RemoteEndPoint;
+            Address = (IPEndPoint) Socket.RemoteEndPoint;
             ParentConnection = InParent;
         }
 
         /// <summary>
-        /// 
         /// </summary>
         ~NetConnection()
         {
@@ -554,7 +487,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void BeginSendThread()
         {
@@ -567,18 +499,17 @@ namespace BuildSync.Core.Networking
             }
 
             SendThread = new Thread(SendThreadEntry);
-            SendThread.Name = "Net Send (" + Address.ToString() + ")";
+            SendThread.Name = "Net Send (" + Address + ")";
             SendThread.Start();
 
             ProcessBufferQueue = new BlockingCollection<MessageQueueEntry>();
 
             ProcessThread = new Thread(ProcessThreadEntry);
-            ProcessThread.Name = "Net Process (" + Address.ToString() + ")";
+            ProcessThread.Name = "Net Process (" + Address + ")";
             ProcessThread.Start();
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void ProcessThreadEntry()
         {
@@ -597,15 +528,16 @@ namespace BuildSync.Core.Networking
                         {
                             // This can happen if another thread switches adding off.
                         }
+
                         continue;
                     }
+
                     ReleaseMessageBuffer(Data.Data, "ProcessThreadEntry");
                 }
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void Disconnect()
         {
@@ -644,8 +576,8 @@ namespace BuildSync.Core.Networking
                 }
             }
 
-            Listening = false;
-            Connecting = false;
+            IsListening = false;
+            IsConnecting = false;
             ShouldDisconnectDueToError = false;
             HandshakeFinished = false;
             Handshake = null;
@@ -657,27 +589,24 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="CallType"></param>
         private void RecordBeginAsyncCall(AsyncCallType CallType)
         {
-            int NewValue = Interlocked.Increment(ref OutstandingAsyncCalls[(int)CallType]);
+            int NewValue = Interlocked.Increment(ref OutstandingAsyncCalls[(int) CallType]);
             Debug.Assert(NewValue < 255);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="CallType"></param>
         private void RecordEndAsyncCall(AsyncCallType CallType)
         {
-            int NewValue = Interlocked.Decrement(ref OutstandingAsyncCalls[(int)CallType]);
+            int NewValue = Interlocked.Decrement(ref OutstandingAsyncCalls[(int) CallType]);
             Debug.Assert(NewValue >= 0);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void QueueDisconnect(ulong Timeout = 0)
         {
@@ -689,7 +618,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void Poll()
         {
@@ -746,7 +674,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Port"></param>
         public void BeginListen(int Port, bool ReuseAddresses = true)
@@ -757,21 +684,6 @@ namespace BuildSync.Core.Networking
             }
 
             Address = new IPEndPoint(IPAddress.Any, Port);
-
-            /*
-            string Hostname = Dns.GetHostName();
-            IPAddress[] HostAddresses = Dns.GetHostAddresses(Hostname);
-
-            IPAddress Ipv4Address = IPAddress.Any;
-            foreach (IPAddress Address in HostAddresses)
-            {
-                if (Address.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    Ipv4Address = Address;
-                    break;
-                }
-            }
-            */
 
             ListenAddress = new IPEndPoint(WindowUtils.GetLocalIPAddress(), Port);
 
@@ -790,7 +702,7 @@ namespace BuildSync.Core.Networking
 
             Logger.Log(LogLevel.Info, LogCategory.Transport, "Listening on {0} (Connectable on {1})", Address.ToString(), ListenAddress.ToString());
 
-            Listening = true;
+            IsListening = true;
             try
             {
                 RecordBeginAsyncCall(AsyncCallType.Accept);
@@ -799,7 +711,7 @@ namespace BuildSync.Core.Networking
                 Socket.Listen(128);
 
                 AsyncCallback AcceptLambda = null;
-                AcceptLambda = (IAsyncResult Result) =>
+                AcceptLambda = Result =>
                 {
                     try
                     {
@@ -829,7 +741,7 @@ namespace BuildSync.Core.Networking
 
                         // Handle disconnects for this client.
                         DisconnectHandler DisconnectLambda = null;
-                        DisconnectLambda = (NetConnection) =>
+                        DisconnectLambda = NetConnection =>
                         {
                             Logger.Log(LogLevel.Info, LogCategory.Transport, "Client disconnected.");
 
@@ -869,7 +781,7 @@ namespace BuildSync.Core.Networking
                     catch (Exception ex)
                     {
                         Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to accept connection {0} with error: {1}", Address.ToString(), ex.Message);
-                        Listening = false;
+                        IsListening = false;
                     }
                     finally
                     {
@@ -883,12 +795,11 @@ namespace BuildSync.Core.Networking
             {
                 RecordEndAsyncCall(AsyncCallType.Accept);
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to listen on {0} with error: {1}", Address.ToString(), ex.Message);
-                Listening = false;
+                IsListening = false;
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="EndPoint"></param>
         public void ConnectToIP(IPEndPoint EndPoint)
@@ -904,48 +815,50 @@ namespace BuildSync.Core.Networking
                 Logger.Log(LogLevel.Info, LogCategory.Transport, "Connecting to {0}", Address.ToString());
 
                 RecordBeginAsyncCall(AsyncCallType.Connect);
-                Socket.BeginConnect(Address, Result =>
-                {
-                    try
+                Socket.BeginConnect(
+                    Address, Result =>
                     {
-                        Socket.EndConnect(Result);
-
-                        Logger.Log(LogLevel.Info, LogCategory.Transport, "Connected to {0}", Socket.RemoteEndPoint.ToString());
-
-                        lock (EventQueue)
+                        try
                         {
-                            EventQueue.Enqueue(() => { OnConnect?.Invoke(this); });
+                            Socket.EndConnect(Result);
+
+                            Logger.Log(LogLevel.Info, LogCategory.Transport, "Connected to {0}", Socket.RemoteEndPoint.ToString());
+
+                            lock (EventQueue)
+                            {
+                                EventQueue.Enqueue(() => { OnConnect?.Invoke(this); });
+                            }
+
+                            BeginSendThread();
+                            BeginRecievingHeader(AllocMessageBuffer("ConnectToIP.RecieveHeader"));
+
+                            // Send handshake.
+                            NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
+                            HandshakeMsg.Version = AppVersion.ProtocolVersion;
+                            Send(HandshakeMsg);
                         }
-
-                        BeginSendThread();
-                        BeginRecievingHeader(AllocMessageBuffer("ConnectToIP.RecieveHeader"));
-
-                        // Send handshake.
-                        NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
-                        HandshakeMsg.Version = AppVersion.ProtocolVersion;
-                        Send(HandshakeMsg);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Address.ToString(), ex.Message);
-
-                        lock (EventQueue)
+                        catch (Exception ex)
                         {
-                            EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Address.ToString(), ex.Message);
+
+                            lock (EventQueue)
+                            {
+                                EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
+                            }
                         }
-                    }
-                    finally
-                    {
-                        RecordEndAsyncCall(AsyncCallType.Connect);
-                        Connecting = false;
-                    }
-                },
-                this);
+                        finally
+                        {
+                            RecordEndAsyncCall(AsyncCallType.Connect);
+                            IsConnecting = false;
+                        }
+                    },
+                    this
+                );
             }
             catch (Exception ex)
             {
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", EndPoint.ToString(), ex.Message);
-                Connecting = false;
+                IsConnecting = false;
 
                 lock (EventQueue)
                 {
@@ -957,7 +870,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Hostname"></param>
         /// <param name="Port"></param>
@@ -968,7 +880,7 @@ namespace BuildSync.Core.Networking
                 Disconnect();
             }
 
-            Connecting = true;
+            IsConnecting = true;
 
             try
             {
@@ -982,44 +894,45 @@ namespace BuildSync.Core.Networking
                 else
                 {
                     RecordBeginAsyncCall(AsyncCallType.Dns);
-                    Dns.BeginGetHostEntry(Hostname, DnsResult =>
-                    {
-                        try
+                    Dns.BeginGetHostEntry(
+                        Hostname, DnsResult =>
                         {
-                            IPHostEntry HostEntry = Dns.EndGetHostEntry(DnsResult);
-
-                            foreach (IPAddress address in HostEntry.AddressList)
+                            try
                             {
-                                if (address.AddressFamily == AddressFamily.InterNetwork ||
-                                    address.AddressFamily == AddressFamily.InterNetworkV6)
+                                IPHostEntry HostEntry = Dns.EndGetHostEntry(DnsResult);
+
+                                foreach (IPAddress address in HostEntry.AddressList)
                                 {
-                                    Address = new IPEndPoint(address, Port);
+                                    if (address.AddressFamily == AddressFamily.InterNetwork ||
+                                        address.AddressFamily == AddressFamily.InterNetworkV6)
+                                    {
+                                        Address = new IPEndPoint(address, Port);
+                                    }
+                                }
+
+                                if (Address == null)
+                                {
+                                    throw new Exception("Address is not valid '" + Hostname + "'.");
+                                }
+
+                                ConnectToIP(Address);
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Hostname, ex.Message);
+                                IsConnecting = false;
+
+                                lock (EventQueue)
+                                {
+                                    EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
                                 }
                             }
-
-                            if (Address == null)
+                            finally
                             {
-                                throw new Exception("Address is not valid '" + Hostname + "'.");
+                                RecordEndAsyncCall(AsyncCallType.Dns);
                             }
-
-                            ConnectToIP(Address);
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Hostname, ex.Message);
-                            Connecting = false;
-
-                            lock (EventQueue)
-                            {
-                                EventQueue.Enqueue(() => { OnConnectFailed?.Invoke(this); });
-                            }
-                        }
-                        finally
-                        {
-                            RecordEndAsyncCall(AsyncCallType.Dns);
-                        }
-
-                    }, null);
+                        }, null
+                    );
                 }
             }
             catch (Exception ex)
@@ -1031,12 +944,11 @@ namespace BuildSync.Core.Networking
 
                 RecordEndAsyncCall(AsyncCallType.Dns);
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to connect to {0} with error: {1}", Hostname, ex.Message);
-                Connecting = false;
+                IsConnecting = false;
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void EndSendThread()
         {
@@ -1075,7 +987,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void SendThreadEntry()
         {
@@ -1091,11 +1002,8 @@ namespace BuildSync.Core.Networking
                         {
                             continue;
                         }
-                        else
-                        {
 
-                            Interlocked.Add(ref SendQueueBytes, -SendData.BufferSize);
-                        }
+                        Interlocked.Add(ref SendQueueBytes, -SendData.BufferSize);
                     }
                     else
                     {
@@ -1120,7 +1028,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Message"></param>
         public void Send(NetMessage Message)
@@ -1143,7 +1050,7 @@ namespace BuildSync.Core.Networking
                 int Latency = FakeLatencyBase + FakeLatencyRandom.Next(0, FakeLatencyJitter);
                 SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength, SendTimeFakeLatency = TimeUtils.Ticks + (ulong)Latency });
 #else
-                SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength });
+                SendQueue.Enqueue(new MessageQueueEntry {Data = Serialized, BufferSize = BufferLength});
 #endif
 
                 Interlocked.Add(ref SendQueueBytes, BufferLength);
@@ -1156,7 +1063,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void SendBlock(byte[] Block, int Offset, int Length)
         {
@@ -1175,7 +1081,6 @@ namespace BuildSync.Core.Networking
 
                     TotalBytesSent += BytesSent;
                 }
-
             }
             catch (Exception ex)
             {
@@ -1190,7 +1095,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void BeginClient()
         {
@@ -1213,7 +1117,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void BeginRecievingHeader(byte[] MessageBuffer, int Offset = 0, int Size = NetMessage.HeaderSize)
         {
@@ -1223,42 +1126,44 @@ namespace BuildSync.Core.Networking
 
                 int BytesToRecv = GlobalBandwidthThrottleIn.Throttle(Size);
 
-                Socket.BeginReceive(MessageBuffer, Offset, BytesToRecv, SocketFlags.None, Result =>
-                {
-                    bool ShouldDisconnect = false;
-                    try
+                Socket.BeginReceive(
+                    MessageBuffer, Offset, BytesToRecv, SocketFlags.None, Result =>
                     {
-                        int BytesRecieved = Socket.EndReceive(Result);
-
-                        GlobalPacketStats.In(1);
-
-                        BandwidthStats.In(BytesRecieved);
-                        GlobalBandwidthStats.In(BytesRecieved);
-
-                        if (BytesRecieved < Size)
+                        bool ShouldDisconnect = false;
+                        try
                         {
-                            BeginRecievingHeader(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved); // TODO: This is fucked!?
-                            return;
+                            int BytesRecieved = Socket.EndReceive(Result);
+
+                            GlobalPacketStats.In(1);
+
+                            BandwidthStats.In(BytesRecieved);
+                            GlobalBandwidthStats.In(BytesRecieved);
+
+                            if (BytesRecieved < Size)
+                            {
+                                BeginRecievingHeader(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved); // TODO: This is fucked!?
+                                return;
+                            }
+
+                            BeginRecievingPayload(MessageBuffer);
                         }
-
-                        BeginRecievingPayload(MessageBuffer);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
-                        ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.Exception");
-                        ShouldDisconnect = true;
-                    }
-                    finally
-                    {
-                        RecordEndAsyncCall(AsyncCallType.Recieve);
-
-                        if (ShouldDisconnect)
+                        catch (Exception ex)
                         {
-                            QueueDisconnect();
+                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
+                            ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.Exception");
+                            ShouldDisconnect = true;
                         }
-                    }
-                }, this);
+                        finally
+                        {
+                            RecordEndAsyncCall(AsyncCallType.Recieve);
+
+                            if (ShouldDisconnect)
+                            {
+                                QueueDisconnect();
+                            }
+                        }
+                    }, this
+                );
             }
             catch (Exception ex)
             {
@@ -1272,7 +1177,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void BeginRecievingPayload(byte[] MessageBuffer)
         {
@@ -1296,7 +1200,7 @@ namespace BuildSync.Core.Networking
             // If no payload, we have the full message.
             if (MessageHeaderTempStorage.PayloadSize == 0)
             {
-                ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize });
+                ProcessBufferQueue.Add(new MessageQueueEntry {Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize});
                 BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayload.RecieveNextHeader"));
             }
             else
@@ -1306,7 +1210,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Offset"></param>
         /// <param name="Size"></param>
@@ -1318,36 +1221,38 @@ namespace BuildSync.Core.Networking
 
                 int BytesToRecv = GlobalBandwidthThrottleIn.Throttle(Size);
 
-                Socket.BeginReceive(MessageBuffer, NetMessage.HeaderSize + Offset, BytesToRecv, SocketFlags.None, Result =>
-                {
-                    try
+                Socket.BeginReceive(
+                    MessageBuffer, NetMessage.HeaderSize + Offset, BytesToRecv, SocketFlags.None, Result =>
                     {
-                        int BytesRecieved = Socket.EndReceive(Result);
-
-                        BandwidthStats.In(BytesRecieved);
-                        GlobalBandwidthStats.In(BytesRecieved);
-
-                        if (BytesRecieved < Size)
+                        try
                         {
-                            BeginRecievingPayloadWithOffset(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved);
-                            return;
+                            int BytesRecieved = Socket.EndReceive(Result);
+
+                            BandwidthStats.In(BytesRecieved);
+                            GlobalBandwidthStats.In(BytesRecieved);
+
+                            if (BytesRecieved < Size)
+                            {
+                                BeginRecievingPayloadWithOffset(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved);
+                                return;
+                            }
+
+                            ProcessBufferQueue.Add(new MessageQueueEntry {Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size});
+
+                            BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader"));
                         }
-
-                        ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size });
-
-                        BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader"));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
-                        ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.Exception");
-                        QueueDisconnect();
-                    }
-                    finally
-                    {
-                        RecordEndAsyncCall(AsyncCallType.Recieve);
-                    }
-                }, this);
+                        catch (Exception ex)
+                        {
+                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
+                            ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.Exception");
+                            QueueDisconnect();
+                        }
+                        finally
+                        {
+                            RecordEndAsyncCall(AsyncCallType.Recieve);
+                        }
+                    }, this
+                );
             }
             catch (Exception ex)
             {
@@ -1360,14 +1265,13 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public static void PreallocateBuffers(int RecieveCount, int SendCount, int GenericCount)
         {
             RecieveCount = Math.Min(RecieveCount, MaxRecieveMessageBuffers);
             for (int i = 0; i < RecieveCount; i++)
             {
-                byte[] Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                byte[] Serialized = new byte[1 * 1024 * 1024 + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
                 Interlocked.Increment(ref RecieveMessageBufferCount);
                 FreeRecieveMessageBuffers.Add(Serialized);
             }
@@ -1375,7 +1279,7 @@ namespace BuildSync.Core.Networking
             SendCount = Math.Min(SendCount, MaxSendMessageBuffers);
             for (int i = 0; i < SendCount; i++)
             {
-                byte[] Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                byte[] Serialized = new byte[1 * 1024 * 1024 + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
                 Interlocked.Increment(ref SendMessageBufferCount);
                 FreeSendMessageBuffers.Add(Serialized);
             }
@@ -1383,14 +1287,13 @@ namespace BuildSync.Core.Networking
             GenericCount = Math.Min(GenericCount, MaxGenericMessageBuffers);
             for (int i = 0; i < GenericCount; i++)
             {
-                byte[] Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                byte[] Serialized = new byte[1 * 1024 * 1024 + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
                 Interlocked.Increment(ref GenericMessageBufferCount);
                 FreeGenericMessageBuffers.Add(Serialized);
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <returns></returns>
         private byte[] AllocMessageBuffer(string Site, bool ForSend = false)
@@ -1432,7 +1335,7 @@ namespace BuildSync.Core.Networking
 
             if (Serialized == null)
             {
-                Serialized = new byte[(1 * 1024 * 1024) + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                Serialized = new byte[1 * 1024 * 1024 + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
                 Interlocked.Increment(ref GenericMessageBufferCount);
                 Logger.Log(LogLevel.Info, LogCategory.Transport, "Dynamically allocating new generic message buffer, now a total of {0} buffers ({1} in queue).", RecieveMessageBufferCount, FreeRecieveMessageBuffers.Count);
             }
@@ -1480,7 +1383,6 @@ namespace BuildSync.Core.Networking
 #endif
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Buffer"></param>
         private void ReleaseMessageBuffer(byte[] Buffer, string Site, bool ForSend = false)
@@ -1529,7 +1431,6 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private bool ProcessMessage(byte[] Buffer, int Size = 0)
         {
@@ -1565,7 +1466,7 @@ namespace BuildSync.Core.Networking
                         QueueDisconnect(200ul);
                     }
 
-                    HandshakeFailed = (HandshakeResult.ResultType != HandshakeResultType.Success);
+                    HandshakeFailed = HandshakeResult.ResultType != HandshakeResultType.Success;
                     HandshakeFinished = true;
                 }
                 else if (Message is NetMessage_Ping)
@@ -1589,6 +1490,7 @@ namespace BuildSync.Core.Networking
                     {
                         BestPing = Elapsed;
                     }
+
                     Ping.Add(Elapsed);
                 }
                 else if (Message is NetMessage_Handshake)
@@ -1633,14 +1535,16 @@ namespace BuildSync.Core.Networking
                     CleanupHandled = true;
                     lock (EventQueue)
                     {
-                        EventQueue.Enqueue(() =>
-                        {
-                            OnMessageRecieved?.Invoke(this, Message);
-                            if (!Message.DoesRecieverHandleCleanup)
+                        EventQueue.Enqueue(
+                            () =>
                             {
-                                Message.Cleanup();
+                                OnMessageRecieved?.Invoke(this, Message);
+                                if (!Message.DoesRecieverHandleCleanup)
+                                {
+                                    Message.Cleanup();
+                                }
                             }
-                        });
+                        );
                     }
                 }
                 else

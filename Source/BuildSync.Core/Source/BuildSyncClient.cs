@@ -19,6 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Licensing;
 using BuildSync.Core.Manifests;
@@ -26,72 +31,56 @@ using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Net;
-using System.Threading;
 
 namespace BuildSync.Core
 {
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     /// <param name="Message"></param>
     public delegate void BuildsRecievedHandler(string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     /// <param name="Message"></param>
     public delegate void ServerStateRecievedHandler(NetMessage_GetServerStateResponse Response);
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="Connection"></param>
     /// <param name="Message"></param>
     public delegate void PermissionsUpdatedHandler();
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void ConenctedToServerHandler();
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void LostConnectionToServerHandler();
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void FailedToConnectToServerHandler();
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void UserListRecievedHandler(List<User> Users);
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void LicenseInfoRecievedHandler(License LicenseInfo);
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void ManifestPublishResultRecievedHandler(Guid ManifestId, PublishManifestResult Result);
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void ManifestDeleteResultRecievedHandler(Guid ManifestId);
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_PeerCount : Statistic
     {
@@ -105,7 +94,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_DataInFlight : Statistic
     {
@@ -119,7 +107,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_BlocksInFlight : Statistic
     {
@@ -133,7 +120,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_AverageBlockLatency : Statistic
     {
@@ -147,7 +133,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_AverageBlockSize : Statistic
     {
@@ -161,7 +146,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_RequestFailures : Statistic
     {
@@ -178,7 +162,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_BlockListUpdates : Statistic
     {
@@ -194,7 +177,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_PendingBlockRequests : Statistic
     {
@@ -210,7 +192,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_ActiveBlockRequests : Statistic
     {
@@ -226,7 +207,6 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public struct PendingBlockRequest
     {
@@ -235,82 +215,87 @@ namespace BuildSync.Core
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class Peer
     {
         /// <summary>
-        /// 
-        /// </summary>
-        public IPEndPoint Address;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public NetConnection Connection = new NetConnection();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public ulong LastConnectionAttemptTime = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool RemoteInitiated = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool WasConnected = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public BlockListState BlockState = new BlockListState();
-
-        /// <summary>
-        /// 
         /// </summary>
         public const int BlockDownloadTimeout = 60 * 1000;
 
         /// <summary>
-        /// 
         /// </summary>
         public List<ManifestPendingDownloadBlock> ActiveBlockDownloads = new List<ManifestPendingDownloadBlock>();
 
         /// <summary>
-        /// 
         /// </summary>
-        public long ActiveBlockDownloadSize = 0;
+        public long ActiveBlockDownloadSize;
 
         /// <summary>
-        /// 
         /// </summary>
-        public RollingAverage BlockRecieveLatency = new RollingAverage(20);
+        public IPEndPoint Address;
 
         /// <summary>
-        /// 
         /// </summary>
         public RollingAverage AverageBlockSize = new RollingAverage(20);
 
         /// <summary>
-        /// 
+        /// </summary>
+        public RollingAverage BlockRecieveLatency = new RollingAverage(20);
+
+        /// <summary>
         /// </summary>
         public ConcurrentQueue<PendingBlockRequest> BlockRequestQueue = new ConcurrentQueue<PendingBlockRequest>();
 
         /// <summary>
-        /// 
+        /// </summary>
+        public BlockListState BlockState = new BlockListState();
+
+        /// <summary>
+        /// </summary>
+        public NetConnection Connection = new NetConnection();
+
+        /// <summary>
         /// </summary>
         public ulong LastBlockRequestFulfillTime = TimeUtils.Ticks;
 
         /// <summary>
-        /// 
+        /// </summary>
+        public ulong LastConnectionAttemptTime;
+
+        /// <summary>
         /// </summary>
         public ulong LastPrintTime = TimeUtils.Ticks;
 
         /// <summary>
-        /// 
+        /// </summary>
+        public bool RemoteInitiated;
+
+        /// <summary>
+        /// </summary>
+        public bool WasConnected;
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Block"></param>
+        public void AddActiveBlockDownload(ManifestPendingDownloadBlock Block)
+        {
+            lock (ActiveBlockDownloads)
+            {
+                ActiveBlockDownloadSize += Block.Size;
+                ActiveBlockDownloads.Add(Block);
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="TargetMsOfData"></param>
+        /// <returns></returns>
+        public long GetAvailableInFlightData(int TargetMsOfData)
+        {
+            return Math.Max(0, GetMaxInFlightData(TargetMsOfData) - ActiveBlockDownloadSize);
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="TargetMsOfData"></param>
         /// <returns></returns>
@@ -333,7 +318,6 @@ namespace BuildSync.Core
 
             return MaxInFlightBytes;// * 5;
 #elif false
-
             // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
             const double TrendUpwardsFactor = 2;
 
@@ -366,7 +350,7 @@ namespace BuildSync.Core
 
             const double TrendUpwardsFactor = 1.5f;
             double TargetSecondsOfData = RealTargetMsOfData / 1000.0;
-            long TargetInFlight = (long)(Connection.BandwidthStats.PeakRateIn * TargetSecondsOfData);
+            long TargetInFlight = (long) (Connection.BandwidthStats.PeakRateIn * TargetSecondsOfData);
 
             long MaxInFlightBytes = TargetInFlight;
 
@@ -374,10 +358,10 @@ namespace BuildSync.Core
             MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
 
             // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
-            MaxInFlightBytes = (long)(MaxInFlightBytes * TrendUpwardsFactor);
+            MaxInFlightBytes = (long) (MaxInFlightBytes * TrendUpwardsFactor);
 
             // Round to next largest block size.
-            MaxInFlightBytes = ((MaxInFlightBytes + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize) * BuildManifest.BlockSize;
+            MaxInFlightBytes = (MaxInFlightBytes + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize * BuildManifest.BlockSize;
 
             return MaxInFlightBytes;
 #else
@@ -386,17 +370,46 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <param name="TargetMsOfData"></param>
+        /// <param name="ManifestId"></param>
+        /// <param name="BlockIndex"></param>
         /// <returns></returns>
-        public long GetAvailableInFlightData(int TargetMsOfData)
+        public bool HasActiveBlockDownload(Guid ManifestId, int BlockIndex)
         {
-            return Math.Max(0, GetMaxInFlightData(TargetMsOfData) - ActiveBlockDownloadSize);
+            lock (ActiveBlockDownloads)
+            {
+                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                {
+                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                    if (Download.BlockIndex == BlockIndex &&
+                        Download.ManifestId == ManifestId)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <returns></returns>
+        public bool HasBlock(ManifestPendingDownloadBlock Block)
+        {
+            foreach (ManifestBlockListState ManifestState in BlockState.States)
+            {
+                if (ManifestState.Id == Block.ManifestId)
+                {
+                    return ManifestState.BlockState.Get(Block.BlockIndex);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name=""></param>
         /// <returns></returns>
@@ -412,85 +425,11 @@ namespace BuildSync.Core
                     }
                 }
             }
+
             return false;
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public bool HasBlock(ManifestPendingDownloadBlock Block)
-        {
-            foreach (ManifestBlockListState ManifestState in BlockState.States)
-            {
-                if (ManifestState.Id == Block.ManifestId)
-                {
-                    return ManifestState.BlockState.Get(Block.BlockIndex);
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public bool SetBlockState(Guid ManifestId, int BlockIndex, bool State)
-        {
-            foreach (ManifestBlockListState ManifestState in BlockState.States)
-            {
-                if (ManifestState.Id == ManifestId)
-                {
-                    ManifestState.BlockState.Set(BlockIndex, State);
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void PruneTimeoutDownloads()
-        {
-            lock (ActiveBlockDownloads)
-            {
-                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
-                {
-                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
-
-                    ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
-                    if (Elapsed > BlockDownloadTimeout)
-                    {
-                        if (!Download.Recieved)
-                        {
-                            ActiveBlockDownloadSize -= Download.Size;
-
-                            Download.Recieved = true;
-                            ActiveBlockDownloads[i] = Download;
-                        }
-
-                        ActiveBlockDownloads.RemoveAt(i);
-                        i--;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Block"></param>
-        private void UpdateLatency(ManifestPendingDownloadBlock Download)
-        {
-            ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
-            //Console.WriteLine("Recieved block {0} in {1} ms", Download.BlockIndex, Elapsed);
-            BlockRecieveLatency.Add(Elapsed);
-            AverageBlockSize.Add(Download.Size);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="ManifestId"></param>
         /// <param name="BlockIndex"></param>
@@ -520,7 +459,34 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public void PruneTimeoutDownloads()
+        {
+            lock (ActiveBlockDownloads)
+            {
+                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                {
+                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
+
+                    ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+                    if (Elapsed > BlockDownloadTimeout)
+                    {
+                        if (!Download.Recieved)
+                        {
+                            ActiveBlockDownloadSize -= Download.Size;
+
+                            Download.Recieved = true;
+                            ActiveBlockDownloads[i] = Download;
+                        }
+
+                        ActiveBlockDownloads.RemoveAt(i);
+                        i--;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// </summary>
         public void RemoveActiveBlockDownload(Guid ManifestId, int BlockIndex, bool WasSuccess)
         {
@@ -539,6 +505,7 @@ namespace BuildSync.Core
                             {
                                 UpdateLatency(Download);
                             }
+
                             ActiveBlockDownloadSize -= Download.Size;
                             Download.Recieved = true;
                             ActiveBlockDownloads[i] = Download;
@@ -554,24 +521,16 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <param name="ManifestId"></param>
-        /// <param name="BlockIndex"></param>
         /// <returns></returns>
-        public bool HasActiveBlockDownload(Guid ManifestId, int BlockIndex)
+        public bool SetBlockState(Guid ManifestId, int BlockIndex, bool State)
         {
-            lock (ActiveBlockDownloads)
+            foreach (ManifestBlockListState ManifestState in BlockState.States)
             {
-                for (int i = 0; i < ActiveBlockDownloads.Count; i++)
+                if (ManifestState.Id == ManifestId)
                 {
-                    ManifestPendingDownloadBlock Download = ActiveBlockDownloads[i];
-
-                    if (Download.BlockIndex == BlockIndex &&
-                        Download.ManifestId == ManifestId)
-                    {
-                        return true;
-                    }
+                    ManifestState.BlockState.Set(BlockIndex, State);
+                    return true;
                 }
             }
 
@@ -579,323 +538,210 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Block"></param>
-        public void AddActiveBlockDownload(ManifestPendingDownloadBlock Block)
+        private void UpdateLatency(ManifestPendingDownloadBlock Download)
         {
-            lock (ActiveBlockDownloads)
-            {
-                ActiveBlockDownloadSize += Block.Size;
-                ActiveBlockDownloads.Add(Block);
-            }
+            ulong Elapsed = TimeUtils.Ticks - Download.TimeStarted;
+            //Console.WriteLine("Recieved block {0} in {1} ms", Download.BlockIndex, Elapsed);
+            BlockRecieveLatency.Add(Elapsed);
+            AverageBlockSize.Add(Download.Size);
         }
-    };
+    }
 
     /// <summary>
-    /// 
     /// </summary>
     public class BuildSyncClient
     {
         /// <summary>
-        /// 
-        /// </summary>
-        private NetConnection Connection = new NetConnection();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private NetConnection ListenConnection = new NetConnection();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private ulong LastConnectionAttempt = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private const int ConnectionAttemptInterval = 60 * 1000;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string ServerHostname;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public const int TargetMillisecondsOfDataInFlight = 200;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int ServerPort = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int PeerListenPortRangeMin = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int PeerListenPortRangeMax = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private int PortIndex = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private ulong LastListenAttempt = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private const int ListenAttemptInterval = 2 * 1000;
-
-        /// <summary>
-        /// 
         /// </summary>
         public const int MaxPeerConnections = 30;
 
         /// <summary>
-        /// 
         /// </summary>
-        private bool ConnectionInfoUpdateRequired = false;
+        public const int TargetMillisecondsOfDataInFlight = 200;
 
         /// <summary>
-        /// 
-        /// </summary>
-        private bool Started = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool BlockListUpdatePending = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool ForceBlockListUpdate = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private int LastManifestStateDirtyCounter = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private ulong LastBlockListUpdateTime = 0;
-
-        /// <summary>
-        /// 
         /// </summary>
         private const int BlockListUpdateInterval = 10 * 1000;
 
         /// <summary>
-        /// 
-        /// </summary>
-        private ulong LastClientStateUpdateTime = 0;
-
-        /// <summary>
-        /// 
         /// </summary>
         private const int ClientStateUpdateInterval = 3 * 1000;
 
         /// <summary>
-        /// 
         /// </summary>
-        private int PeerCycleIndex = 0;
+        private const int ConnectionAttemptInterval = 60 * 1000;
 
         /// <summary>
-        /// 
         /// </summary>
-        private bool DisableReconnect = false;
+        private const int ListenAttemptInterval = 2 * 1000;
 
         /// <summary>
-        /// 
-        /// </summary>
-        private int PeerBlockRequestShuffleIndex = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private int ActivePeerRequests = 0;
-
-        /// <summary>
-        /// 
         /// </summary>
         private const int MaxConcurrentPeerRequests = 32;
 
         /// <summary>
-        /// 
         /// </summary>
-        public HandshakeResultType HandshakeResult
-        {
-            get;
-            private set;
-        }
+        public long BlockListUpdateRate;
 
         /// <summary>
-        /// 
         /// </summary>
-        private BuildManifestRegistry ManifestRegistry = null;
+        public long BlockRequestFailureRate;
 
         /// <summary>
-        /// 
-        /// </summary>
-        private List<IPEndPoint> RelevantPeerAddresses;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private List<Peer> Peers = new List<Peer>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private ManifestDownloadManager ManifestDownloadManager = null;
-
-        /// <summary>
-        /// 
         /// </summary>
         public Queue<Action> DeferredActions = new Queue<Action>();
 
         /// <summary>
-        /// 
         /// </summary>
-        public event BuildsRecievedHandler OnBuildsRecieved;
+        public bool InternalConnectionsDisabled;
 
         /// <summary>
-        /// 
         /// </summary>
-        public event ServerStateRecievedHandler OnServerStateRecieved;
+        public int PeerListenPortRangeMax;
 
         /// <summary>
-        /// 
         /// </summary>
-        public event PermissionsUpdatedHandler OnPermissionsUpdated;
+        public int PeerListenPortRangeMin;
 
         /// <summary>
-        /// 
-        /// </summary>
-        public event ManifestPublishResultRecievedHandler OnManifestPublishResultRecieved;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public event ManifestDeleteResultRecievedHandler OnManifestDeleteResultRecieved;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public event UserListRecievedHandler OnUserListRecieved;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public event LicenseInfoRecievedHandler OnLicenseInfoRecieved;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public event ConenctedToServerHandler OnConnectedToServer;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public event LostConnectionToServerHandler OnLostConnectionToServer;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public event FailedToConnectToServerHandler OnFailedToConnectToServer;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool IsConnected
-        {
-            get { return Connection != null ? Connection.IsConnected : false; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool IsConnecting
-        {
-            get { return Connection != null ? Connection.IsConnecting : false; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool IsReadyForData
-        {
-            get { return Connection != null ? Connection.IsReadyForData : false; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool InternalConnectionsDisabled = false;
-
-        /// <summary>
-        /// 
         /// </summary>
         public UserPermissionCollection Permissions = new UserPermissionCollection();
 
         /// <summary>
-        /// 
         /// </summary>
-        public long BlockRequestFailureRate = 0;
+        public string ServerHostname;
 
         /// <summary>
-        /// 
         /// </summary>
-        public long BlockListUpdateRate = 0;
+        public int ServerPort;
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool ConnectionsDisabled
-        {
-            get
-            {
-                return InternalConnectionsDisabled;
-            }
-            set
-            {
-                bool Changed = (InternalConnectionsDisabled != value);
-                InternalConnectionsDisabled = value;
-                if (InternalConnectionsDisabled && Changed)
-                {
-                    RestartConnections();
-                }
-            }
-        }
+        private int ActivePeerRequests;
 
         /// <summary>
-        /// 
         /// </summary>
-        public int PeerCount
-        {
-            get
-            {
-                lock (Peers)
-                {
-                    return Peers.Count;
-                }
-            }
-        }
+        private bool BlockListUpdatePending;
 
         /// <summary>
-        /// 
+        /// </summary>
+        private readonly NetConnection Connection = new NetConnection();
+
+        /// <summary>
+        /// </summary>
+        private bool ConnectionInfoUpdateRequired;
+
+        /// <summary>
+        /// </summary>
+        private bool DisableReconnect;
+
+        /// <summary>
+        /// </summary>
+        private bool ForceBlockListUpdate;
+
+        /// <summary>
+        /// </summary>
+        private bool InternalTrafficEnabled = true;
+
+        /// <summary>
+        /// </summary>
+        private ulong LastBlockListUpdateTime;
+
+        /// <summary>
+        /// </summary>
+        private ulong LastClientStateUpdateTime;
+
+        /// <summary>
+        /// </summary>
+        private ulong LastConnectionAttempt;
+
+        /// <summary>
+        /// </summary>
+        private ulong LastListenAttempt;
+
+        /// <summary>
+        /// </summary>
+        private int LastManifestStateDirtyCounter;
+
+        /// <summary>
+        /// </summary>
+        private readonly NetConnection ListenConnection = new NetConnection();
+
+        /// <summary>
+        /// </summary>
+        private ManifestDownloadManager ManifestDownloadManager;
+
+        /// <summary>
+        /// </summary>
+        private BuildManifestRegistry ManifestRegistry;
+
+        /// <summary>
+        /// </summary>
+        private int PeerBlockRequestShuffleIndex;
+
+        /// <summary>
+        /// </summary>
+        private int PeerCycleIndex;
+
+        /// <summary>
+        /// </summary>
+        private readonly List<Peer> Peers = new List<Peer>();
+
+        /// <summary>
+        /// </summary>
+        private int PortIndex;
+
+        /// <summary>
+        /// </summary>
+        private List<IPEndPoint> RelevantPeerAddresses;
+
+        /// <summary>
+        /// </summary>
+        private bool Started;
+
+        /// <summary>
+        /// </summary>
+        public event BuildsRecievedHandler OnBuildsRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event ConenctedToServerHandler OnConnectedToServer;
+
+        /// <summary>
+        /// </summary>
+        public event FailedToConnectToServerHandler OnFailedToConnectToServer;
+
+        /// <summary>
+        /// </summary>
+        public event LicenseInfoRecievedHandler OnLicenseInfoRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event LostConnectionToServerHandler OnLostConnectionToServer;
+
+        /// <summary>
+        /// </summary>
+        public event ManifestDeleteResultRecievedHandler OnManifestDeleteResultRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event ManifestPublishResultRecievedHandler OnManifestPublishResultRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event PermissionsUpdatedHandler OnPermissionsUpdated;
+
+        /// <summary>
+        /// </summary>
+        public event ServerStateRecievedHandler OnServerStateRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event UserListRecievedHandler OnUserListRecieved;
+
+        /// <summary>
         /// </summary>
         public Peer[] AllPeers
         {
@@ -909,12 +755,55 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        private bool InternalTrafficEnabled = true;
+        public bool ConnectionsDisabled
+        {
+            get => InternalConnectionsDisabled;
+            set
+            {
+                bool Changed = InternalConnectionsDisabled != value;
+                InternalConnectionsDisabled = value;
+                if (InternalConnectionsDisabled && Changed)
+                {
+                    RestartConnections();
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        public HandshakeResultType HandshakeResult { get; private set; }
+
+        /// <summary>
+        /// </summary>
+        public bool IsConnected => Connection != null ? Connection.IsConnected : false;
+
+        /// <summary>
+        /// </summary>
+        public bool IsConnecting => Connection != null ? Connection.IsConnecting : false;
+
+        /// <summary>
+        /// </summary>
+        public bool IsReadyForData => Connection != null ? Connection.IsReadyForData : false;
+
+        /// <summary>
+        /// </summary>
+        public int PeerCount
+        {
+            get
+            {
+                lock (Peers)
+                {
+                    return Peers.Count;
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
         public bool TrafficEnabled
         {
-            get { return InternalTrafficEnabled; }
+            get => InternalTrafficEnabled;
             set
             {
                 if (InternalTrafficEnabled != value)
@@ -926,15 +815,18 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public BuildSyncClient()
         {
             Connection.OnMessageRecieved += HandleMessage;
-            Connection.OnConnect += (NetConnection Connection) => { OnConnectedToServer?.Invoke(); };
-            Connection.OnDisconnect += (NetConnection Connection) => { OnLostConnectionToServer?.Invoke(); };
-            Connection.OnConnectFailed += (NetConnection Connection) => { OnFailedToConnectToServer?.Invoke(); HandshakeResult = HandshakeResultType.Unknown; };
-            Connection.OnHandshakeResult += (NetConnection Connection, HandshakeResultType ResultType) =>
+            Connection.OnConnect += Connection => { OnConnectedToServer?.Invoke(); };
+            Connection.OnDisconnect += Connection => { OnLostConnectionToServer?.Invoke(); };
+            Connection.OnConnectFailed += Connection =>
+            {
+                OnFailedToConnectToServer?.Invoke();
+                HandshakeResult = HandshakeResultType.Unknown;
+            };
+            Connection.OnHandshakeResult += (Connection, ResultType) =>
             {
                 HandshakeResult = ResultType;
                 if (ResultType == HandshakeResultType.InvalidVersion)
@@ -945,13 +837,48 @@ namespace BuildSync.Core
 
             ListenConnection.OnClientConnect += PeerConnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 128);
+            MemoryPool.PreallocateBuffers((int) BuildManifest.BlockSize, 128);
             MemoryPool.PreallocateBuffers(Crc32.BufferSize, 16);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers);
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="guid"></param>
+        public bool DeleteManifest(Guid ManifestId)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete, no connection to server?");
+                return false;
+            }
+
+            NetMessage_DeleteManifest Msg = new NetMessage_DeleteManifest();
+            Msg.ManifestId = ManifestId;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool DeleteUser(string Username)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete user, no connection to server?");
+                return false;
+            }
+
+            NetMessage_DeleteUser Msg = new NetMessage_DeleteUser();
+            Msg.Username = Username;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
         /// </summary>
         public void Disconnect()
         {
@@ -961,54 +888,6 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        public void RestartConnections()
-        {
-            lock (Peers)
-            {
-                foreach (Peer peer in Peers)
-                {
-                    peer.Connection.Disconnect();
-                }
-
-                Connection.Disconnect();
-                ListenConnection.Disconnect();
-
-                // Deferred actions contain responses to connection events, so purge them. 
-                lock (DeferredActions)
-                {
-                    DeferredActions.Clear();
-                }
-
-                LastConnectionAttempt = 0;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Hostname"></param>
-        /// <param name="Port"></param>
-        public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, BuildManifestRegistry BuildManifest, ManifestDownloadManager DownloadManager)
-        {
-            ServerHostname = Hostname;
-            ServerPort = Port;
-            PeerListenPortRangeMin = ListenPortRangeMin;
-            PeerListenPortRangeMax = ListenPortRangeMax;
-            ManifestRegistry = BuildManifest;
-            ManifestDownloadManager = DownloadManager;
-            ManifestDownloadManager.OnManifestRequested += (Guid Id) =>
-            {
-                RequestManifest(Id);
-            };
-            Started = true;
-        }
-
-        //static ulong time = TimeUtils.Ticks;
-
-        /// <summary>
-        /// 
         /// </summary>
         public void Poll()
         {
@@ -1053,7 +932,7 @@ namespace BuildSync.Core
                 }
 
                 ulong ElapsedTime = TimeUtils.Ticks - LastBlockListUpdateTime;
-                if ((ElapsedTime > BlockListUpdateInterval && BlockListUpdatePending) || ForceBlockListUpdate)
+                if (ElapsedTime > BlockListUpdateInterval && BlockListUpdatePending || ForceBlockListUpdate)
                 {
                     SendBlockListUpdate();
 
@@ -1095,6 +974,7 @@ namespace BuildSync.Core
                     }
                 }
             }
+
             // Execute all deferred actions.
             lock (DeferredActions)
             {
@@ -1140,8 +1020,8 @@ namespace BuildSync.Core
                 Statistic.Get<Statistic_BlockListUpdates>().AddSample(BlockListUpdateRate);
                 Statistic.Get<Statistic_DataInFlight>().AddSample(DataInFlight / 1024 / 1024);
                 Statistic.Get<Statistic_BlocksInFlight>().AddSample(BlocksInFlight);
-                Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float)AverageBlockLatency);
-                Statistic.Get<Statistic_AverageBlockSize>().AddSample((float)AverageBlockSize / 1024 / 1024);
+                Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float) AverageBlockLatency);
+                Statistic.Get<Statistic_AverageBlockSize>().AddSample((float) AverageBlockSize / 1024 / 1024);
 
                 Statistic.Get<Statistic_ActiveBlockRequests>().AddSample(ActivePeerRequests);
                 Statistic.Get<Statistic_PendingBlockRequests>().AddSample(PendingBlockRequests);
@@ -1153,302 +1033,208 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        private void ConnectToServer()
+        /// <param name="guid"></param>
+        public bool PublishManifest(BuildManifest Manifest)
         {
-            Connection.BeginConnect(ServerHostname, ServerPort);
-
-            LastConnectionAttempt = TimeUtils.Ticks;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void ListenForPeers()
-        {
-            int PortCount = (PeerListenPortRangeMax - PeerListenPortRangeMin) + 1;
-            int Port = PeerListenPortRangeMin + (PortIndex++ % PortCount);
-            ListenConnection.BeginListen(Port, false);
-
-            LastListenAttempt = TimeUtils.Ticks;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void UpdatePeerRequests()
-        {
-            while (ActivePeerRequests < MaxConcurrentPeerRequests)
+            if (!Connection.IsReadyForData)
             {
-                Peer BestPeer = null;
-                ulong BestPeerElapsed = ulong.MaxValue;
-
-                lock (Peers)
-                {
-                    // Find peer with the longest time since one if its requests were fulfilled.
-                    foreach (Peer peer in Peers)
-                    {
-                        if (peer.BlockRequestQueue.Count > 0 && peer.Connection.IsReadyForData)
-                        {
-                            ulong Elapsed = TimeUtils.Ticks - peer.LastBlockRequestFulfillTime;
-                            if (Elapsed < BestPeerElapsed)
-                            {
-                                BestPeer = peer;
-                                BestPeerElapsed = Elapsed;
-                            }
-                        }
-                    }
-                }
-
-                if (BestPeer != null)
-                {
-                    PendingBlockRequest Request;
-                    if (BestPeer.BlockRequestQueue.TryDequeue(out Request))
-                    {
-                        //Console.WriteLine("[Processing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
-
-                        BestPeer.LastBlockRequestFulfillTime = TimeUtils.Ticks;
-                        Interlocked.Increment(ref ActivePeerRequests);
-
-                        NetMessage_GetBlockResponse Response = new NetMessage_GetBlockResponse();
-                        Response.ManifestId = Request.Message.ManifestId;
-                        Response.BlockIndex = Request.Message.BlockIndex;
-
-                        BlockAccessCompleteHandler Callback = (bool bSuccess) =>
-                        {
-                            Interlocked.Decrement(ref ActivePeerRequests);
-
-                            lock (DeferredActions)
-                            {
-                                DeferredActions.Enqueue(() =>
-                                {
-                                    if (!bSuccess)
-                                    {
-                                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to retrieve requested block {0} in manifest {1} for peer {2}.", Request.Message.BlockIndex, Request.Message.ManifestId.ToString(), Request.Requester.Address.ToString());
-
-                                        ManifestDownloadManager.MarkAllBlockFilesAsUnavailable(Request.Message.ManifestId, Request.Message.BlockIndex);
-                                        //ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
-                                        Response.Data.SetNull();
-                                    }
-
-                                    if (Request.Requester.IsConnected)
-                                    {
-                                        Request.Requester.Send(Response);
-                                    }
-
-                                    Response.Data.SetNull(); // Free data it's been serialized by this point.
-
-                                });
-                            }
-                        };
-
-                        bool FailedOutOfMemory = false;
-                        bool Ret = ManifestDownloadManager.GetBlockData(Request.Message.ManifestId, Request.Message.BlockIndex, ref Response.Data, Callback, out FailedOutOfMemory);
-
-                        // If we don't have enough memory available to store this block in memory right now then requeue and stop trying to fulfill peer requests, none will has memory yet.
-                        if (!Ret && FailedOutOfMemory)
-                        {
-                            //Console.WriteLine("[Requeing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
-                            Interlocked.Decrement(ref ActivePeerRequests);
-                            BestPeer.BlockRequestQueue.Enqueue(Request);
-                            return;
-                        }
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void UpdateAvailableBlocks()
-        {
-            // Inform the download manager what blocks are available from peers.
-            BlockListState State = new BlockListState();
-
-            lock (Peers)
-            {
-                foreach (Peer peer in Peers)
-                {
-                    if (peer.BlockState != null)
-                    {
-                        State.Union(peer.BlockState);
-                    }
-                }
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to publish, no connection to server?");
+                return false;
             }
 
-            ManifestDownloadManager.SetAvailableToDownloadBlocks(State);
+            byte[] Data = Manifest.ToByteArray();
+
+            NetMessage_PublishManifest Msg = new NetMessage_PublishManifest();
+            Msg.Data = Data;
+            Msg.ManifestId = Manifest.Guid;
+            Connection.Send(Msg);
+
+            return true;
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        private void MarkBlockDownloadsForUpdate()
+        /// <param name="Path"></param>
+        public bool RequestApplyLicense(License license)
         {
-            //DownloadQueueIsDirty = 1;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void UpdateBlockDownloads()
-        {
-            // TODO: Make this whole function less crap and less cpu consuming.
-            //if (Interlocked.CompareExchange(ref DownloadQueueIsDirty, 0, 1) == 1)
-            //{
-            //    return;
-            //}
-
-            ManifestDownloadManager.UpdateBlockQueue();
-
-            if (ManifestDownloadManager.DownloadQueue == null)
+            if (!Connection.IsReadyForData)
             {
-                return;
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to apply license, no connection to server?");
+                return false;
             }
 
-            lock (Peers)
-            {
-                // Remove any downloads that have timed out.
-                foreach (Peer peer in Peers)
-                {
-                    peer.PruneTimeoutDownloads();
-                }
+            NetMessage_ApplyLicense Msg = new NetMessage_ApplyLicense();
+            Msg.License = license;
+            Connection.Send(Msg);
 
-                for (int i = 0; i < ManifestDownloadManager.DownloadQueue.Count; i++)
-                {
-                    ManifestPendingDownloadBlock Item = ManifestDownloadManager.DownloadQueue[i];
-
-                    // Make sure block is not already being downloaded.
-                    // TODO: Change to a set lookup, this is slow.
-                    bool AlreadyDownloading = false;
-                    foreach (Peer peer in Peers)
-                    {
-                        if (peer.IsDownloadingBlock(Item))
-                        {
-                            AlreadyDownloading = true;
-                            continue;
-                        }
-                    }
-
-                    if (AlreadyDownloading)
-                    {
-                        continue;
-                    }
-
-                    // Get block information so we know if its small enough to add to any peers queue.
-                    BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
-                    if (!ManifestDownloadManager.GetBlockInfo(Item.ManifestId, Item.BlockIndex, ref BlockInfo))
-                    {
-                        continue;
-                    }
-
-                    // Find all peers that have this block.
-                    Peer LeastLoadedPeer = null;
-                    long LeastLoadedPeerAvailableBandwidth = 0;
-                    for (int j = 0; j < Peers.Count; j++)
-                    {
-                        Peer Peer = Peers[(j + PeerBlockRequestShuffleIndex) % Peers.Count];
-                        if (!Peer.Connection.IsReadyForData)
-                        {
-                            continue;
-                        }
-
-                        if (!Peer.HasBlock(Item))
-                        {
-                            continue;
-                        }
-
-                        long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
-                        long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
-
-                        if ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && (LeastLoadedPeer == null || Peer.ActiveBlockDownloadSize < LeastLoadedPeerAvailableBandwidth))
-                        {
-                            LeastLoadedPeer = Peer;
-                            LeastLoadedPeerAvailableBandwidth = Peer.ActiveBlockDownloadSize;
-                        }
-                    }
-
-                    PeerBlockRequestShuffleIndex++;
-                    if (PeerBlockRequestShuffleIndex > Peers.Count)
-                    {
-                        PeerBlockRequestShuffleIndex = 0;
-                    }
-
-                    if (LeastLoadedPeer != null)
-                    {
-                        NetMessage_GetBlock Msg = new NetMessage_GetBlock();
-                        Msg.ManifestId = Item.ManifestId;
-                        Msg.BlockIndex = Item.BlockIndex;
-                        LeastLoadedPeer.Connection.Send(Msg);
-
-                        Item.TimeStarted = TimeUtils.Ticks;
-                        Item.Size = BlockInfo.TotalSize;
-
-                        LeastLoadedPeer.AddActiveBlockDownload(Item);
-
-                        long MaxBandwidth = LeastLoadedPeer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
-                        long BandwidthAvailable = LeastLoadedPeer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
-                    }
-                }
-
-                if (Peers.Count > 0)
-                {
-                    PeerCycleIndex = (++PeerCycleIndex % Peers.Count);
-                }
-            }
+            return true;
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <param name="EndPoint"></param>
-        /// <returns></returns>
-        private Peer GetPeerByAddress(IPEndPoint EndPoint)
+        /// <param name="Path"></param>
+        public bool RequestBuilds(string Path)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request builds, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetBuilds Msg = new NetMessage_GetBuilds();
+            Msg.RootPath = Path;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool RequestLicenseInfo()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request license info, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetLicenseInfo Msg = new NetMessage_GetLicenseInfo();
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        public bool RequestManifest(Guid Id)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request manifests, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetManifest Msg = new NetMessage_GetManifest();
+            Msg.ManifestId = Id;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool RequestServerState()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request server state, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetServerState Msg = new NetMessage_GetServerState();
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool RequestUserList()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request users, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetUsers Msg = new NetMessage_GetUsers();
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        public void RestartConnections()
         {
             lock (Peers)
             {
                 foreach (Peer peer in Peers)
                 {
-#if SHIPPING
-                    if (peer.Address.Address.Equals(EndPoint.Address))
-#else
-                    if (peer.Address.Equals(EndPoint))
-#endif
-                    {
-                        return peer;
-                    }
+                    peer.Connection.Disconnect();
                 }
-            }
-            return null;
-        }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="EndPoint"></param>
-        /// <returns></returns>
-        private Peer GetPeerByConnection(NetConnection Connection)
-        {
-            lock (Peers)
-            {
-                foreach (Peer peer in Peers)
+                Connection.Disconnect();
+                ListenConnection.Disconnect();
+
+                // Deferred actions contain responses to connection events, so purge them. 
+                lock (DeferredActions)
                 {
-                    if (peer.Connection == Connection)
-                    {
-                        return peer;
-                    }
+                    DeferredActions.Clear();
                 }
+
+                LastConnectionAttempt = 0;
             }
-            return null;
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool SetServerMaxBandwidth(long MaxBandwidth)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to set max bandwidth, no connection to server?");
+                return false;
+            }
+
+            NetMessage_SetServerMaxBandwidth Msg = new NetMessage_SetServerMaxBandwidth();
+            Msg.BandwidthLimit = MaxBandwidth;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool SetUserPermissions(string Username, UserPermissionCollection Permissions)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to set user permissions, no connection to server?");
+                return false;
+            }
+
+            NetMessage_SetUserPermissions Msg = new NetMessage_SetUserPermissions();
+            Msg.Username = Username;
+            Msg.Permissions = Permissions;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Hostname"></param>
+        /// <param name="Port"></param>
+        public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, BuildManifestRegistry BuildManifest, ManifestDownloadManager DownloadManager)
+        {
+            ServerHostname = Hostname;
+            ServerPort = Port;
+            PeerListenPortRangeMin = ListenPortRangeMin;
+            PeerListenPortRangeMax = ListenPortRangeMax;
+            ManifestRegistry = BuildManifest;
+            ManifestDownloadManager = DownloadManager;
+            ManifestDownloadManager.OnManifestRequested += Id => { RequestManifest(Id); };
+            Started = true;
+        }
+
+        /// <summary>
         /// </summary>
         private void ConnectToPeers()
         {
@@ -1562,363 +1348,65 @@ namespace BuildSync.Core
 
                         Peers.RemoveAt(i);
                         i--;
-
-                        continue;
                     }
                 }
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        private void SendClientUpdate()
+        private void ConnectToServer()
         {
-            NetMessage_ClientStateUpdate Msg = new NetMessage_ClientStateUpdate();
-            Msg.DownloadRate = NetConnection.GlobalBandwidthStats.RateIn;
-            Msg.UploadRate = NetConnection.GlobalBandwidthStats.RateOut;
-            Msg.TotalDownloaded = NetConnection.GlobalBandwidthStats.TotalIn;
-            Msg.TotalUploaded = NetConnection.GlobalBandwidthStats.TotalOut;
-            Msg.DiskUsage = 0;
-            Msg.ConnectedPeerCount = 0;
-            Msg.Version = AppVersion.VersionString;
+            Connection.BeginConnect(ServerHostname, ServerPort);
 
+            LastConnectionAttempt = TimeUtils.Ticks;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="EndPoint"></param>
+        /// <returns></returns>
+        private Peer GetPeerByAddress(IPEndPoint EndPoint)
+        {
             lock (Peers)
             {
-                for (int i = 0; i < Peers.Count; i++)
+                foreach (Peer peer in Peers)
                 {
-                    Peer peer = Peers[i];
-                    if (peer.Connection.IsConnected)
+#if SHIPPING
+                    if (peer.Address.Address.Equals(EndPoint.Address))
+#else
+                    if (peer.Address.Equals(EndPoint))
+#endif
                     {
-                        Msg.ConnectedPeerCount++;
+                        return peer;
                     }
                 }
             }
 
-
-            foreach (ManifestDownloadState Manifest in ManifestDownloadManager.States.States)
-            {
-                Msg.DiskUsage += Manifest.Manifest != null ? Manifest.Manifest.GetTotalSize() : 0;
-            }
-
-            Connection.Send(Msg);
+            return null;
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        private void SendBlockListUpdate()
+        /// <param name="EndPoint"></param>
+        /// <returns></returns>
+        private Peer GetPeerByConnection(NetConnection Connection)
         {
-            Logger.Log(LogLevel.Verbose, LogCategory.Main, "Sending block list update.");
-
-            BlockListState State = ManifestDownloadManager.GetBlockListState();
-
-            NetMessage_BlockListUpdate Msg = new NetMessage_BlockListUpdate();
-            Msg.BlockState = State;
-
-            // Send to server and each peer.
-            foreach (Peer peer in Peers)
-            {
-                if (peer.Connection.IsConnected)
-                {
-                    Logger.Log(LogLevel.Verbose, LogCategory.Main, "\tSent to peer: " + peer.Connection.Address.ToString());
-                    peer.Connection.Send(Msg);
-                }
-            }
-
-            Logger.Log(LogLevel.Verbose, LogCategory.Main, "\tSent to server.");
-            Connection.Send(Msg);
-
-            /*
-            BlockListState DeltaEncoded = State;
-            if (LastBlockListState != null)
-            {
-                DeltaEncoded = State.GetDelta(LastBlockListState);
-            }
-
-            NetMessage_BlockListUpdate Msg = new NetMessage_BlockListUpdate();
-            Msg.BlockState = DeltaEncoded;
-
-            LastBlockListState = DeltaEncoded;
-
-            Connection.Send(Msg);
-            */
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public bool RequestServerState()
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request server state, no connection to server?");
-                return false;
-            }
-
-            NetMessage_GetServerState Msg = new NetMessage_GetServerState();
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public bool RequestUserList()
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request users, no connection to server?");
-                return false;
-            }
-
-            NetMessage_GetUsers Msg = new NetMessage_GetUsers();
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public bool RequestLicenseInfo()
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request license info, no connection to server?");
-                return false;
-            }
-
-            NetMessage_GetLicenseInfo Msg = new NetMessage_GetLicenseInfo();
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public bool RequestApplyLicense(License license)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to apply license, no connection to server?");
-                return false;
-            }
-
-            NetMessage_ApplyLicense Msg = new NetMessage_ApplyLicense();
-            Msg.License = license;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public bool SetUserPermissions(string Username, UserPermissionCollection Permissions)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to set user permissions, no connection to server?");
-                return false;
-            }
-
-            NetMessage_SetUserPermissions Msg = new NetMessage_SetUserPermissions();
-            Msg.Username = Username;
-            Msg.Permissions = Permissions;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public bool SetServerMaxBandwidth(long MaxBandwidth)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to set max bandwidth, no connection to server?");
-                return false;
-            }
-
-            NetMessage_SetServerMaxBandwidth Msg = new NetMessage_SetServerMaxBandwidth();
-            Msg.BandwidthLimit = MaxBandwidth;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public bool DeleteUser(string Username)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete user, no connection to server?");
-                return false;
-            }
-
-            NetMessage_DeleteUser Msg = new NetMessage_DeleteUser();
-            Msg.Username = Username;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        public bool RequestBuilds(string Path)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request builds, no connection to server?");
-                return false;
-            }
-
-            NetMessage_GetBuilds Msg = new NetMessage_GetBuilds();
-            Msg.RootPath = Path;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool RequestManifest(Guid Id)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request manifests, no connection to server?");
-                return false;
-            }
-
-            NetMessage_GetManifest Msg = new NetMessage_GetManifest();
-            Msg.ManifestId = Id;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void SendConnectionInfo()
-        {
-            if (!Connection.IsReadyForData)
-            {
-                return;
-            }
-
-            NetMessage_ConnectionInfo Msg = new NetMessage_ConnectionInfo();
-            Msg.Username = Environment.UserDomainName + "\\" + Environment.UserName;
-            Msg.PeerConnectionAddress = ListenConnection.ListenAddress;
-            Connection.Send(Msg);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="guid"></param>
-        public bool PublishManifest(BuildManifest Manifest)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to publish, no connection to server?");
-                return false;
-            }
-
-            byte[] Data = Manifest.ToByteArray();
-
-            NetMessage_PublishManifest Msg = new NetMessage_PublishManifest();
-            Msg.Data = Data;
-            Msg.ManifestId = Manifest.Guid;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="guid"></param>
-        public bool DeleteManifest(Guid ManifestId)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete, no connection to server?");
-                return false;
-            }
-
-            NetMessage_DeleteManifest Msg = new NetMessage_DeleteManifest();
-            Msg.ManifestId = ManifestId;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Connection"></param>
-        /// <param name="ClientConnection"></param>
-        private void PeerConnected(NetConnection Connection, NetConnection ClientConnection)
-        {
-            Peer peer = null;
             lock (Peers)
             {
-                peer = GetPeerByAddress(ClientConnection.Address);
-                if (peer == null)
+                foreach (Peer peer in Peers)
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}.", ClientConnection.Address.ToString());
-
-                    peer = new Peer();
-                    peer.Address = ClientConnection.Address;
-                    peer.Connection = ClientConnection;
-                    peer.Connection.OnMessageRecieved += HandleMessage;
-                    peer.RemoteInitiated = true;
-                    peer.LastConnectionAttemptTime = 0;
-                    Peers.Add(peer);
-                }
-                else
-                {
-                    bool bRemoteHasPriority = (ClientConnection.Address.Port < peer.Connection.Address.Port);
-
-                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}, but we already have a local connection, {1} takes priority.", ClientConnection.Address.ToString(), bRemoteHasPriority ? "REMOTE" : "LOCAL");
-
-                    // The peer with the lowest ip address takes priority.
-                    if (bRemoteHasPriority)
+                    if (peer.Connection == Connection)
                     {
-                        // Their connection takes priority.
-                        peer.Connection.Disconnect();
-                    }
-                    else
-                    {
-                        // Our connection takes priority.
-                        ClientConnection.Disconnect();
+                        return peer;
                     }
                 }
             }
 
-            // Exchange block list with remote.
-            BlockListUpdatePending = true;
+            return null;
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Connection"></param>
         /// <param name="Message"></param>
@@ -2042,20 +1530,20 @@ namespace BuildSync.Core
 
                     lock (DeferredActions)
                     {
-                        DeferredActions.Enqueue(() =>
-                        {
-                            Peer peer = GetPeerByConnection(Connection);
-                            if (peer != null)
+                        DeferredActions.Enqueue(
+                            () =>
                             {
-                                peer.SetBlockState(Msg.ManifestId, Msg.BlockIndex, false);
+                                Peer peer = GetPeerByConnection(Connection);
+                                if (peer != null)
+                                {
+                                    peer.SetBlockState(Msg.ManifestId, Msg.BlockIndex, false);
+                                }
                             }
-                        });
+                        );
                     }
 
                     Interlocked.Increment(ref BlockRequestFailureRate);
                     Msg.Cleanup();
-
-                    return;
                 }
                 else
                 {
@@ -2076,7 +1564,7 @@ namespace BuildSync.Core
                         return;
                     }
 
-                    BlockAccessCompleteHandler Callback = (bool bSuccess) =>
+                    BlockAccessCompleteHandler Callback = bSuccess =>
                     {
                         Msg.Cleanup();
 
@@ -2084,17 +1572,19 @@ namespace BuildSync.Core
 
                         lock (DeferredActions)
                         {
-                            DeferredActions.Enqueue(() =>
-                            {
-                                // Mark block as complete.
-                                if (bSuccess)
+                            DeferredActions.Enqueue(
+                                () =>
                                 {
-                                    ManifestDownloadManager.MarkBlockAsComplete(Msg.ManifestId, Msg.BlockIndex);
-                                }
+                                    // Mark block as complete.
+                                    if (bSuccess)
+                                    {
+                                        ManifestDownloadManager.MarkBlockAsComplete(Msg.ManifestId, Msg.BlockIndex);
+                                    }
 
-                                // Remove active download marker for this block.
-                                peer.RemoveActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex, bSuccess);
-                            });
+                                    // Remove active download marker for this block.
+                                    peer.RemoveActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex, bSuccess);
+                                }
+                            );
                         }
                     };
 
@@ -2143,6 +1633,377 @@ namespace BuildSync.Core
 
                 // Only limit in rate, out rate is limited implicitly.
                 NetConnection.GlobalBandwidthThrottleIn.GlobalMaxRate = Msg.BandwidthLimit;
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        private void ListenForPeers()
+        {
+            int PortCount = PeerListenPortRangeMax - PeerListenPortRangeMin + 1;
+            int Port = PeerListenPortRangeMin + PortIndex++ % PortCount;
+            ListenConnection.BeginListen(Port, false);
+
+            LastListenAttempt = TimeUtils.Ticks;
+        }
+
+        /// <summary>
+        /// </summary>
+        private void MarkBlockDownloadsForUpdate()
+        {
+            //DownloadQueueIsDirty = 1;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Connection"></param>
+        /// <param name="ClientConnection"></param>
+        private void PeerConnected(NetConnection Connection, NetConnection ClientConnection)
+        {
+            Peer peer = null;
+            lock (Peers)
+            {
+                peer = GetPeerByAddress(ClientConnection.Address);
+                if (peer == null)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}.", ClientConnection.Address.ToString());
+
+                    peer = new Peer();
+                    peer.Address = ClientConnection.Address;
+                    peer.Connection = ClientConnection;
+                    peer.Connection.OnMessageRecieved += HandleMessage;
+                    peer.RemoteInitiated = true;
+                    peer.LastConnectionAttemptTime = 0;
+                    Peers.Add(peer);
+                }
+                else
+                {
+                    bool bRemoteHasPriority = ClientConnection.Address.Port < peer.Connection.Address.Port;
+
+                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}, but we already have a local connection, {1} takes priority.", ClientConnection.Address.ToString(), bRemoteHasPriority ? "REMOTE" : "LOCAL");
+
+                    // The peer with the lowest ip address takes priority.
+                    if (bRemoteHasPriority)
+                    {
+                        // Their connection takes priority.
+                        peer.Connection.Disconnect();
+                    }
+                    else
+                    {
+                        // Our connection takes priority.
+                        ClientConnection.Disconnect();
+                    }
+                }
+            }
+
+            // Exchange block list with remote.
+            BlockListUpdatePending = true;
+        }
+
+        /// <summary>
+        /// </summary>
+        private void SendBlockListUpdate()
+        {
+            Logger.Log(LogLevel.Verbose, LogCategory.Main, "Sending block list update.");
+
+            BlockListState State = ManifestDownloadManager.GetBlockListState();
+
+            NetMessage_BlockListUpdate Msg = new NetMessage_BlockListUpdate();
+            Msg.BlockState = State;
+
+            // Send to server and each peer.
+            foreach (Peer peer in Peers)
+            {
+                if (peer.Connection.IsConnected)
+                {
+                    Logger.Log(LogLevel.Verbose, LogCategory.Main, "\tSent to peer: " + peer.Connection.Address);
+                    peer.Connection.Send(Msg);
+                }
+            }
+
+            Logger.Log(LogLevel.Verbose, LogCategory.Main, "\tSent to server.");
+            Connection.Send(Msg);
+
+            /*
+            BlockListState DeltaEncoded = State;
+            if (LastBlockListState != null)
+            {
+                DeltaEncoded = State.GetDelta(LastBlockListState);
+            }
+
+            NetMessage_BlockListUpdate Msg = new NetMessage_BlockListUpdate();
+            Msg.BlockState = DeltaEncoded;
+
+            LastBlockListState = DeltaEncoded;
+
+            Connection.Send(Msg);
+            */
+        }
+
+        /// <summary>
+        /// </summary>
+        private void SendClientUpdate()
+        {
+            NetMessage_ClientStateUpdate Msg = new NetMessage_ClientStateUpdate();
+            Msg.DownloadRate = NetConnection.GlobalBandwidthStats.RateIn;
+            Msg.UploadRate = NetConnection.GlobalBandwidthStats.RateOut;
+            Msg.TotalDownloaded = NetConnection.GlobalBandwidthStats.TotalIn;
+            Msg.TotalUploaded = NetConnection.GlobalBandwidthStats.TotalOut;
+            Msg.DiskUsage = 0;
+            Msg.ConnectedPeerCount = 0;
+            Msg.Version = AppVersion.VersionString;
+
+            lock (Peers)
+            {
+                for (int i = 0; i < Peers.Count; i++)
+                {
+                    Peer peer = Peers[i];
+                    if (peer.Connection.IsConnected)
+                    {
+                        Msg.ConnectedPeerCount++;
+                    }
+                }
+            }
+
+
+            foreach (ManifestDownloadState Manifest in ManifestDownloadManager.States.States)
+            {
+                Msg.DiskUsage += Manifest.Manifest != null ? Manifest.Manifest.GetTotalSize() : 0;
+            }
+
+            Connection.Send(Msg);
+        }
+
+        /// <summary>
+        /// </summary>
+        private void SendConnectionInfo()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                return;
+            }
+
+            NetMessage_ConnectionInfo Msg = new NetMessage_ConnectionInfo();
+            Msg.Username = Environment.UserDomainName + "\\" + Environment.UserName;
+            Msg.PeerConnectionAddress = ListenConnection.ListenAddress;
+            Connection.Send(Msg);
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdateAvailableBlocks()
+        {
+            // Inform the download manager what blocks are available from peers.
+            BlockListState State = new BlockListState();
+
+            lock (Peers)
+            {
+                foreach (Peer peer in Peers)
+                {
+                    if (peer.BlockState != null)
+                    {
+                        State.Union(peer.BlockState);
+                    }
+                }
+            }
+
+            ManifestDownloadManager.SetAvailableToDownloadBlocks(State);
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdateBlockDownloads()
+        {
+            // TODO: Make this whole function less crap and less cpu consuming.
+            //if (Interlocked.CompareExchange(ref DownloadQueueIsDirty, 0, 1) == 1)
+            //{
+            //    return;
+            //}
+
+            ManifestDownloadManager.UpdateBlockQueue();
+
+            if (ManifestDownloadManager.DownloadQueue == null)
+            {
+                return;
+            }
+
+            lock (Peers)
+            {
+                // Remove any downloads that have timed out.
+                foreach (Peer peer in Peers)
+                {
+                    peer.PruneTimeoutDownloads();
+                }
+
+                for (int i = 0; i < ManifestDownloadManager.DownloadQueue.Count; i++)
+                {
+                    ManifestPendingDownloadBlock Item = ManifestDownloadManager.DownloadQueue[i];
+
+                    // Make sure block is not already being downloaded.
+                    // TODO: Change to a set lookup, this is slow.
+                    bool AlreadyDownloading = false;
+                    foreach (Peer peer in Peers)
+                    {
+                        if (peer.IsDownloadingBlock(Item))
+                        {
+                            AlreadyDownloading = true;
+                        }
+                    }
+
+                    if (AlreadyDownloading)
+                    {
+                        continue;
+                    }
+
+                    // Get block information so we know if its small enough to add to any peers queue.
+                    BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
+                    if (!ManifestDownloadManager.GetBlockInfo(Item.ManifestId, Item.BlockIndex, ref BlockInfo))
+                    {
+                        continue;
+                    }
+
+                    // Find all peers that have this block.
+                    Peer LeastLoadedPeer = null;
+                    long LeastLoadedPeerAvailableBandwidth = 0;
+                    for (int j = 0; j < Peers.Count; j++)
+                    {
+                        Peer Peer = Peers[(j + PeerBlockRequestShuffleIndex) % Peers.Count];
+                        if (!Peer.Connection.IsReadyForData)
+                        {
+                            continue;
+                        }
+
+                        if (!Peer.HasBlock(Item))
+                        {
+                            continue;
+                        }
+
+                        long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
+                        long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
+
+                        if ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && (LeastLoadedPeer == null || Peer.ActiveBlockDownloadSize < LeastLoadedPeerAvailableBandwidth))
+                        {
+                            LeastLoadedPeer = Peer;
+                            LeastLoadedPeerAvailableBandwidth = Peer.ActiveBlockDownloadSize;
+                        }
+                    }
+
+                    PeerBlockRequestShuffleIndex++;
+                    if (PeerBlockRequestShuffleIndex > Peers.Count)
+                    {
+                        PeerBlockRequestShuffleIndex = 0;
+                    }
+
+                    if (LeastLoadedPeer != null)
+                    {
+                        NetMessage_GetBlock Msg = new NetMessage_GetBlock();
+                        Msg.ManifestId = Item.ManifestId;
+                        Msg.BlockIndex = Item.BlockIndex;
+                        LeastLoadedPeer.Connection.Send(Msg);
+
+                        Item.TimeStarted = TimeUtils.Ticks;
+                        Item.Size = BlockInfo.TotalSize;
+
+                        LeastLoadedPeer.AddActiveBlockDownload(Item);
+
+                        long MaxBandwidth = LeastLoadedPeer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
+                        long BandwidthAvailable = LeastLoadedPeer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
+                    }
+                }
+
+                if (Peers.Count > 0)
+                {
+                    PeerCycleIndex = ++PeerCycleIndex % Peers.Count;
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdatePeerRequests()
+        {
+            while (ActivePeerRequests < MaxConcurrentPeerRequests)
+            {
+                Peer BestPeer = null;
+                ulong BestPeerElapsed = ulong.MaxValue;
+
+                lock (Peers)
+                {
+                    // Find peer with the longest time since one if its requests were fulfilled.
+                    foreach (Peer peer in Peers)
+                    {
+                        if (peer.BlockRequestQueue.Count > 0 && peer.Connection.IsReadyForData)
+                        {
+                            ulong Elapsed = TimeUtils.Ticks - peer.LastBlockRequestFulfillTime;
+                            if (Elapsed < BestPeerElapsed)
+                            {
+                                BestPeer = peer;
+                                BestPeerElapsed = Elapsed;
+                            }
+                        }
+                    }
+                }
+
+                if (BestPeer != null)
+                {
+                    PendingBlockRequest Request;
+                    if (BestPeer.BlockRequestQueue.TryDequeue(out Request))
+                    {
+                        //Console.WriteLine("[Processing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
+
+                        BestPeer.LastBlockRequestFulfillTime = TimeUtils.Ticks;
+                        Interlocked.Increment(ref ActivePeerRequests);
+
+                        NetMessage_GetBlockResponse Response = new NetMessage_GetBlockResponse();
+                        Response.ManifestId = Request.Message.ManifestId;
+                        Response.BlockIndex = Request.Message.BlockIndex;
+
+                        BlockAccessCompleteHandler Callback = bSuccess =>
+                        {
+                            Interlocked.Decrement(ref ActivePeerRequests);
+
+                            lock (DeferredActions)
+                            {
+                                DeferredActions.Enqueue(
+                                    () =>
+                                    {
+                                        if (!bSuccess)
+                                        {
+                                            Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to retrieve requested block {0} in manifest {1} for peer {2}.", Request.Message.BlockIndex, Request.Message.ManifestId.ToString(), Request.Requester.Address.ToString());
+
+                                            ManifestDownloadManager.MarkAllBlockFilesAsUnavailable(Request.Message.ManifestId, Request.Message.BlockIndex);
+                                            //ManifestDownloadManager.MarkBlockAsUnavailable(Msg.ManifestId, Msg.BlockIndex);
+                                            Response.Data.SetNull();
+                                        }
+
+                                        if (Request.Requester.IsConnected)
+                                        {
+                                            Request.Requester.Send(Response);
+                                        }
+
+                                        Response.Data.SetNull(); // Free data it's been serialized by this point.
+                                    }
+                                );
+                            }
+                        };
+
+                        bool FailedOutOfMemory = false;
+                        bool Ret = ManifestDownloadManager.GetBlockData(Request.Message.ManifestId, Request.Message.BlockIndex, ref Response.Data, Callback, out FailedOutOfMemory);
+
+                        // If we don't have enough memory available to store this block in memory right now then requeue and stop trying to fulfill peer requests, none will has memory yet.
+                        if (!Ret && FailedOutOfMemory)
+                        {
+                            //Console.WriteLine("[Requeing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
+                            Interlocked.Decrement(ref ActivePeerRequests);
+                            BestPeer.BlockRequestQueue.Enqueue(Request);
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    break;
+                }
             }
         }
     }

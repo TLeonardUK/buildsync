@@ -19,11 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System.Reflection;
+using System.Threading;
 using BuildSync.Core.Utils;
 using BuildSync.Server.Tasks;
 using CommandLine;
-using System.Reflection;
-using System.Threading;
 
 namespace BuildSync.Server.Commands
 {
@@ -37,7 +37,6 @@ namespace BuildSync.Server.Commands
         public string Value { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
@@ -71,6 +70,7 @@ namespace BuildSync.Server.Commands
                     IpcClient.Respond(string.Format("FAILED: Value '{0}' is not a valid int.", Value));
                     return;
                 }
+
                 ValueToSet = Result;
             }
             else if (Property.PropertyType == typeof(float))
@@ -81,6 +81,7 @@ namespace BuildSync.Server.Commands
                     IpcClient.Respond(string.Format("FAILED: Value '{0}' is not a valid float.", Value));
                     return;
                 }
+
                 ValueToSet = Result;
             }
             else if (Property.PropertyType == typeof(bool))
@@ -102,6 +103,7 @@ namespace BuildSync.Server.Commands
                         return;
                     }
                 }
+
                 ValueToSet = Result;
             }
             else if (Property.PropertyType == typeof(bool))
@@ -123,6 +125,7 @@ namespace BuildSync.Server.Commands
                         return;
                     }
                 }
+
                 ValueToSet = Result;
             }
             else
@@ -153,29 +156,30 @@ namespace BuildSync.Server.Commands
                         switch (MoveTask.State)
                         {
                             case MoveStorageState.CopyingFiles:
+                            {
+                                if (MoveTask.CurrentFile != null && MoveTask.CurrentFile.Trim().Length > 0)
                                 {
-                                    if (MoveTask.CurrentFile != null && MoveTask.CurrentFile.Trim().Length > 0)
-                                    {
-                                        IpcClient.Respond(string.Format("Copying: {0}", MoveTask.CurrentFile));
-                                    }
-                                    break;
+                                    IpcClient.Respond(string.Format("Copying: {0}", MoveTask.CurrentFile));
                                 }
+
+                                break;
+                            }
                             case MoveStorageState.CleaningUpOldDirectory:
-                                {
-                                    IpcClient.Respond(string.Format("Cleaning up old directory."));
-                                    break;
-                                }
+                            {
+                                IpcClient.Respond("Cleaning up old directory.");
+                                break;
+                            }
                             case MoveStorageState.Success:
-                                {
-                                    break;
-                                }
+                            {
+                                break;
+                            }
                             case MoveStorageState.FailedDiskError:
                             case MoveStorageState.Failed:
                             default:
-                                {
-                                    IpcClient.Respond(string.Format("FAILED: Failed to change storage directory due to disk error."));
-                                    return;
-                                }
+                            {
+                                IpcClient.Respond("FAILED: Failed to change storage directory due to disk error.");
+                                return;
+                            }
                         }
 
                         OldFile = MoveTask.CurrentFile;

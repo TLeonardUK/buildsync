@@ -19,25 +19,33 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System.IO;
 using BuildSync.Client.Tasks;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using CommandLine;
-using System.IO;
 
 namespace BuildSync.Client.Commands
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Verb("add", HelpText = "Adds a build to the given path on the server.")]
     public class CommandLineAddOptions
     {
-        [Value(0, MetaName = "VirtualPath", Required = true, HelpText = "Path, in the servers virtual file system, that this build should be added at, eg. 'MyProject/Nightly/cs12345'.")]
-        public string VirtualPath { get; set; }
-
+        /// <summary>
+        /// 
+        /// </summary>
         [Value(1, MetaName = "LocalPath", Required = true, HelpText = "Path to a folder, on the local machine, that the build files exist in.")]
         public string LocalPath { get; set; }
 
         /// <summary>
         /// 
+        /// </summary>
+        [Value(0, MetaName = "VirtualPath", Required = true, HelpText = "Path, in the servers virtual file system, that this build should be added at, eg. 'MyProject/Nightly/cs12345'.")]
+        public string VirtualPath { get; set; }
+
+        /// <summary>
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
@@ -67,69 +75,71 @@ namespace BuildSync.Client.Commands
 
             Publisher.Start(VirtualPath, LocalPath);
 
-            Program.PumpLoop(() =>
-            {
-                if (!Program.NetClient.IsConnected)
+            Program.PumpLoop(
+                () =>
                 {
-                    IpcClient.Respond("FAILED: Lost connection to server.");
-                    return true;
-                }
-
-                if (Publisher != null && (Publisher.State != OldPublisherState || (int)Publisher.Progress != OldPublisherProgress))
-                {
-                    OldPublisherState = Publisher.State;
-                    OldPublisherProgress = (int)Publisher.Progress;
-
-                    switch (Publisher.State)
+                    if (!Program.NetClient.IsConnected)
                     {
-                        case BuildPublishingState.CopyingFiles:
+                        IpcClient.Respond("FAILED: Lost connection to server.");
+                        return true;
+                    }
+
+                    if (Publisher != null && (Publisher.State != OldPublisherState || (int) Publisher.Progress != OldPublisherProgress))
+                    {
+                        OldPublisherState = Publisher.State;
+                        OldPublisherProgress = (int) Publisher.Progress;
+
+                        switch (Publisher.State)
+                        {
+                            case BuildPublishingState.CopyingFiles:
                             {
                                 IpcClient.Respond(string.Format("Copying files to storage: {0}%", OldPublisherProgress));
                                 break;
                             }
-                        case BuildPublishingState.ScanningFiles:
+                            case BuildPublishingState.ScanningFiles:
                             {
                                 IpcClient.Respond(string.Format("Scanning local files: {0}%", OldPublisherProgress));
                                 break;
                             }
-                        case BuildPublishingState.UploadingManifest:
+                            case BuildPublishingState.UploadingManifest:
                             {
-                                IpcClient.Respond(string.Format("Uploading manfiest to server."));
+                                IpcClient.Respond("Uploading manfiest to server.");
                                 break;
                             }
-                        case BuildPublishingState.FailedVirtualPathAlreadyExists:
+                            case BuildPublishingState.FailedVirtualPathAlreadyExists:
                             {
                                 IpcClient.Respond(string.Format("FAILED: Build already exists at virtual path '{0}'.", VirtualPath));
                                 return true;
                             }
-                        case BuildPublishingState.PermissionDenied:
+                            case BuildPublishingState.PermissionDenied:
                             {
                                 IpcClient.Respond(string.Format("FAILED: Permission denied to virtual path '{0}'.", VirtualPath));
                                 return true;
                             }
-                        case BuildPublishingState.FailedGuidAlreadyExists:
+                            case BuildPublishingState.FailedGuidAlreadyExists:
                             {
-                                IpcClient.Respond(string.Format("FAILED: Manifest with same GUID already exists."));
+                                IpcClient.Respond("FAILED: Manifest with same GUID already exists.");
                                 return true;
                             }
-                        case BuildPublishingState.Success:
+                            case BuildPublishingState.Success:
                             {
                                 Publisher.Commit();
                                 Publisher = null;
-                                IpcClient.Respond(string.Format("SUCCESS: Build added successfully."));
+                                IpcClient.Respond("SUCCESS: Build added successfully.");
                                 return true;
                             }
-                        case BuildPublishingState.Failed:
-                        default:
+                            case BuildPublishingState.Failed:
+                            default:
                             {
-                                IpcClient.Respond(string.Format("FAILED: Undefined reason."));
+                                IpcClient.Respond("FAILED: Undefined reason.");
                                 return true;
                             }
+                        }
                     }
-                }
 
-                return false;
-            });
+                    return false;
+                }
+            );
         }
     }
 }

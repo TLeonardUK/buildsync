@@ -25,36 +25,69 @@ using System.IO;
 
 namespace BuildSync.Core.Utils
 {
-
     /// <summary>
-    /// 
     /// </summary>
     public class FileCache
     {
         /// <summary>
-        /// 
         /// </summary>
         private class Entry
         {
-            public string Path;
             public string Contents;
             public DateTime LastModified;
             public bool NeedsUpdate;
+            public string Path;
             public FileSystemWatcher Watcher;
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private Dictionary<string, Entry> Entries = new Dictionary<string, Entry>();
-
-        /// <summary>
-        /// 
         /// </summary>
         private const int RecheckedInterval = 10 * 1000;
 
         /// <summary>
-        /// 
+        /// </summary>
+        private readonly Dictionary<string, Entry> Entries = new Dictionary<string, Entry>();
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Value"></param>
+        public string Get(string Path)
+        {
+            return GetCache(Path).Contents;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        /// <returns></returns>
+        private Entry GetCache(string InPath)
+        {
+            InPath = FileUtils.NormalizePath(InPath);
+
+            Entry Result = null;
+            if (Entries.TryGetValue(InPath, out Result))
+            {
+                UpdateEntry(Result);
+                return Result;
+            }
+
+            Result = new Entry();
+            Result.Path = InPath;
+            Result.LastModified = DateTime.MinValue;
+            Result.NeedsUpdate = true;
+            Result.Contents = "";
+            Result.Watcher = new FileSystemWatcher();
+            Result.Watcher.Path = Path.GetDirectoryName(InPath);
+            Result.Watcher.Filter = Path.GetFileName(InPath);
+            Result.Watcher.EnableRaisingEvents = true;
+            Result.Watcher.Changed += (sender, e) => { Result.NeedsUpdate = true; };
+            Entries.Add(Result.Path, Result);
+
+            UpdateEntry(Result);
+            return Result;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="entry"></param>
         private void UpdateEntry(Entry entry)
@@ -79,50 +112,6 @@ namespace BuildSync.Core.Utils
 
                 entry.NeedsUpdate = false;
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Path"></param>
-        /// <returns></returns>
-        private Entry GetCache(string InPath)
-        {
-            InPath = FileUtils.NormalizePath(InPath);
-
-            Entry Result = null;
-            if (Entries.TryGetValue(InPath, out Result))
-            {
-                UpdateEntry(Result);
-                return Result;
-            }
-
-            Result = new Entry();
-            Result.Path = InPath;
-            Result.LastModified = DateTime.MinValue;
-            Result.NeedsUpdate = true;
-            Result.Contents = "";
-            Result.Watcher = new FileSystemWatcher();
-            Result.Watcher.Path = Path.GetDirectoryName(InPath);
-            Result.Watcher.Filter = Path.GetFileName(InPath);
-            Result.Watcher.EnableRaisingEvents = true;
-            Result.Watcher.Changed += (object sender, FileSystemEventArgs e) =>
-            {
-                Result.NeedsUpdate = true;
-            };
-            Entries.Add(Result.Path, Result);
-
-            UpdateEntry(Result);
-            return Result;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Value"></param>
-        public string Get(string Path)
-        {
-            return GetCache(Path).Contents;
         }
     }
 }

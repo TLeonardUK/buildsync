@@ -26,7 +26,6 @@ using System.ComponentModel;
 namespace BuildSync.Core.Downloads
 {
     /// <summary>
-    /// 
     /// </summary>
     public enum BuildSelectionRule
     {
@@ -34,11 +33,10 @@ namespace BuildSync.Core.Downloads
         Newest,
 
         [Description("Oldest")]
-        Oldest,
+        Oldest
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public enum BuildSelectionFilter
     {
@@ -58,106 +56,82 @@ namespace BuildSync.Core.Downloads
         BuildNameAboveFileContents,
 
         [Description("Build name == SCM file contents")]
-        BuildNameEqualsFileContents,
+        BuildNameEqualsFileContents
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class DownloadStateCollection
     {
         /// <summary>
-        /// 
         /// </summary>
         public List<DownloadState> States { get; set; } = new List<DownloadState>();
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class DownloadState
     {
         /// <summary>
-        /// 
-        /// </summary>
-        public Guid Id { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string VirtualPath { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int Priority { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string ScmWorkspaceLocation { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public BuildSelectionRule SelectionRule { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public BuildSelectionFilter SelectionFilter { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string SelectionFilterFilePath { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool UpdateAutomatically { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool InstallAutomatically { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string InstallDeviceName { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool Paused { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool Installed { get; set; }
-
-        /// <summary>
-        /// 
         /// </summary>
         public Guid ActiveManifestId { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool IsInternal
-        {
-            get
-            {
-                return Name.Contains("$");
-            }
-        }
+        public Guid Id { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public bool InstallAutomatically { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public string InstallDeviceName { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public bool Installed { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public bool IsInternal => Name.Contains("$");
+
+        /// <summary>
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public bool Paused { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public int Priority { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public string ScmWorkspaceLocation { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public BuildSelectionFilter SelectionFilter { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public string SelectionFilterFilePath { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public BuildSelectionRule SelectionRule { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public bool UpdateAutomatically { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public string VirtualPath { get; set; }
     }
 }

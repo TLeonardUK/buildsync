@@ -26,15 +26,17 @@ namespace BuildSync.Core.Networking.Messages
     public class NetMessage_SetUserPermissions : NetMessage
     {
         /// <summary>
-        /// 
+        /// </summary>
+        public UserPermissionCollection Permissions = new UserPermissionCollection();
+
+        /// <summary>
         /// </summary>
         public string Username = "";
 
         /// <summary>
         /// 
         /// </summary>
-        public UserPermissionCollection Permissions = new UserPermissionCollection();
-
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Username);
@@ -43,6 +45,7 @@ namespace BuildSync.Core.Networking.Messages
             {
                 Permissions = new UserPermissionCollection();
             }
+
             Permissions.Serialize(serializer);
         }
     }

@@ -24,22 +24,18 @@ using System.Net;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_ConnectionInfo : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public IPEndPoint PeerConnectionAddress = new IPEndPoint(IPAddress.Any, 0);
 
         /// <summary>
-        /// 
         /// </summary>
         public string Username = "";
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)

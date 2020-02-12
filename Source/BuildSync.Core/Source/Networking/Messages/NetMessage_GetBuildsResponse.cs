@@ -24,27 +24,28 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_GetBuildsResponse : NetMessage
     {
         public struct BuildInfo
         {
             public string VirtualPath;
-            public System.Guid Guid;
+            public Guid Guid;
             public DateTime CreateTime;
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public BuildInfo[] Builds = new BuildInfo[0];
+
+        /// <summary>
         /// </summary>
         public string RootPath = "";
 
         /// <summary>
         /// 
         /// </summary>
-        public BuildInfo[] Builds = new BuildInfo[0];
-
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             int BuildCount = Builds.Length;

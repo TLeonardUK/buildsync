@@ -19,109 +19,35 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Networking
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class NetMessage
     {
         public const int HeaderSize = 8;
-        public const int MaxPayloadSize = (100 * 1024 * 1024);
+        public const int MaxPayloadSize = 100 * 1024 * 1024;
 
-        public int Id = 0;
-        public int PayloadSize = 0;
+        private static readonly Dictionary<int, Type> MessageTypes = new Dictionary<int, Type>();
 
-        public virtual bool DoesRecieverHandleCleanup
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public int Id;
+        public int PayloadSize;
 
-        private static Dictionary<int, Type> MessageTypes = new Dictionary<int, Type>();
+        public virtual bool DoesRecieverHandleCleanup => false;
 
-        public void ReadHeader(byte[] Buffer)
-        {
-            Id = BitConverter.ToInt32(Buffer, 0);
-            PayloadSize = BitConverter.ToInt32(Buffer, 4);
-        }
-
-        private void WriteHeader(BinaryWriter writer)
-        {
-            writer.Write(Id);
-            writer.Write(PayloadSize);
-        }
-
-        internal virtual void Cleanup()
-        {
-            // Implement in derived class.
-        }
-
-        protected virtual void SerializePayload(NetMessageSerializer reader)
-        {
-            // Implement in derived class.
-        }
-
-        public static void LoadMessageTypes()
-        {
-            lock (MessageTypes)
-            {
-                if (MessageTypes.Count > 0)
-                {
-                    return;
-                }
-                MessageTypes.Clear();
-
-                foreach (Assembly Assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    try
-                    {
-                        foreach (Type Type in Assembly.GetTypes())
-                        {
-                            if (typeof(NetMessage).IsAssignableFrom(Type))
-                            {
-                                MessageTypes.Add(Type.Name.GetHashCode(), Type);
-                            }
-                        }
-
-                    }
-                    catch (ReflectionTypeLoadException)
-                    {
-                        // Skip this assembly, for some reason any runtime generated (via dynamic complilation) assemblies
-                        // cannot have their types examined.
-                    }
-                }
-            }
-        }
-
-        public int ToByteArray(ref byte[] Output)
-        {
-            ExpandableMemoryStream dataStream = new ExpandableMemoryStream(Output);
-            //MemoryStream dataStream = new MemoryStream(Output);
-            BinaryWriter dataWriter = new BinaryWriter(dataStream);
-
-            dataStream.Seek(HeaderSize, SeekOrigin.Begin);
-
-            long PayloadStart = dataStream.Position;
-            SerializePayload(new NetMessageSerializer(dataWriter));
-            Id = GetType().Name.GetHashCode();
-            PayloadSize = (int)(dataStream.Position - PayloadStart);
-
-            dataStream.Seek(0, SeekOrigin.Begin);
-            WriteHeader(dataWriter);
-
-            dataWriter.Close();
-            dataStream.Close();
-
-            Output = dataStream.GetBuffer();
-            return HeaderSize + PayloadSize;
-        }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Buffer"></param>
+        /// <param name="WasMemoryAvailable"></param>
+        /// <returns></returns>
         public static NetMessage FromByteArray(byte[] Buffer, out bool WasMemoryAvailable)
         {
             WasMemoryAvailable = true;
@@ -184,6 +110,106 @@ namespace BuildSync.Core.Networking
                     return Msg;
                 }
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static void LoadMessageTypes()
+        {
+            lock (MessageTypes)
+            {
+                if (MessageTypes.Count > 0)
+                {
+                    return;
+                }
+
+                MessageTypes.Clear();
+
+                foreach (Assembly Assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    try
+                    {
+                        foreach (Type Type in Assembly.GetTypes())
+                        {
+                            if (typeof(NetMessage).IsAssignableFrom(Type))
+                            {
+                                MessageTypes.Add(Type.Name.GetHashCode(), Type);
+                            }
+                        }
+                    }
+                    catch (ReflectionTypeLoadException)
+                    {
+                        // Skip this assembly, for some reason any runtime generated (via dynamic complilation) assemblies
+                        // cannot have their types examined.
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Buffer"></param>
+        public void ReadHeader(byte[] Buffer)
+        {
+            Id = BitConverter.ToInt32(Buffer, 0);
+            PayloadSize = BitConverter.ToInt32(Buffer, 4);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Output"></param>
+        /// <returns></returns>
+        public int ToByteArray(ref byte[] Output)
+        {
+            ExpandableMemoryStream dataStream = new ExpandableMemoryStream(Output);
+            //MemoryStream dataStream = new MemoryStream(Output);
+            BinaryWriter dataWriter = new BinaryWriter(dataStream);
+
+            dataStream.Seek(HeaderSize, SeekOrigin.Begin);
+
+            long PayloadStart = dataStream.Position;
+            SerializePayload(new NetMessageSerializer(dataWriter));
+            Id = GetType().Name.GetHashCode();
+            PayloadSize = (int) (dataStream.Position - PayloadStart);
+
+            dataStream.Seek(0, SeekOrigin.Begin);
+            WriteHeader(dataWriter);
+
+            dataWriter.Close();
+            dataStream.Close();
+
+            Output = dataStream.GetBuffer();
+            return HeaderSize + PayloadSize;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="reader"></param>
+        protected virtual void SerializePayload(NetMessageSerializer reader)
+        {
+            // Implement in derived class.
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        internal virtual void Cleanup()
+        {
+            // Implement in derived class.
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="writer"></param>
+        private void WriteHeader(BinaryWriter writer)
+        {
+            writer.Write(Id);
+            writer.Write(PayloadSize);
         }
     }
 }

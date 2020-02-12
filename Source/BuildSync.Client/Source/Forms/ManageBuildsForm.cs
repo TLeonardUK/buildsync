@@ -26,12 +26,10 @@ using WeifenLuo.WinFormsUI.Docking;
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class ManageBuildsForm : DockContent
     {
         /// <summary>
-        /// 
         /// </summary>
         public ManageBuildsForm()
         {
@@ -41,43 +39,24 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private void ValidateState()
-        {
-            RemoveBuildButton.Enabled = (
-                downloadFileSystemTree.SelectedManifestId != Guid.Empty
-            );
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void AddBuildClicked(object sender, EventArgs e)
         {
-            (new PublishBuildForm()).ShowDialog(this);
+            new PublishBuildForm().ShowDialog(this);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void RemoveBuildClicked(object sender, EventArgs e)
+        private void CloseButtonClicked(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to delete '" + downloadFileSystemTree.SelectedPath + "'.", "Delete Build", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
-            {
-                if (!Program.NetClient.DeleteManifest(downloadFileSystemTree.SelectedManifestId))
-                {
-                    return;
-                }
-            }
+            Close();
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -87,13 +66,24 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void CloseButtonClicked(object sender, EventArgs e)
+        private void RemoveBuildClicked(object sender, EventArgs e)
         {
-            Close();
+            if (MessageBox.Show("Are you sure you want to delete '" + downloadFileSystemTree.SelectedPath + "'.", "Delete Build", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                if (!Program.NetClient.DeleteManifest(downloadFileSystemTree.SelectedManifestId))
+                {
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        private void ValidateState()
+        {
+            RemoveBuildButton.Enabled = downloadFileSystemTree.SelectedManifestId != Guid.Empty;
         }
     }
 }

@@ -19,41 +19,45 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Manifests;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using BuildSync.Core.Manifests;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Downloads
 {
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class ManifestDownloadStateCollection
     {
         /// <summary>
-        /// 
         /// </summary>
         public List<ManifestDownloadState> States { get; set; } = new List<ManifestDownloadState>();
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class ManifestFileCompletedState
     {
-        public string Path { get; set; } = "";
+        /// <summary>
+        /// 
+        /// </summary>
         public DateTime ModifiedTimestampOnCompleted { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Path { get; set; } = "";
     }
 
     /// <summary>
-    /// 
     /// </summary>
-    [Serializable, JsonConverter(typeof(JsonStringEnumConverter))]
+    [Serializable]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ManifestDownloadProgressState
     {
         RetrievingManifest,
@@ -65,156 +69,80 @@ namespace BuildSync.Core.Downloads
         InitializeFailed,
         ValidationFailed,
         Installing,
-        InstallFailed,
+        InstallFailed
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class ManifestDownloadState
     {
         /// <summary>
-        /// 
-        /// </summary>
-        public Guid Id { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public ManifestDownloadProgressState State { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool Paused { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool Active { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public DateTime LastActive { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public Guid ManifestId { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int Priority { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string LocalFolder { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public SparseStateArray BlockStates { get; set; } = new SparseStateArray();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<ManifestFileCompletedState> FileCompletedStates { get; set; } = new List<ManifestFileCompletedState>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [NonSerialized]
-        public ulong LastManifestRequestTime = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [NonSerialized]
-        public BuildManifest Manifest;
-
-        /// <summary>
-        /// 
         /// </summary>
         [NonSerialized]
         public RateTracker BandwidthStats = new RateTracker(100);
 
         /// <summary>
-        /// 
         /// </summary>
         [NonSerialized]
-        internal Task InitializeTask = null;
+        public RateTracker InitializeRateStats = new RateTracker(1000);
 
         /// <summary>
-        /// 
+        /// </summary>
+        public string InstallDeviceName = "";
+
+        /// <summary>
+        /// </summary>
+        public bool Installed = false;
+
+        /// <summary>
+        /// </summary>
+        public bool InstallOnComplete = false;
+
+        /// <summary>
         /// </summary>
         [NonSerialized]
-        internal Task ValidationTask = null;
+        public ulong LastManifestRequestTime = 0;
 
         /// <summary>
-        /// 
         /// </summary>
         [NonSerialized]
-        internal Task InstallTask = null;
+        public BuildManifest Manifest;
 
         /// <summary>
-        /// 
+        /// </summary>
+        [NonSerialized]
+        public RateTracker ValidateRateStats = new RateTracker(1000);
+
+        /// <summary>
         /// </summary>
         [NonSerialized]
         internal bool DiskError = false;
 
         /// <summary>
-        /// 
         /// </summary>
-        [JsonIgnore]
-        public float ValidateProgress { get; internal set; }
+        [NonSerialized]
+        internal Task InitializeTask = null;
 
         /// <summary>
-        /// 
         /// </summary>
-        [JsonIgnore]
-        public float InitializeProgress { get; internal set; }
+        [NonSerialized]
+        internal Task InstallTask = null;
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool InstallOnComplete = false;
+        [NonSerialized]
+        internal Task ValidationTask = null;
 
         /// <summary>
-        /// 
         /// </summary>
-        public string InstallDeviceName = "";
+        public bool Active { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
-        public bool Installed = false;
+        public SparseStateArray BlockStates { get; set; } = new SparseStateArray();
 
         /// <summary>
-        /// 
-        /// </summary>
-        [JsonIgnore]
-        public float Progress
-        {
-            get
-            {
-                if (BlockStates == null || BlockStates.Size == 0)
-                {
-                    return 0;
-                }
-                else
-                {
-                    float BlocksRetrieved = BlockStates.Count(true);
-                    return BlocksRetrieved / BlockStates.Size;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         [JsonIgnore]
         public long BytesRemaining
@@ -225,46 +153,81 @@ namespace BuildSync.Core.Downloads
                 {
                     return 0;
                 }
-                else
-                {
-                    long TotalSize = Manifest.GetTotalSize();
-                    long Downloaded = Manifest.GetTotalSizeOfBlocks(BlockStates);
 
-                    return TotalSize - Downloaded;
-                }
+                long TotalSize = Manifest.GetTotalSize();
+                long Downloaded = Manifest.GetTotalSizeOfBlocks(BlockStates);
+
+                return TotalSize - Downloaded;
             }
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public List<ManifestFileCompletedState> FileCompletedStates { get; set; } = new List<ManifestFileCompletedState>();
+
+        /// <summary>
+        /// </summary>
+        public Guid Id { get; set; }
+
+        /// <summary>
         /// </summary>
         [JsonIgnore]
-        public long ValidateBytesRemaining
+        public long InitializeBytesRemaining { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonIgnore]
+        public float InitializeProgress { get; internal set; }
+
+        /// <summary>
+        /// </summary>
+        public DateTime LastActive { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public string LocalFolder { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public Guid ManifestId { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public bool Paused { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public int Priority { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonIgnore]
+        public float Progress
         {
-            get;
-            set;
+            get
+            {
+                if (BlockStates == null || BlockStates.Size == 0)
+                {
+                    return 0;
+                }
+
+                float BlocksRetrieved = BlockStates.Count(true);
+                return BlocksRetrieved / BlockStates.Size;
+            }
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        [NonSerialized]
-        public RateTracker ValidateRateStats = new RateTracker(1000);
+        public ManifestDownloadProgressState State { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
         [JsonIgnore]
-        public long InitializeBytesRemaining
-        {
-            get;
-            set;
-        }
+        public long ValidateBytesRemaining { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
-        [NonSerialized]
-        public RateTracker InitializeRateStats = new RateTracker(1000);
+        [JsonIgnore]
+        public float ValidateProgress { get; internal set; }
     }
 }

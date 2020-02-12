@@ -19,23 +19,28 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Client.Forms;
-using BuildSync.Core.Scm;
 using System;
 using System.Windows.Forms;
+using BuildSync.Client.Forms;
+using BuildSync.Core.Scm;
 
 namespace BuildSync.Client.Controls.Settings
 {
     /// <summary>
-    ///     Control thats displayed in the <see cref="SettingsForm"/> to allow the user to configure all
+    ///     Control thats displayed in the <see cref="SettingsForm" /> to allow the user to configure all
     ///     server settings.
     /// </summary>
     public partial class ScmSettings : SettingsControlBase
     {
-        private bool SkipValidity = false;
+        private readonly bool SkipValidity;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="ServerSettings"/> class.
+        ///     Gets the title displayed over the settings when this control is displayed.
+        /// </summary>
+        public override string GroupName => "SCM Settings";
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ServerSettings" /> class.
         /// </summary>
         public ScmSettings()
         {
@@ -58,30 +63,37 @@ namespace BuildSync.Client.Controls.Settings
         }
 
         /// <summary>
-        ///     Gets the title displayed over the settings when this control is displayed.
         /// </summary>
-        public override string GroupName
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void AddClicked(object sender, EventArgs e)
         {
-            get
+            AddScmWorkspaceForm Form = new AddScmWorkspaceForm();
+            if (Form.ShowDialog(this) == DialogResult.OK)
             {
-                return "SCM Settings";
+                Program.Settings.ScmWorkspaces.Add(Form.Settings);
+                Program.SaveSettings();
+
+                RefreshItems();
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void RefreshItems()
         {
             workspaceList.Items.Clear();
             foreach (ScmWorkspaceSettings Settings in Program.Settings.ScmWorkspaces)
             {
-                ListViewItem Item = new ListViewItem(new string[] {
-                    Settings.Server,
-                    Settings.Username,
-                    Settings.Password.Length > 0 ? "******" : "",
-                    Settings.Location
-                });
+                ListViewItem Item = new ListViewItem(
+                    new[]
+                    {
+                        Settings.Server,
+                        Settings.Username,
+                        Settings.Password.Length > 0 ? "******" : "",
+                        Settings.Location
+                    }
+                );
                 Item.Tag = Settings;
                 Item.Group = workspaceList.Groups[Settings.ProviderType.ToString()];
                 workspaceList.Items.Add(Item);
@@ -89,13 +101,38 @@ namespace BuildSync.Client.Controls.Settings
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RemoveClicked(object sender, EventArgs e)
+        {
+            if (workspaceList.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            ScmWorkspaceSettings Settings = workspaceList.SelectedItems[0].Tag as ScmWorkspaceSettings;
+            Program.Settings.ScmWorkspaces.Remove(Settings);
+            Program.SaveSettings();
+
+            RefreshItems();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StateChanged(object sender, EventArgs e)
+        {
+            UpdateValidityState();
+        }
+
+        /// <summary>
         /// </summary>
         private void UpdateValidityState()
         {
             if (SkipValidity)
             {
-                return;
             }
 
             /*Program.Settings.PerforceServer = ServerTextBox.Text;
@@ -126,53 +163,6 @@ namespace BuildSync.Client.Controls.Settings
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void StateChanged(object sender, EventArgs e)
-        {
-            UpdateValidityState();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void AddClicked(object sender, EventArgs e)
-        {
-            AddScmWorkspaceForm Form = new AddScmWorkspaceForm();
-            if (Form.ShowDialog(this) == DialogResult.OK)
-            {
-                Program.Settings.ScmWorkspaces.Add(Form.Settings);
-                Program.SaveSettings();
-
-                RefreshItems();
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void RemoveClicked(object sender, EventArgs e)
-        {
-            if (workspaceList.SelectedItems.Count == 0)
-            {
-                return;
-            }
-
-            ScmWorkspaceSettings Settings = workspaceList.SelectedItems[0].Tag as ScmWorkspaceSettings;
-            Program.Settings.ScmWorkspaces.Remove(Settings);
-            Program.SaveSettings();
-
-            RefreshItems();
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>

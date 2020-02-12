@@ -24,21 +24,24 @@ using BuildSync.Core.Users;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_PermissionUpdate : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public UserPermissionCollection Permissions = new UserPermissionCollection();
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             if (serializer.IsLoading)
             {
                 Permissions = new UserPermissionCollection();
             }
+
             Permissions.Serialize(serializer);
         }
     }

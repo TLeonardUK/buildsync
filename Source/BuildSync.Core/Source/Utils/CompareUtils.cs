@@ -21,20 +21,20 @@
 
 using System;
 using System.Collections;
+using System.Runtime.InteropServices;
 
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
-    [System.Runtime.InteropServices.ComVisible(true)]
+    [ComVisible(true)]
     public class FileSizeStringComparer : IComparer
     {
-        public int Compare(Object a, Object b)
+        public int Compare(object a, object b)
         {
-            String sa = a as String;
-            String sb = b as String;
+            string sa = a as string;
+            string sb = b as string;
             if (sa != null && sb != null)
             {
                 long XValue = 0;
@@ -45,24 +45,21 @@ namespace BuildSync.Core.Utils
 
                 return XValue.CompareTo(YValue);
             }
-            else
-            {
-                return Comparer.Default.Compare(a, b);
-            }
+
+            return Comparer.Default.Compare(a, b);
         }
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
-    [System.Runtime.InteropServices.ComVisible(true)]
+    [ComVisible(true)]
     public class TransferRateStringComparer : IComparer
     {
-        public int Compare(Object a, Object b)
+        public int Compare(object a, object b)
         {
-            String sa = a as String;
-            String sb = b as String;
+            string sa = a as string;
+            string sb = b as string;
             if (sa != null && sb != null)
             {
                 long XValue = 0;
@@ -73,10 +70,8 @@ namespace BuildSync.Core.Utils
 
                 return XValue.CompareTo(YValue);
             }
-            else
-            {
-                return Comparer.Default.Compare(a, b);
-            }
+
+            return Comparer.Default.Compare(a, b);
         }
     }
 }

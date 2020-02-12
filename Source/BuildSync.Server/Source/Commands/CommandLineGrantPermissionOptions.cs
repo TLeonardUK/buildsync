@@ -19,32 +19,31 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using CommandLine;
-using System;
 
 namespace BuildSync.Server.Commands
 {
     [Verb("grantpermission", HelpText = "Adds the given permission type to a user.")]
     public class CommandLineGrantPermissionOptions
     {
-        [Value(0, MetaName = "Username", Required = true, HelpText = "Username of user to give permission to, if on a domain the domain should be included in format Domain\\Username.")]
-        public string Username { get; set; } = "";
+        [Value(2, MetaName = "Path", Required = false, HelpText = "Virtual path that permission is valid on. All decendents also have permission.")]
+        public string Path { get; set; } = "";
 
         [Value(1, MetaName = "Permission", Required = true, HelpText = "Type of permission that should be granted.")]
         public string Permission { get; set; } = "";
 
-        [Value(2, MetaName = "Path", Required = false, HelpText = "Virtual path that permission is valid on. All decendents also have permission.")]
-        public string Path { get; set; } = "";
+        [Value(0, MetaName = "Username", Required = true, HelpText = "Username of user to give permission to, if on a domain the domain should be included in format Domain\\Username.")]
+        public string Username { get; set; } = "";
 
         /// <summary>
-        /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
             UserPermissionType PermissionType;
-            if (!Enum.TryParse<UserPermissionType>(Permission, out PermissionType))
+            if (!Enum.TryParse(Permission, out PermissionType))
             {
                 IpcClient.Respond(string.Format("FAILED: Permission '{0}' is not valid.", Permission));
                 return;
@@ -59,7 +58,7 @@ namespace BuildSync.Server.Commands
             {
                 if (Program.UserManager.CheckPermission(Username, PermissionType, Path, true))
                 {
-                    IpcClient.Respond(string.Format("FAILED: User already has the permission."));
+                    IpcClient.Respond("FAILED: User already has the permission.");
                     return;
                 }
 

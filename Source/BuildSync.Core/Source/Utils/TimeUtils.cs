@@ -19,25 +19,17 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
 using System.Runtime.InteropServices;
 
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     public static class TimeUtils
     {
-        [DllImport("kernel32.dll")]
-        public static extern UInt64 GetTickCount64();
+        public static ulong Ticks => GetTickCount64();
 
-        public static ulong Ticks
-        {
-            get
-            {
-                return GetTickCount64();
-            }
-        }
+        [DllImport("kernel32.dll")]
+        public static extern ulong GetTickCount64();
     }
 }

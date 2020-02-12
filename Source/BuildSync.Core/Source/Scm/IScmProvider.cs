@@ -24,56 +24,36 @@ using System;
 namespace BuildSync.Core.Scm
 {
     /// <summary>
-    /// 
     /// </summary>
     public interface IScmProvider
     {
         /// <summary>
-        /// 
         /// </summary>
-        string Server
-        {
-            get;
-        }
+        string Password { get; }
 
         /// <summary>
-        /// 
         /// </summary>
-        string Username
-        {
-            get;
-        }
+        string Root { get; }
 
         /// <summary>
-        /// 
         /// </summary>
-        string Password
-        {
-            get;
-        }
+        string Server { get; }
 
         /// <summary>
-        /// 
         /// </summary>
-        string Root
-        {
-            get;
-        }
+        string Username { get; }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Location"></param>
         /// <returns></returns>
         DateTime GetSyncTime();
 
         /// <summary>
-        /// 
         /// </summary>
         void Poll();
 
         /// <summary>
-        /// 
         /// </summary>
         void Terminate();
     }

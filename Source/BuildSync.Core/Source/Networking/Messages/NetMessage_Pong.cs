@@ -22,15 +22,17 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_Pong : NetMessage
     {
         /// <summary>
+        /// </summary>
+        public ulong Timestamp;
+
+        /// <summary>
         /// 
         /// </summary>
-        public ulong Timestamp = 0;
-
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Timestamp);

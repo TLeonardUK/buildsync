@@ -24,7 +24,7 @@ using System;
 namespace BuildSync.Core.Controls.Graph
 {
     /// <summary>
-    ///     Describes an individual data point within a <see cref="GraphSeries"/>.
+    ///     Describes an individual data point within a <see cref="GraphSeries" />.
     /// </summary>
     [Serializable]
     public struct GraphDataPoint

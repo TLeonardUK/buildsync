@@ -19,20 +19,18 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System;
 using System.Net;
 using System.Net.Sockets;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Networking
 {
     /// <summary>
-    /// 
     /// </summary>
     public delegate void NetDiscoveryResponseRecievedEventHandler(NetDiscoveryClient Client, NetDiscoveryData Response);
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public struct NetDiscoveryData
@@ -45,7 +43,6 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public struct NetDiscoveryProbe
@@ -54,24 +51,30 @@ namespace BuildSync.Core.Networking
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class NetDiscoveryClient
     {
+        public const int ProbePort = 9101;
+        public const int ResponsePort = 9100;
+
         private UdpClient Client;
+
+        /// <summary>
+        /// 
+        /// </summary>
 
         public event NetDiscoveryResponseRecievedEventHandler OnResposeRecieved;
 
-        public const int ResponsePort = 9100;
-        public const int ProbePort = 9101;
-
+        /// <summary>
+        /// 
+        /// </summary>
         public NetDiscoveryClient()
         {
             Client = new UdpClient(ResponsePort);
 
             try
             {
-                Client.BeginReceive(new AsyncCallback(UdpPacketRecieved), null);
+                Client.BeginReceive(UdpPacketRecieved, null);
             }
             catch (Exception Ex)
             {
@@ -79,11 +82,42 @@ namespace BuildSync.Core.Networking
             }
         }
 
-        ~NetDiscoveryClient()
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Close()
         {
-            Close();
+            if (Client != null)
+            {
+                Client.Close();
+                Client = null;
+            }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Discover()
+        {
+            NetDiscoveryProbe Probe;
+            Probe.Name = "BuildSync";
+
+            byte[] Data = FileUtils.WriteToArray(Probe);
+
+            try
+            {
+                Client.Send(Data, Data.Length, new IPEndPoint(IPAddress.Broadcast, ProbePort));
+            }
+            catch (Exception Ex)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.IO, "Failed to send discovery probe: {0}", Ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="result"></param>
         private void UdpPacketRecieved(IAsyncResult result)
         {
             if (Client == null)
@@ -112,7 +146,7 @@ namespace BuildSync.Core.Networking
                 {
                     try
                     {
-                        Client.BeginReceive(new AsyncCallback(UdpPacketRecieved), null);
+                        Client.BeginReceive(UdpPacketRecieved, null);
                     }
                     catch (Exception Ex)
                     {
@@ -122,6 +156,43 @@ namespace BuildSync.Core.Networking
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        ~NetDiscoveryClient()
+        {
+            Close();
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public class NetDiscoveryServer
+    {
+        public NetDiscoveryData ResponseData;
+        private UdpClient Client;
+
+        /// <summary>
+        /// 
+        /// </summary>
+
+        public NetDiscoveryServer()
+        {
+            Client = new UdpClient(NetDiscoveryClient.ProbePort);
+
+            try
+            {
+                Client.BeginReceive(UdpPacketRecieved, null);
+            }
+            catch (Exception Ex)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.IO, "Failed to begin recieving udp packets with error: {0}", Ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public void Close()
         {
             if (Client != null)
@@ -131,52 +202,10 @@ namespace BuildSync.Core.Networking
             }
         }
 
-        public void Discover()
-        {
-            NetDiscoveryProbe Probe;
-            Probe.Name = "BuildSync";
-
-            byte[] Data = FileUtils.WriteToArray<NetDiscoveryProbe>(Probe);
-
-            try
-            {
-                Client.Send(Data, Data.Length, new IPEndPoint(IPAddress.Broadcast, ProbePort));
-            }
-            catch (Exception Ex)
-            {
-                Logger.Log(LogLevel.Info, LogCategory.IO, "Failed to send discovery probe: {0}", Ex.Message);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public class NetDiscoveryServer
-    {
-        private UdpClient Client;
-
-        public NetDiscoveryData ResponseData;
-
-        public NetDiscoveryServer()
-        {
-            Client = new UdpClient(NetDiscoveryClient.ProbePort);
-
-            try
-            {
-                Client.BeginReceive(new AsyncCallback(UdpPacketRecieved), null);
-            }
-            catch (Exception Ex)
-            {
-                Logger.Log(LogLevel.Info, LogCategory.IO, "Failed to begin recieving udp packets with error: {0}", Ex.Message);
-            }
-        }
-
-        ~NetDiscoveryServer()
-        {
-            Close();
-        }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="result"></param>
         private void UdpPacketRecieved(IAsyncResult result)
         {
             if (Client == null)
@@ -196,7 +225,7 @@ namespace BuildSync.Core.Networking
                 ResponseData.Version = AppVersion.VersionString;
                 ResponseData.ProtocolVersion = AppVersion.ProtocolVersion;
 
-                byte[] Response = FileUtils.WriteToArray<NetDiscoveryData>(ResponseData);
+                byte[] Response = FileUtils.WriteToArray(ResponseData);
 
                 Client.Send(Response, Response.Length, new IPEndPoint(SourceEndPoint.Address, NetDiscoveryClient.ResponsePort));
             }
@@ -210,7 +239,7 @@ namespace BuildSync.Core.Networking
                 {
                     try
                     {
-                        Client.BeginReceive(new AsyncCallback(UdpPacketRecieved), null);
+                        Client.BeginReceive(UdpPacketRecieved, null);
                     }
                     catch (Exception Ex)
                     {
@@ -220,13 +249,12 @@ namespace BuildSync.Core.Networking
             }
         }
 
-        public void Close()
+        /// <summary>
+        /// 
+        /// </summary>
+        ~NetDiscoveryServer()
         {
-            if (Client != null)
-            {
-                Client.Close();
-                Client = null;
-            }
+            Close();
         }
     }
 }

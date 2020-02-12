@@ -19,21 +19,20 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core;
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Forms;
+using BuildSync.Core;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class AboutForm : Form
     {
         /// <summary>
-        /// 
         /// </summary>
         public AboutForm()
         {
@@ -41,15 +40,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private void OkClicked(object sender, EventArgs e)
-        {
-            Close();
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -57,7 +47,7 @@ namespace BuildSync.Client.Forms
         {
             VersionLabel.Text = AppVersion.VersionString;
 
-            string ExePath = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+            string ExePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             while (true)
             {
                 string HelpDocs = Path.Combine(ExePath, "Docs/Licenses.rtf");
@@ -67,16 +57,21 @@ namespace BuildSync.Client.Forms
                     licenseTextBox.LoadFile(HelpDocs);
                     break;
                 }
-                else
+
+                ExePath = Path.GetDirectoryName(ExePath);
+                if (ExePath == null || !ExePath.Contains('\\') && !ExePath.Contains('/'))
                 {
-                    ExePath = Path.GetDirectoryName(ExePath);
-                    if (ExePath == null || !ExePath.Contains('\\') && !ExePath.Contains('/'))
-                    {
-                        MessageBox.Show("Failed to find about rtf file, installation may be corrupt.", "Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        break;
-                    }
+                    MessageBox.Show("Failed to find about rtf file, installation may be corrupt.", "Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    break;
                 }
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        private void OkClicked(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }

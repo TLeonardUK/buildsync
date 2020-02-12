@@ -19,23 +19,28 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
 using BuildSync.Core;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using CommandLine;
-using System;
 
 namespace BuildSync.Client.Commands
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Verb("delete", HelpText = "Deletes a build at the given path from the server.")]
     public class CommandLineDeleteOptions
     {
+        /// <summary>
+        /// 
+        /// </summary>
         [Value(0, MetaName = "VirtualPath", Required = true, HelpText = "Path, in the servers virtual file system, of the build that should be deleted.")]
         public string VirtualPath { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
@@ -59,7 +64,7 @@ namespace BuildSync.Client.Commands
                 return;
             }
 
-            BuildsRecievedHandler BuildsRecievedHandler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) =>
+            BuildsRecievedHandler BuildsRecievedHandler = (RootPath, Builds) =>
             {
                 if (RootPath == ParentPath && !DeleteInProgress)
                 {
@@ -95,7 +100,7 @@ namespace BuildSync.Client.Commands
                 }
             };
 
-            ManifestDeleteResultRecievedHandler ManifestRecieveHandler = (Guid Id) =>
+            ManifestDeleteResultRecievedHandler ManifestRecieveHandler = Id =>
             {
                 IpcClient.Respond("SUCCESS: Deleted manifest.");
                 IsComplete = true;
@@ -110,18 +115,18 @@ namespace BuildSync.Client.Commands
                 return;
             }
 
-            Program.PumpLoop(() =>
-            {
-
-                if (!Program.NetClient.IsConnected)
+            Program.PumpLoop(
+                () =>
                 {
-                    IpcClient.Respond("FAILED: Lost connection to server.");
-                    return true;
+                    if (!Program.NetClient.IsConnected)
+                    {
+                        IpcClient.Respond("FAILED: Lost connection to server.");
+                        return true;
+                    }
+
+                    return IsComplete;
                 }
-
-                return IsComplete;
-
-            });
+            );
 
             Program.NetClient.OnManifestDeleteResultRecieved -= ManifestRecieveHandler;
             Program.NetClient.OnBuildsRecieved -= BuildsRecievedHandler;

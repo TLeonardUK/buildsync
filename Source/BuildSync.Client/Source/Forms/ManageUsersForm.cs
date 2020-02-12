@@ -19,28 +19,27 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Users;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using BuildSync.Core.Users;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public partial class ManageUsersForm : DockContent
     {
-        private User SelectedUser
-        {
-            get
-            {
-                if (UserListView.SelectedItems.Count == 0)
-                {
-                    return null;
-                }
-                return UserListView.SelectedItems[0].Tag as User;
-            }
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        private User NewUser;
 
+        /// <summary>
+        /// 
+        /// </summary>
         private UserPermission SelectedPermission
         {
             get
@@ -49,24 +48,53 @@ namespace BuildSync.Client.Forms
                 {
                     return null;
                 }
+
                 return PermissionListView.SelectedItems[0].Tag as UserPermission;
             }
         }
 
-        private User NewUser = null;
+        /// <summary>
+        /// 
+        /// </summary>
+        private User SelectedUser
+        {
+            get
+            {
+                if (UserListView.SelectedItems.Count == 0)
+                {
+                    return null;
+                }
 
+                return UserListView.SelectedItems[0].Tag as User;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public ManageUsersForm()
         {
             InitializeComponent();
         }
 
-        private void CloseClicked(object sender, EventArgs e)
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void AddPermissionButtonClicked(object sender, EventArgs e)
         {
-            Close();
+            User AddUser = SelectedUser;
+
+            AddPermissionForm Dialog = new AddPermissionForm();
+            if (Dialog.ShowDialog() == DialogResult.OK)
+            {
+                AddUser.Permissions.Permissions.Add(Dialog.Permission);
+                SaveUser(SelectedUser);
+                RefreshPermissions();
+            }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -86,43 +114,21 @@ namespace BuildSync.Client.Forms
             {
                 SubItem.Selected = false;
             }
+
             item.Selected = true;
 
             UpdateState();
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void RemoveUserButtonClicked(object sender, EventArgs e)
+        private void BeginLabelEdit(object sender, LabelEditEventArgs e)
         {
-            User User = SelectedUser;
-
-            ListViewItem Selected = UserListView.SelectedItems[0];
-            Selected.Selected = false;
-
-            UserListView.Items.Remove(Selected);
-
-            Program.NetClient.DeleteUser(User.Username);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void AddPermissionButtonClicked(object sender, EventArgs e)
-        {
-            User AddUser = SelectedUser;
-
-            AddPermissionForm Dialog = new AddPermissionForm();
-            if (Dialog.ShowDialog() == DialogResult.OK)
+            if (UserListView.Items[e.Item].Tag != NewUser)
             {
-                AddUser.Permissions.Permissions.Add(Dialog.Permission);
-                SaveUser(SelectedUser);
-                RefreshPermissions();
+                e.CancelEdit = true;
             }
         }
 
@@ -131,36 +137,12 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void RemovePermissionButtonClicked(object sender, EventArgs e)
+        private void CloseClicked(object sender, EventArgs e)
         {
-            SelectedUser.Permissions.Permissions.Remove(SelectedPermission);
-            RefreshPermissions();
-            SaveUser(SelectedUser);
+            Close();
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnShown(object sender, EventArgs e)
-        {
-            Program.NetClient.OnUserListRecieved += UserListRecieved;
-            Program.NetClient.RequestUserList();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnClosed(object sender, FormClosedEventArgs e)
-        {
-            Program.NetClient.OnUserListRecieved -= UserListRecieved;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -186,20 +168,34 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void BeginLabelEdit(object sender, LabelEditEventArgs e)
+        private void OnClosed(object sender, FormClosedEventArgs e)
         {
-            if (UserListView.Items[e.Item].Tag != NewUser)
-            {
-                e.CancelEdit = true;
-            }
+            Program.NetClient.OnUserListRecieved -= UserListRecieved;
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnShown(object sender, EventArgs e)
+        {
+            Program.NetClient.OnUserListRecieved += UserListRecieved;
+            Program.NetClient.RequestUserList();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PermissionListSelectedItemChanged(object sender, EventArgs e)
+        {
+            UpdateState();
+        }
+
+        /// <summary>
         /// </summary>
         private void RefreshPermissions()
         {
@@ -213,19 +209,28 @@ namespace BuildSync.Client.Forms
 
             foreach (UserPermission Permission in user.Permissions.Permissions)
             {
-                ListViewItem item = new ListViewItem(new string[] { Permission.Type.ToString(), Permission.VirtualPath });
+                ListViewItem item = new ListViewItem(new[] {Permission.Type.ToString(), Permission.VirtualPath});
                 item.Tag = Permission;
                 PermissionListView.Items.Add(item);
             }
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RefreshUserList(object sender, EventArgs e)
+        {
+            if (Visible)
+            {
+                Program.NetClient.RequestUserList();
+            }
+        }
+
+        /// <summary>
         /// </summary>
         private void RefreshUsers(List<User> Users)
         {
-
-
             foreach (User user in Users)
             {
                 if (UserListView.Items[user.Username] != null)
@@ -246,7 +251,7 @@ namespace BuildSync.Client.Forms
                 bool Exists = false;
                 foreach (User user in Users)
                 {
-                    if (user.Username == item.Name.ToString())
+                    if (user.Username == item.Name)
                     {
                         Exists = true;
                         break;
@@ -268,7 +273,50 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RemovePermissionButtonClicked(object sender, EventArgs e)
+        {
+            SelectedUser.Permissions.Permissions.Remove(SelectedPermission);
+            RefreshPermissions();
+            SaveUser(SelectedUser);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RemoveUserButtonClicked(object sender, EventArgs e)
+        {
+            User User = SelectedUser;
+
+            ListViewItem Selected = UserListView.SelectedItems[0];
+            Selected.Selected = false;
+
+            UserListView.Items.Remove(Selected);
+
+            Program.NetClient.DeleteUser(User.Username);
+        }
+
+        /// <summary>
+        /// </summary>
+        private void SaveUser(User ToSave)
+        {
+            Program.NetClient.SetUserPermissions(ToSave.Username, ToSave.Permissions);
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdateState()
+        {
+            AddUserButton.Enabled = true;
+            RemoveUserButton.Enabled = SelectedUser != null;
+            AddPermissionButton.Enabled = SelectedUser != null;
+            RemovePermissionButton.Enabled = SelectedUser != null && SelectedPermission != null;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Users"></param>
         private void UserListRecieved(List<User> Users)
@@ -277,7 +325,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -285,48 +332,6 @@ namespace BuildSync.Client.Forms
         {
             RefreshPermissions();
             UpdateState();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void PermissionListSelectedItemChanged(object sender, EventArgs e)
-        {
-            UpdateState();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void UpdateState()
-        {
-            AddUserButton.Enabled = true;
-            RemoveUserButton.Enabled = (SelectedUser != null);
-            AddPermissionButton.Enabled = (SelectedUser != null);
-            RemovePermissionButton.Enabled = (SelectedUser != null && SelectedPermission != null);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void SaveUser(User ToSave)
-        {
-            Program.NetClient.SetUserPermissions(ToSave.Username, ToSave.Permissions);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void RefreshUserList(object sender, EventArgs e)
-        {
-            if (Visible)
-            {
-                Program.NetClient.RequestUserList();
-            }
         }
     }
 }

@@ -19,22 +19,27 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
 using BuildSync.Core;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
 using CommandLine;
-using System;
 
 namespace BuildSync.Client.Commands
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Verb("list", HelpText = "Lists all builds that exists at a given path on the server.")]
     public class CommandLineListOptions
     {
+        /// <summary>
+        /// 
+        /// </summary>
         [Value(0, MetaName = "VirtualPath", Required = false, HelpText = "Path, in the servers virtual file system, whose contents should be listed.")]
         public string VirtualPath { get; set; } = "";
 
         /// <summary>
-        /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
@@ -48,7 +53,7 @@ namespace BuildSync.Client.Commands
 
             bool GotResults = false;
 
-            BuildsRecievedHandler BuildsRecievedHandler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) =>
+            BuildsRecievedHandler BuildsRecievedHandler = (RootPath, Builds) =>
             {
                 if (GotResults)
                 {
@@ -71,6 +76,7 @@ namespace BuildSync.Client.Commands
                             IpcClient.Respond(string.Format(Format, VirtualFileSystem.GetNodeName(Info.VirtualPath), Info.Guid, Info.CreateTime));
                         }
                     }
+
                     IpcClient.Respond("");
 
                     GotResults = true;
@@ -85,18 +91,18 @@ namespace BuildSync.Client.Commands
                 return;
             }
 
-            Program.PumpLoop(() =>
-            {
-
-                if (!Program.NetClient.IsConnected)
+            Program.PumpLoop(
+                () =>
                 {
-                    IpcClient.Respond("FAILED: Lost connection to server.");
-                    return true;
+                    if (!Program.NetClient.IsConnected)
+                    {
+                        IpcClient.Respond("FAILED: Lost connection to server.");
+                        return true;
+                    }
+
+                    return GotResults;
                 }
-
-                return GotResults;
-
-            });
+            );
 
             Program.NetClient.OnBuildsRecieved -= BuildsRecievedHandler;
         }

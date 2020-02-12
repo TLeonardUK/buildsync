@@ -23,8 +23,17 @@ using Microsoft.Deployment.WindowsInstaller;
 
 namespace BuildSync.Core.Utils
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public static class InstallUtils
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msi"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static string GetMsiProperty(string msi, string name)
         {
             using (Database db = new Database(msi))
@@ -33,6 +42,12 @@ namespace BuildSync.Core.Utils
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msi"></param>
+        /// <param name="name"></param>
+        /// <param name="value"></param>
         public static void GetMsiProperty(string msi, string name, string value)
         {
             using (Database db = new Database(msi, DatabaseOpenMode.Direct))

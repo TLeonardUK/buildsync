@@ -25,69 +25,10 @@ using System.IO;
 namespace VersionUpdater
 {
     /// <summary>
-    /// 
     /// </summary>
     public class Program
     {
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Contents"></param>
-        /// <param name="TagName"></param>
-        /// <param name="NewValue"></param>
-        /// <returns></returns>
-        public static string PatchAssemblyTag(string Contents, string TagName, string NewValue)
-        {
-            string Tag = "[assembly: " + TagName + "(";
-
-            int TagIndex = Contents.IndexOf(Tag);
-            if (TagIndex < 0)
-            {
-                Console.WriteLine("BuildVersion not found.");
-                return Contents;
-            }
-            TagIndex = TagIndex + Tag.Length;
-
-            int EndTagIndex = Contents.IndexOf(")", TagIndex);
-            if (EndTagIndex < 0)
-            {
-                Console.WriteLine("BuildVersion end not found.");
-                return Contents;
-            }
-
-            return Contents.Substring(0, TagIndex) + NewValue + Contents.Substring(EndTagIndex);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Contents"></param>
-        /// <param name="TagStart"></param>
-        /// <param name="TagEnd"></param>
-        /// <param name="NewValue"></param>
-        /// <returns></returns>
-        public static string PatchFullTag(string Contents, string TagStart, string TagEnd, string NewValue)
-        {
-            int TagIndex = Contents.IndexOf(TagStart);
-            if (TagIndex < 0)
-            {
-                Console.WriteLine("Tag not found.");
-                return Contents;
-            }
-            TagIndex = TagIndex + TagStart.Length;
-
-            int EndTagIndex = Contents.IndexOf(TagEnd, TagIndex);
-            if (EndTagIndex < 0)
-            {
-                Console.WriteLine("Tag End end not found.");
-                return Contents;
-            }
-
-            return Contents.Substring(0, TagIndex) + NewValue + Contents.Substring(EndTagIndex);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Contents"></param>
         /// <param name="Name"></param>
@@ -102,6 +43,7 @@ namespace VersionUpdater
                 Console.WriteLine("BuildVersion not found.");
                 return Contents;
             }
+
             TagIndex = TagIndex + Tag.Length;
 
             int EndTagIndex = Contents.IndexOf(";", TagIndex);
@@ -116,36 +58,6 @@ namespace VersionUpdater
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Contents"></param>
-        /// <param name="Name"></param>
-        /// <param name="Value"></param>
-        /// <returns></returns>
-        public static string SetVariableValue(string Contents, string Name, string Value)
-        {
-            string Tag = Name + " = ";
-
-            int TagIndex = Contents.IndexOf(Tag);
-            if (TagIndex < 0)
-            {
-                Console.WriteLine("BuildVersion not found.");
-                return Contents;
-            }
-            TagIndex = TagIndex + Tag.Length;
-
-            int EndTagIndex = Contents.IndexOf(";", TagIndex);
-            if (EndTagIndex < 0)
-            {
-                Console.WriteLine("BuildVersion end not found.");
-                return Contents;
-            }
-
-            return Contents.Substring(0, TagIndex) + Value + Contents.Substring(EndTagIndex);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Args"></param>
         public static void Main(string[] Args)
@@ -193,6 +105,7 @@ namespace VersionUpdater
                     Contents = PatchFullTag(Contents, "Language=\"1033\" Version=\"", "\"", VersionString);
                     File.WriteAllText(FilePath, Contents);
                 }
+
                 InstallFiles = Directory.GetFiles(SolutionDirectory, "Product.wxs", SearchOption.AllDirectories);
                 foreach (string FilePath in InstallFiles)
                 {
@@ -201,6 +114,92 @@ namespace VersionUpdater
                     File.WriteAllText(FilePath, Contents);
                 }
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Contents"></param>
+        /// <param name="TagName"></param>
+        /// <param name="NewValue"></param>
+        /// <returns></returns>
+        public static string PatchAssemblyTag(string Contents, string TagName, string NewValue)
+        {
+            string Tag = "[assembly: " + TagName + "(";
+
+            int TagIndex = Contents.IndexOf(Tag);
+            if (TagIndex < 0)
+            {
+                Console.WriteLine("BuildVersion not found.");
+                return Contents;
+            }
+
+            TagIndex = TagIndex + Tag.Length;
+
+            int EndTagIndex = Contents.IndexOf(")", TagIndex);
+            if (EndTagIndex < 0)
+            {
+                Console.WriteLine("BuildVersion end not found.");
+                return Contents;
+            }
+
+            return Contents.Substring(0, TagIndex) + NewValue + Contents.Substring(EndTagIndex);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Contents"></param>
+        /// <param name="TagStart"></param>
+        /// <param name="TagEnd"></param>
+        /// <param name="NewValue"></param>
+        /// <returns></returns>
+        public static string PatchFullTag(string Contents, string TagStart, string TagEnd, string NewValue)
+        {
+            int TagIndex = Contents.IndexOf(TagStart);
+            if (TagIndex < 0)
+            {
+                Console.WriteLine("Tag not found.");
+                return Contents;
+            }
+
+            TagIndex = TagIndex + TagStart.Length;
+
+            int EndTagIndex = Contents.IndexOf(TagEnd, TagIndex);
+            if (EndTagIndex < 0)
+            {
+                Console.WriteLine("Tag End end not found.");
+                return Contents;
+            }
+
+            return Contents.Substring(0, TagIndex) + NewValue + Contents.Substring(EndTagIndex);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Contents"></param>
+        /// <param name="Name"></param>
+        /// <param name="Value"></param>
+        /// <returns></returns>
+        public static string SetVariableValue(string Contents, string Name, string Value)
+        {
+            string Tag = Name + " = ";
+
+            int TagIndex = Contents.IndexOf(Tag);
+            if (TagIndex < 0)
+            {
+                Console.WriteLine("BuildVersion not found.");
+                return Contents;
+            }
+
+            TagIndex = TagIndex + Tag.Length;
+
+            int EndTagIndex = Contents.IndexOf(";", TagIndex);
+            if (EndTagIndex < 0)
+            {
+                Console.WriteLine("BuildVersion end not found.");
+                return Contents;
+            }
+
+            return Contents.Substring(0, TagIndex) + Value + Contents.Substring(EndTagIndex);
         }
     }
 }

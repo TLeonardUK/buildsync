@@ -19,42 +19,39 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Controls.Graph;
-using BuildSync.Core.Networking.Messages;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections;
 using System.Windows.Forms;
+using BuildSync.Core.Controls.Graph;
+using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class ManageServerForm : DockContent
     {
         /// <summary>
-        /// 
         /// </summary>
-        private ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
+        private readonly ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
 
         /// <summary>
-        /// 
         /// </summary>
-        private IComparer[] ColumnSorterComparers = new IComparer[] {
-            new CaseInsensitiveComparer(),      // Hostname
-            new TransferRateStringComparer(),   // Download Speed
-            new TransferRateStringComparer(),   // Upload Speed
-            new FileSizeStringComparer(),       // Total Downloaded
-            new FileSizeStringComparer(),       // Total Uploaded
-            new CaseInsensitiveComparer(),      // Connected Peer Count
-            new FileSizeStringComparer(),       // Disk Usage
-            new CaseInsensitiveComparer()       // Version
+        private readonly IComparer[] ColumnSorterComparers =
+        {
+            new CaseInsensitiveComparer(), // Hostname
+            new TransferRateStringComparer(), // Download Speed
+            new TransferRateStringComparer(), // Upload Speed
+            new FileSizeStringComparer(), // Total Downloaded
+            new FileSizeStringComparer(), // Total Uploaded
+            new CaseInsensitiveComparer(), // Connected Peer Count
+            new FileSizeStringComparer(), // Disk Usage
+            new CaseInsensitiveComparer() // Version
         };
 
         /// <summary>
-        /// 
         /// </summary>
         public ManageServerForm()
         {
@@ -66,7 +63,53 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ColumnClicked(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == ColumnSorter.SortColumn)
+            {
+                if (ColumnSorter.Order == SortOrder.Ascending)
+                {
+                    ColumnSorter.Order = SortOrder.Descending;
+                }
+                else
+                {
+                    ColumnSorter.Order = SortOrder.Ascending;
+                }
+            }
+            else
+            {
+                ColumnSorter.SortColumn = e.Column;
+                ColumnSorter.Order = SortOrder.Ascending;
+                ColumnSorter.ObjectCompare = ColumnSorterComparers[e.Column];
+            }
+
+            MainListView.Sort();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MaxBandwidthBoxChanged(object sender, EventArgs e)
+        {
+            Program.NetClient.SetServerMaxBandwidth((long) MaxBandwidthBox.Value * 1024L);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnClosed(object sender, FormClosedEventArgs e)
+        {
+            Program.NetClient.OnServerStateRecieved -= ServerStateRecieved;
+
+            RefreshTimer.Enabled = false;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -94,24 +137,11 @@ namespace BuildSync.Client.Forms
                 series.MinimumInterval = 1.0f / 2.0f;
                 series.YAxis.Max = 1024L;
                 series.YAxis.GridInterval = series.YAxis.Max / 10;
-                BandwithGraph.Series = new GraphSeries[1] { series };
+                BandwithGraph.Series = new GraphSeries[1] {series};
             }
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnClosed(object sender, FormClosedEventArgs e)
-        {
-            Program.NetClient.OnServerStateRecieved -= ServerStateRecieved;
-
-            RefreshTimer.Enabled = false;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -121,7 +151,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Users"></param>
         private void ServerStateRecieved(NetMessage_GetServerStateResponse Msg)
@@ -134,7 +163,7 @@ namespace BuildSync.Client.Forms
                 bool Exists = false;
                 foreach (ListViewItem Item in MainListView.Items)
                 {
-                    if ((Item.Tag as string) == State.Address)
+                    if (Item.Tag as string == State.Address)
                     {
                         Exists = true;
                         break;
@@ -159,7 +188,7 @@ namespace BuildSync.Client.Forms
                 bool Exists = false;
                 foreach (NetMessage_GetServerStateResponse.ClientState State in Msg.ClientStates)
                 {
-                    if ((Item.Tag as string) == State.Address)
+                    if (Item.Tag as string == State.Address)
                     {
                         Item.SubItems[0].Text = HostnameCache.GetHostname(State.Address);
                         Item.SubItems[1].Text = StringUtils.FormatAsTransferRate(State.DownloadRate);
@@ -188,45 +217,8 @@ namespace BuildSync.Client.Forms
             {
                 TotalBandwidth += State.DownloadRate;
             }
+
             BandwithGraph.Series[0].AddDataPoint(Environment.TickCount / 1000.0f, TotalBandwidth);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MaxBandwidthBoxChanged(object sender, EventArgs e)
-        {
-            Program.NetClient.SetServerMaxBandwidth((long)MaxBandwidthBox.Value * 1024L);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ColumnClicked(object sender, ColumnClickEventArgs e)
-        {
-            if (e.Column == ColumnSorter.SortColumn)
-            {
-                if (ColumnSorter.Order == SortOrder.Ascending)
-                {
-                    ColumnSorter.Order = SortOrder.Descending;
-                }
-                else
-                {
-                    ColumnSorter.Order = SortOrder.Ascending;
-                }
-            }
-            else
-            {
-                ColumnSorter.SortColumn = e.Column;
-                ColumnSorter.Order = SortOrder.Ascending;
-                ColumnSorter.ObjectCompare = ColumnSorterComparers[e.Column];
-            }
-
-            MainListView.Sort();
         }
     }
 }

@@ -22,7 +22,6 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public enum HandshakeResultType
     {
@@ -33,22 +32,19 @@ namespace BuildSync.Core.Networking.Messages
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_HandshakeResult : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public HandshakeResultType ResultType = HandshakeResultType.Unknown;
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
-            serializer.SerializeEnum<HandshakeResultType>(ref ResultType);
+            serializer.SerializeEnum(ref ResultType);
         }
     }
 }

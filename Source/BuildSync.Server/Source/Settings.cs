@@ -19,23 +19,23 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Users;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
+using BuildSync.Core.Users;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Server
 {
     [Serializable]
     public class Settings : SettingsBase
     {
-        public int ServerPort { get; set; } = 12341;
-        public string StoragePath { get; set; } = "";
+        public Dictionary<string, DateTime> ManifestLastSeenTimes { get; set; } = new Dictionary<string, DateTime>();
+        public long MaxBandwidth { get; set; } = 0;
         public int MaximumManifests { get; set; } = 500;
         public int MaximumManifestUnseenDays { get; set; } = 30;
         public bool RunOnStartup { get; set; } = true;
+        public int ServerPort { get; set; } = 12341;
+        public string StoragePath { get; set; } = "";
         public List<User> Users { get; set; } = new List<User>();
-        public long MaxBandwidth { get; set; } = 0;
-        public Dictionary<string, DateTime> ManifestLastSeenTimes { get; set; } = new Dictionary<string, DateTime>();
     }
 }

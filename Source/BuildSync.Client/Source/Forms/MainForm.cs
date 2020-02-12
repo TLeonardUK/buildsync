@@ -19,7 +19,19 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 using BuildSync.Client.Controls;
+using BuildSync.Client.Properties;
 using BuildSync.Client.Tasks;
 using BuildSync.Core;
 using BuildSync.Core.Downloads;
@@ -27,96 +39,73 @@ using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
-using System;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class MainForm : Form
     {
         #region Fields
 
         /// <summary>
-        /// 
         /// </summary>
-        private bool ForcedExit = false;
+        private bool ForcedExit;
 
         /// <summary>
-        /// 
         /// </summary>
-        private ConsoleForm ConsoleOutputForm = null;
+        private readonly ConsoleForm ConsoleOutputForm;
 
         /// <summary>
-        /// 
         /// </summary>
-        private StatisticsForm StatsForm = null;
+        private readonly StatisticsForm StatsForm;
 
         /// <summary>
-        /// 
         /// </summary>
-        private PeersForm PeersForm = null;
+        private readonly PeersForm PeersForm;
 
         /// <summary>
-        /// 
         /// </summary>
-        private ManifestsForm ManifestsForm = null;
+        private readonly ManifestsForm ManifestsForm;
 
         /// <summary>
-        /// 
         /// </summary>
-        private ManageUsersForm ManageUsersForm = null;
+        private readonly ManageUsersForm ManageUsersForm;
 
         /// <summary>
-        /// 
         /// </summary>
-        private ManageServerForm ManageServerForm = null;
+        private readonly ManageServerForm ManageServerForm;
 
         /// <summary>
-        /// 
         /// </summary>
-        private ManageBuildsForm ManageBuildsForm = null;
+        private readonly ManageBuildsForm ManageBuildsForm;
 
         /// <summary>
-        /// 
         /// </summary>
-        private DownloadListItem ContextMenuDownloadItem = null;
+        private DownloadListItem ContextMenuDownloadItem;
 
         /// <summary>
-        /// 
         /// </summary>
-        private DownloadList MainDownloadList = null;
+        private readonly DownloadList MainDownloadList;
 
         /// <summary>
-        /// 
         /// </summary>
-        private bool WasMinimized = false;
+        private bool WasMinimized;
 
         /// <summary>
-        /// 
         /// </summary>
-        private bool DisableLayoutStoring = false;
+        private bool DisableLayoutStoring;
 
         /// <summary>
-        /// 
         /// </summary>
-        private DeserializeDockContent DeserializedDockContent = null;
+        private readonly DeserializeDockContent DeserializedDockContent;
 
         #endregion
+
         #region Methods
 
         /// <summary>
-        /// 
         /// </summary>
         public MainForm()
         {
@@ -131,11 +120,10 @@ namespace BuildSync.Client.Forms
             PeersForm = new PeersForm();
             ManifestsForm = new ManifestsForm();
 
-            DeserializedDockContent = new DeserializeDockContent(GetLayoutContentFromPersistString);
+            DeserializedDockContent = GetLayoutContentFromPersistString;
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="persistString"></param>
         /// <returns></returns>
@@ -145,31 +133,38 @@ namespace BuildSync.Client.Forms
             {
                 return MainDownloadList;
             }
-            else if (persistString == typeof(StatisticsForm).ToString())
+
+            if (persistString == typeof(StatisticsForm).ToString())
             {
                 return StatsForm;
             }
-            else if (persistString == typeof(ManageBuildsForm).ToString())
+
+            if (persistString == typeof(ManageBuildsForm).ToString())
             {
                 return ManageBuildsForm;
             }
-            else if (persistString == typeof(ManageUsersForm).ToString())
+
+            if (persistString == typeof(ManageUsersForm).ToString())
             {
                 return ManageUsersForm;
             }
-            else if (persistString == typeof(ManageServerForm).ToString())
+
+            if (persistString == typeof(ManageServerForm).ToString())
             {
                 return ManageServerForm;
             }
-            else if (persistString == typeof(ConsoleForm).ToString())
+
+            if (persistString == typeof(ConsoleForm).ToString())
             {
                 return ConsoleOutputForm;
             }
-            else if (persistString == typeof(PeersForm).ToString())
+
+            if (persistString == typeof(PeersForm).ToString())
             {
                 return PeersForm;
             }
-            else if (persistString == typeof(ManifestsForm).ToString())
+
+            if (persistString == typeof(ManifestsForm).ToString())
             {
                 return ManifestsForm;
             }
@@ -179,7 +174,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private bool RestoreLayout()
         {
@@ -187,7 +181,7 @@ namespace BuildSync.Client.Forms
             {
                 using (MemoryStream Stream = new MemoryStream(Program.Settings.LayoutState))
                 {
-                    this.Size = Program.Settings.LayoutSize;
+                    Size = Program.Settings.LayoutSize;
                     CloseAllContent();
                     DockPanel.LoadFromXml(Stream, DeserializedDockContent);
                     return true;
@@ -198,7 +192,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void CloseAllContent()
         {
@@ -209,7 +202,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void StoreLayout(Size mainSize)
         {
@@ -220,7 +212,7 @@ namespace BuildSync.Client.Forms
 
             using (MemoryStream Stream = new MemoryStream())
             {
-                DockPanel.SaveAsXml(Stream, System.Text.Encoding.UTF8);
+                DockPanel.SaveAsXml(Stream, Encoding.UTF8);
                 Program.Settings.LayoutState = Stream.ToArray();
                 Program.Settings.LayoutSize = mainSize;
             }
@@ -280,7 +272,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void AddDownloadClicked(object sender, EventArgs e)
         {
-            (new AddDownloadForm()).ShowDialog(this);
+            new AddDownloadForm().ShowDialog(this);
         }
 
         /// <summary>
@@ -293,7 +285,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -316,9 +307,8 @@ namespace BuildSync.Client.Forms
                 }
 
                 BuildsRecievedHandler Handler = null;
-                Handler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) =>
+                Handler = (RootPath, Builds) =>
                 {
-
                     Program.NetClient.OnBuildsRecieved -= Handler;
 
                     // Find the next sequential build index.
@@ -348,43 +338,40 @@ namespace BuildSync.Client.Forms
                     PublishBuildTask Publisher = new PublishBuildTask();
                     Publisher.Start(NewVirtualPath, TempFolder);
 
-                    Task.Run(() =>
-                    {
-
-                        bool PublishComplete = false;
-                        while (!PublishComplete)
+                    Task.Run(
+                        () =>
                         {
-                            switch (Publisher.State)
+                            bool PublishComplete = false;
+                            while (!PublishComplete)
                             {
-                                case BuildPublishingState.CopyingFiles:
-                                case BuildPublishingState.ScanningFiles:
-                                case BuildPublishingState.UploadingManifest:
+                                switch (Publisher.State)
+                                {
+                                    case BuildPublishingState.CopyingFiles:
+                                    case BuildPublishingState.ScanningFiles:
+                                    case BuildPublishingState.UploadingManifest:
                                     {
                                         // Ignore
                                         break;
                                     }
-                                case BuildPublishingState.Success:
+                                    case BuildPublishingState.Success:
                                     {
-                                        this.Invoke((MethodInvoker)(() =>
-                                        {
-                                            Publisher.Commit();
-                                        }));
+                                        Invoke((MethodInvoker) (() => { Publisher.Commit(); }));
                                         Publisher = null;
                                         PublishComplete = true;
                                         break;
                                     }
-                                default:
+                                    default:
                                     {
                                         Publisher = null;
                                         PublishComplete = true;
                                         break;
                                     }
+                                }
+
+                                Thread.Sleep(1000);
                             }
-
-                            Thread.Sleep(1000);
                         }
-
-                    });
+                    );
                 };
 
                 Program.NetClient.OnBuildsRecieved += Handler;
@@ -393,23 +380,21 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ViewLicenseClicked(object sender, EventArgs e)
         {
-            (new LicenseForm()).ShowDialog(this);
+            new LicenseForm().ShowDialog(this);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ViewHelpClickled(object sender, EventArgs e)
         {
-            string ExePath = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+            string ExePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             while (true)
             {
                 string HelpDocs = Path.Combine(ExePath, "Docs/Build Sync Help.chm");
@@ -419,14 +404,12 @@ namespace BuildSync.Client.Forms
                     Process.Start(HelpDocs);
                     break;
                 }
-                else
+
+                ExePath = Path.GetDirectoryName(ExePath);
+                if (ExePath == null || !ExePath.Contains('\\') && !ExePath.Contains('/'))
                 {
-                    ExePath = Path.GetDirectoryName(ExePath);
-                    if (ExePath == null || !ExePath.Contains('\\') && !ExePath.Contains('/'))
-                    {
-                        MessageBox.Show("Failed to find help chm file, installation may be corrupt.", "Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        break;
-                    }
+                    MessageBox.Show("Failed to find help chm file, installation may be corrupt.", "Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    break;
                 }
             }
         }
@@ -438,7 +421,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void PreferencesClicked(object sender, EventArgs e)
         {
-            (new PreferencesForm()).ShowDialog(this);
+            new PreferencesForm().ShowDialog(this);
         }
 
         /// <summary>
@@ -460,11 +443,10 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void AboutClicked(object sender, EventArgs e)
         {
-            (new AboutForm()).ShowDialog(this);
+            new AboutForm().ShowDialog(this);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Content"></param>
         private void ShowContent(DockContent Content, DockState DefaultDockState)
@@ -482,11 +464,11 @@ namespace BuildSync.Client.Forms
             {
                 DockPanel.ActiveAutoHideContent = Content;
             }
+
             Content.Activate();
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -496,7 +478,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -506,7 +487,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -516,7 +496,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -526,7 +505,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -536,7 +514,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -546,7 +523,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -556,7 +532,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -572,7 +547,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            StoreLayout(this.Size);
+            StoreLayout(Size);
 
             if (ForcedExit)
             {
@@ -582,7 +557,7 @@ namespace BuildSync.Client.Forms
             if (Program.Settings.MinimizeToTrayOnClose)
             {
                 e.Cancel = true;
-                this.WindowState = FormWindowState.Minimized;
+                WindowState = FormWindowState.Minimized;
             }
             else
             {
@@ -591,13 +566,12 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ClientSizeHasChanged(object sender, EventArgs e)
         {
-            ShowInTaskbar = (WindowState != FormWindowState.Minimized);
+            ShowInTaskbar = WindowState != FormWindowState.Minimized;
             if (WindowState != FormWindowState.Minimized)
             {
                 if (WasMinimized)
@@ -610,7 +584,7 @@ namespace BuildSync.Client.Forms
             {
                 if (!WasMinimized)
                 {
-                    StoreLayout(this.RestoreBounds.Size);
+                    StoreLayout(RestoreBounds.Size);
                     WasMinimized = true;
                 }
             }
@@ -625,9 +599,9 @@ namespace BuildSync.Client.Forms
         {
             if (e.Button == MouseButtons.Left)
             {
-                this.WindowState = FormWindowState.Normal;
-                this.BringToFront();
-                this.Focus();
+                WindowState = FormWindowState.Normal;
+                BringToFront();
+                Focus();
             }
         }
 
@@ -675,7 +649,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -690,7 +663,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -705,7 +677,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -720,7 +691,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -731,14 +701,14 @@ namespace BuildSync.Client.Forms
             {
                 ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
 
-                forceRedownloadToolStripMenuItem.Enabled = (Downloader != null && Downloader.State != ManifestDownloadProgressState.Validating && Downloader.State != ManifestDownloadProgressState.Initializing && Downloader.State != ManifestDownloadProgressState.Installing);
-                forceRevalidateToolStripMenuItem.Enabled = (Downloader != null && (Downloader.State == ManifestDownloadProgressState.Complete || Downloader.State == ManifestDownloadProgressState.ValidationFailed));
-                forceReinstallToolStripMenuItem.Enabled = (Downloader != null && (Downloader.State == ManifestDownloadProgressState.Complete || Downloader.State == ManifestDownloadProgressState.InstallFailed));
-                pauseToolStripMenuItem.Enabled = (Downloader != null);
-                pauseToolStripMenuItem.Text = (Downloader != null && Downloader.Paused ? "Resume" : "Pause");
-                pauseToolStripMenuItem.Image = (Downloader != null && Downloader.Paused ? global::BuildSync.Client.Properties.Resources.appbar_control_play : global::BuildSync.Client.Properties.Resources.appbar_control_pause);
-                deleteToolStripMenuItem.Enabled = (Downloader != null);
-                settingsToolStripMenuItem.Enabled = (Downloader != null);
+                forceRedownloadToolStripMenuItem.Enabled = Downloader != null && Downloader.State != ManifestDownloadProgressState.Validating && Downloader.State != ManifestDownloadProgressState.Initializing && Downloader.State != ManifestDownloadProgressState.Installing;
+                forceRevalidateToolStripMenuItem.Enabled = Downloader != null && (Downloader.State == ManifestDownloadProgressState.Complete || Downloader.State == ManifestDownloadProgressState.ValidationFailed);
+                forceReinstallToolStripMenuItem.Enabled = Downloader != null && (Downloader.State == ManifestDownloadProgressState.Complete || Downloader.State == ManifestDownloadProgressState.InstallFailed);
+                pauseToolStripMenuItem.Enabled = Downloader != null;
+                pauseToolStripMenuItem.Text = Downloader != null && Downloader.Paused ? "Resume" : "Pause";
+                pauseToolStripMenuItem.Image = Downloader != null && Downloader.Paused ? Resources.appbar_control_play : Resources.appbar_control_pause;
+                deleteToolStripMenuItem.Enabled = Downloader != null;
+                settingsToolStripMenuItem.Enabled = Downloader != null;
             }
             else
             {
@@ -753,7 +723,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -763,7 +732,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -776,7 +744,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -788,7 +755,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         private void RefreshState()
         {
@@ -811,20 +777,20 @@ namespace BuildSync.Client.Forms
                     switch (Program.NetClient.HandshakeResult)
                     {
                         case HandshakeResultType.InvalidVersion:
-                            {
-                                peerCountLabel.Text = "Version is incompatible, please update application.";
-                                break;
-                            }
+                        {
+                            peerCountLabel.Text = "Version is incompatible, please update application.";
+                            break;
+                        }
                         case HandshakeResultType.MaxSeatsExceeded:
-                            {
-                                peerCountLabel.Text = "Server has run out of seat licenses.";
-                                break;
-                            }
+                        {
+                            peerCountLabel.Text = "Server has run out of seat licenses.";
+                            break;
+                        }
                         default:
-                            {
-                                peerCountLabel.Text = "Unable to connect to server '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
-                                break;
-                            }
+                        {
+                            peerCountLabel.Text = "Unable to connect to server '" + Program.Settings.ServerHostname + ":" + Program.Settings.ServerPort + "'";
+                            break;
+                        }
                     }
 
                     peerCountLabel.ForeColor = Color.Red;
@@ -915,7 +881,7 @@ namespace BuildSync.Client.Forms
             // Show/Hide autoupdate stuff
             if (Program.AutoUpdateAvailable)
             {
-                StoreLayout(this.Size);
+                StoreLayout(Size);
                 DisableLayoutStoring = true;
 
                 UpdatePanel.Visible = true;
@@ -937,7 +903,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -947,7 +912,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>

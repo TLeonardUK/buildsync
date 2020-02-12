@@ -35,32 +35,14 @@ namespace BuildSync.Core.Utils
     public class SingleGlobalInstance : IDisposable
     {
         /// <summary>
-        /// 
         /// </summary>
-        public bool HasHandle = false;
+        public bool HasHandle;
 
         /// <summary>
-        /// 
         /// </summary>
-        Mutex MainMutex;
+        private Mutex MainMutex;
 
         /// <summary>
-        /// 
-        /// </summary>
-        private void InitMutex()
-        {
-            string appGuid = ((GuidAttribute)Assembly.GetEntryAssembly().GetCustomAttributes(typeof(GuidAttribute), false).GetValue(0)).Value;
-            string mutexId = string.Format("Global\\{{{0}}}", appGuid);
-            MainMutex = new Mutex(false, mutexId);
-
-            var allowEveryoneRule = new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), MutexRights.FullControl, AccessControlType.Allow);
-            var securitySettings = new MutexSecurity();
-            securitySettings.AddAccessRule(allowEveryoneRule);
-            MainMutex.SetAccessControl(securitySettings);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Timeout"></param>
         public SingleGlobalInstance(int Timeout)
@@ -89,7 +71,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void Dispose()
         {
@@ -99,8 +80,23 @@ namespace BuildSync.Core.Utils
                 {
                     MainMutex.ReleaseMutex();
                 }
+
                 MainMutex.Close();
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        private void InitMutex()
+        {
+            string appGuid = ((GuidAttribute) Assembly.GetEntryAssembly().GetCustomAttributes(typeof(GuidAttribute), false).GetValue(0)).Value;
+            string mutexId = string.Format("Global\\{{{0}}}", appGuid);
+            MainMutex = new Mutex(false, mutexId);
+
+            MutexAccessRule allowEveryoneRule = new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), MutexRights.FullControl, AccessControlType.Allow);
+            MutexSecurity securitySettings = new MutexSecurity();
+            securitySettings.AddAccessRule(allowEveryoneRule);
+            MainMutex.SetAccessControl(securitySettings);
         }
     }
 }

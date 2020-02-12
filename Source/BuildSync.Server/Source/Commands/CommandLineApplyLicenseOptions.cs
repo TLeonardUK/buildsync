@@ -32,7 +32,6 @@ namespace BuildSync.Server.Commands
         public string FilePath { get; set; } = "";
 
         /// <summary>
-        /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
@@ -48,7 +47,7 @@ namespace BuildSync.Server.Commands
             }
             else
             {
-                IpcClient.Respond(string.Format("FAILED: Unable to apply license, either invalid or expired."));
+                IpcClient.Respond("FAILED: Unable to apply license, either invalid or expired.");
             }
 
             Program.SaveSettings();

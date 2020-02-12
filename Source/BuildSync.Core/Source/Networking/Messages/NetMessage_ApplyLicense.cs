@@ -24,12 +24,10 @@ using BuildSync.Core.Licensing;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_ApplyLicense : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public License License = new License();
 

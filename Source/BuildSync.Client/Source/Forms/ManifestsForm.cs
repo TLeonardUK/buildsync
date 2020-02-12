@@ -1,8 +1,4 @@
-﻿using BuildSync.Core.Downloads;
-using BuildSync.Core.Utils;
-using System;
-using System.Collections;
-/*
+﻿/*
   buildsync
   Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
 
@@ -23,37 +19,38 @@ using System.Collections;
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
+using System.Collections;
 using System.Windows.Forms;
+using BuildSync.Core.Downloads;
+using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class ManifestsForm : DockContent
     {
         /// <summary>
-        /// 
         /// </summary>
-        private ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
+        private readonly ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
 
         /// <summary>
-        /// 
         /// </summary>
-        private IComparer[] ColumnSorterComparers = new IComparer[] {
-            new CaseInsensitiveComparer(),      // Id
-            new CaseInsensitiveComparer(),      // Virtual Path
-            new CaseInsensitiveComparer(),      // Local Path
-            new CaseInsensitiveComparer(),      // Progress
-            new CaseInsensitiveComparer(),      // State
-            new FileSizeStringComparer(),       // Disk Usage
-            new TransferRateStringComparer(),   // Download Speed
-            new TransferRateStringComparer()    // Upload Speed
+        private readonly IComparer[] ColumnSorterComparers =
+        {
+            new CaseInsensitiveComparer(), // Id
+            new CaseInsensitiveComparer(), // Virtual Path
+            new CaseInsensitiveComparer(), // Local Path
+            new CaseInsensitiveComparer(), // Progress
+            new CaseInsensitiveComparer(), // State
+            new FileSizeStringComparer(), // Disk Usage
+            new TransferRateStringComparer(), // Download Speed
+            new TransferRateStringComparer() // Upload Speed
         };
 
         /// <summary>
-        /// 
         /// </summary>
         public ManifestsForm()
         {
@@ -65,7 +62,60 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ColumnClicked(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == ColumnSorter.SortColumn)
+            {
+                if (ColumnSorter.Order == SortOrder.Ascending)
+                {
+                    ColumnSorter.Order = SortOrder.Descending;
+                }
+                else
+                {
+                    ColumnSorter.Order = SortOrder.Ascending;
+                }
+            }
+            else
+            {
+                ColumnSorter.SortColumn = e.Column;
+                ColumnSorter.Order = SortOrder.Ascending;
+                ColumnSorter.ObjectCompare = ColumnSorterComparers[e.Column];
+            }
+
+            mainListView.Sort();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnClosed(object sender, FormClosedEventArgs e)
+        {
+            UpdateTimer.Enabled = false;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnLoaded(object sender, EventArgs e)
+        {
+            RefreshManifests();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnShown(object sender, EventArgs e)
+        {
+            UpdateTimer.Enabled = true;
+        }
+
+        /// <summary>
         /// </summary>
         private void RefreshManifests()
         {
@@ -120,71 +170,12 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnLoaded(object sender, EventArgs e)
-        {
-            RefreshManifests();
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void UpdateTimerTick(object sender, EventArgs e)
         {
             RefreshManifests();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnClosed(object sender, FormClosedEventArgs e)
-        {
-            UpdateTimer.Enabled = false;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnShown(object sender, EventArgs e)
-        {
-            UpdateTimer.Enabled = true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ColumnClicked(object sender, ColumnClickEventArgs e)
-        {
-            if (e.Column == ColumnSorter.SortColumn)
-            {
-                if (ColumnSorter.Order == SortOrder.Ascending)
-                {
-                    ColumnSorter.Order = SortOrder.Descending;
-                }
-                else
-                {
-                    ColumnSorter.Order = SortOrder.Ascending;
-                }
-            }
-            else
-            {
-                ColumnSorter.SortColumn = e.Column;
-                ColumnSorter.Order = SortOrder.Ascending;
-                ColumnSorter.ObjectCompare = ColumnSorterComparers[e.Column];
-            }
-
-            mainListView.Sort();
         }
     }
 }

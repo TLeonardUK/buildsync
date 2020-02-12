@@ -22,15 +22,17 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_SetServerMaxBandwidth : NetMessage
     {
         /// <summary>
+        /// </summary>
+        public long BandwidthLimit;
+
+        /// <summary>
         /// 
         /// </summary>
-        public long BandwidthLimit = 0;
-
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref BandwidthLimit);

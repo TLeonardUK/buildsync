@@ -24,20 +24,21 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_GetBlock : NetMessage
     {
         /// <summary>
-        /// 
+        /// </summary>
+        public int BlockIndex;
+
+        /// <summary>
         /// </summary>
         public Guid ManifestId;
 
         /// <summary>
         /// 
         /// </summary>
-        public int BlockIndex;
-
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref ManifestId);

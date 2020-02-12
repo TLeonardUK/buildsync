@@ -24,22 +24,18 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_GetManifestResponse : NetMessage
     {
         /// <summary>
-        /// 
-        /// </summary>
-        public Guid ManifestId;
-
-        /// <summary>
-        /// 
         /// </summary>
         public byte[] Data;
 
         /// <summary>
-        /// 
+        /// </summary>
+        public Guid ManifestId;
+
+        /// <summary>
         /// </summary>
         /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)

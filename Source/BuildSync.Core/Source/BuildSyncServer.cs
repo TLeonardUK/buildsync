@@ -19,6 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
+using System.Collections.Generic;
+using System.Net;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Licensing;
 using BuildSync.Core.Manifests;
@@ -26,123 +29,97 @@ using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
-using System;
-using System.Collections.Generic;
-using System.Net;
 
 namespace BuildSync.Core
 {
     /// <summary>
-    /// 
     /// </summary>
     public class BuildSyncServer
     {
         /// <summary>
-        /// 
         /// </summary>
         public class ClientState
         {
-            public string Username = "";
+            public long BandwidthLimit;
 
-            public BlockListState BlockState = null;
+            public BlockListState BlockState;
+            public int ConnectedPeerCount;
+            public long DiskUsage;
+            public long DownloadRate;
+
+            public IPEndPoint PeerConnectionAddress;
+
+            public bool PermissionsNeedUpdate;
             public List<IPEndPoint> RelevantPeerAddresses = new List<IPEndPoint>();
-            public bool RelevantPeerAddressesNeedUpdate = false;
+            public bool RelevantPeerAddressesNeedUpdate;
 
-            public bool PermissionsNeedUpdate = false;
-
-            public IPEndPoint PeerConnectionAddress = null;
-
-            public long TotalDownloaded = 0;
-            public long TotalUploaded = 0;
-            public long DownloadRate = 0;
-            public long UploadRate = 0;
-            public int ConnectedPeerCount = 0;
-            public long DiskUsage = 0;
+            public long TotalDownloaded;
+            public long TotalUploaded;
+            public long UploadRate;
+            public string Username = "";
             public string Version = "";
-
-            public long BandwidthLimit = 0;
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private NetConnection ListenConnection = new NetConnection();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private int ServerPort = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private ulong LastListenAttempt = 0;
-
-        /// <summary>
-        /// 
         /// </summary>
         private const int ListenAttemptInterval = 2 * 1000;
 
         /// <summary>
-        /// 
         /// </summary>
-        private bool Started = false;
+        public long BandwidthLimit;
 
         /// <summary>
-        /// 
-        /// </summary>
-        private BuildManifestRegistry ManifestRegistry = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private UserManager UserManager = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private LicenseManager LicenseManager = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private NetDiscoveryServer NetDiscoveryServer = new NetDiscoveryServer();
-
-        /// <summary>
-        /// 
         /// </summary>
         public int MaxConnectedClients = 0;
 
         /// <summary>
-        /// 
         /// </summary>
-        public long BandwidthLimit = 0;
+        private ulong LastListenAttempt;
 
         /// <summary>
-        /// 
         /// </summary>
-        public int ClientCount
-        {
-            get
-            {
-                return ListenConnection.AllClients.Count;
-            }
-        }
+        private LicenseManager LicenseManager;
 
         /// <summary>
-        /// 
+        /// </summary>
+        private readonly NetConnection ListenConnection = new NetConnection();
+
+        /// <summary>
+        /// </summary>
+        private BuildManifestRegistry ManifestRegistry;
+
+        /// <summary>
+        /// </summary>
+        private readonly NetDiscoveryServer NetDiscoveryServer = new NetDiscoveryServer();
+
+        /// <summary>
+        /// </summary>
+        private int ServerPort;
+
+        /// <summary>
+        /// </summary>
+        private bool Started;
+
+        /// <summary>
+        /// </summary>
+        private UserManager UserManager;
+
+        /// <summary>
+        /// </summary>
+        public int ClientCount => ListenConnection.AllClients.Count;
+
+        /// <summary>
         /// </summary>
         public BuildSyncServer()
         {
             ListenConnection.OnClientMessageRecieved += HandleMessage;
             ListenConnection.OnClientConnect += ClientConnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 16);
+            MemoryPool.PreallocateBuffers((int) BuildManifest.BlockSize, 16);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void Disconnect()
         {
@@ -151,38 +128,6 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Hostname"></param>
-        /// <param name="Port"></param>
-        public void Start(int Port, BuildManifestRegistry BuildManifest, UserManager InUserManager, LicenseManager InLicenseManager)
-        {
-            ServerPort = Port;
-            Started = true;
-            ManifestRegistry = BuildManifest;
-
-            LicenseManager = InLicenseManager;
-
-            UserManager = InUserManager;
-            UserManager.PermissionsUpdated += (User user) =>
-            {
-                List<NetConnection> Clients = ListenConnection.AllClients;
-                foreach (NetConnection Connection in Clients)
-                {
-                    if (Connection.Metadata != null)
-                    {
-                        ClientState State = Connection.Metadata as ClientState;
-                        if (State.Username == user.Username)
-                        {
-                            State.PermissionsNeedUpdate = true;
-                        }
-                    }
-                }
-            };
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         public void Poll()
         {
@@ -242,7 +187,7 @@ namespace BuildSync.Core
                         List<IPEndPoint> NewPeers = GetRelevantPeerAddressesForBlockState(Clients, Connection);
 
                         // If the new list is different than the old one send it.
-                        bool IsDifferent = (NewPeers.Count != State.RelevantPeerAddresses.Count);
+                        bool IsDifferent = NewPeers.Count != State.RelevantPeerAddresses.Count;
                         if (!IsDifferent)
                         {
                             foreach (IPEndPoint Address in NewPeers)
@@ -315,7 +260,45 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Hostname"></param>
+        /// <param name="Port"></param>
+        public void Start(int Port, BuildManifestRegistry BuildManifest, UserManager InUserManager, LicenseManager InLicenseManager)
+        {
+            ServerPort = Port;
+            Started = true;
+            ManifestRegistry = BuildManifest;
+
+            LicenseManager = InLicenseManager;
+
+            UserManager = InUserManager;
+            UserManager.PermissionsUpdated += user =>
+            {
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection Connection in Clients)
+                {
+                    if (Connection.Metadata != null)
+                    {
+                        ClientState State = Connection.Metadata as ClientState;
+                        if (State.Username == user.Username)
+                        {
+                            State.PermissionsNeedUpdate = true;
+                        }
+                    }
+                }
+            };
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Connection"></param>
+        /// <param name="ClientConnection"></param>
+        private void ClientConnected(NetConnection Connection, NetConnection ClientConnection)
+        {
+            ClientConnection.Metadata = new ClientState();
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Clients"></param>
         /// <param name="ForClient"></param>
@@ -347,6 +330,7 @@ namespace BuildSync.Core
                 {
                     continue;
                 }
+
                 if (ClientState.PeerConnectionAddress == null)
                 {
                     continue;
@@ -362,125 +346,6 @@ namespace BuildSync.Core
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private void ListenForClients()
-        {
-            ListenConnection.BeginListen(ServerPort);
-            LastListenAttempt = TimeUtils.Ticks;
-
-            NetDiscoveryServer.ResponseData.Name = Dns.GetHostName();
-            NetDiscoveryServer.ResponseData.Address = ListenConnection.ListenAddress.Address.ToString();
-            NetDiscoveryServer.ResponseData.Port = ListenConnection.ListenAddress.Port;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Connection"></param>
-        /// <param name="ClientConnection"></param>
-        private void ClientConnected(NetConnection Connection, NetConnection ClientConnection)
-        {
-            ClientConnection.Metadata = new ClientState();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void PrintClientBlockStates()
-        {
-            List<NetConnection> Clients = ListenConnection.AllClients;
-
-            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "=======================");
-            foreach (NetConnection Connection in Clients)
-            {
-                if (Connection.Metadata == null)
-                {
-                    continue;
-                }
-
-                ClientState ClientState = Connection.Metadata as ClientState;
-                if (ClientState.BlockState == null)
-                {
-                    continue;
-                }
-
-                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer[{0}]", ClientState.PeerConnectionAddress == null ? "Unknown" : ClientState.PeerConnectionAddress.ToString());
-                for (int i = 0; i < ClientState.BlockState.States.Length; i++)
-                {
-                    ManifestBlockListState State = ClientState.BlockState.States[i];
-                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tManifest[{0}] Id={1} Active={2}", i, State.Id.ToString(), State.IsActive);
-                    if (State.BlockState.Ranges != null)
-                    {
-                        for (int j = 0; j < State.BlockState.Ranges.Count; j++)
-                        {
-                            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\t\tRegion[{0}] Start={1} End={2} Active={3}", j, State.BlockState.Ranges[j].Start, State.BlockState.Ranges[j].End, State.BlockState.Ranges[j].State);
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Root"></param>
-        private void SendBuildsUpdate(NetConnection Connection, string RootPath)
-        {
-            ClientState State = Connection.Metadata as ClientState;
-
-            List<string> Children = ManifestRegistry.GetVirtualPathChildren(RootPath);
-
-            NetMessage_GetBuildsResponse ResponseMsg = new NetMessage_GetBuildsResponse();
-            ResponseMsg.RootPath = RootPath;
-            List<NetMessage_GetBuildsResponse.BuildInfo> Result = new List<NetMessage_GetBuildsResponse.BuildInfo>();
-
-            // Folders first.
-            int Index = 0;
-            for (int i = 0; i < Children.Count; i++)
-            {
-                BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
-                if (Manifest == null)
-                {
-                    if (UserManager.CheckPermission(State.Username, UserPermissionType.Access, Children[i], false, true))
-                    {
-                        Result.Add(new NetMessage_GetBuildsResponse.BuildInfo()
-                        {
-                            Guid = Guid.Empty,
-                            CreateTime = DateTime.UtcNow,
-                            VirtualPath = Children[i]
-                        });
-                    }
-                }
-            }
-
-            // Builds second.
-            if (UserManager.CheckPermission(State.Username, UserPermissionType.Access, RootPath))
-            {
-                for (int i = 0; i < Children.Count; i++)
-                {
-                    BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
-                    if (Manifest != null)
-                    {
-                        Result.Add(new NetMessage_GetBuildsResponse.BuildInfo()
-                        {
-                            Guid = Manifest.Guid,
-                            CreateTime = Manifest.CreateTime,
-                            VirtualPath = Children[i]
-                        });
-
-                        Index++;
-                    }
-                }
-            }
-
-            ResponseMsg.Builds = Result.ToArray();
-
-            Connection.Send(ResponseMsg);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Connection"></param>
         /// <param name="Message"></param>
@@ -562,7 +427,7 @@ namespace BuildSync.Core
                 if (State.BlockState != null)
                 {
                     Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved block list update from client, applying as patch ({0} states).", Msg.BlockState.States.Length);
-                    State.BlockState = Msg.BlockState;// State.BlockState.ApplyDelta(Msg.BlockState);
+                    State.BlockState = Msg.BlockState; // State.BlockState.ApplyDelta(Msg.BlockState);
                 }
                 else
                 {
@@ -608,6 +473,7 @@ namespace BuildSync.Core
                     State.Username = Msg.Username;
                     State.PermissionsNeedUpdate = true;
                 }
+
                 // Dirty all peer states to force an address update (todo: this is shit we should only update relevant peers).
                 List<NetConnection> Clients = ListenConnection.AllClients;
                 foreach (NetConnection ClientConnection in Clients)
@@ -620,7 +486,7 @@ namespace BuildSync.Core
                 }
 
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Clients username was updated to: " + State.Username);
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Clients connection address was updated to: " + State.PeerConnectionAddress.ToString());
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Clients connection address was updated to: " + State.PeerConnectionAddress);
             }
 
             // ------------------------------------------------------------------------------
@@ -856,6 +722,115 @@ namespace BuildSync.Core
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' changed global bandwidth limit to {1}.", State.Username, StringUtils.FormatAsTransferRate(Msg.BandwidthLimit));
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        private void ListenForClients()
+        {
+            ListenConnection.BeginListen(ServerPort);
+            LastListenAttempt = TimeUtils.Ticks;
+
+            NetDiscoveryServer.ResponseData.Name = Dns.GetHostName();
+            NetDiscoveryServer.ResponseData.Address = ListenConnection.ListenAddress.Address.ToString();
+            NetDiscoveryServer.ResponseData.Port = ListenConnection.ListenAddress.Port;
+        }
+
+        /// <summary>
+        /// </summary>
+        private void PrintClientBlockStates()
+        {
+            List<NetConnection> Clients = ListenConnection.AllClients;
+
+            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "=======================");
+            foreach (NetConnection Connection in Clients)
+            {
+                if (Connection.Metadata == null)
+                {
+                    continue;
+                }
+
+                ClientState ClientState = Connection.Metadata as ClientState;
+                if (ClientState.BlockState == null)
+                {
+                    continue;
+                }
+
+                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer[{0}]", ClientState.PeerConnectionAddress == null ? "Unknown" : ClientState.PeerConnectionAddress.ToString());
+                for (int i = 0; i < ClientState.BlockState.States.Length; i++)
+                {
+                    ManifestBlockListState State = ClientState.BlockState.States[i];
+                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tManifest[{0}] Id={1} Active={2}", i, State.Id.ToString(), State.IsActive);
+                    if (State.BlockState.Ranges != null)
+                    {
+                        for (int j = 0; j < State.BlockState.Ranges.Count; j++)
+                        {
+                            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\t\tRegion[{0}] Start={1} End={2} Active={3}", j, State.BlockState.Ranges[j].Start, State.BlockState.Ranges[j].End, State.BlockState.Ranges[j].State);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Root"></param>
+        private void SendBuildsUpdate(NetConnection Connection, string RootPath)
+        {
+            ClientState State = Connection.Metadata as ClientState;
+
+            List<string> Children = ManifestRegistry.GetVirtualPathChildren(RootPath);
+
+            NetMessage_GetBuildsResponse ResponseMsg = new NetMessage_GetBuildsResponse();
+            ResponseMsg.RootPath = RootPath;
+            List<NetMessage_GetBuildsResponse.BuildInfo> Result = new List<NetMessage_GetBuildsResponse.BuildInfo>();
+
+            // Folders first.
+            int Index = 0;
+            for (int i = 0; i < Children.Count; i++)
+            {
+                BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
+                if (Manifest == null)
+                {
+                    if (UserManager.CheckPermission(State.Username, UserPermissionType.Access, Children[i], false, true))
+                    {
+                        Result.Add(
+                            new NetMessage_GetBuildsResponse.BuildInfo
+                            {
+                                Guid = Guid.Empty,
+                                CreateTime = DateTime.UtcNow,
+                                VirtualPath = Children[i]
+                            }
+                        );
+                    }
+                }
+            }
+
+            // Builds second.
+            if (UserManager.CheckPermission(State.Username, UserPermissionType.Access, RootPath))
+            {
+                for (int i = 0; i < Children.Count; i++)
+                {
+                    BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
+                    if (Manifest != null)
+                    {
+                        Result.Add(
+                            new NetMessage_GetBuildsResponse.BuildInfo
+                            {
+                                Guid = Manifest.Guid,
+                                CreateTime = Manifest.CreateTime,
+                                VirtualPath = Children[i]
+                            }
+                        );
+
+                        Index++;
+                    }
+                }
+            }
+
+            ResponseMsg.Builds = Result.ToArray();
+
+            Connection.Send(ResponseMsg);
         }
     }
 }

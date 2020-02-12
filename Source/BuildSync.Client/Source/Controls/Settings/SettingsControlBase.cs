@@ -24,27 +24,21 @@ using System.Windows.Forms;
 namespace BuildSync.Client.Controls.Settings
 {
     /// <summary>
-    ///     Base control for all controls shown as pages in the <see cref="SettingsForm"/> form.
+    ///     Base control for all controls shown as pages in the <see cref="SettingsForm" /> form.
     /// </summary>
     public partial class SettingsControlBase : UserControl
     {
         /// <summary>
-        ///     Initializes a new instance of the <see cref="SettingsControlBase"/> class.
+        ///     Gets the title displayed over the settings when this control is displayed.
+        /// </summary>
+        public virtual string GroupName => "Untitled";
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="SettingsControlBase" /> class.
         /// </summary>
         public SettingsControlBase()
         {
             InitializeComponent();
-        }
-
-        /// <summary>
-        ///     Gets the title displayed over the settings when this control is displayed.
-        /// </summary>
-        public virtual string GroupName
-        {
-            get
-            {
-                return "Untitled";
-            }
         }
     }
 }

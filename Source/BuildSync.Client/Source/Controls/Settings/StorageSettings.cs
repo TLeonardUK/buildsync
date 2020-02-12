@@ -19,22 +19,28 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.IO;
+using BuildSync.Client.Properties;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace BuildSync.Client.Controls.Settings
 {
     /// <summary>
-    ///     Control thats displayed in the <see cref="SettingsForm"/> to allow the user to configure all
+    ///     Control thats displayed in the <see cref="SettingsForm" /> to allow the user to configure all
     ///     storage settings.
     /// </summary>
     public partial class StorageSettings : SettingsControlBase
     {
-        private bool SkipValidity = false;
+        private readonly bool SkipValidity;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="ServerSettings"/> class.
+        ///     Gets the title displayed over the settings when this control is displayed.
+        /// </summary>
+        public override string GroupName => "Storage Settings";
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ServerSettings" /> class.
         /// </summary>
         public StorageSettings()
         {
@@ -49,51 +55,6 @@ namespace BuildSync.Client.Controls.Settings
         }
 
         /// <summary>
-        ///     Gets the title displayed over the settings when this control is displayed.
-        /// </summary>
-        public override string GroupName
-        {
-            get
-            {
-                return "Storage Settings";
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void UpdateValidityState()
-        {
-            if (SkipValidity)
-            {
-                return;
-            }
-
-            Program.Settings.StoragePath = StoragePathTextBox.Text;
-            Program.Settings.StorageMaxSize = (long)StorageMaxSizeTextBox.Value * 1024 * 1024 * 1024;
-
-            if (Directory.Exists(Program.Settings.StoragePath))
-            {
-                StoragePathIcon.Image = Properties.Resources.ic_check_circle_2x;
-            }
-            else
-            {
-                StoragePathIcon.Image = Properties.Resources.ic_error_red_48pt;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void StateChanged(object sender, EventArgs e)
-        {
-            UpdateValidityState();
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -112,6 +73,37 @@ namespace BuildSync.Client.Controls.Settings
                 Program.Settings.StoragePath = Dialog.FileName;
 
                 UpdateValidityState();
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StateChanged(object sender, EventArgs e)
+        {
+            UpdateValidityState();
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdateValidityState()
+        {
+            if (SkipValidity)
+            {
+                return;
+            }
+
+            Program.Settings.StoragePath = StoragePathTextBox.Text;
+            Program.Settings.StorageMaxSize = (long) StorageMaxSizeTextBox.Value * 1024 * 1024 * 1024;
+
+            if (Directory.Exists(Program.Settings.StoragePath))
+            {
+                StoragePathIcon.Image = Resources.ic_check_circle_2x;
+            }
+            else
+            {
+                StoragePathIcon.Image = Resources.ic_error_red_48pt;
             }
         }
     }

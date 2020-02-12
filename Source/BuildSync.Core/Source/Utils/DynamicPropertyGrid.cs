@@ -29,57 +29,46 @@ namespace BuildSync.Core.Utils
     // Based on https://www.codeproject.com/Articles/9280/Add-Remove-Items-to-from-PropertyGrid-at-Runtime
 
     /// <summary>
-    /// 
     /// </summary>
     public class DynamicPropertyGridProperty
     {
         /// <summary>
-        /// 
-        /// </summary>
-        public string Id { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Description { get; set; }
-
-        /// <summary>
-        /// 
         /// </summary>
         public string Category { get; set; }
 
         /// <summary>
-        /// 
-        /// </summary>
-        public virtual object Value { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public object DefaultValue { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool ReadOnly { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool Visible { get; set; }
-
-        /// <summary>
-        /// 
         /// </summary>
         public TypeConverter Converter { get; set; }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public object DefaultValue { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public string Id { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public bool ReadOnly { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public virtual object Value { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public bool Visible { get; set; }
+
+        /// <summary>
         /// </summary>
         /// <param name="InName"></param>
         /// <param name="InValue"></param>
@@ -99,46 +88,39 @@ namespace BuildSync.Core.Utils
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class DynamicPropertyGridRangedProperty : DynamicPropertyGridProperty
     {
         /// <summary>
-        /// 
-        /// </summary>
-        public float MinValue { get; set; }
-
-        /// <summary>
-        /// 
         /// </summary>
         public float MaxValue { get; set; }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public float MinValue { get; set; }
+
+        /// <summary>
         /// </summary>
         public override object Value
         {
-            get
-            {
-                return base.Value;
-            }
+            get => base.Value;
             set
             {
                 object NewValue = value;
                 if (value is int)
                 {
-                    NewValue = Math.Max(Math.Min((int)NewValue, (int)MaxValue), (int)MinValue);
+                    NewValue = Math.Max(Math.Min((int) NewValue, (int) MaxValue), (int) MinValue);
                 }
                 else if (value is float)
                 {
-                    NewValue = Math.Max(Math.Min((float)NewValue, MaxValue), MinValue);
+                    NewValue = Math.Max(Math.Min((float) NewValue, MaxValue), MinValue);
                 }
+
                 base.Value = NewValue;
             }
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="InName"></param>
         /// <param name="InValue"></param>
@@ -154,17 +136,14 @@ namespace BuildSync.Core.Utils
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class DynamicPropertyGridOptionsProperty : DynamicPropertyGridProperty
     {
         /// <summary>
-        /// 
         /// </summary>
         public List<string> Options { get; set; } = new List<string>();
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="InName"></param>
         /// <param name="InValue"></param>
@@ -176,57 +155,55 @@ namespace BuildSync.Core.Utils
             Options = InOptions;
             Value = InValue;
 
-            Converter = new DynamicPropertyGridOptionsTypeConverter() { Options = this.Options };
+            Converter = new DynamicPropertyGridOptionsTypeConverter {Options = Options};
         }
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class DynamicPropertyGridOptionsTypeConverter : StringConverter
     {
         /// <summary>
-        /// 
         /// </summary>
         public List<string> Options { get; set; } = new List<string>();
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="context"></param>
         /// <returns></returns>
-        public override Boolean GetStandardValuesSupported(ITypeDescriptorContext context) { return true; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public override Boolean GetStandardValuesExclusive(ITypeDescriptorContext context) { return true; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        public override TypeConverter.StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
+        public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
         {
             return new StandardValuesCollection(Options);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override bool GetStandardValuesExclusive(ITypeDescriptorContext context)
+        {
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        public override bool GetStandardValuesSupported(ITypeDescriptorContext context)
+        {
+            return true;
         }
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class DynamicPropertyGridPropertyDescriptor : PropertyDescriptor
     {
         /// <summary>
-        /// 
         /// </summary>
-        DynamicPropertyGridProperty Property;
+        private readonly DynamicPropertyGridProperty Property;
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="InProperty"></param>
         /// <param name="InAttributes"></param>
@@ -239,7 +216,6 @@ namespace BuildSync.Core.Utils
         #region PropertyDescriptor Implementation
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="component"></param>
         /// <returns></returns>
@@ -249,18 +225,10 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        public override Type ComponentType
-        {
-            get
-            {
-                return null;
-            }
-        }
+        public override Type ComponentType => null;
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="component"></param>
         /// <returns></returns>
@@ -270,51 +238,22 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        public override string Description
-        {
-            get
-            {
-                return Property.Description;
-            }
-        }
+        public override string Description => Property.Description;
 
         /// <summary>
-        /// 
         /// </summary>
-        public override string Category
-        {
-            get
-            {
-                return Property.Category;
-            }
-        }
+        public override string Category => Property.Category;
 
         /// <summary>
-        /// 
         /// </summary>
-        public override string DisplayName
-        {
-            get
-            {
-                return Property.Name;
-            }
-        }
+        public override string DisplayName => Property.Name;
 
         /// <summary>
-        /// 
         /// </summary>
-        public override bool IsReadOnly
-        {
-            get
-            {
-                return Property.ReadOnly;
-            }
-        }
+        public override bool IsReadOnly => Property.ReadOnly;
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="component"></param>
         public override void ResetValue(object component)
@@ -323,7 +262,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="component"></param>
         /// <returns></returns>
@@ -333,7 +271,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="component"></param>
         /// <param name="value"></param>
@@ -343,15 +280,10 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        public override Type PropertyType
-        {
-            get { return Property.Value.GetType(); }
-        }
+        public override Type PropertyType => Property.Value.GetType();
 
         /// <summary>
-        /// 
         /// </summary>
         public override TypeConverter Converter
         {
@@ -361,6 +293,7 @@ namespace BuildSync.Core.Utils
                 {
                     return Property.Converter;
                 }
+
                 return base.Converter;
             }
         }
@@ -369,81 +302,71 @@ namespace BuildSync.Core.Utils
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class DynamicPropertyGridObject : CollectionBase, ICustomTypeDescriptor
     {
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public DynamicPropertyGridProperty this[int index]
+        {
+            get => (DynamicPropertyGridProperty) List[index];
+            set => List[index] = value;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Value"></param>
         public void Add(DynamicPropertyGridProperty Value)
         {
-            base.List.Add(Value);
+            List.Add(Value);
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Name"></param>
-        public void Remove(string Id)
-        {
-            foreach (DynamicPropertyGridProperty prop in base.List)
-            {
-                if (prop.Id == Id)
-                {
-                    base.List.Remove(prop);
-                    return;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Name"></param>
         public DynamicPropertyGridProperty Find(string Id)
         {
-            foreach (DynamicPropertyGridProperty prop in base.List)
+            foreach (DynamicPropertyGridProperty prop in List)
             {
                 if (prop.Id == Id)
                 {
                     return prop;
                 }
             }
+
             return null;
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        public DynamicPropertyGridProperty this[int index]
+        /// <param name="Name"></param>
+        public void Remove(string Id)
         {
-            get
+            foreach (DynamicPropertyGridProperty prop in List)
             {
-                return (DynamicPropertyGridProperty)base.List[index];
-            }
-            set
-            {
-                base.List[index] = value;
+                if (prop.Id == Id)
+                {
+                    List.Remove(prop);
+                    return;
+                }
             }
         }
 
         #region TypeDescriptor Implementation
 
         /// <summary>
-        /// Get Class Name
+        ///     Get Class Name
         /// </summary>
         /// <returns>String</returns>
-        public String GetClassName()
+        public string GetClassName()
         {
             return TypeDescriptor.GetClassName(this, true);
         }
 
         /// <summary>
-        /// GetAttributes
+        ///     GetAttributes
         /// </summary>
         /// <returns>AttributeCollection</returns>
         public AttributeCollection GetAttributes()
@@ -452,16 +375,16 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// GetComponentName
+        ///     GetComponentName
         /// </summary>
         /// <returns>String</returns>
-        public String GetComponentName()
+        public string GetComponentName()
         {
             return TypeDescriptor.GetComponentName(this, true);
         }
 
         /// <summary>
-        /// GetConverter
+        ///     GetConverter
         /// </summary>
         /// <returns>TypeConverter</returns>
         public TypeConverter GetConverter()
@@ -470,7 +393,7 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// GetDefaultEvent
+        ///     GetDefaultEvent
         /// </summary>
         /// <returns>EventDescriptor</returns>
         public EventDescriptor GetDefaultEvent()
@@ -479,7 +402,7 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// GetDefaultProperty
+        ///     GetDefaultProperty
         /// </summary>
         /// <returns>PropertyDescriptor</returns>
         public PropertyDescriptor GetDefaultProperty()
@@ -488,7 +411,7 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// GetEditor
+        ///     GetEditor
         /// </summary>
         /// <param name="editorBaseType">editorBaseType</param>
         /// <returns>object</returns>
@@ -498,7 +421,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="attributes"></param>
         /// <returns></returns>
@@ -508,7 +430,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <returns></returns>
         public EventDescriptorCollection GetEvents()
@@ -517,14 +438,13 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Attributes"></param>
         /// <returns></returns>
         public PropertyDescriptorCollection GetProperties(Attribute[] Attributes)
         {
-            PropertyDescriptor[] NewProperties = new PropertyDescriptor[this.Count];
-            for (int i = 0; i < this.Count; i++)
+            PropertyDescriptor[] NewProperties = new PropertyDescriptor[Count];
+            for (int i = 0; i < Count; i++)
             {
                 DynamicPropertyGridProperty prop = this[i];
                 if (prop.Name.Length > 0)
@@ -532,11 +452,11 @@ namespace BuildSync.Core.Utils
                     NewProperties[i] = new DynamicPropertyGridPropertyDescriptor(ref prop, Attributes);
                 }
             }
+
             return new PropertyDescriptorCollection(NewProperties);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <returns></returns>
         public PropertyDescriptorCollection GetProperties()
@@ -545,7 +465,6 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="pd"></param>
         /// <returns></returns>

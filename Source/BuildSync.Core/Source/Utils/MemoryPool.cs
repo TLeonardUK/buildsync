@@ -27,7 +27,6 @@ using System.Threading;
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     public class Statistic_MemoryBlocksFree : Statistic
     {
@@ -45,18 +44,24 @@ namespace BuildSync.Core.Utils
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     public static class MemoryPool
     {
         public class Bucket
         {
-            public int Size;
             public List<byte[]> Buffers = new List<byte[]>();
-            public int TotalAllocated = 0;
+            public int Size;
+            public int TotalAllocated;
         }
 
-        private static List<Bucket> Buckets = new List<Bucket>();
-        private static long MemoryAllocated = 0;
+        private static readonly List<Bucket> Buckets = new List<Bucket>();
+        private static long MemoryAllocated;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public static int BlocksFree
         {
             get
@@ -69,10 +74,62 @@ namespace BuildSync.Core.Utils
                         Result += bucket.Buffers.Count;
                     }
                 }
+
                 return Result;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Size"></param>
+        /// <param name="FailIfNoMemory"></param>
+        /// <returns></returns>
+        public static byte[] AllocBuffer(int Size, bool FailIfNoMemory = false)
+        {
+            lock (Buckets)
+            {
+                while (true)
+                {
+                    foreach (Bucket bucket in Buckets)
+                    {
+                        if (Size <= bucket.Size)
+                        {
+                            if (bucket.Buffers.Count > 0)
+                            {
+                                byte[] Result = bucket.Buffers[bucket.Buffers.Count - 1];
+                                bucket.Buffers.RemoveAt(bucket.Buffers.Count - 1);
+
+                                //PrintStatus();
+                                return Result;
+                            }
+
+                            if (FailIfNoMemory)
+                            {
+                                return null;
+                            }
+
+                            {
+                                byte[] Result = new byte[bucket.Size];
+                                bucket.TotalAllocated++;
+                                Interlocked.Add(ref MemoryAllocated, bucket.Size);
+
+                                return Result;
+                            }
+                        }
+                    }
+
+                    int NextBucketSize = Buckets.Count > 0 ? Buckets[Buckets.Count - 1].Size * 2 : 128;
+                    Buckets.Add(new Bucket {Size = NextBucketSize});
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Size"></param>
+        /// <param name="Count"></param>
         public static void PreallocateBuffers(int Size, int Count)
         {
             lock (Buckets)
@@ -95,54 +152,34 @@ namespace BuildSync.Core.Utils
                         }
                     }
 
-                    int NextBucketSize = (Buckets.Count > 0) ? (Buckets[Buckets.Count - 1].Size * 2) : 128;
-                    Buckets.Add(new Bucket() { Size = NextBucketSize });
+                    int NextBucketSize = Buckets.Count > 0 ? Buckets[Buckets.Count - 1].Size * 2 : 128;
+                    Buckets.Add(new Bucket {Size = NextBucketSize});
                 }
             }
         }
 
-        public static byte[] AllocBuffer(int Size, bool FailIfNoMemory = false)
+        /// <summary>
+        /// 
+        /// </summary>
+        public static void PrintStatus()
         {
+            Console.WriteLine("======= MEMORY POOL ========");
             lock (Buckets)
             {
-                while (true)
+                foreach (Bucket bucket in Buckets)
                 {
-                    foreach (Bucket bucket in Buckets)
+                    if (bucket.TotalAllocated > 0)
                     {
-                        if (Size <= bucket.Size)
-                        {
-                            if (bucket.Buffers.Count > 0)
-                            {
-                                byte[] Result = bucket.Buffers[bucket.Buffers.Count - 1];
-                                bucket.Buffers.RemoveAt(bucket.Buffers.Count - 1);
-
-                                //PrintStatus();
-                                return Result;
-                            }
-                            else
-                            {
-                                if (FailIfNoMemory)
-                                {
-                                    return null;
-                                }
-                                else
-                                {
-                                    byte[] Result = new byte[bucket.Size];
-                                    bucket.TotalAllocated++;
-                                    Interlocked.Add(ref MemoryAllocated, bucket.Size);
-
-                                    return Result;
-                                }
-                            }
-                        }
+                        Console.WriteLine("Size={0} Count={1} Free={2} Size={3}", StringUtils.FormatAsSize(bucket.Size), bucket.TotalAllocated, bucket.Buffers.Count, StringUtils.FormatAsSize(bucket.Size * bucket.TotalAllocated));
                     }
-
-                    int NextBucketSize = (Buckets.Count > 0) ? (Buckets[Buckets.Count - 1].Size * 2) : 128;
-                    Buckets.Add(new Bucket() { Size = NextBucketSize });
                 }
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Buffer"></param>
         public static void ReleaseBuffer(byte[] Buffer)
         {
             lock (Buckets)
@@ -159,21 +196,6 @@ namespace BuildSync.Core.Utils
                 }
 
                 Debug.Assert(false);
-            }
-        }
-
-        public static void PrintStatus()
-        {
-            Console.WriteLine("======= MEMORY POOL ========");
-            lock (Buckets)
-            {
-                foreach (Bucket bucket in Buckets)
-                {
-                    if (bucket.TotalAllocated > 0)
-                    {
-                        Console.WriteLine("Size={0} Count={1} Free={2} Size={3}", StringUtils.FormatAsSize(bucket.Size), bucket.TotalAllocated, bucket.Buffers.Count, StringUtils.FormatAsSize(bucket.Size * bucket.TotalAllocated));
-                    }
-                }
             }
         }
     }

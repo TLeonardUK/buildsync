@@ -19,22 +19,24 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Downloads;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using BuildSync.Core.Downloads;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Controls
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class DownloadList : DockContent
     {
         /// <summary>
-        /// 
+        /// </summary>
+        private DownloadListItem OldSelectedItem;
+
+        /// <summary>
         /// </summary>
         public DownloadListItem SelectedItem
         {
@@ -62,12 +64,6 @@ namespace BuildSync.Client.Controls
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private DownloadListItem OldSelectedItem = null;
-
-        /// <summary>
-        /// 
         /// </summary>
         public DownloadList()
         {
@@ -75,7 +71,18 @@ namespace BuildSync.Client.Controls
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MouseClicked(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                //Program.AppForm.ShowDownloadListContextMenu();
+            }
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -93,10 +100,12 @@ namespace BuildSync.Client.Controls
                 {
                     OldSelectedItem.Selected = false;
                 }
+
                 if (NewSelectedItem != null)
                 {
                     NewSelectedItem.Selected = true;
                 }
+
                 OldSelectedItem = NewSelectedItem;
             }
 
@@ -154,19 +163,6 @@ namespace BuildSync.Client.Controls
             foreach (DownloadListItem Ctl in ExistingItems)
             {
                 Ctl.RefreshState();
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void MouseClicked(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Right)
-            {
-                //Program.AppForm.ShowDownloadListContextMenu();
             }
         }
     }

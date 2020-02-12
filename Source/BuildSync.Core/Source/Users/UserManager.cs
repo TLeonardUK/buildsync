@@ -19,18 +19,18 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Networking;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using BuildSync.Core.Networking;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Users
 {
     /// <summary>
-    /// 
     /// </summary>
-    [Serializable, JsonConverter(typeof(JsonStringEnumConverter))]
+    [Serializable]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum UserPermissionType
     {
         ManageBuilds,
@@ -42,33 +42,38 @@ namespace BuildSync.Core.Users
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class UserPermission
     {
+        private string InternalVirtualPath = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
         public UserPermissionType Type { get; set; } = UserPermissionType.Unknown;
 
-        [JsonIgnore]
-        public string[] VirtualPathSplit { get; private set; } = new string[0];
-
-        private string InternalVirtualPath = "";
+        /// <summary>
+        /// 
+        /// </summary>
         public string VirtualPath
         {
-            get
-            {
-                return InternalVirtualPath;
-            }
+            get => InternalVirtualPath;
             set
             {
                 InternalVirtualPath = value;
                 VirtualPathSplit = value.ToLower().Split('/');
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonIgnore]
+        public string[] VirtualPathSplit { get; private set; } = new string[0];
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class UserPermissionCollection
@@ -76,7 +81,28 @@ namespace BuildSync.Core.Users
         public List<UserPermission> Permissions { get; set; } = new List<UserPermission>();
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Permission"></param>
+        /// <param name="Path"></param>
+        public void GrantPermission(UserPermissionType Type, string Path)
+        {
+            Path = VirtualFileSystem.Normalize(Path);
+
+            foreach (UserPermission Permission in Permissions)
+            {
+                if (Permission.Type == Type && Permission.VirtualPath.ToLower() == Path.ToLower())
+                {
+                    return;
+                }
+            }
+
+            UserPermission NewPermission = new UserPermission();
+            NewPermission.Type = Type;
+            NewPermission.VirtualPath = Path;
+            Permissions.Add(NewPermission);
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Type"></param>
         /// <param name="Path"></param>
@@ -152,34 +178,11 @@ namespace BuildSync.Core.Users
                     }
                 }
             }
+
             return false;
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Permission"></param>
-        /// <param name="Path"></param>
-        public void GrantPermission(UserPermissionType Type, string Path)
-        {
-            Path = VirtualFileSystem.Normalize(Path);
-
-            foreach (UserPermission Permission in Permissions)
-            {
-                if (Permission.Type == Type && Permission.VirtualPath.ToLower() == Path.ToLower())
-                {
-                    return;
-                }
-            }
-
-            UserPermission NewPermission = new UserPermission();
-            NewPermission.Type = Type;
-            NewPermission.VirtualPath = Path;
-            Permissions.Add(NewPermission);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
@@ -198,7 +201,6 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="serializer"></param>
         public void Serialize(NetMessageSerializer serializer)
@@ -216,7 +218,7 @@ namespace BuildSync.Core.Users
                 UserPermissionType Type = Permissions[i].Type;
                 string Path = Permissions[i].VirtualPath;
 
-                serializer.SerializeEnum<UserPermissionType>(ref Type);
+                serializer.SerializeEnum(ref Type);
                 serializer.Serialize(ref Path);
 
                 Permissions[i].Type = Type;
@@ -226,51 +228,39 @@ namespace BuildSync.Core.Users
     }
 
     /// <summary>
-    /// 
     /// </summary>
     [Serializable]
     public class User
     {
-        public string Username { get; set; } = "";
         public UserPermissionCollection Permissions { get; set; } = new UserPermissionCollection();
+        public string Username { get; set; } = "";
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void PermissionUpdatedEventHandler(User user);
 
     /// <summary>
-    /// 
     /// </summary>
     public delegate void UsersUpdatedEventHandler();
 
     /// <summary>
-    /// 
     /// </summary>
     public class UserManager
     {
         /// <summary>
-        /// 
         /// </summary>
         public event PermissionUpdatedEventHandler PermissionsUpdated;
 
         /// <summary>
-        /// 
         /// </summary>
         public event UsersUpdatedEventHandler UsersUpdated;
 
         /// <summary>
-        /// 
         /// </summary>
-        public List<User> Users
-        {
-            get;
-            private set;
-        } = new List<User>();
+        public List<User> Users { get; } = new List<User>();
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="InitialUsers"></param>
         public UserManager(List<User> InitialUsers = null)
@@ -282,39 +272,30 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
-        public User GetOrCreateUser(string Username)
+        public bool CheckPermission(User User, UserPermissionType Permission, string Path, bool IgnoreInheritedPermissions = false, bool AllowIfHavePermissionToSubPath = false)
+        {
+            return User.Permissions.HasPermission(Permission, Path, IgnoreInheritedPermissions, AllowIfHavePermissionToSubPath);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public bool CheckPermission(string Username, UserPermissionType Permission, string Path, bool IgnoreInheritedPermissions = false, bool AllowIfHavePermissionToSubPath = false)
         {
             User user = FindUser(Username);
             if (user == null)
             {
-                user = CreateUser(Username);
+                return false;
             }
-            return user;
+
+            return CheckPermission(user, Permission, Path, IgnoreInheritedPermissions, AllowIfHavePermissionToSubPath);
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Username"></param>
-        /// <returns></returns>
-        public User FindUser(string Username)
-        {
-            foreach (User user in Users)
-            {
-                if (user.Username.ToLower() == Username.ToLower())
-                {
-                    return user;
-                }
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
@@ -338,7 +319,6 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
@@ -353,7 +333,6 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
@@ -369,7 +348,38 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public User FindUser(string Username)
+        {
+            foreach (User user in Users)
+            {
+                if (user.Username.ToLower() == Username.ToLower())
+                {
+                    return user;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public User GetOrCreateUser(string Username)
+        {
+            User user = FindUser(Username);
+            if (user == null)
+            {
+                user = CreateUser(Username);
+            }
+
+            return user;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
@@ -384,7 +394,6 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
@@ -399,33 +408,6 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Username"></param>
-        /// <returns></returns>
-        public bool CheckPermission(User User, UserPermissionType Permission, string Path, bool IgnoreInheritedPermissions = false, bool AllowIfHavePermissionToSubPath = false)
-        {
-            return User.Permissions.HasPermission(Permission, Path, IgnoreInheritedPermissions, AllowIfHavePermissionToSubPath);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Username"></param>
-        /// <returns></returns>
-        public bool CheckPermission(string Username, UserPermissionType Permission, string Path, bool IgnoreInheritedPermissions = false, bool AllowIfHavePermissionToSubPath = false)
-        {
-            User user = FindUser(Username);
-            if (user == null)
-            {
-                return false;
-            }
-
-            return CheckPermission(user, Permission, Path, IgnoreInheritedPermissions, AllowIfHavePermissionToSubPath);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="Username"></param>
         /// <param name="Permissions"></param>

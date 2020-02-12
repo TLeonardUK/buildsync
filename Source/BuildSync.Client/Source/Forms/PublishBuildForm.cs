@@ -19,26 +19,23 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Client.Tasks;
-using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
 using System.IO;
 using System.Windows.Forms;
+using BuildSync.Client.Tasks;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class PublishBuildForm : Form
     {
         /// <summary>
-        /// 
         /// </summary>
-        private PublishBuildTask Publisher = null;
+        private PublishBuildTask Publisher;
 
         /// <summary>
-        /// 
         /// </summary>
         public PublishBuildForm()
         {
@@ -46,29 +43,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private void ValidateState()
-        {
-            PublishButton.Enabled = (
-                VirtualPathTextBox.Text.Trim().Length >= 3 &&
-                LocalFolderTextBox.Text.Length > 0 &&
-                Directory.Exists(LocalFolderTextBox.Text)
-            );
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void DataStateChanged(object sender, EventArgs e)
-        {
-            ValidateState();
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -87,7 +61,103 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DataStateChanged(object sender, EventArgs e)
+        {
+            ValidateState();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FormAboutToClose(object sender, FormClosingEventArgs e)
+        {
+            if (Publisher != null)
+            {
+                MessageBox.Show("Cannot close, please wait for publishing to complete.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                e.Cancel = true;
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ProgressTimerTick(object sender, EventArgs e)
+        {
+            if (Publisher != null)
+            {
+                PublishProgressBar.Value = Math.Max(0, Math.Min(100, (int) Publisher.Progress));
+
+                switch (Publisher.State)
+                {
+                    case BuildPublishingState.CopyingFiles:
+                    {
+                        PublishProgressLabel.Text = "Copying file: " + Publisher.CurrentFile;
+                        break;
+                    }
+                    case BuildPublishingState.ScanningFiles:
+                    {
+                        PublishProgressLabel.Text = "Scanning file: " + Publisher.CurrentFile;
+                        break;
+                    }
+                    case BuildPublishingState.UploadingManifest:
+                    {
+                        PublishProgressLabel.Text = "Publishing manifest to server";
+                        break;
+                    }
+                    case BuildPublishingState.FailedVirtualPathAlreadyExists:
+                    {
+                        Publisher = null;
+                        MessageBox.Show("Failed to publish manifest, one already exists at virtual path.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
+                    case BuildPublishingState.PermissionDenied:
+                    {
+                        Publisher = null;
+                        MessageBox.Show("Failed to publish manifest, you do not have permission to publish at that virtual path.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
+                    case BuildPublishingState.FailedGuidAlreadyExists:
+                    {
+                        Publisher = null;
+                        MessageBox.Show("Failed to publish manifest, one already exists with the same guid.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
+                    case BuildPublishingState.Success:
+                    {
+                        Publisher.Commit();
+                        Publisher = null;
+                        MessageBox.Show("Finished publishing manifest.", "Manifest published", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        Close();
+                        break;
+                    }
+                    case BuildPublishingState.Failed:
+                    default:
+                    {
+                        Publisher = null;
+                        MessageBox.Show("Failed to publish manifest for undefined reason.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        break;
+                    }
+                }
+
+                if (Publisher == null)
+                {
+                    PublishButton.Text = "Publish Build";
+                    PublishButton.Enabled = true;
+                    PublishProgressBar.Visible = false;
+                    PublishProgressLabel.Visible = false;
+
+                    VirtualPathTextBox.Enabled = true;
+                    LocalFolderBrowseButton.Enabled = true;
+                }
+            }
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -106,93 +176,12 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void FormAboutToClose(object sender, FormClosingEventArgs e)
+        private void ValidateState()
         {
-            if (Publisher != null)
-            {
-                MessageBox.Show("Cannot close, please wait for publishing to complete.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                e.Cancel = true;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ProgressTimerTick(object sender, EventArgs e)
-        {
-            if (Publisher != null)
-            {
-                PublishProgressBar.Value = Math.Max(0, Math.Min(100, (int)Publisher.Progress));
-
-                switch (Publisher.State)
-                {
-                    case BuildPublishingState.CopyingFiles:
-                        {
-                            PublishProgressLabel.Text = "Copying file: " + Publisher.CurrentFile;
-                            break;
-                        }
-                    case BuildPublishingState.ScanningFiles:
-                        {
-                            PublishProgressLabel.Text = "Scanning file: " + Publisher.CurrentFile;
-                            break;
-                        }
-                    case BuildPublishingState.UploadingManifest:
-                        {
-                            PublishProgressLabel.Text = "Publishing manifest to server";
-                            break;
-                        }
-                    case BuildPublishingState.FailedVirtualPathAlreadyExists:
-                        {
-                            Publisher = null;
-                            MessageBox.Show("Failed to publish manifest, one already exists at virtual path.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            break;
-                        }
-                    case BuildPublishingState.PermissionDenied:
-                        {
-                            Publisher = null;
-                            MessageBox.Show("Failed to publish manifest, you do not have permission to publish at that virtual path.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            break;
-                        }
-                    case BuildPublishingState.FailedGuidAlreadyExists:
-                        {
-                            Publisher = null;
-                            MessageBox.Show("Failed to publish manifest, one already exists with the same guid.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            break;
-                        }
-                    case BuildPublishingState.Success:
-                        {
-                            Publisher.Commit();
-                            Publisher = null;
-                            MessageBox.Show("Finished publishing manifest.", "Manifest published", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            Close();
-                            break;
-                        }
-                    case BuildPublishingState.Failed:
-                    default:
-                        {
-                            Publisher = null;
-                            MessageBox.Show("Failed to publish manifest for undefined reason.", "Failed to publish", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            break;
-                        }
-                }
-
-                if (Publisher == null)
-                {
-                    PublishButton.Text = "Publish Build";
-                    PublishButton.Enabled = true;
-                    PublishProgressBar.Visible = false;
-                    PublishProgressLabel.Visible = false;
-
-                    VirtualPathTextBox.Enabled = true;
-                    LocalFolderBrowseButton.Enabled = true;
-                }
-            }
+            PublishButton.Enabled = VirtualPathTextBox.Text.Trim().Length >= 3 &&
+                                    LocalFolderTextBox.Text.Length > 0 &&
+                                    Directory.Exists(LocalFolderTextBox.Text);
         }
     }
 }

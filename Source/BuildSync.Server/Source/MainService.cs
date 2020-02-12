@@ -19,6 +19,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System.Diagnostics;
 using System.ServiceProcess;
 using System.Timers;
 
@@ -36,11 +37,11 @@ namespace BuildSync.Server
         protected override void OnStart(string[] args)
         {
 #if DEBUG
-            System.Diagnostics.Debugger.Launch();
+            Debugger.Launch();
 #endif
 
             PollTimer = new Timer(1);
-            PollTimer.Elapsed += (object sender, ElapsedEventArgs e) =>
+            PollTimer.Elapsed += (sender, e) =>
             {
                 lock (PollTimer)
                 {

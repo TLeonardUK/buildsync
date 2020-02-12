@@ -19,22 +19,28 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Client.Forms;
 using System;
 using System.Windows.Forms;
+using BuildSync.Client.Forms;
+using BuildSync.Client.Properties;
 
 namespace BuildSync.Client.Controls.Settings
 {
     /// <summary>
-    ///     Control thats displayed in the <see cref="SettingsForm"/> to allow the user to configure all
+    ///     Control thats displayed in the <see cref="SettingsForm" /> to allow the user to configure all
     ///     server settings.
     /// </summary>
     public partial class ServerSettings : SettingsControlBase
     {
-        private bool SkipValidity = false;
+        private readonly bool SkipValidity;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="ServerSettings"/> class.
+        ///     Gets the title displayed over the settings when this control is displayed.
+        /// </summary>
+        public override string GroupName => "Server Settings";
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ServerSettings" /> class.
         /// </summary>
         public ServerSettings()
         {
@@ -51,53 +57,6 @@ namespace BuildSync.Client.Controls.Settings
         }
 
         /// <summary>
-        ///     Gets the title displayed over the settings when this control is displayed.
-        /// </summary>
-        public override string GroupName
-        {
-            get
-            {
-                return "Server Settings";
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void UpdateValidityState()
-        {
-            if (SkipValidity)
-            {
-                return;
-            }
-
-            Program.Settings.ServerHostname = ServerHostnameTextBox.Text;
-            Program.Settings.ServerPort = (int)ServerPortTextBox.Value;
-            Program.Settings.ClientPortRangeMin = (int)PeerPortRangeStartBox.Value;
-            Program.Settings.ClientPortRangeMax = (int)PeerPortRangeEndBox.Value;
-
-            if (Uri.CheckHostName(Program.Settings.ServerHostname) != UriHostNameType.Unknown)
-            {
-                ServerHostnameIcon.Image = Properties.Resources.ic_check_circle_2x;
-            }
-            else
-            {
-                ServerHostnameIcon.Image = Properties.Resources.ic_error_red_48pt;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void StateChanged(object sender, EventArgs e)
-        {
-            UpdateValidityState();
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -110,6 +69,39 @@ namespace BuildSync.Client.Controls.Settings
                 ServerPortTextBox.Value = form.SelectedPort;
 
                 UpdateValidityState();
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StateChanged(object sender, EventArgs e)
+        {
+            UpdateValidityState();
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdateValidityState()
+        {
+            if (SkipValidity)
+            {
+                return;
+            }
+
+            Program.Settings.ServerHostname = ServerHostnameTextBox.Text;
+            Program.Settings.ServerPort = (int) ServerPortTextBox.Value;
+            Program.Settings.ClientPortRangeMin = (int) PeerPortRangeStartBox.Value;
+            Program.Settings.ClientPortRangeMax = (int) PeerPortRangeEndBox.Value;
+
+            if (Uri.CheckHostName(Program.Settings.ServerHostname) != UriHostNameType.Unknown)
+            {
+                ServerHostnameIcon.Image = Resources.ic_check_circle_2x;
+            }
+            else
+            {
+                ServerHostnameIcon.Image = Resources.ic_error_red_48pt;
             }
         }
     }

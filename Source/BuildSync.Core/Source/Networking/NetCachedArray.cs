@@ -19,48 +19,43 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System.Collections.Generic;
 using System.Diagnostics;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Networking
 {
     /// <summary>
     ///     WARNING: Make sure you understand the alloc/release pattern for this class when recieved in netmessages, missues
-    ///              will result in hard to find leaks and memory stomping as the buffers are recycled.
+    ///     will result in hard to find leaks and memory stomping as the buffers are recycled.
     /// </summary>
     public class NetCachedArray
     {
         public class Bucket
         {
-            public int Size;
             public List<byte[]> Buffers = new List<byte[]>();
+            public int Size;
         }
 
-        private static List<Bucket> Buckets = new List<Bucket>();
+        private static readonly List<Bucket> Buckets = new List<Bucket>();
 
-        public byte[] Data
-        {
-            get;
-            internal set;
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        public byte[] Data { get; internal set; }
 
-        public int Length
-        {
-            get;
-            internal set;
-        }
+        /// <summary>
+        /// 
+        /// </summary>
+        public int Length { get; internal set; }
 
-        private byte[] AllocBuffer(int Size, bool FailIfNoMemory)
-        {
-            return MemoryPool.AllocBuffer(Size, FailIfNoMemory);
-        }
-
-        private void ReleaseBuffer(byte[] Buffer)
-        {
-            MemoryPool.ReleaseBuffer(Buffer);
-        }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="NewSize"></param>
+        /// <param name="Capacity"></param>
+        /// <param name="FailIfNoMemory"></param>
+        /// <returns></returns>
         public bool Resize(int NewSize, int Capacity, bool FailIfNoMemory)
         {
             if (Data != null && Data.Length < NewSize)
@@ -77,10 +72,12 @@ namespace BuildSync.Core.Networking
             {
                 return false;
             }
+
             if (OldData != null)
             {
                 ReleaseBuffer(OldData);
             }
+
             Length = NewSize;
             return true;
         }
@@ -92,6 +89,26 @@ namespace BuildSync.Core.Networking
                 ReleaseBuffer(Data);
                 Data = null;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Size"></param>
+        /// <param name="FailIfNoMemory"></param>
+        /// <returns></returns>
+        private byte[] AllocBuffer(int Size, bool FailIfNoMemory)
+        {
+            return MemoryPool.AllocBuffer(Size, FailIfNoMemory);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Buffer"></param>
+        private void ReleaseBuffer(byte[] Buffer)
+        {
+            MemoryPool.ReleaseBuffer(Buffer);
         }
     }
 }

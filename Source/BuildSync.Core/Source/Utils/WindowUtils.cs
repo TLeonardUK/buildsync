@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -32,36 +33,9 @@ using System.Windows.Forms;
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     public static class WindowUtils
     {
-        public const int SW_RESTORE = 9;
-
-        // Treeview consts
-        public const int TVIF_STATE = 0x8;
-        public const int TVIS_STATEIMAGEMASK = 0xF000;
-        public const int TV_FIRST = 0x1100;
-        public const int TVM_SETITEM = TV_FIRST + 63;
-
-        [DllImport("User32.dll", CharSet = CharSet.Auto, SetLastError = false)]
-        static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr w, IntPtr l);
-        [DllImport("User32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr handle);
-        [DllImport("User32.dll")]
-        private static extern bool ShowWindow(IntPtr handle, int nCmdShow);
-        [DllImport("User32.dll")]
-        private static extern bool IsIconic(IntPtr handle);
-        [DllImport("USER32.DLL", CharSet = CharSet.Unicode)]
-        public static extern IntPtr FindWindow(String lpClassName, String lpWindowName);
-        [DllImport("kernel32.dll")]
-        public static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
-        [DllImport("psapi.dll")]
-        static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName, [In] [MarshalAs(UnmanagedType.U4)] int nSize);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool CloseHandle(IntPtr hObject);
-
         // Treeview node properties
         public struct TVITEM
         {
@@ -69,8 +43,10 @@ namespace BuildSync.Core.Utils
             public IntPtr hItem;
             public int state;
             public int stateMask;
+
             [MarshalAs(UnmanagedType.LPTStr)]
-            public String lpszText;
+            public string lpszText;
+
             public int cchTextMax;
             public int iImage;
             public int iSelectedImage;
@@ -78,77 +54,15 @@ namespace BuildSync.Core.Utils
             public IntPtr lParam;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pid"></param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string GetProcessName(int pid)
-        {
-            var processHandle = OpenProcess(0x0400 | 0x0010, false, pid);
+        public const int SW_RESTORE = 9;
+        public const int TV_FIRST = 0x1100;
 
-            if (processHandle == IntPtr.Zero)
-            {
-                return null;
-            }
-
-            const int lengthSb = 4000;
-
-            var sb = new StringBuilder(lengthSb);
-
-            string result = null;
-
-            if (GetModuleFileNameEx(processHandle, IntPtr.Zero, sb, lengthSb) > 0)
-            {
-                result = sb.ToString();
-            }
-
-            CloseHandle(processHandle);
-
-            return result;
-        }
+        // Treeview consts
+        public const int TVIF_STATE = 0x8;
+        public const int TVIS_STATEIMAGEMASK = 0xF000;
+        public const int TVM_SETITEM = TV_FIRST + 63;
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="node"></param>
-        public static void HideTreeNodeCheckbox(TreeNode node)
-        {
-            TVITEM tvi = new TVITEM();
-            tvi.hItem = node.Handle;
-            tvi.mask = TVIF_STATE;
-            tvi.stateMask = TVIS_STATEIMAGEMASK;
-            tvi.state = 0;
-
-            IntPtr lparam = Marshal.AllocHGlobal(Marshal.SizeOf(tvi));
-            Marshal.StructureToPtr(tvi, lparam, false);
-
-            SendMessage(node.TreeView.Handle, TVM_SETITEM, IntPtr.Zero, lparam);
-        }
-
-        /// <summary>
-        ///     Sets a given control to be double buffered to prevent flickering.
-        /// </summary>
-        /// <param name="c">Control to set as double buffered.</param>
-        public static void EnableDoubleBuffering(Control c)
-        {
-            // Taxes: Remote Desktop Connection and painting
-            // http://blogs.msdn.com/oldnewthing/archive/2006/01/03/508694.aspx
-            if (System.Windows.Forms.SystemInformation.TerminalServerSession)
-                return;
-
-            System.Reflection.PropertyInfo aProp =
-                  typeof(System.Windows.Forms.Control).GetProperty(
-                        "DoubleBuffered",
-                        System.Reflection.BindingFlags.NonPublic |
-                        System.Reflection.BindingFlags.Instance);
-
-            aProp.SetValue(c, true, null);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="AppWindowName"></param>
         /// <returns></returns>
@@ -168,27 +82,11 @@ namespace BuildSync.Core.Utils
                 ShowWindow(handle, SW_RESTORE);
             }
 
-            Console.WriteLine("Bring app to front.");
             SetForegroundWindow(handle);
             return true;
-
-
-            /*            Process CurrentProc = Process.GetCurrentProcess();
-                        Process[] Procs = Process.GetProcessesByName(CurrentProc.ProcessName);
-                        foreach (Process Proc in Procs)
-                        {
-                            if (Proc.Id != CurrentProc.Id)
-                            {
-                                BringProcessToFront(Proc);
-                                return true;
-                            }
-                        }
-                        return false;
-            */
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="process"></param>
         public static void BringProcessToFront(Process process)
@@ -203,7 +101,29 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
-        /// 
+        ///     Sets a given control to be double buffered to prevent flickering.
+        /// </summary>
+        /// <param name="c">Control to set as double buffered.</param>
+        public static void EnableDoubleBuffering(Control c)
+        {
+            // Taxes: Remote Desktop Connection and painting
+            // http://blogs.msdn.com/oldnewthing/archive/2006/01/03/508694.aspx
+            if (SystemInformation.TerminalServerSession)
+            {
+                return;
+            }
+
+            PropertyInfo aProp =
+                typeof(Control).GetProperty(
+                    "DoubleBuffered",
+                    BindingFlags.NonPublic |
+                    BindingFlags.Instance
+                );
+
+            aProp.SetValue(c, true, null);
+        }
+
+        /// <summary>
         /// </summary>
         /// <returns></returns>
         public static IPAddress GetLocalIPAddress()
@@ -221,11 +141,58 @@ namespace BuildSync.Core.Utils
                     }
                 }
             }
+
             return IPAddress.Any;
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="pid"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string GetProcessName(int pid)
+        {
+            IntPtr processHandle = OpenProcess(0x0400 | 0x0010, false, pid);
+
+            if (processHandle == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            const int lengthSb = 4000;
+
+            StringBuilder sb = new StringBuilder(lengthSb);
+
+            string result = null;
+
+            if (GetModuleFileNameEx(processHandle, IntPtr.Zero, sb, lengthSb) > 0)
+            {
+                result = sb.ToString();
+            }
+
+            CloseHandle(processHandle);
+
+            return result;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="node"></param>
+        public static void HideTreeNodeCheckbox(TreeNode node)
+        {
+            TVITEM tvi = new TVITEM();
+            tvi.hItem = node.Handle;
+            tvi.mask = TVIF_STATE;
+            tvi.stateMask = TVIS_STATEIMAGEMASK;
+            tvi.state = 0;
+
+            IntPtr lparam = Marshal.AllocHGlobal(Marshal.SizeOf(tvi));
+            Marshal.StructureToPtr(tvi, lparam, false);
+
+            SendMessage(node.TreeView.Handle, TVM_SETITEM, IntPtr.Zero, lparam);
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="pBar"></param>
         /// <param name="state"></param>
@@ -233,5 +200,30 @@ namespace BuildSync.Core.Utils
         {
             SendMessage(pBar.Handle, 1040, (IntPtr)state, IntPtr.Zero);
         }
+
+        [DllImport("USER32.DLL", CharSet = CharSet.Unicode)]
+        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("psapi.dll")]
+        private static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName, [In] [MarshalAs(UnmanagedType.U4)] int nSize);
+
+        [DllImport("User32.dll")]
+        private static extern bool IsIconic(IntPtr handle);
+
+        [DllImport("User32.dll", CharSet = CharSet.Auto, SetLastError = false)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr w, IntPtr l);
+
+        [DllImport("User32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr handle);
+
+        [DllImport("User32.dll")]
+        private static extern bool ShowWindow(IntPtr handle, int nCmdShow);
     }
 }

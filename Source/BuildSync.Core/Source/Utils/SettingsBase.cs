@@ -27,12 +27,60 @@ using System.Text.Json;
 namespace BuildSync.Core.Utils
 {
     /// <summary>
-    /// 
     /// </summary>
     public class SettingsBase
     {
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="FullFilePath"></param>
+        /// <param name="SaveItem"></param>
+        /// <returns></returns>
+        public static bool Load<T>(string FullFilePath, out T SaveItem)
+            where T : new()
+        {
+            bool Result = false;
+            SaveItem = new T();
+
+            string BackupPath = FullFilePath + ".backup";
+
+            try
+            {
+                JsonSerializerOptions Options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                };
+
+                string Text = File.ReadAllText(FullFilePath);
+                SaveItem = (T) JsonSerializer.Deserialize(Text, typeof(T), Options);
+                if (SaveItem != null)
+                {
+                    Result = true;
+
+                    if (File.Exists(BackupPath))
+                    {
+                        File.Delete(BackupPath);
+                    }
+                }
+            }
+            catch (Exception Ex)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Failed to load '{0}' with error: {1}", FullFilePath, Ex.Message);
+
+                // Try and load backup.
+                if (File.Exists(BackupPath))
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "Backup setings file found '{0}', attempting to load.", BackupPath);
+
+                    Result = Load(BackupPath, out SaveItem);
+                    File.Delete(BackupPath);
+                }
+            }
+
+            return Result;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="FullFilePath"></param>
         /// <returns></returns>
@@ -63,80 +111,13 @@ namespace BuildSync.Core.Utils
                     string Data = JsonSerializer.Serialize(this, GetType(), Options);
                     TextWriter.Write(Data);
                     Result = true;
-
-                    /*
-                    JsonSerializer XmlSerializer = new JsonSerializer(GetType());
-
-                    XmlSerializer.Serialize(TextWriter, this);
-                    Result = true;
-                    */
                 }
             }
             catch (Exception Ex)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Failed to save '{0}' with error: {1}", FullFilePath, Ex.Message);
             }
-            return Result;
-        }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="FullFilePath"></param>
-        /// <param name="SaveItem"></param>
-        /// <returns></returns>
-        public static bool Load<T>(string FullFilePath, out T SaveItem)
-            where T : new()
-        {
-            bool Result = false;
-            SaveItem = new T();
-
-            string BackupPath = FullFilePath + ".backup";
-
-            try
-            {
-                JsonSerializerOptions Options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                };
-
-                string Text = File.ReadAllText(FullFilePath);
-                SaveItem = (T)JsonSerializer.Deserialize(Text, typeof(T), Options);
-                if (SaveItem != null)
-                {
-                    Result = true;
-
-                    if (File.Exists(BackupPath))
-                    {
-                        File.Delete(BackupPath);
-                    }
-                }
-
-                //using (TextReader TextReader = new StreamReader(FullFilePath))
-                //{
-                /*
-                XmlSerializer XmlSerializer = new XmlSerializer(typeof(T));
-                SaveItem = (T)XmlSerializer.Deserialize(TextReader);
-                if (SaveItem != null)
-                {
-                    Result = true;
-                }*/
-                //}
-            }
-            catch (Exception Ex)
-            {
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Failed to load '{0}' with error: {1}", FullFilePath, Ex.Message);
-
-                // Try and load backup.
-                if (File.Exists(BackupPath))
-                {
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "Backup setings file found '{0}', attempting to load.", BackupPath);
-
-                    Result = Load(BackupPath, out SaveItem);
-                    File.Delete(BackupPath);
-                }
-            }
             return Result;
         }
     }

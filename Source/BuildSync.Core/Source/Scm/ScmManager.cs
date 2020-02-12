@@ -19,13 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System.Collections.Generic;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Scm
 {
     /// <summary>
-    /// 
     /// </summary>
     public enum ScmProviderType
     {
@@ -34,36 +33,14 @@ namespace BuildSync.Core.Scm
     }
 
     /// <summary>
-    /// 
     /// </summary>
     public class ScmManager
     {
         /// <summary>
-        /// 
         /// </summary>
         public List<IScmProvider> Providers = new List<IScmProvider>();
 
         /// <summary>
-        /// 
-        /// </summary>
-        public ScmManager()
-        {
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void ClearProviders()
-        {
-            foreach (IScmProvider Provider in Providers)
-            {
-                Provider.Terminate();
-            }
-            Providers.Clear();
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         public void AddProvider(IScmProvider Provider)
         {
@@ -73,19 +50,18 @@ namespace BuildSync.Core.Scm
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <param name="Provider"></param>
-        public void RemoveProvider(IScmProvider Provider)
+        public void ClearProviders()
         {
-            Logger.Log(LogLevel.Info, LogCategory.Scm, "Removing scm provider: {0}", Provider.ToString());
+            foreach (IScmProvider Provider in Providers)
+            {
+                Provider.Terminate();
+            }
 
-            Provider.Terminate();
-            Providers.Remove(Provider);
+            Providers.Clear();
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Location"></param>
         /// <returns></returns>
@@ -99,11 +75,11 @@ namespace BuildSync.Core.Scm
                     return Provider;
                 }
             }
+
             return null;
         }
 
         /// <summary>
-        /// 
         /// </summary>
         public void Poll()
         {
@@ -111,6 +87,17 @@ namespace BuildSync.Core.Scm
             {
                 Provider.Poll();
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Provider"></param>
+        public void RemoveProvider(IScmProvider Provider)
+        {
+            Logger.Log(LogLevel.Info, LogCategory.Scm, "Removing scm provider: {0}", Provider.ToString());
+
+            Provider.Terminate();
+            Providers.Remove(Provider);
         }
     }
 }

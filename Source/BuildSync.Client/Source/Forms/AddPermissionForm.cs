@@ -19,21 +19,22 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Users;
 using System;
 using System.Windows.Forms;
+using BuildSync.Core.Users;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class AddPermissionForm : Form
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public UserPermission Permission = new UserPermission();
 
         /// <summary>
-        /// 
         /// </summary>
         public AddPermissionForm()
         {
@@ -41,7 +42,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -52,37 +52,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void VirtualPathChanged(object sender, EventArgs e)
-        {
-            Permission.VirtualPath = virtualPathTextBox.Text;
-            UpdateState();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void PermissionChanged(object sender, EventArgs e)
-        {
-            Permission.Type = (UserPermissionType)permissionTypeComboBox.SelectedIndex;
-            UpdateState();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private void UpdateState()
-        {
-            addDownloadButton.Enabled = Permission.Type != UserPermissionType.Unknown;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -92,8 +61,36 @@ namespace BuildSync.Client.Forms
             {
                 permissionTypeComboBox.Items.Add(value);
             }
-            permissionTypeComboBox.SelectedIndex = (int)UserPermissionType.Unknown;
 
+            permissionTypeComboBox.SelectedIndex = (int) UserPermissionType.Unknown;
+
+            UpdateState();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PermissionChanged(object sender, EventArgs e)
+        {
+            Permission.Type = (UserPermissionType) permissionTypeComboBox.SelectedIndex;
+            UpdateState();
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdateState()
+        {
+            addDownloadButton.Enabled = Permission.Type != UserPermissionType.Unknown;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void VirtualPathChanged(object sender, EventArgs e)
+        {
+            Permission.VirtualPath = virtualPathTextBox.Text;
             UpdateState();
         }
     }

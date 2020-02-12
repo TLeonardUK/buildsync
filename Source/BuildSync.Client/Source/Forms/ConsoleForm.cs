@@ -19,24 +19,22 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System;
 using System.Windows.Forms;
+using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class ConsoleForm : DockContent
     {
         /// <summary>
-        /// 
         /// </summary>
         public class TextBoxLogSink : LogSink
         {
-            private ConsoleForm OutputForm;
+            private readonly ConsoleForm OutputForm;
 
             public TextBoxLogSink(ConsoleForm Form)
             {
@@ -58,22 +56,18 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private TextBoxLogSink Sink = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        internal object BufferLock = new object();
-
-        /// <summary>
-        /// 
         /// </summary>
         internal string Buffer = "";
 
         /// <summary>
-        /// 
+        /// </summary>
+        internal object BufferLock = new object();
+
+        /// <summary>
+        /// </summary>
+        private TextBoxLogSink Sink;
+
+        /// <summary>
         /// </summary>
         public ConsoleForm()
         {
@@ -81,18 +75,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnStartClosing(object sender, FormClosingEventArgs e)
-        {
-            UpdateTimer.Enabled = false;
-            Logger.UnregisterSink(Sink);
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -104,7 +86,16 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnStartClosing(object sender, FormClosingEventArgs e)
+        {
+            UpdateTimer.Enabled = false;
+            Logger.UnregisterSink(Sink);
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>

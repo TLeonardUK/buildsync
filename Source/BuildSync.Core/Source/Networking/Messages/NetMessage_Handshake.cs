@@ -22,12 +22,15 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_Handshake : NetMessage
     {
         public int Version = AppVersion.ProtocolVersion;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Version);

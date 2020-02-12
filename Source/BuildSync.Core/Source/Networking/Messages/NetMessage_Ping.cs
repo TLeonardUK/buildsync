@@ -24,15 +24,17 @@ using BuildSync.Core.Utils;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_Ping : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public ulong Timestamp = TimeUtils.Ticks;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Timestamp);

@@ -25,48 +25,27 @@ using System.Linq;
 
 namespace BuildSync.Core.Utils
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class RollingAverage
     {
-        private int MaxSamples = 0;
-        private List<double> Values = new List<double>();
+        private readonly int MaxSamples;
+        private readonly List<double> Values = new List<double>();
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="SampleCount"></param>
         public RollingAverage(int SampleCount)
         {
             MaxSamples = SampleCount;
         }
 
-        public double GetStandardDeviation(bool as_sample = false)
-        {
-            // Get the mean.
-            double mean = Values.Sum() / Values.Count();
-
-            // Get the sum of the squares of the differences
-            // between the values and the mean.
-            var squares_query =
-                from double value in Values
-                select (value - mean) * (value - mean);
-            double sum_of_squares = squares_query.Sum();
-
-            if (as_sample)
-            {
-                return Math.Sqrt(sum_of_squares / (Values.Count() - 1));
-            }
-            else
-            {
-                return Math.Sqrt(sum_of_squares / Values.Count());
-            }
-        }
-
-        public double GetMean()
-        {
-            double Total = 0.0f;
-            for (int i = 0; i < Values.Count; i++)
-            {
-                Total += Values[i];
-            }
-            return Total / Values.Count;
-        }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Value"></param>
         public void Add(double Value)
         {
             lock (Values)
@@ -79,6 +58,10 @@ namespace BuildSync.Core.Utils
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public double Get()
         {
             double Result = 0;
@@ -103,7 +86,48 @@ namespace BuildSync.Core.Utils
                     Result = Total / Samples;
                 }
             }
+
             return Result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public double GetMean()
+        {
+            double Total = 0.0f;
+            for (int i = 0; i < Values.Count; i++)
+            {
+                Total += Values[i];
+            }
+
+            return Total / Values.Count;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="as_sample"></param>
+        /// <returns></returns>
+        public double GetStandardDeviation(bool as_sample = false)
+        {
+            // Get the mean.
+            double mean = Values.Sum() / Values.Count();
+
+            // Get the sum of the squares of the differences
+            // between the values and the mean.
+            IEnumerable<double> squares_query =
+                from double value in Values
+                select (value - mean) * (value - mean);
+            double sum_of_squares = squares_query.Sum();
+
+            if (as_sample)
+            {
+                return Math.Sqrt(sum_of_squares / (Values.Count() - 1));
+            }
+
+            return Math.Sqrt(sum_of_squares / Values.Count());
         }
     }
 }

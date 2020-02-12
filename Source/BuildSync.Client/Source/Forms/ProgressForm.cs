@@ -26,15 +26,20 @@ using System.Windows.Forms;
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class ProgressForm : Form
     {
-        private bool Finished = false;
-        private Task Work = null;
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool Finished;
 
         /// <summary>
         /// 
+        /// </summary>
+        private readonly Task Work;
+
+        /// <summary>
         /// </summary>
         public ProgressForm(Task task)
         {
@@ -43,7 +48,23 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="Message"></param>
+        /// <param name="Progress"></param>
+        /// <param name="TotalMessage"></param>
+        /// <param name="TotalProgress"></param>
+        public void SetProgress(string Message, float Progress)
+        {
+            Invoke(
+                (MethodInvoker) (() =>
+                {
+                    TaskProgressLabel.Text = Message;
+                    TaskProgressBar.Value = (int) (Progress * 100);
+                })
+            );
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -57,23 +78,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Message"></param>
-        /// <param name="Progress"></param>
-        /// <param name="TotalMessage"></param>
-        /// <param name="TotalProgress"></param>
-        public void SetProgress(string Message, float Progress)
-        {
-            Invoke((MethodInvoker)(() =>
-            {
-                TaskProgressLabel.Text = Message;
-                TaskProgressBar.Value = (int)(Progress * 100);
-            }));
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -82,7 +86,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>

@@ -19,23 +19,32 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System.Reflection;
 using BuildSync.Core.Utils;
 using CommandLine;
-using System.Reflection;
 
 namespace BuildSync.Client.Commands
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Verb("configure", HelpText = "Sets the value of a setting configuring the behaviour of this tool.")]
     public class CommandLineConfigureOptions
     {
+        /// <summary>
+        /// 
+        /// </summary>
         [Value(0, MetaName = "Name", Required = true, HelpText = "Name of setting to modify.")]
         public string Name { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
 
         [Value(1, MetaName = "Value", Required = true, HelpText = "New value of setting to modify.")]
         public string Value { get; set; }
 
         /// <summary>
-        /// 
         /// </summary>
         internal void Run(CommandIPC IpcClient)
         {
@@ -69,6 +78,7 @@ namespace BuildSync.Client.Commands
                     IpcClient.Respond(string.Format("FAILED: Value '{0}' is not a valid int.", Value));
                     return;
                 }
+
                 ValueToSet = Result;
             }
             else if (Property.PropertyType == typeof(float))
@@ -79,6 +89,7 @@ namespace BuildSync.Client.Commands
                     IpcClient.Respond(string.Format("FAILED: Value '{0}' is not a valid float.", Value));
                     return;
                 }
+
                 ValueToSet = Result;
             }
             else if (Property.PropertyType == typeof(bool))
@@ -100,6 +111,7 @@ namespace BuildSync.Client.Commands
                         return;
                     }
                 }
+
                 ValueToSet = Result;
             }
             else

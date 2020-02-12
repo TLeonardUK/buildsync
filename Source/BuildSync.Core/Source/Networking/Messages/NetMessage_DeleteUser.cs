@@ -24,10 +24,13 @@ namespace BuildSync.Core.Networking.Messages
     public class NetMessage_DeleteUser : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
         public string Username = "";
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Username);

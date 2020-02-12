@@ -19,61 +19,41 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
 using System;
 using System.Threading;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Networking
 {
     /// <summary>
-    /// 
     /// </summary>
     public class BandwidthThrottler
     {
         /// <summary>
-        /// 
-        /// </summary>
-        public long MaxRate
-        {
-            get;
-            set;
-        } = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public long GlobalMaxRate
-        {
-            get;
-            set;
-        } = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public long MinimumTransmissionUnit
-        {
-            get;
-            set;
-        } = 1024;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private double Tokens = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private object TokenLock = new object();
-
-        /// <summary>
-        /// 
         /// </summary>
         private ulong LastRefillTime = TimeUtils.Ticks;
 
         /// <summary>
-        /// 
+        /// </summary>
+        private readonly object TokenLock = new object();
+
+        /// <summary>
+        /// </summary>
+        private double Tokens;
+
+        /// <summary>
+        /// </summary>
+        public long GlobalMaxRate { get; set; } = 0;
+
+        /// <summary>
+        /// </summary>
+        public long MaxRate { get; set; } = 0;
+
+        /// <summary>
+        /// </summary>
+        public long MinimumTransmissionUnit { get; set; } = 1024;
+
+        /// <summary>
         /// </summary>
         /// <param name="Pending"></param>
         /// <returns></returns>
@@ -103,7 +83,7 @@ namespace BuildSync.Core.Networking
 
             // Is there enough tokens to send the entire thing or at leat the MTU?
             long Mtu = Math.Min(MinimumTransmissionUnit, Limit);
-            double MinimumToSend = Math.Min(Mtu, (double)Pending);
+            double MinimumToSend = Math.Min(Mtu, (double) Pending);
             while (true)
             {
                 // Refill the tokens.
@@ -138,15 +118,15 @@ namespace BuildSync.Core.Networking
                 {
                     if (Interlocked.CompareExchange(ref Tokens, OriginalValue - AmountToTake, OriginalValue) == OriginalValue)
                     {
-                        return (int)AmountToTake;
+                        return (int) AmountToTake;
                     }
                 }
                 // Otherwise sleep.
                 else
                 {
                     double RefillRequired = MinimumToSend - AmountToTake;
-                    double TimeToFillMs = ((RefillRequired / Limit) * 1000.0);
-                    Thread.Sleep((int)TimeToFillMs);
+                    double TimeToFillMs = RefillRequired / Limit * 1000.0;
+                    Thread.Sleep((int) TimeToFillMs);
                 }
             }
         }

@@ -19,26 +19,23 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Downloads;
-using BuildSync.Core.Utils;
 using System;
 using System.ComponentModel;
 using System.Windows.Forms;
+using BuildSync.Core.Downloads;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class AddDownloadForm : Form
     {
         /// <summary>
-        /// 
         /// </summary>
         public DownloadState EditState;
 
         /// <summary>
-        /// 
         /// </summary>
         public AddDownloadForm()
         {
@@ -48,7 +45,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -62,8 +58,8 @@ namespace BuildSync.Client.Forms
                 EditState.InstallAutomatically = autoInstallCheckBox.Checked;
                 EditState.InstallDeviceName = deviceTextBox.Text;
                 EditState.VirtualPath = downloadFileSystemTree.SelectedPath;
-                EditState.SelectionRule = (BuildSelectionRule)selectionRuleComboBox.SelectedIndex;
-                EditState.SelectionFilter = (BuildSelectionFilter)selectionFilterComboBox.SelectedIndex;
+                EditState.SelectionRule = (BuildSelectionRule) selectionRuleComboBox.SelectedIndex;
+                EditState.SelectionFilter = (BuildSelectionFilter) selectionFilterComboBox.SelectedIndex;
                 EditState.SelectionFilterFilePath = scmFileTextBox.Text;
                 EditState.ScmWorkspaceLocation = workspaceComboBox.Text;
             }
@@ -73,8 +69,8 @@ namespace BuildSync.Client.Forms
                     nameTextBox.Text,
                     downloadFileSystemTree.SelectedPath,
                     priorityComboBox.SelectedIndex,
-                    (BuildSelectionRule)selectionRuleComboBox.SelectedIndex,
-                    (BuildSelectionFilter)selectionFilterComboBox.SelectedIndex,
+                    (BuildSelectionRule) selectionRuleComboBox.SelectedIndex,
+                    (BuildSelectionFilter) selectionFilterComboBox.SelectedIndex,
                     scmFileTextBox.Text,
                     workspaceComboBox.Text,
                     autoUpdateCheckBox.Checked,
@@ -90,53 +86,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        private void ValidateState()
-        {
-            BuildSelectionRule SelectionRule = (BuildSelectionRule)selectionRuleComboBox.SelectedIndex;
-            BuildSelectionFilter SelectionFilter = (BuildSelectionFilter)selectionFilterComboBox.SelectedIndex;
-
-            bool IsScmSelectionRule = (
-                SelectionFilter == BuildSelectionFilter.BuildTimeBeforeScmSyncTime ||
-                SelectionFilter == BuildSelectionFilter.BuildTimeAfterScmSyncTime ||
-                SelectionFilter == BuildSelectionFilter.BuildNameBelowFileContents ||
-                SelectionFilter == BuildSelectionFilter.BuildNameAboveFileContents ||
-                SelectionFilter == BuildSelectionFilter.BuildNameEqualsFileContents
-            );
-
-            bool IsScmFileRule = (
-                SelectionFilter == BuildSelectionFilter.BuildNameBelowFileContents ||
-                SelectionFilter == BuildSelectionFilter.BuildNameAboveFileContents ||
-                SelectionFilter == BuildSelectionFilter.BuildNameEqualsFileContents
-            );
-
-            addDownloadButton.Enabled = (
-                downloadFileSystemTree.SelectedPath.Length > 0 &&
-                nameTextBox.Text.Trim().Length > 3 &&
-                !nameTextBox.Text.Contains("$") &&
-                priorityComboBox.SelectedIndex >= 0 &&
-                (
-                    !IsScmSelectionRule ||
-                    (workspaceComboBox.Enabled && workspaceComboBox.SelectedIndex >= 0)
-                )
-                &&
-                (
-                    !IsScmFileRule ||
-                    (scmFileTextBox.Enabled && scmFileTextBox.Text.Trim().Length >= 3)
-                )
-            );
-
-            bool HasSelectedBuild = (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
-
-            autoUpdateCheckBox.Visible = !HasSelectedBuild;
-            buildSelectionRulePanel.Visible = !HasSelectedBuild;
-            scmSettingsPanel.Visible = !HasSelectedBuild && IsScmSelectionRule;
-            scmFilePanel.Visible = !HasSelectedBuild && IsScmFileRule;
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -146,7 +95,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -163,16 +111,18 @@ namespace BuildSync.Client.Forms
             selectionRuleComboBox.Items.Clear();
             foreach (Enum val in Enum.GetValues(typeof(BuildSelectionRule)))
             {
-                selectionRuleComboBox.Items.Add(EnumUtils.GetAttributeOfType<DescriptionAttribute>(val).Description);
+                selectionRuleComboBox.Items.Add(val.GetAttributeOfType<DescriptionAttribute>().Description);
             }
-            selectionRuleComboBox.SelectedIndex = (int)BuildSelectionRule.Newest;
+
+            selectionRuleComboBox.SelectedIndex = (int) BuildSelectionRule.Newest;
 
             selectionFilterComboBox.Items.Clear();
             foreach (Enum val in Enum.GetValues(typeof(BuildSelectionFilter)))
             {
-                selectionFilterComboBox.Items.Add(EnumUtils.GetAttributeOfType<DescriptionAttribute>(val).Description);
+                selectionFilterComboBox.Items.Add(val.GetAttributeOfType<DescriptionAttribute>().Description);
             }
-            selectionFilterComboBox.SelectedIndex = (int)BuildSelectionFilter.None;
+
+            selectionFilterComboBox.SelectedIndex = (int) BuildSelectionFilter.None;
 
             workspaceComboBox.Items.Clear();
             foreach (ScmWorkspaceSettings Settings in Program.Settings.ScmWorkspaces)
@@ -186,8 +136,8 @@ namespace BuildSync.Client.Forms
                 nameTextBox.Text = EditState.Name;
                 priorityComboBox.SelectedIndex = EditState.Priority;
                 scmFileTextBox.Text = EditState.SelectionFilterFilePath;
-                selectionRuleComboBox.SelectedIndex = (int)EditState.SelectionRule;
-                selectionFilterComboBox.SelectedIndex = (int)EditState.SelectionFilter;
+                selectionRuleComboBox.SelectedIndex = (int) EditState.SelectionRule;
+                selectionFilterComboBox.SelectedIndex = (int) EditState.SelectionFilter;
 
                 if (workspaceComboBox.Items.Count > 0)
                 {
@@ -222,13 +172,51 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
             ValidateState();
+        }
+
+        /// <summary>
+        /// </summary>
+        private void ValidateState()
+        {
+            BuildSelectionRule SelectionRule = (BuildSelectionRule) selectionRuleComboBox.SelectedIndex;
+            BuildSelectionFilter SelectionFilter = (BuildSelectionFilter) selectionFilterComboBox.SelectedIndex;
+
+            bool IsScmSelectionRule = SelectionFilter == BuildSelectionFilter.BuildTimeBeforeScmSyncTime ||
+                                      SelectionFilter == BuildSelectionFilter.BuildTimeAfterScmSyncTime ||
+                                      SelectionFilter == BuildSelectionFilter.BuildNameBelowFileContents ||
+                                      SelectionFilter == BuildSelectionFilter.BuildNameAboveFileContents ||
+                                      SelectionFilter == BuildSelectionFilter.BuildNameEqualsFileContents;
+
+            bool IsScmFileRule = SelectionFilter == BuildSelectionFilter.BuildNameBelowFileContents ||
+                                 SelectionFilter == BuildSelectionFilter.BuildNameAboveFileContents ||
+                                 SelectionFilter == BuildSelectionFilter.BuildNameEqualsFileContents;
+
+            addDownloadButton.Enabled = downloadFileSystemTree.SelectedPath.Length > 0 &&
+                                        nameTextBox.Text.Trim().Length > 3 &&
+                                        !nameTextBox.Text.Contains("$") &&
+                                        priorityComboBox.SelectedIndex >= 0 &&
+                                        (
+                                            !IsScmSelectionRule ||
+                                            workspaceComboBox.Enabled && workspaceComboBox.SelectedIndex >= 0
+                                        )
+                                        &&
+                                        (
+                                            !IsScmFileRule ||
+                                            scmFileTextBox.Enabled && scmFileTextBox.Text.Trim().Length >= 3
+                                        );
+
+            bool HasSelectedBuild = downloadFileSystemTree.SelectedManifestId != Guid.Empty;
+
+            autoUpdateCheckBox.Visible = !HasSelectedBuild;
+            buildSelectionRulePanel.Visible = !HasSelectedBuild;
+            scmSettingsPanel.Visible = !HasSelectedBuild && IsScmSelectionRule;
+            scmFilePanel.Visible = !HasSelectedBuild && IsScmFileRule;
         }
     }
 }

@@ -19,28 +19,55 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Controls.Graph;
-using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using BuildSync.Core.Controls.Graph;
+using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class StatisticsForm : DockContent
     {
         /// <summary>
-        /// 
         /// </summary>
         public List<Statistic> Stats = new List<Statistic>();
 
         /// <summary>
-        /// 
+        /// </summary>
+        public StatisticsForm()
+        {
+            InitializeComponent();
+
+            lock (Statistic.Instances)
+            {
+                foreach (KeyValuePair<Type, Statistic> pair in Statistic.Instances)
+                {
+                    AddStatistic(pair.Value);
+                }
+            }
+
+            foreach (TreeNode node in StatsTreeView.Nodes)
+            {
+                node.ExpandAll();
+                WindowUtils.HideTreeNodeCheckbox(node);
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Index"></param>
+        /// <param name="Value"></param>
+        public void AddDataPoint(int Index, float Value)
+        {
+            Stats[Index].Series.AddDataPoint(Environment.TickCount / 1000.0f, Value);
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Name"></param>
         /// <param name="Max"></param>
@@ -70,7 +97,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Nodes"></param>
         /// <param name="Path"></param>
@@ -87,43 +113,41 @@ namespace BuildSync.Client.Forms
 
                 return NewNode;
             }
+
+            TreeNode[] Parent = Nodes.Find(split[0], false);
+            TreeNodeCollection NextCollection = null;
+            if (Parent.Length == 0)
+            {
+                TreeNode NewNode = new TreeNode();
+                NewNode.Text = split[0];
+                NewNode.Tag = "";
+                NewNode.Name = split[0];
+                Nodes.Add(NewNode);
+
+                WindowUtils.HideTreeNodeCheckbox(NewNode);
+
+                NextCollection = NewNode.Nodes;
+            }
             else
             {
-                TreeNode[] Parent = Nodes.Find(split[0], false);
-                TreeNodeCollection NextCollection = null;
-                if (Parent.Length == 0)
-                {
-                    TreeNode NewNode = new TreeNode();
-                    NewNode.Text = split[0];
-                    NewNode.Tag = "";
-                    NewNode.Name = split[0];
-                    Nodes.Add(NewNode);
-
-                    WindowUtils.HideTreeNodeCheckbox(NewNode);
-
-                    NextCollection = NewNode.Nodes;
-                }
-                else
-                {
-                    NextCollection = Parent[0].Nodes;
-                }
-
-                string NewPath = "";
-                for (int i = 1; i < split.Length; i++)
-                {
-                    if (i != 1)
-                    {
-                        NewPath += "\\";
-                    }
-                    NewPath += split[i];
-                }
-
-                return AddNodeByPath(NextCollection, NewPath, Tag);
+                NextCollection = Parent[0].Nodes;
             }
+
+            string NewPath = "";
+            for (int i = 1; i < split.Length; i++)
+            {
+                if (i != 1)
+                {
+                    NewPath += "\\";
+                }
+
+                NewPath += split[i];
+            }
+
+            return AddNodeByPath(NextCollection, NewPath, Tag);
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Node"></param>
         /// <param name="CheckedNodes"></param>
@@ -145,39 +169,57 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
-        /// <param name="Index"></param>
-        /// <param name="Value"></param>
-        public void AddDataPoint(int Index, float Value)
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void GetSamples(object sender, EventArgs e)
         {
-            Stats[Index].Series.AddDataPoint(Environment.TickCount / 1000.0f, Value);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public StatisticsForm()
-        {
-            InitializeComponent();
-
             lock (Statistic.Instances)
             {
-                foreach (var pair in Statistic.Instances)
+                foreach (KeyValuePair<Type, Statistic> pair in Statistic.Instances)
                 {
-                    AddStatistic(pair.Value);
+                    pair.Value.Gather();
                 }
-            }
-
-            foreach (TreeNode node in StatsTreeView.Nodes)
-            {
-                node.ExpandAll();
-                WindowUtils.HideTreeNodeCheckbox(node);
             }
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnClosing(object sender, FormClosingEventArgs e)
+        {
+            SampleTimer.Enabled = false;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnLoaded(object sender, EventArgs e)
+        {
+            UpdateVisibleSeries();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnShown(object sender, EventArgs e)
+        {
+            SampleTimer.Enabled = true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StatisticCheckChanged(object sender, TreeViewEventArgs e)
+        {
+            UpdateVisibleSeries();
+        }
+
+        /// <summary>
         /// </summary>
         private void UpdateVisibleSeries()
         {
@@ -202,7 +244,7 @@ namespace BuildSync.Client.Forms
                 if (!Exists)
                 {
                     GraphControl Control = new GraphControl();
-                    Control.Series = new GraphSeries[1] { stat.Series };
+                    Control.Series = new GraphSeries[1] {stat.Series};
                     Control.Dock = DockStyle.Top;
                     Control.Size = new Size(100, 110);
                     Control.Tag = stat;
@@ -232,62 +274,6 @@ namespace BuildSync.Client.Forms
             }
 
             Program.SaveSettings();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnShown(object sender, EventArgs e)
-        {
-            SampleTimer.Enabled = true;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnClosing(object sender, FormClosingEventArgs e)
-        {
-            SampleTimer.Enabled = false;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void GetSamples(object sender, EventArgs e)
-        {
-            lock (Statistic.Instances)
-            {
-                foreach (var pair in Statistic.Instances)
-                {
-                    pair.Value.Gather();
-                }
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnLoaded(object sender, EventArgs e)
-        {
-            UpdateVisibleSeries();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void StatisticCheckChanged(object sender, TreeViewEventArgs e)
-        {
-            UpdateVisibleSeries();
         }
     }
 }

@@ -22,47 +22,38 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_ClientStateUpdate : NetMessage
     {
         /// <summary>
-        /// 
         /// </summary>
-        public long UploadRate = 0;
+        public int ConnectedPeerCount;
 
         /// <summary>
-        /// 
         /// </summary>
-        public long DownloadRate = 0;
+        public long DiskUsage;
 
         /// <summary>
-        /// 
         /// </summary>
-        public long TotalUploaded = 0;
+        public long DownloadRate;
 
         /// <summary>
-        /// 
         /// </summary>
-        public long TotalDownloaded = 0;
+        public long TotalDownloaded;
 
         /// <summary>
-        /// 
         /// </summary>
-        public int ConnectedPeerCount = 0;
+        public long TotalUploaded;
 
         /// <summary>
-        /// 
         /// </summary>
-        public long DiskUsage = 0;
+        public long UploadRate;
 
         /// <summary>
-        /// 
         /// </summary>
         public string Version = "";
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)

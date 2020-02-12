@@ -24,32 +24,33 @@ using System.Collections.Generic;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
     /// </summary>
     public class NetMessage_GetServerStateResponse : NetMessage
     {
         public class ClientState
         {
             public string Address;
-            public long DownloadRate;
-            public long UploadRate;
-            public long TotalDownloaded;
-            public long TotalUploaded;
             public int ConnectedPeerCount;
             public long DiskUsage;
+            public long DownloadRate;
+            public long TotalDownloaded;
+            public long TotalUploaded;
+            public long UploadRate;
             public string Version;
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        public long BandwidthLimit;
+
+        /// <summary>
         /// </summary>
         public List<ClientState> ClientStates = new List<ClientState>();
 
         /// <summary>
         /// 
         /// </summary>
-        public long BandwidthLimit = 0;
-
+        /// <param name="serializer"></param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref BandwidthLimit);

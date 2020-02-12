@@ -19,35 +19,30 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core;
-using BuildSync.Core.Networking;
 using System;
 using System.Windows.Forms;
+using BuildSync.Core;
+using BuildSync.Core.Networking;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
     public partial class FindServerForm : Form
     {
         /// <summary>
-        /// 
         /// </summary>
-        private NetDiscoveryClient DiscoveryClient = new NetDiscoveryClient();
+        private readonly NetDiscoveryClient DiscoveryClient = new NetDiscoveryClient();
 
         /// <summary>
-        /// 
         /// </summary>
         public string SelectedHostname { get; private set; }
 
         /// <summary>
-        /// 
         /// </summary>
         public int SelectedPort { get; private set; }
 
         /// <summary>
-        /// 
         /// </summary>
         public FindServerForm()
         {
@@ -55,7 +50,15 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnClosed(object sender, FormClosedEventArgs e)
+        {
+            DiscoveryClient.Close();
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -66,49 +69,42 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="Client"></param>
         /// <param name="Response"></param>
         private void ResponseRecieved(NetDiscoveryClient Client, NetDiscoveryData Response)
         {
-            Invoke((MethodInvoker)(() =>
-            {
-                foreach (ListViewItem Item in serverListView.Items)
+            Invoke(
+                (MethodInvoker) (() =>
                 {
-                    if (Item.SubItems[1].Text == Response.Address + ":" + Response.Port)
+                    foreach (ListViewItem Item in serverListView.Items)
                     {
-                        return;
+                        if (Item.SubItems[1].Text == Response.Address + ":" + Response.Port)
+                        {
+                            return;
+                        }
                     }
-                }
 
-                string Version = Response.Version;
-                if (Response.ProtocolVersion != AppVersion.ProtocolVersion)
-                {
-                    Version += " (Incompatible)";
-                }
+                    string Version = Response.Version;
+                    if (Response.ProtocolVersion != AppVersion.ProtocolVersion)
+                    {
+                        Version += " (Incompatible)";
+                    }
 
-                ListViewItem item = new ListViewItem(new string[] {
-                    Response.Name,
-                    Response.Address + ":" + Response.Port,
-                    Version
-                });
-                serverListView.Items.Add(item);
-            }));
+                    ListViewItem item = new ListViewItem(
+                        new[]
+                        {
+                            Response.Name,
+                            Response.Address + ":" + Response.Port,
+                            Version
+                        }
+                    );
+                    serverListView.Items.Add(item);
+                })
+            );
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnClosed(object sender, FormClosedEventArgs e)
-        {
-            DiscoveryClient.Close();
-        }
-
-        /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -135,7 +131,6 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
