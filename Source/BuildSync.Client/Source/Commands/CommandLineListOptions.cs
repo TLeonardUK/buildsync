@@ -19,11 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using CommandLine;
 using BuildSync.Core;
-using BuildSync.Core.Utils;
 using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Utils;
+using CommandLine;
+using System;
 
 namespace BuildSync.Client.Commands
 {
@@ -85,7 +85,8 @@ namespace BuildSync.Client.Commands
                 return;
             }
 
-            Program.PumpLoop(() => {
+            Program.PumpLoop(() =>
+            {
 
                 if (!Program.NetClient.IsConnected)
                 {

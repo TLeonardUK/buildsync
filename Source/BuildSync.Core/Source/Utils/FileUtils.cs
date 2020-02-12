@@ -20,12 +20,9 @@
 */
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Collections.Generic;
-using System.Text;
-using System.Security.Cryptography;
-using System.Diagnostics;
 
 namespace BuildSync.Core.Utils
 {
@@ -244,7 +241,7 @@ namespace BuildSync.Core.Utils
                 if (File.ToLower().StartsWith(DirPath))
                 {
                     return true;
-                }             
+                }
             }
             return false;
         }

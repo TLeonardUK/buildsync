@@ -19,19 +19,10 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using BuildSync.Core.Scm;
 using BuildSync.Client.Forms;
+using BuildSync.Core.Scm;
+using System;
+using System.Windows.Forms;
 
 namespace BuildSync.Client.Controls.Settings
 {
@@ -85,7 +76,7 @@ namespace BuildSync.Client.Controls.Settings
             workspaceList.Items.Clear();
             foreach (ScmWorkspaceSettings Settings in Program.Settings.ScmWorkspaces)
             {
-                ListViewItem Item = new ListViewItem(new string[] { 
+                ListViewItem Item = new ListViewItem(new string[] {
                     Settings.Server,
                     Settings.Username,
                     Settings.Password.Length > 0 ? "******" : "",

@@ -19,17 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Networking.Messages;
 
 namespace BuildSync.Client.Controls
 {
@@ -48,7 +43,7 @@ namespace BuildSync.Client.Controls
             public Guid ManifestId;
             public DateTime CreateTime;
         }
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -63,7 +58,7 @@ namespace BuildSync.Client.Controls
         /// </summary>
         public string SelectedPath
         {
-            get 
+            get
             {
                 TreeNode SelectedNode = MainTreeView.SelectedNode;
                 if (SelectedNode != null)
@@ -170,16 +165,19 @@ namespace BuildSync.Client.Controls
             BuildFileSystem.ChildrenRefreshInterval = 5 * 1000;
             BuildFileSystem.AutoRefreshChildren = false;
 
-            BuildFileSystem.OnRequestChildren += (VirtualFileSystem FileSystem, string Path) => {
+            BuildFileSystem.OnRequestChildren += (VirtualFileSystem FileSystem, string Path) =>
+            {
                 if (Program.NetClient != null)
                 {
                     Program.NetClient.RequestBuilds(Path);
                 }
             };
 
-            BuildFileSystem.OnNodeAdded += (VirtualFileSystem FileSystem, VirtualFileSystemNode Node) => {
+            BuildFileSystem.OnNodeAdded += (VirtualFileSystem FileSystem, VirtualFileSystemNode Node) =>
+            {
 
-                Invoke((MethodInvoker)(() => {
+                Invoke((MethodInvoker)(() =>
+                {
 
                     // Ignore internal parts of the heirarchy.
                     if (Node.Path.Contains("$") && !ShowInternal)
@@ -262,9 +260,11 @@ namespace BuildSync.Client.Controls
 
             };
 
-            BuildFileSystem.OnNodeRemoved += (VirtualFileSystem FileSystem, VirtualFileSystemNode Node) => {
+            BuildFileSystem.OnNodeRemoved += (VirtualFileSystem FileSystem, VirtualFileSystemNode Node) =>
+            {
 
-                Invoke((MethodInvoker)(() => {
+                Invoke((MethodInvoker)(() =>
+                {
 
                     // Ignore internal parts of the heirarchy.
                     if (Node.Path.Contains("$") && !ShowInternal)
@@ -305,10 +305,11 @@ namespace BuildSync.Client.Controls
             List<VirtualFileSystemInsertChild> NewChildren = new List<VirtualFileSystemInsertChild>();
             foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
             {
-                NewChildren.Add(new VirtualFileSystemInsertChild { 
+                NewChildren.Add(new VirtualFileSystemInsertChild
+                {
                     VirtualPath = Build.VirtualPath,
-                    CreateTime = Build.Guid == Guid.Empty ? DateTime.UtcNow : Build.CreateTime, 
-                    Metadata = Build.Guid 
+                    CreateTime = Build.Guid == Guid.Empty ? DateTime.UtcNow : Build.CreateTime,
+                    Metadata = Build.Guid
                 });
             }
             BuildFileSystem.ReconcileChildren(RootPath, NewChildren);

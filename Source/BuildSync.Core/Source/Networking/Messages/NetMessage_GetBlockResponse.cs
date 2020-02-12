@@ -19,12 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Text;
-using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
+using System;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -71,8 +67,8 @@ namespace BuildSync.Core.Networking.Messages
                 return;
             }
 
-           // totalstop.Stop();
-           // Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to {0} data: {1}", serializer.IsLoading ? "read" : "write", ((float)totalstop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
+            // totalstop.Stop();
+            // Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to {0} data: {1}", serializer.IsLoading ? "read" : "write", ((float)totalstop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
         }
 
         internal override void Cleanup()

@@ -156,7 +156,7 @@ namespace BuildSync.Core.Controls.Graph
             // Always sort the resulting data along the X-axis, it makes drawing simpler.
             // If this becomes an issue, do sorting at the insertion point rather than sorting
             // entire list.
-//            this.Data.Sort((c1, c2) => Math.Sign(c1.X - c2.X));
+            //            this.Data.Sort((c1, c2) => Math.Sign(c1.X - c2.X));
         }
 
         /// <summary>
@@ -194,7 +194,7 @@ namespace BuildSync.Core.Controls.Graph
 
                             return true;
                         }
-                        
+
                         // No last value = no data for given point.
                         return false;
                     }

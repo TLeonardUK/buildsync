@@ -19,17 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using BuildSync.Core.Utils;
+using System;
+using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
@@ -45,7 +37,7 @@ namespace BuildSync.Client.Forms
         public class TextBoxLogSink : LogSink
         {
             private ConsoleForm OutputForm;
-            
+
             public TextBoxLogSink(ConsoleForm Form)
             {
                 OutputForm = Form;

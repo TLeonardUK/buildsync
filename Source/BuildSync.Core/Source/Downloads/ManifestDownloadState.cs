@@ -19,16 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections;
-using System.Runtime.Serialization;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml.Serialization;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
+using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace BuildSync.Core.Downloads
 {

@@ -23,7 +23,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace BuildSync.Core.Utils
 {
@@ -110,7 +109,7 @@ namespace BuildSync.Core.Utils
 
             Ranges.Clear();
 
-            for (int RangeStart = 0; RangeStart < Array.Length; )
+            for (int RangeStart = 0; RangeStart < Array.Length;)
             {
                 int RangeEnd = RangeStart;
 
@@ -150,7 +149,7 @@ namespace BuildSync.Core.Utils
                 Ranges = new List<Range>();
             }
 
-            for (int RangeStart = Offset; RangeStart < Offset + Length; )
+            for (int RangeStart = Offset; RangeStart < Offset + Length;)
             {
                 int RangeEnd = RangeStart;
 
@@ -188,9 +187,9 @@ namespace BuildSync.Core.Utils
                 return false;
             }
 
-            return 
-                Ranges[0].Start == 0 && 
-                Ranges[0].End == Size - 1 && 
+            return
+                Ranges[0].Start == 0 &&
+                Ranges[0].End == Size - 1 &&
                 Ranges[0].State == State;
         }
 
@@ -354,7 +353,7 @@ namespace BuildSync.Core.Utils
                 {
                     Ranges = new List<Range>();
                 }
-               
+
                 if (Ranges.Count == 0)
                 {
                     Ranges.Add(new Range { Start = 0, End = NewSize - 1, State = false });

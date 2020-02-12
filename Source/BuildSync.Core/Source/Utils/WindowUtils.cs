@@ -20,14 +20,12 @@
 */
 
 using System;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Net;
-using System.Net.Sockets;
-using System.Net.NetworkInformation;
 using System.Diagnostics;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Collections.Generic;
 using System.Text;
 using System.Windows.Forms;
 
@@ -175,18 +173,18 @@ namespace BuildSync.Core.Utils
             return true;
 
 
-/*            Process CurrentProc = Process.GetCurrentProcess();
-            Process[] Procs = Process.GetProcessesByName(CurrentProc.ProcessName);
-            foreach (Process Proc in Procs)
-            {
-                if (Proc.Id != CurrentProc.Id)
-                {
-                    BringProcessToFront(Proc);
-                    return true;
-                }
-            }
-            return false;
-*/
+            /*            Process CurrentProc = Process.GetCurrentProcess();
+                        Process[] Procs = Process.GetProcessesByName(CurrentProc.ProcessName);
+                        foreach (Process Proc in Procs)
+                        {
+                            if (Proc.Id != CurrentProc.Id)
+                            {
+                                BringProcessToFront(Proc);
+                                return true;
+                            }
+                        }
+                        return false;
+            */
         }
 
         /// <summary>

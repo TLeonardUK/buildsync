@@ -19,26 +19,23 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Client.Controls;
+using BuildSync.Client.Tasks;
+using BuildSync.Core;
+using BuildSync.Core.Downloads;
+using BuildSync.Core.Networking;
+using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Users;
+using BuildSync.Core.Utils;
 using System;
-using System.IO;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using BuildSync.Client.Tasks;
-using BuildSync.Core;
-using BuildSync.Core.Networking;
-using BuildSync.Core.Networking.Messages;
-using BuildSync.Core.Downloads;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Users;
-using BuildSync.Client.Controls;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
@@ -318,8 +315,9 @@ namespace BuildSync.Client.Forms
                     return;
                 }
 
-                BuildsRecievedHandler Handler = null;                
-                Handler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) => {
+                BuildsRecievedHandler Handler = null;
+                Handler = (string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds) =>
+                {
 
                     Program.NetClient.OnBuildsRecieved -= Handler;
 
@@ -350,7 +348,8 @@ namespace BuildSync.Client.Forms
                     PublishBuildTask Publisher = new PublishBuildTask();
                     Publisher.Start(NewVirtualPath, TempFolder);
 
-                    Task.Run(() => { 
+                    Task.Run(() =>
+                    {
 
                         bool PublishComplete = false;
                         while (!PublishComplete)
@@ -366,8 +365,9 @@ namespace BuildSync.Client.Forms
                                     }
                                 case BuildPublishingState.Success:
                                     {
-                                        this.Invoke((MethodInvoker)(() => { 
-                                            Publisher.Commit(); 
+                                        this.Invoke((MethodInvoker)(() =>
+                                        {
+                                            Publisher.Commit();
                                         }));
                                         Publisher = null;
                                         PublishComplete = true;
@@ -385,13 +385,13 @@ namespace BuildSync.Client.Forms
                         }
 
                     });
-                }; 
+                };
 
                 Program.NetClient.OnBuildsRecieved += Handler;
                 Program.NetClient.RequestBuilds("$Internal$/Updates");
             }
         }
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -956,6 +956,6 @@ namespace BuildSync.Client.Forms
             Program.InstallAutoUpdate();
         }
 
-#endregion
+        #endregion
     }
 }

@@ -19,19 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
-using Microsoft.WindowsAPICodePack.Dialogs;
+using System;
+using System.ComponentModel;
+using System.Windows.Forms;
 
 namespace BuildSync.Client.Forms
 {
@@ -127,7 +119,7 @@ namespace BuildSync.Client.Forms
                 (
                     !IsScmSelectionRule ||
                     (workspaceComboBox.Enabled && workspaceComboBox.SelectedIndex >= 0)
-                ) 
+                )
                 &&
                 (
                     !IsScmFileRule ||

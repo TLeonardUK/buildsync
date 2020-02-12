@@ -22,10 +22,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.ComponentModel;
 
 namespace BuildSync.Core.Utils
@@ -120,9 +116,9 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
-        public override object Value 
-        { 
-            get 
+        public override object Value
+        {
+            get
             {
                 return base.Value;
             }
@@ -135,7 +131,7 @@ namespace BuildSync.Core.Utils
                 }
                 else if (value is float)
                 {
-                    NewValue = Math.Max(Math.Min((float)NewValue, (float)MaxValue), (float)MinValue);
+                    NewValue = Math.Max(Math.Min((float)NewValue, MaxValue), MinValue);
                 }
                 base.Value = NewValue;
             }
@@ -359,7 +355,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         public override TypeConverter Converter
         {
-            get 
+            get
             {
                 if (Property.Converter != null)
                 {
@@ -431,7 +427,7 @@ namespace BuildSync.Core.Utils
             }
             set
             {
-                base.List[index] = (DynamicPropertyGridProperty)value;
+                base.List[index] = value;
             }
         }
 
@@ -530,7 +526,7 @@ namespace BuildSync.Core.Utils
             PropertyDescriptor[] NewProperties = new PropertyDescriptor[this.Count];
             for (int i = 0; i < this.Count; i++)
             {
-                DynamicPropertyGridProperty prop = (DynamicPropertyGridProperty)this[i];
+                DynamicPropertyGridProperty prop = this[i];
                 if (prop.Name.Length > 0)
                 {
                     NewProperties[i] = new DynamicPropertyGridPropertyDescriptor(ref prop, Attributes);

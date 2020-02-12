@@ -1,6 +1,7 @@
-﻿using System;
+﻿using BuildSync.Core.Downloads;
+using BuildSync.Core.Utils;
+using System;
 using System.Collections;
-using System.Collections.Generic;
 /*
   buildsync
   Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
@@ -22,17 +23,7 @@ using System.Collections.Generic;
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using BuildSync.Client;
-using BuildSync.Core.Manifests;
-using BuildSync.Core.Downloads;
-using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms

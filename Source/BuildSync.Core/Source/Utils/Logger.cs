@@ -20,12 +20,9 @@
 */
 
 using System;
-using System.IO;
-using System.Diagnostics;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.IO;
 
 namespace BuildSync.Core.Utils
 {
@@ -45,7 +42,7 @@ namespace BuildSync.Core.Utils
     /// 
     /// </summary>
     public enum LogCategory
-    { 
+    {
         Main,
         Manifest,
         Download,

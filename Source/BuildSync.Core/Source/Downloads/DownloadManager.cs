@@ -19,14 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Scm;
+using BuildSync.Core.Utils;
 using System;
-using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
-using BuildSync.Core.Manifests;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Scm;
+using System.IO;
 
 namespace BuildSync.Core.Downloads
 {
@@ -198,7 +196,7 @@ namespace BuildSync.Core.Downloads
 
             List<VirtualFileSystemNode> FilteredChildren = new List<VirtualFileSystemNode>();
             switch (State.SelectionFilter)
-            {         
+            {
                 case BuildSelectionFilter.None:
                     {
                         FilteredChildren = BuildChildren;

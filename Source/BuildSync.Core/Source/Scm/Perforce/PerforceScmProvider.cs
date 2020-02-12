@@ -19,15 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Perforce.P4;
 using BuildSync.Core.Utils;
+using Perforce.P4;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace BuildSync.Core.Scm.Perforce
 {
@@ -215,7 +212,7 @@ namespace BuildSync.Core.Scm.Perforce
                         ServerInstance = new Server(new ServerAddress(Server));
                         Repository = new Repository(ServerInstance);
                         Repository.Connection.UserName = Username;
-                        
+
                         Options options = new Options();
                         options["Password"] = Password;
 

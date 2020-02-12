@@ -19,10 +19,6 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Text;
 using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Networking.Messages

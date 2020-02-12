@@ -19,16 +19,10 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Users;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using BuildSync.Core.Users;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
@@ -230,7 +224,7 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private void RefreshUsers(List<User> Users)
         {
-            
+
 
             foreach (User user in Users)
             {

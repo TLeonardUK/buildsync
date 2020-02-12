@@ -22,16 +22,15 @@
 //#define FAKE_LATENCY
 //#define TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
 
+using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Utils;
 using System;
-using System.Diagnostics;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Text;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using BuildSync.Core.Networking.Messages;
-using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Networking
 {
@@ -361,7 +360,7 @@ namespace BuildSync.Core.Networking
         private NetMessage MessageHeaderTempStorage = new NetMessage();
 
         public enum AsyncCallType
-        { 
+        {
             Accept,
             Recieve,
             Send,
@@ -455,7 +454,7 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        public event HandshakeFailedHandler OnHandshakeResult;        
+        public event HandshakeFailedHandler OnHandshakeResult;
 
         /// <summary>
         /// 
@@ -1098,7 +1097,7 @@ namespace BuildSync.Core.Networking
                             Interlocked.Add(ref SendQueueBytes, -SendData.BufferSize);
                         }
                     }
-                    else 
+                    else
                     {
                         Monitor.Wait(SendQueueWakeObject, 1000);
                         continue;
@@ -1297,7 +1296,7 @@ namespace BuildSync.Core.Networking
             // If no payload, we have the full message.
             if (MessageHeaderTempStorage.PayloadSize == 0)
             {
-                ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer,  BufferSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize });
+                ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize });
                 BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayload.RecieveNextHeader"));
             }
             else

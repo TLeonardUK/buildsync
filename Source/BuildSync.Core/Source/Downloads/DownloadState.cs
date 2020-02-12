@@ -20,11 +20,8 @@
 */
 
 using System;
-using System.Configuration;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
-using BuildSync.Core.Manifests;
 
 namespace BuildSync.Core.Downloads
 {
@@ -155,7 +152,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public bool IsInternal 
+        public bool IsInternal
         {
             get
             {

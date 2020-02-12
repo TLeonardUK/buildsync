@@ -19,14 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using BuildSync.Core.Utils;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace BuildSync.Server.Tasks
 {
@@ -159,8 +156,8 @@ namespace BuildSync.Server.Tasks
 
                                         State = MoveStorageState.CopyingFiles;
                                         CurrentFile = RelativePath;
-                                        Progress = (float)i / (float)FilesToCopy.Count;
-                                        SubProgress = (float)TotalBytes / (float)FileLength;
+                                        Progress = i / (float)FilesToCopy.Count;
+                                        SubProgress = TotalBytes / (float)FileLength;
 
                                         Dest.Write(CopyBuffer, 0, CurrentBlockSize);
                                     }

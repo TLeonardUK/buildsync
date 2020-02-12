@@ -19,14 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using BuildSync.Core.Utils;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace BuildSync.Core.Networking
 {

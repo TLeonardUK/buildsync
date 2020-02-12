@@ -19,13 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BuildSync.Core.Utils;
-using BuildSync.Core.Scm.Perforce;
+using System.Collections.Generic;
 
 namespace BuildSync.Core.Scm
 {

@@ -19,13 +19,10 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Text;
-using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Utils;
+using System;
+using System.Collections.Generic;
 
 namespace BuildSync.Core.Downloads
 {

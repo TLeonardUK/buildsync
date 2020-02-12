@@ -20,8 +20,8 @@
 */
 
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Cryptography;
 
 namespace BuildSync.Core.Utils

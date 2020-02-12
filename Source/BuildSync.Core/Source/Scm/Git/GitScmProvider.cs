@@ -19,16 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Utils;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Scm.Git
 {

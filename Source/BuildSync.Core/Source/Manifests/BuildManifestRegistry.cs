@@ -19,12 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Text;
 using BuildSync.Core.Utils;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 
 namespace BuildSync.Core.Manifests
 {
@@ -299,7 +298,7 @@ namespace BuildSync.Core.Manifests
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading manifest: {0}", FilePath);
 
                 try
-                { 
+                {
                     BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath);
                     AddManifest(Manifest);
                 }

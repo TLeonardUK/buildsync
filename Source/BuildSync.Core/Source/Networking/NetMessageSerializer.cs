@@ -21,9 +21,6 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
 
 namespace BuildSync.Core.Networking
 {
@@ -68,7 +65,7 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         /// <param name="Value"></param>
-        public void SerializeEnum<T>(ref T Value) 
+        public void SerializeEnum<T>(ref T Value)
         {
             int Id = (int)(object)Value;
             if (IsLoading)
@@ -228,7 +225,7 @@ namespace BuildSync.Core.Networking
                 }
                 else
                 {
-                    Value = new byte[Length]; 
+                    Value = new byte[Length];
                     Reader.BaseStream.Read(Value, 0, Length);
                 }
             }
@@ -239,7 +236,7 @@ namespace BuildSync.Core.Networking
                     Writer.Write(-1);
                 }
                 else
-                { 
+                {
                     Writer.Write(Value.Length);
                     Writer.BaseStream.Write(Value, 0, Value.Length);
                 }

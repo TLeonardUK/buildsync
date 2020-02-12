@@ -19,27 +19,23 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Diagnostics;
+using BuildSync.Client.Commands;
 using BuildSync.Client.Forms;
 using BuildSync.Core;
-using System.Timers;
-using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
-using BuildSync.Core.Utils;
+using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Scm;
-using BuildSync.Core.Scm.Perforce;
 using BuildSync.Core.Scm.Git;
-using BuildSync.Client.Commands;
+using BuildSync.Core.Scm.Perforce;
+using BuildSync.Core.Utils;
 using CommandLine;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Windows.Forms;
 
 namespace BuildSync.Client
 {
@@ -197,9 +193,9 @@ namespace BuildSync.Client
                 using (new SingleGlobalInstance(100))
                 {
 #endif
-                    BuildSettings.Init();
+            BuildSettings.Init();
 
-                    OnStart();
+            OnStart();
 
             /*
                     PollTimer = new System.Timers.Timer(20);
@@ -235,10 +231,10 @@ namespace BuildSync.Client
                     PollTimer.Start();
             */
 
-                    AppForm = new MainForm();
-                    Application.Run(AppForm);
+            AppForm = new MainForm();
+            Application.Run(AppForm);
 
-                    OnStop();
+            OnStop();
 #if SHIPPING
                 }
             }
@@ -354,8 +350,8 @@ namespace BuildSync.Client
                 bool Exists = false;
                 foreach (IScmProvider Provider in ScmManager.Providers)
                 {
-                    if (Provider.Server == ScmSettings.Server && 
-                        Provider.Username == ScmSettings.Username && 
+                    if (Provider.Server == ScmSettings.Server &&
+                        Provider.Username == ScmSettings.Username &&
                         Provider.Password == ScmSettings.Password &&
                         FileUtils.NormalizePath(Provider.Root) == FileUtils.NormalizePath(ScmSettings.Location))
                     {
@@ -396,8 +392,8 @@ namespace BuildSync.Client
                 bool Exists = false;
                 foreach (ScmWorkspaceSettings ScmSettings in Settings.ScmWorkspaces)
                 {
-                    if (Provider.Server == ScmSettings.Server && 
-                        Provider.Username == ScmSettings.Username && 
+                    if (Provider.Server == ScmSettings.Server &&
+                        Provider.Username == ScmSettings.Username &&
                         Provider.Password == ScmSettings.Password &&
                         FileUtils.NormalizePath(Provider.Root) == FileUtils.NormalizePath(ScmSettings.Location))
                     {
@@ -468,7 +464,8 @@ namespace BuildSync.Client
                 List<VirtualFileSystemInsertChild> NewChildren = new List<VirtualFileSystemInsertChild>();
                 foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
                 {
-                    NewChildren.Add(new VirtualFileSystemInsertChild { 
+                    NewChildren.Add(new VirtualFileSystemInsertChild
+                    {
                         VirtualPath = Build.VirtualPath,
                         CreateTime = Build.Guid == Guid.Empty ? DateTime.UtcNow : Build.CreateTime,
                         Metadata = Build.Guid,
@@ -688,7 +685,7 @@ namespace BuildSync.Client
                 Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to install update, no internal download available.");
                 return;
             }
-            
+
             string InstallerPath = Path.Combine(AutoUpdateDownload.LocalFolder, "installer.msi");
             if (!File.Exists(InstallerPath))
             {
@@ -708,7 +705,7 @@ namespace BuildSync.Client
                     p.StartInfo.UseShellExecute = false;
                     p.StartInfo.WorkingDirectory = AutoUpdateDownload.LocalFolder;
                     p.Start();
-                    
+
                     //Process.Start(InstallerPath, "/passive /norestart REINSTALL=ALL REINSTALLMODE=A MSIRMSHUTDOWN=1 MSIDISABLERMRESTART=0 ADDLOCAL=All");
 
                     Application.Exit();

@@ -19,16 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Reflection;
-using CommandLine;
-using BuildSync.Server.Tasks;
 using BuildSync.Core.Utils;
+using BuildSync.Server.Tasks;
+using CommandLine;
+using System.Reflection;
+using System.Threading;
 
 namespace BuildSync.Server.Commands
 {

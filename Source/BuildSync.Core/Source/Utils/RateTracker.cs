@@ -19,10 +19,6 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace BuildSync.Core.Utils
 {
 
@@ -119,7 +115,7 @@ namespace BuildSync.Core.Utils
                 lock (LockObject)
                 {
                     Update();
-                    return (long)TotalBytesRecieved;
+                    return TotalBytesRecieved;
                 }
             }
         }
@@ -134,7 +130,7 @@ namespace BuildSync.Core.Utils
                 lock (LockObject)
                 {
                     Update();
-                    return (long)TotalBytesSent;
+                    return TotalBytesSent;
                 }
             }
         }
@@ -213,7 +209,7 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         private void Update()
-        { 
+        {
             // Calculate bandwidth.
             ulong Elapsed = TimeUtils.Ticks - BandwidthTimeStart;
             if (Elapsed > 250)
@@ -226,7 +222,7 @@ namespace BuildSync.Core.Utils
                 long Sent = TotalBytesSent - BandwidthTimeStartBytesSent;
                 long Recieved = TotalBytesRecieved - BandwidthTimeStartBytesRecieved;
 
-                double Delta = 1000.0  / (Elapsed == 0 ? 1 : Elapsed);
+                double Delta = 1000.0 / (Elapsed == 0 ? 1 : Elapsed);
 
                 double SentPs = Sent * Delta;
                 double RecievedPs = Recieved * Delta;

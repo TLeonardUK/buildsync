@@ -21,11 +21,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
-using System.Net.Sockets;
 
 namespace BuildSync.Core.Utils
 {
@@ -52,7 +48,7 @@ namespace BuildSync.Core.Utils
             {
                 Logger.Log(LogLevel.Info, LogCategory.Transport, "Resolving hostname '{0}' ...", Addr);
                 Dns.BeginGetHostEntry(Addr, DnsResult =>
-                {                        
+                {
                     try
                     {
                         IPHostEntry HostEntry = Dns.EndGetHostEntry(DnsResult);

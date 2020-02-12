@@ -19,14 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
-using System.Reflection;
 using BuildSync.Core.Utils;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 
 namespace BuildSync.Core.Networking
 {
@@ -109,7 +106,7 @@ namespace BuildSync.Core.Networking
             BinaryWriter dataWriter = new BinaryWriter(dataStream);
 
             dataStream.Seek(HeaderSize, SeekOrigin.Begin);
-           
+
             long PayloadStart = dataStream.Position;
             SerializePayload(new NetMessageSerializer(dataWriter));
             Id = GetType().Name.GetHashCode();

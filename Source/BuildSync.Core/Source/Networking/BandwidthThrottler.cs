@@ -19,11 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using BuildSync.Core.Utils;
+using System;
+using System.Threading;
 
 namespace BuildSync.Core.Networking
 {
@@ -105,7 +103,7 @@ namespace BuildSync.Core.Networking
 
             // Is there enough tokens to send the entire thing or at leat the MTU?
             long Mtu = Math.Min(MinimumTransmissionUnit, Limit);
-            double MinimumToSend = Math.Min((double)Mtu, (double)Pending);
+            double MinimumToSend = Math.Min(Mtu, (double)Pending);
             while (true)
             {
                 // Refill the tokens.
@@ -113,7 +111,7 @@ namespace BuildSync.Core.Networking
                 {
                     ulong Time = TimeUtils.Ticks;
                     double ElapsedSeconds = (Time - LastRefillTime) / 1000.0;
-                    double RefillTokens = ElapsedSeconds * (double)Limit;
+                    double RefillTokens = ElapsedSeconds * Limit;
 
                     while (true)
                     {
@@ -135,7 +133,7 @@ namespace BuildSync.Core.Networking
 
                 // See if we can take enough tokens.
                 double OriginalValue = Tokens;
-                double AmountToTake = Math.Min((double)OriginalValue, (double)Pending);
+                double AmountToTake = Math.Min(OriginalValue, Pending);
                 if (AmountToTake >= MinimumToSend)
                 {
                     if (Interlocked.CompareExchange(ref Tokens, OriginalValue - AmountToTake, OriginalValue) == OriginalValue)

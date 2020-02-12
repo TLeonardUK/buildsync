@@ -19,15 +19,15 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core;
+using BuildSync.Core.Downloads;
+using BuildSync.Core.Manifests;
+using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Utils;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using BuildSync.Core.Manifests;
-using BuildSync.Core;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Downloads;
-using BuildSync.Core.Networking.Messages;
 
 namespace BuildSync.Client.Tasks
 {
@@ -35,7 +35,7 @@ namespace BuildSync.Client.Tasks
     /// 
     /// </summary>
     public enum BuildPublishingState
-    { 
+    {
         ScanningFiles,
         CopyingFiles,
         UploadingManifest,

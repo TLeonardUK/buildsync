@@ -19,18 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using BuildSync.Core.Downloads;
 using BuildSync.Client.Forms;
+using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using System;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace BuildSync.Client.Controls
 {
@@ -96,7 +90,7 @@ namespace BuildSync.Client.Controls
         /// 
         /// </summary>
         private enum StateColoring
-        { 
+        {
             Success,
             Error,
             Warning,
@@ -255,7 +249,7 @@ namespace BuildSync.Client.Controls
                             }
                         case ManifestDownloadProgressState.Initializing:
                             {
-                                double SecondsToInitialize = (double)Downloader.InitializeBytesRemaining / (double)Downloader.InitializeRateStats.RateIn;
+                                double SecondsToInitialize = Downloader.InitializeBytesRemaining / (double)Downloader.InitializeRateStats.RateIn;
                                 if (Downloader.InitializeRateStats.RateIn == 0)
                                 {
                                     SecondsToInitialize = 0;
@@ -268,7 +262,7 @@ namespace BuildSync.Client.Controls
                             }
                         case ManifestDownloadProgressState.Validating:
                             {
-                                long SecondsToValidate = (long)((double)Downloader.ValidateBytesRemaining / (double)Downloader.ValidateRateStats.RateOut);
+                                long SecondsToValidate = (long)(Downloader.ValidateBytesRemaining / (double)Downloader.ValidateRateStats.RateOut);
                                 if (Downloader.ValidateRateStats.RateOut == 0)
                                 {
                                     SecondsToValidate = 0;
@@ -286,7 +280,7 @@ namespace BuildSync.Client.Controls
                             }
                         case ManifestDownloadProgressState.Downloading:
                             {
-                                long SecondsToDownload = (long)((double)Downloader.BytesRemaining / (double)Downloader.BandwidthStats.RateIn);
+                                long SecondsToDownload = (long)(Downloader.BytesRemaining / (double)Downloader.BandwidthStats.RateIn);
                                 if (Downloader.BandwidthStats.RateIn == 0)
                                 {
                                     SecondsToDownload = 0;
@@ -436,7 +430,7 @@ namespace BuildSync.Client.Controls
             //}
             //else
             //{
-                ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, SystemColors.ControlLight, ButtonBorderStyle.Solid);
+            ControlPaint.DrawBorder(e.Graphics, MainPanel.ClientRectangle, SystemColors.ControlLight, ButtonBorderStyle.Solid);
             //}
         }
 

@@ -19,19 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core;
 using System;
 using System.IO;
-using System.Deployment.Application;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Reflection;
 using System.Windows.Forms;
-using BuildSync.Core;
 
 namespace BuildSync.Client.Forms
 {

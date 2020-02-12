@@ -19,21 +19,13 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using BuildSync.Core.Users;
-using WeifenLuo.WinFormsUI.Docking;
+using BuildSync.Core.Controls.Graph;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
-using BuildSync.Core.Controls.Graph;
+using System;
+using System.Collections;
+using System.Windows.Forms;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
 {

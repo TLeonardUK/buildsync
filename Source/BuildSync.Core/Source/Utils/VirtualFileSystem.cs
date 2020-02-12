@@ -20,9 +20,7 @@
 */
 
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Text;
 
 namespace BuildSync.Core.Utils
 {
@@ -224,7 +222,7 @@ namespace BuildSync.Core.Utils
             VirtualFileSystemNode BaseNode = GetNodeByPath(Path);
             if (BaseNode == null)
             {
-                BaseNode = InsertNode(Path, DateTime.UtcNow, null); 
+                BaseNode = InsertNode(Path, DateTime.UtcNow, null);
             }
 
             List<VirtualFileSystemNode> ChildrenToRemove = new List<VirtualFileSystemNode>();
@@ -373,7 +371,7 @@ namespace BuildSync.Core.Utils
         /// <param name="Path"></param>
         public List<string> GetChildrenNames(string Path)
         {
-            List<string> Result = new List<string>();            
+            List<string> Result = new List<string>();
 
             VirtualFileSystemNode Node = GetNodeByPath(Path);
             if (Node != null)

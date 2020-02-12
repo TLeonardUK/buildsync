@@ -27,8 +27,8 @@ using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Utils;
 using System;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -91,7 +91,7 @@ namespace BuildSync.Core.Downloads
     /// 
     /// </summary>
     public enum ManifestBlockChangeType
-    { 
+    {
         Upload,
         Validate,
     }
@@ -865,7 +865,7 @@ namespace BuildSync.Core.Downloads
                                         State.InitializeRateStats.Reset();
                                         State.Manifest.InitializeDirectory(State.LocalFolder, IOQueue, !SkipDiskAllocation, (long BytesWritten, long TotalBytes) =>
                                         {
-                                            State.InitializeProgress = (float)BytesWritten / (float)TotalBytes;
+                                            State.InitializeProgress = BytesWritten / (float)TotalBytes;
                                             State.InitializeRateStats.In(BytesWritten - State.InitializeRateStats.TotalIn);
                                             State.InitializeBytesRemaining = TotalBytes - BytesWritten;
                                             return !State.Paused;
@@ -1008,8 +1008,9 @@ namespace BuildSync.Core.Downloads
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
                                         State.ValidateRateStats.Reset();
-                                        List<int> FailedBlocks = State.Manifest.Validate(State.LocalFolder, State.ValidateRateStats, IOQueue, (long BytesRead, long TotalBytes, Guid ManifestId, int BlockIndex) => {
-                                            State.ValidateProgress = (float)BytesRead / (float)TotalBytes;
+                                        List<int> FailedBlocks = State.Manifest.Validate(State.LocalFolder, State.ValidateRateStats, IOQueue, (long BytesRead, long TotalBytes, Guid ManifestId, int BlockIndex) =>
+                                        {
+                                            State.ValidateProgress = BytesRead / (float)TotalBytes;
                                             State.ValidateRateStats.Out(BytesRead - State.ValidateRateStats.TotalOut);
                                             State.ValidateBytesRemaining = TotalBytes - BytesRead;
                                             RecordBlockChange(ManifestId, BlockIndex, ManifestBlockChangeType.Validate);
@@ -1217,8 +1218,8 @@ namespace BuildSync.Core.Downloads
                 {
                     if (!State.Active)
                     {
-                        if (!FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder) && 
-                            State.Manifest != null && 
+                        if (!FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder) &&
+                            State.Manifest != null &&
                             !State.Manifest.VirtualPath.StartsWith("$")) // Ignore internal downloads, which are used for updates etc, we always want to maintain maximum availability of these.
                         {
                             DeletionCandidates.Add(State);
@@ -1583,7 +1584,7 @@ namespace BuildSync.Core.Downloads
             // Mark block as having block.
             State.BlockStates.Set(BlockIndex, false);
             StateDirtyCount++;
-            
+
             if (State.State == ManifestDownloadProgressState.Complete && !State.BlockStates.AreAllSet(true))
             {
                 ChangeState(State, ManifestDownloadProgressState.Downloading);
@@ -1742,7 +1743,8 @@ namespace BuildSync.Core.Downloads
                         {
                             if (range.State)
                             {
-                                ManifestDownloadRequiredBlock RequiredBlock = new ManifestDownloadRequiredBlock {
+                                ManifestDownloadRequiredBlock RequiredBlock = new ManifestDownloadRequiredBlock
+                                {
                                     ManifestId = State.ManifestId,
                                     RangeStart = range.Start,
                                     RangeEnd = range.End

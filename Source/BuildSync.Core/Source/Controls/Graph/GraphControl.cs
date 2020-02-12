@@ -19,17 +19,13 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
-using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Controls.Graph
 {

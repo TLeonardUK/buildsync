@@ -19,18 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using System;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace BuildSync.Client.Controls
 {
@@ -43,7 +36,7 @@ namespace BuildSync.Client.Controls
         /// 
         /// </summary>
         public enum CellState
-        { 
+        {
             NotDownloaded,
             Downloading,
             Downloaded,
@@ -108,7 +101,7 @@ namespace BuildSync.Client.Controls
         {
             e.Graphics.FillRectangle(SystemBrushes.Window, 0, 0, Size.Width - 1, Size.Height - 1);
             ControlPaint.DrawBorder(e.Graphics, new Rectangle(0, 0, Size.Width, Size.Height), SystemColors.ControlLight, ButtonBorderStyle.Solid);
-//            e.Graphics.DrawRectangle(SystemPens.ControlLight, 0, 0, Size.Width - 1, Size.Height - 1);
+            //            e.Graphics.DrawRectangle(SystemPens.ControlLight, 0, 0, Size.Width - 1, Size.Height - 1);
 
             if (State == null)
             {
@@ -132,8 +125,8 @@ namespace BuildSync.Client.Controls
             int CellPadding = 3;
             int CellOveralSize = CellSize + CellPadding;
 
-            int Rows = (int)Math.Floor((float)(Size.Height - CellPadding * 2 - OuterPadding * 2) / (float)CellOveralSize);
-            int Columns = (int)Math.Floor((float)(Size.Width - CellPadding * 2 - OuterPadding * 2 - LegendWidth) / (float)CellOveralSize);
+            int Rows = (int)Math.Floor((Size.Height - CellPadding * 2 - OuterPadding * 2) / (float)CellOveralSize);
+            int Columns = (int)Math.Floor((Size.Width - CellPadding * 2 - OuterPadding * 2 - LegendWidth) / (float)CellOveralSize);
 
             int MaxCells = Rows * Columns;
 

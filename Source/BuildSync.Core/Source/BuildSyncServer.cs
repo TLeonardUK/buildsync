@@ -19,16 +19,16 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Net;
-using System.Collections.Generic;
-using BuildSync.Core.Utils;
+using BuildSync.Core.Downloads;
+using BuildSync.Core.Licensing;
+using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
-using BuildSync.Core.Manifests;
-using BuildSync.Core.Downloads;
 using BuildSync.Core.Users;
-using BuildSync.Core.Licensing;
+using BuildSync.Core.Utils;
+using System;
+using System.Collections.Generic;
+using System.Net;
 
 namespace BuildSync.Core
 {
@@ -228,7 +228,7 @@ namespace BuildSync.Core
                     if (State.PermissionsNeedUpdate)
                     {
                         User user = UserManager.GetOrCreateUser(State.Username);
-                        
+
                         NetMessage_PermissionUpdate Msg = new NetMessage_PermissionUpdate();
                         Msg.Permissions = user.Permissions;
                         Connection.Send(Msg);

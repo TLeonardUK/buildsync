@@ -19,25 +19,20 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceProcess;
-using System.Text;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 using BuildSync.Core;
-using BuildSync.Core.Manifests;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Users;
 using BuildSync.Core.Licensing;
+using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
+using BuildSync.Core.Users;
+using BuildSync.Core.Utils;
 using BuildSync.Server.Commands;
 using CommandLine;
-using CommandLine.Text;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace BuildSync.Server
 {
@@ -181,30 +176,30 @@ namespace BuildSync.Server
 #endif
 
 #if true
-                    SetConsoleCtrlHandler((CtrlTypes CtrlType) =>
-                    {
-                        if (CtrlType == CtrlTypes.CTRL_C_EVENT ||
-                            CtrlType == CtrlTypes.CTRL_BREAK_EVENT ||
-                            CtrlType == CtrlTypes.CTRL_CLOSE_EVENT ||
-                            CtrlType == CtrlTypes.CTRL_LOGOFF_EVENT ||
-                            CtrlType == CtrlTypes.CTRL_SHUTDOWN_EVENT)
-                        {
-                            Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved close event from console.");
-                            IsClosing = true;
-                            return true;
-                        }
-                        return false;
-                    }, true);
+            SetConsoleCtrlHandler((CtrlTypes CtrlType) =>
+            {
+                if (CtrlType == CtrlTypes.CTRL_C_EVENT ||
+                    CtrlType == CtrlTypes.CTRL_BREAK_EVENT ||
+                    CtrlType == CtrlTypes.CTRL_CLOSE_EVENT ||
+                    CtrlType == CtrlTypes.CTRL_LOGOFF_EVENT ||
+                    CtrlType == CtrlTypes.CTRL_SHUTDOWN_EVENT)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved close event from console.");
+                    IsClosing = true;
+                    return true;
+                }
+                return false;
+            }, true);
 
-                    OnStart();
+            OnStart();
 
-                    while (!IsClosing)
-                    {
-                        OnPoll();
-                        Thread.Sleep(1);
-                    }
+            while (!IsClosing)
+            {
+                OnPoll();
+                Thread.Sleep(1);
+            }
 
-                    OnStop();
+            OnStop();
 #else
                     ServiceBase[] ServicesToRun;
                     ServicesToRun = new ServiceBase[]

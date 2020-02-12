@@ -19,19 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Controls.Graph;
+using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Reflection;
 using System.Windows.Forms;
-using BuildSync.Core.Controls.Graph;
-using BuildSync.Core.Networking;
-using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms

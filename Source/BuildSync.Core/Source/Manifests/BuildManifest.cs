@@ -19,14 +19,13 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Utils;
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Text;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Manifests
 {
@@ -206,7 +205,7 @@ namespace BuildSync.Core.Manifests
             //Console.WriteLine("======================================== CACHING BLOCK INFO ================================");
             long BlockIndex = 0;
             long TotalBlockSize = 0;
-            for (int fi = 0; fi < Files.Count; )
+            for (int fi = 0; fi < Files.Count;)
             {
                 BuildManifestFileInfo Info = Files[fi];
                 Info.FirstBlockIndex = (int)BlockIndex;
@@ -243,8 +242,8 @@ namespace BuildSync.Core.Manifests
                     BlockIndex++;
                 }
                 Debug.Assert(Total == Info.Size);
-                
-                Info.LastBlockIndex = (int)BlockIndex -  1;
+
+                Info.LastBlockIndex = (int)BlockIndex - 1;
 
                 int LastBlockIndex = Info.LastBlockIndex;
 
@@ -450,7 +449,7 @@ namespace BuildSync.Core.Manifests
                 {
                     if (!bSuccess)
                     {
-                        throw new IOException("Failed to read data for block from file: "+PathName+".");
+                        throw new IOException("Failed to read data for block from file: " + PathName + ".");
                     }
 
                     if (Interlocked.Decrement(ref QueuedReads) == 0)
@@ -678,7 +677,7 @@ namespace BuildSync.Core.Manifests
                         {
                             lock (Callback)
                             {
-                                float Progress = (float)(FileCounter + BlockCounter) / (float)(FileInfos.Length + Manifest.BlockCount);
+                                float Progress = (FileCounter + BlockCounter) / (float)(FileInfos.Length + Manifest.BlockCount);
                                 Callback(RelativePath, Progress * 100);
                             }
                         }
@@ -729,7 +728,7 @@ namespace BuildSync.Core.Manifests
                         {
                             lock (Callback)
                             {
-                                float Progress = (float)(FileCounter + BlockCounter) / (float)(FileInfos.Length + Manifest.BlockCount);
+                                float Progress = (FileCounter + BlockCounter) / (float)(FileInfos.Length + Manifest.BlockCount);
                                 Callback("Checksuming blocks", Progress * 100);
                             }
                         }

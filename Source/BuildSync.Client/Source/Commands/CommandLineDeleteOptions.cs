@@ -19,16 +19,12 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CommandLine;
 using BuildSync.Core;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Users;
 using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Users;
+using BuildSync.Core.Utils;
+using CommandLine;
+using System;
 
 namespace BuildSync.Client.Commands
 {
@@ -106,7 +102,7 @@ namespace BuildSync.Client.Commands
             };
 
             Program.NetClient.OnBuildsRecieved += BuildsRecievedHandler;
-            Program.NetClient.OnManifestDeleteResultRecieved += ManifestRecieveHandler; 
+            Program.NetClient.OnManifestDeleteResultRecieved += ManifestRecieveHandler;
 
             if (!Program.NetClient.RequestBuilds(ParentPath))
             {
@@ -114,7 +110,8 @@ namespace BuildSync.Client.Commands
                 return;
             }
 
-            Program.PumpLoop(() => {
+            Program.PumpLoop(() =>
+            {
 
                 if (!Program.NetClient.IsConnected)
                 {

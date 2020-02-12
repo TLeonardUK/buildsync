@@ -19,11 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.Win32;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace BuildSync.Core.Utils
@@ -42,7 +39,7 @@ namespace BuildSync.Core.Utils
         /// </summary>
         public static void AttachToParentConsole()
         {
-           // AttachConsole(ATTACH_PARENT_PROCESS);
+            // AttachConsole(ATTACH_PARENT_PROCESS);
         }
 
         /// <summary>

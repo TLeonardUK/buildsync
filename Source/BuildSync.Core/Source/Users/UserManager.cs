@@ -19,15 +19,11 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Networking;
+using BuildSync.Core.Utils;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Serialization;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Networking;
 
 namespace BuildSync.Core.Users
 {
@@ -54,7 +50,7 @@ namespace BuildSync.Core.Users
         public UserPermissionType Type { get; set; } = UserPermissionType.Unknown;
 
         [JsonIgnore]
-        public string[] VirtualPathSplit { get; private set; } = new string[0]; 
+        public string[] VirtualPathSplit { get; private set; } = new string[0];
 
         private string InternalVirtualPath = "";
         public string VirtualPath

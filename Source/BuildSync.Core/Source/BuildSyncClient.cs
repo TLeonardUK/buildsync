@@ -19,18 +19,18 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Net;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Threading;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Manifests;
 using BuildSync.Core.Downloads;
+using BuildSync.Core.Licensing;
+using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
-using BuildSync.Core.Licensing;
+using BuildSync.Core.Utils;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Net;
+using System.Threading;
 
 namespace BuildSync.Core
 {
@@ -78,7 +78,7 @@ namespace BuildSync.Core
     /// <summary>
     /// 
     /// </summary>
-    public delegate void LicenseInfoRecievedHandler(License LicenseInfo);    
+    public delegate void LicenseInfoRecievedHandler(License LicenseInfo);
 
     /// <summary>
     /// 
@@ -89,7 +89,7 @@ namespace BuildSync.Core
     /// 
     /// </summary>
     public delegate void ManifestDeleteResultRecievedHandler(Guid ManifestId);
-    
+
     /// <summary>
     /// 
     /// </summary>
@@ -934,7 +934,8 @@ namespace BuildSync.Core
             Connection.OnConnect += (NetConnection Connection) => { OnConnectedToServer?.Invoke(); };
             Connection.OnDisconnect += (NetConnection Connection) => { OnLostConnectionToServer?.Invoke(); };
             Connection.OnConnectFailed += (NetConnection Connection) => { OnFailedToConnectToServer?.Invoke(); HandshakeResult = HandshakeResultType.Unknown; };
-            Connection.OnHandshakeResult += (NetConnection Connection, HandshakeResultType ResultType) => { 
+            Connection.OnHandshakeResult += (NetConnection Connection, HandshakeResultType ResultType) =>
+            {
                 HandshakeResult = ResultType;
                 if (ResultType == HandshakeResultType.InvalidVersion)
                 {
@@ -963,7 +964,7 @@ namespace BuildSync.Core
         /// 
         /// </summary>
         public void RestartConnections()
-        {   
+        {
             lock (Peers)
             {
                 foreach (Peer peer in Peers)
@@ -997,7 +998,8 @@ namespace BuildSync.Core
             PeerListenPortRangeMax = ListenPortRangeMax;
             ManifestRegistry = BuildManifest;
             ManifestDownloadManager = DownloadManager;
-            ManifestDownloadManager.OnManifestRequested += (Guid Id) => {
+            ManifestDownloadManager.OnManifestRequested += (Guid Id) =>
+            {
                 RequestManifest(Id);
             };
             Started = true;
@@ -1134,16 +1136,16 @@ namespace BuildSync.Core
                     AverageBlockLatency /= Peers.Count;
                 }
 
-                Statistic.Get<Statistic_RequestFailures>().AddSample((float)BlockRequestFailureRate);
-                Statistic.Get<Statistic_BlockListUpdates>().AddSample((float)BlockListUpdateRate);
+                Statistic.Get<Statistic_RequestFailures>().AddSample(BlockRequestFailureRate);
+                Statistic.Get<Statistic_BlockListUpdates>().AddSample(BlockListUpdateRate);
                 Statistic.Get<Statistic_DataInFlight>().AddSample(DataInFlight / 1024 / 1024);
                 Statistic.Get<Statistic_BlocksInFlight>().AddSample(BlocksInFlight);
                 Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float)AverageBlockLatency);
                 Statistic.Get<Statistic_AverageBlockSize>().AddSample((float)AverageBlockSize / 1024 / 1024);
-                
+
                 Statistic.Get<Statistic_ActiveBlockRequests>().AddSample(ActivePeerRequests);
                 Statistic.Get<Statistic_PendingBlockRequests>().AddSample(PendingBlockRequests);
-                
+
 
                 BlockRequestFailureRate = 0;
                 BlockListUpdateRate = 0;
@@ -1282,7 +1284,7 @@ namespace BuildSync.Core
 
             ManifestDownloadManager.SetAvailableToDownloadBlocks(State);
         }
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -1421,7 +1423,7 @@ namespace BuildSync.Core
                         return peer;
                     }
                 }
-            }           
+            }
             return null;
         }
 
@@ -2141,7 +2143,7 @@ namespace BuildSync.Core
 
                 // Only limit in rate, out rate is limited implicitly.
                 NetConnection.GlobalBandwidthThrottleIn.GlobalMaxRate = Msg.BandwidthLimit;
-            }            
+            }
         }
     }
 }

@@ -20,11 +20,8 @@
 */
 
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace BuildSync.Core.Utils
 {
@@ -93,7 +90,7 @@ namespace BuildSync.Core.Utils
         {
             InPath = FileUtils.NormalizePath(InPath);
 
-            Entry Result = null; 
+            Entry Result = null;
             if (Entries.TryGetValue(InPath, out Result))
             {
                 UpdateEntry(Result);

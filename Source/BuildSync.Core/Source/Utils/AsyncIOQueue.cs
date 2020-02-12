@@ -23,11 +23,11 @@
 //#define DISABLE_IO_BUFFERING
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace BuildSync.Core.Utils
 {
@@ -170,7 +170,7 @@ namespace BuildSync.Core.Utils
 
         public override void Gather()
         {
-            AddSample((float)AsyncIOQueue.TaskQueueCount);
+            AddSample(AsyncIOQueue.TaskQueueCount);
         }
     }
 
@@ -249,7 +249,7 @@ namespace BuildSync.Core.Utils
 
         public static RollingAverage OutLatency = new RollingAverage(25);
         public static RollingAverage InLatency = new RollingAverage(25);
-        public static RollingAverage TaskProcessTime = new RollingAverage(5);        
+        public static RollingAverage TaskProcessTime = new RollingAverage(5);
 
         private static long GlobalQueuedOut = 0;
         private static long GlobalQueuedIn = 0;
@@ -631,7 +631,7 @@ namespace BuildSync.Core.Utils
                                 Stm.Stream.EndWrite(Result);
 
                                 ulong ElapsedTime = TimeUtils.Ticks - Work.QueueTime;
-                                InLatency.Add((double)ElapsedTime);
+                                InLatency.Add(ElapsedTime);
 
                                 Work.Callback?.Invoke(true);
                             }
@@ -724,7 +724,7 @@ namespace BuildSync.Core.Utils
                             }
 
                             ulong ElapsedTime = TimeUtils.Ticks - Work.QueueTime;
-                            OutLatency.Add((double)ElapsedTime);
+                            OutLatency.Add(ElapsedTime);
 
                             Work.Callback?.Invoke(true);
                         }

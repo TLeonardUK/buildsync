@@ -20,8 +20,6 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace BuildSync.Core.Utils
 {
@@ -51,7 +49,7 @@ namespace BuildSync.Core.Utils
                 {
                     break;
                 }
-            }            
+            }
             return Result.Trim();
         }
 

@@ -19,24 +19,18 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using CommandLine;
 using BuildSync.Client.Tasks;
-using BuildSync.Core.Utils;
 using BuildSync.Core.Users;
+using BuildSync.Core.Utils;
+using CommandLine;
+using System.IO;
 
 namespace BuildSync.Client.Commands
 {
     [Verb("add", HelpText = "Adds a build to the given path on the server.")]
     public class CommandLineAddOptions
     {
-        [Value(0, MetaName = "VirtualPath", Required = true, HelpText = "Path, in the servers virtual file system, that this build should be added at, eg. 'MyProject/Nightly/cs12345'.")]        
+        [Value(0, MetaName = "VirtualPath", Required = true, HelpText = "Path, in the servers virtual file system, that this build should be added at, eg. 'MyProject/Nightly/cs12345'.")]
         public string VirtualPath { get; set; }
 
         [Value(1, MetaName = "LocalPath", Required = true, HelpText = "Path to a folder, on the local machine, that the build files exist in.")]

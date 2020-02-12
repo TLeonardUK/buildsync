@@ -19,17 +19,13 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Utils;
 using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Diagnostics;
 using System.Reflection;
-using BuildSync.Core.Utils;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace BuildSync.Core.Licensing
 {
@@ -109,7 +105,7 @@ namespace BuildSync.Core.Licensing
                 return false;
             }
 
-            byte[] Buffer = new byte[CertStream.Length];            
+            byte[] Buffer = new byte[CertStream.Length];
             int ReadBytes = CertStream.Read(Buffer, 0, (int)CertStream.Length);
             if (ReadBytes == 0)
             {

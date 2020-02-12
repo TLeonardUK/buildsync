@@ -19,18 +19,16 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Utils;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 using System;
-using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using BuildSync.Core.Utils;
-using Microsoft.CodeAnalysis.Scripting;
-using Microsoft.CodeAnalysis.CSharp.Scripting;
 
 namespace BuildSync.Core.Manifests
 {
@@ -55,7 +53,7 @@ namespace BuildSync.Core.Manifests
         public string Value { get; set; } = "";
         public List<string> Options { get; set; } = new List<string>();
         public float MinValue { get; set; } = -1000;
-        public float MaxValue { get; set; } =  1000;
+        public float MaxValue { get; set; } = 1000;
 
         public bool ConditionResult = false;
         public bool Internal = false;
@@ -417,17 +415,17 @@ namespace BuildSync.Core.Manifests
             Mode.Executable = @"Data\game.exe";
             Mode.WorkingDirectory = @"Data";
             Mode.Condition = "Environment.GetEnvironmentVariable(\"PATH\") != null && Directory.Exists(\"C:\\\\\")";
-            Mode.Variables.Add(new BuildLaunchVariable { Name ="HIDDEN_INT_TEST", FriendlyName="Hidden Int Test", FriendlyDescription="Should not show, condition should evaluate to false.", DataType=BuildLaunchVariableDataType.Int, Condition="false", Value="0", MinValue=0, MaxValue=100 });
-            Mode.Variables.Add(new BuildLaunchVariable { Name ="INT_TEST", FriendlyName="Int Test", FriendlyDescription="Test of integer variables.", DataType=BuildLaunchVariableDataType.Int, Condition="true", Value="0", MinValue=0, MaxValue=100 });
+            Mode.Variables.Add(new BuildLaunchVariable { Name = "HIDDEN_INT_TEST", FriendlyName = "Hidden Int Test", FriendlyDescription = "Should not show, condition should evaluate to false.", DataType = BuildLaunchVariableDataType.Int, Condition = "false", Value = "0", MinValue = 0, MaxValue = 100 });
+            Mode.Variables.Add(new BuildLaunchVariable { Name = "INT_TEST", FriendlyName = "Int Test", FriendlyDescription = "Test of integer variables.", DataType = BuildLaunchVariableDataType.Int, Condition = "true", Value = "0", MinValue = 0, MaxValue = 100 });
             Mode.Variables.Add(new BuildLaunchVariable { Name = "BOOL_TEST", FriendlyName = "Bool Test", FriendlyDescription = "Test of bool variables.", DataType = BuildLaunchVariableDataType.Bool, Condition = "true", Value = "true" });
-            Mode.Variables.Add(new BuildLaunchVariable { Name = "STRING_OPTIONS_TEST", FriendlyName = "String Options Test", FriendlyDescription = "Test of string options variables.", DataType = BuildLaunchVariableDataType.String, Condition ="true", Value="main", Options=new List<string> {"main", "debug", "something"} });
+            Mode.Variables.Add(new BuildLaunchVariable { Name = "STRING_OPTIONS_TEST", FriendlyName = "String Options Test", FriendlyDescription = "Test of string options variables.", DataType = BuildLaunchVariableDataType.String, Condition = "true", Value = "main", Options = new List<string> { "main", "debug", "something" } });
             Mode.Variables.Add(new BuildLaunchVariable { Name = "STRING_TEST", FriendlyName = "String Test", FriendlyDescription = "Test of string variables.", DataType = BuildLaunchVariableDataType.String, Condition = "true", Value = "main" });
             Mode.Variables.Add(new BuildLaunchVariable { Name = "FLOAT_TEST", FriendlyName = "Float Test", FriendlyDescription = "Test of float variables.", DataType = BuildLaunchVariableDataType.Float, Condition = "true", Value = "0.1", MinValue = 0.1f, MaxValue = 1.0f });
-            Mode.Arguments.Add(new BuildLaunchArgument { Value= "-bool_test", Condition="%BOOL_TEST%" });
-            Mode.Arguments.Add(new BuildLaunchArgument { Value= "-int_test=%INT_TEST%", Condition="%INT_TEST% > 0" });
-            Mode.Arguments.Add(new BuildLaunchArgument { Value= "-float_test=%FLOAT_TEST%", Condition="%FLOAT_TEST% > 0.1" });
-            Mode.Arguments.Add(new BuildLaunchArgument { Value= "-string_test=\"%STRING_TEST%\"", Condition="\"%STRING_TEST%\" != \"\"" });
-            Mode.Arguments.Add(new BuildLaunchArgument { Value= "-string_options_test=%STRING_OPTIONS_TEST%", Condition="\"%STRING_OPTIONS_TEST%\" != \"\"" });
+            Mode.Arguments.Add(new BuildLaunchArgument { Value = "-bool_test", Condition = "%BOOL_TEST%" });
+            Mode.Arguments.Add(new BuildLaunchArgument { Value = "-int_test=%INT_TEST%", Condition = "%INT_TEST% > 0" });
+            Mode.Arguments.Add(new BuildLaunchArgument { Value = "-float_test=%FLOAT_TEST%", Condition = "%FLOAT_TEST% > 0.1" });
+            Mode.Arguments.Add(new BuildLaunchArgument { Value = "-string_test=\"%STRING_TEST%\"", Condition = "\"%STRING_TEST%\" != \"\"" });
+            Mode.Arguments.Add(new BuildLaunchArgument { Value = "-string_options_test=%STRING_OPTIONS_TEST%", Condition = "\"%STRING_OPTIONS_TEST%\" != \"\"" });
 
             BuildInstallStep Step = new BuildInstallStep();
             Step.Executable = "exepath";
@@ -554,7 +552,7 @@ namespace BuildSync.Core.Manifests
                         StartIndex = EndIndex + 1;
                     }
                 }
-            } 
+            }
             while (ReplacementsPerformed > 0);
 
             return Result;
