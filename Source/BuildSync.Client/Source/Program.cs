@@ -146,7 +146,7 @@ namespace BuildSync.Client
 
         /// <summary>
         /// </summary>
-        public static bool AutoUpdateAvailable { get; } = false;
+        public static bool AutoUpdateAvailable { get; set; } = false;
 
         /// <summary>
         /// </summary>
@@ -582,7 +582,9 @@ namespace BuildSync.Client
                 ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(InternalUpdateDownload.ActiveManifestId);
                 if (Downloader != null && Downloader.State == ManifestDownloadProgressState.Complete && Downloader.Manifest != null)
                 {
-                    if (AppVersion.VersionString != VirtualFileSystem.GetNodeName(Downloader.Manifest.VirtualPath))
+                    int VersionNumber = StringUtils.ConvertSemanticVerisonNumber(VirtualFileSystem.GetNodeName(Downloader.Manifest.VirtualPath));
+
+                    if (AppVersion.VersionNumber < VersionNumber)
                     {
                         //Logger.Log(LogLevel.Info, LogCategory.Main, "Installing new update: {0}", Downloader.Manifest.VirtualPath);
                         AutoUpdateAvailable = true;

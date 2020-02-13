@@ -19,12 +19,14 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Utils;
+
 namespace BuildSync.Core
 {
     public class AppVersion
     {
         // AUTO GENERATION
-        public static int BuildVersion = 321;
+        public static int BuildVersion = 329;
         public static int MajorVersion = 1;
         public static int MinorVersion = 0;
         public static int PatchVersion = 0;
@@ -32,7 +34,7 @@ namespace BuildSync.Core
         public static int ProtocolVersion = 5;
         // END AUTO GENERATION
 
-        public static int VersionNumber = MajorVersion * 100000000 + MinorVersion * 1000000 + PatchVersion * 10000 + BuildVersion;
         public static string VersionString = MajorVersion + "." + MinorVersion + "." + PatchVersion + "." + BuildVersion;
+        public static int VersionNumber = StringUtils.ConvertSemanticVerisonNumber(VersionString);
     }
 }

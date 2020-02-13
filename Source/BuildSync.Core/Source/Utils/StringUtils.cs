@@ -32,6 +32,44 @@ namespace BuildSync.Core.Utils
         public static string[] SizePrefixes = {"bytes", "KB", "MB", "GB", "TB"};
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Value"></param>
+        /// <returns></returns>
+        public static int ConvertSemanticVerisonNumber(string Value)
+        {
+            string[] splits = Value.Split('.');
+            if (splits.Length != 4)
+            {
+                return 0;
+            }
+
+            int major = 0;
+            int minor = 0;
+            int patch = 0;
+            int build = 0;
+
+            if (!int.TryParse(splits[0], out major))
+            {
+                return 0;
+            }
+            if (!int.TryParse(splits[1], out minor))
+            {
+                return 0;
+            }
+            if (!int.TryParse(splits[2], out patch))
+            {
+                return 0;
+            }
+            if (!int.TryParse(splits[3], out build))
+            {
+                return 0;
+            }
+
+            return major * 100000000 + minor * 1000000 + patch * 10000 + build;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Seconds"></param>
         /// <returns></returns>
