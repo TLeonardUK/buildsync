@@ -21,6 +21,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using System.ComponentModel;
 
 namespace BuildSync.Core.Downloads
@@ -133,5 +134,10 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         public string VirtualPath { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonIgnore]
+        public ManifestDownloadProgressState PreviousDownloaderState { get; set; } = ManifestDownloadProgressState.Unknown;
     }
 }

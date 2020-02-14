@@ -241,6 +241,21 @@ namespace BuildSync.Client.Forms
 
                 MainDownloadList.Activate();
             }
+
+            Program.DownloadManager.OnDownloadFinished += (DownloadState State) => 
+            {
+                if (!State.VirtualPath.StartsWith("$")) // Ignore internal downloads.
+                {
+                    notifyIcon.ShowBalloonTip(5000, "Download Finished", "Finished downloading newest build for '" + State.Name + "'", ToolTipIcon.Info);
+                }
+            };
+            Program.DownloadManager.OnDownloadStarted += (DownloadState State) =>
+            {
+                if (!State.VirtualPath.StartsWith("$")) // Ignore internal downloads.
+                {
+                    notifyIcon.ShowBalloonTip(5000, "Download Started", "Started downloading new build for '" + State.Name + "'", ToolTipIcon.Info);
+                }
+            };
         }
 
         /// <summary>

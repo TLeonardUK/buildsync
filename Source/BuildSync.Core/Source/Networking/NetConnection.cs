@@ -271,7 +271,8 @@ namespace BuildSync.Core.Networking
         private ulong DisconnectTimeout;
 
         private ulong LastPingSendTime;
-        private const int PingInterval = 1 * 1000;
+        private bool PingOutstanding = false;
+        private const int PingInterval = 3 * 1000;
 
         public NetMessage_Handshake Handshake { get; internal set; }
         private bool HandshakeFailed;
@@ -581,6 +582,7 @@ namespace BuildSync.Core.Networking
             ShouldDisconnectDueToError = false;
             HandshakeFinished = false;
             Handshake = null;
+            PingOutstanding = false;
 
             lock (EventQueue)
             {
@@ -656,10 +658,12 @@ namespace BuildSync.Core.Networking
             if (!IsListening && IsReadyForData)
             {
                 ulong Elapsed = TimeUtils.Ticks - LastPingSendTime;
-                if (Elapsed > PingInterval)
+                if (Elapsed > PingInterval && !PingOutstanding)
                 {
                     Send(new NetMessage_Ping());
+
                     LastPingSendTime = TimeUtils.Ticks;
+                    PingOutstanding = true;
                 }
             }
 
@@ -1492,6 +1496,9 @@ namespace BuildSync.Core.Networking
                     }
 
                     Ping.Add(Elapsed);
+
+                    LastPingSendTime = TimeUtils.Ticks;
+                    PingOutstanding = true;
                 }
                 else if (Message is NetMessage_Handshake)
                 {

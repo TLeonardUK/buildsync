@@ -164,7 +164,14 @@ namespace BuildSync.Core.Utils
             if (PrefixIndex < SizePrefixes.Length)
             {
                 double Value = 0;
-                string PrefixRemoved = input.Substring(0, input.Length - Prefix.Length - 1);
+
+                int len = input.Length - Prefix.Length - 1;
+                if (len < 0)
+                {
+                    return 0;
+                }
+
+                string PrefixRemoved = input.Substring(0, len);
                 if (double.TryParse(PrefixRemoved, out Value))
                 {
                     return (long) (Value * Multiplier);
@@ -219,7 +226,14 @@ namespace BuildSync.Core.Utils
             if (PrefixIndex < RatePrefixesBytes.Length)
             {
                 double Value = 0;
-                string PrefixRemoved = input.Substring(0, input.Length - Prefix.Length - 1);
+                
+                int len = input.Length - Prefix.Length - 1;
+                if (len < 0)
+                {
+                    return 0;
+                }
+
+                string PrefixRemoved = input.Substring(0, len);
                 if (double.TryParse(PrefixRemoved, out Value))
                 {
                     return (long) (Value * Multiplier);

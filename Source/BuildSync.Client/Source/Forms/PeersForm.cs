@@ -146,7 +146,7 @@ namespace BuildSync.Client.Forms
                 Item.SubItems[8].Text = StringUtils.FormatAsSize((long) Peer.TargetInFlightData);
                 Item.SubItems[9].Text = StringUtils.FormatAsSize((long) Peer.CurrentInFlightData);
                 Item.SubItems[10].Text = string.Format("{0} ms", Peer.Ping);
-                Item.SubItems[10].Text = string.Format("{0} ms", Peer.BestPing);
+                Item.SubItems[11].Text = string.Format("{0} ms", Peer.BestPing);
             }
         }
 

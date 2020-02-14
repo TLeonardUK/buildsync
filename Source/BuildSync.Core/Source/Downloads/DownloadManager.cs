@@ -30,6 +30,16 @@ namespace BuildSync.Core.Downloads
 {
     /// <summary>
     /// </summary>
+    /// <param name="State"></param>
+    public delegate void DownloadStartedHandler(DownloadState State);
+
+    /// <summary>
+    /// </summary>
+    /// <param name="State"></param>
+    public delegate void DownloadFinishedHandler(DownloadState State);
+
+    /// <summary>
+    /// </summary>
     public class DownloadManager
     {
         /// <summary>
@@ -63,6 +73,16 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         public DownloadStateCollection States => StateCollection;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event DownloadStartedHandler OnDownloadStarted;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public event DownloadFinishedHandler OnDownloadFinished;
 
         /// <summary>
         /// </summary>
@@ -370,6 +390,11 @@ namespace BuildSync.Core.Downloads
                     Guid NewManifestId = GetTargetManifestForState(State);
                     if (NewManifestId != Guid.Empty)
                     {
+                        if (State.ActiveManifestId != NewManifestId && !State.Paused)
+                        {
+                            OnDownloadStarted?.Invoke(State);
+                        }
+
                         State.ActiveManifestId = NewManifestId;
                     }
                 }
@@ -405,6 +430,16 @@ namespace BuildSync.Core.Downloads
                     Downloader.Priority = State.Priority;
                     Downloader.InstallOnComplete = State.InstallAutomatically;
                     Downloader.InstallDeviceName = State.InstallDeviceName;
+
+                    // Have we finished this download?
+                    if (Downloader.State == ManifestDownloadProgressState.Complete && 
+                        State.PreviousDownloaderState != Downloader.State &&
+                        State.PreviousDownloaderState != ManifestDownloadProgressState.Unknown)
+                    {
+                        OnDownloadFinished?.Invoke(State);
+                    }
+
+                    State.PreviousDownloaderState = Downloader.State;
                 }
                 else
                 {

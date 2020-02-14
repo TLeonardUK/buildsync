@@ -60,6 +60,7 @@ namespace BuildSync.Core.Downloads
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ManifestDownloadProgressState
     {
+        Unknown,
         RetrievingManifest,
         Initializing,
         Downloading,
