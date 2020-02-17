@@ -25,12 +25,15 @@ namespace BuildSync.Core.Networking.Messages
     /// </summary>
     public class NetMessage_Handshake : NetMessage
     {
-        public int Version = AppVersion.ProtocolVersion;
-
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="serializer"></param>
+        public int Version = AppVersion.ProtocolVersion;
+
+        /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
+        /// </summary>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Version);

@@ -27,6 +27,9 @@ namespace BuildSync.Core.Networking.Messages
     /// </summary>
     public class NetMessage_GetBuildsResponse : NetMessage
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public struct BuildInfo
         {
             public string VirtualPath;
@@ -43,9 +46,9 @@ namespace BuildSync.Core.Networking.Messages
         public string RootPath = "";
 
         /// <summary>
-        /// 
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             int BuildCount = Builds.Length;

@@ -24,20 +24,27 @@ using System.Net;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Server
+    ///
+    ///     Sent to the server to inform them of any changes of address that should
+    ///     be used for connecting to the client for peer-to-peer transfers.
     /// </summary>
     public class NetMessage_ConnectionInfo : NetMessage
     {
         /// <summary>
+        ///     Address of this client to connect to for data transfers.
         /// </summary>
         public IPEndPoint PeerConnectionAddress = new IPEndPoint(IPAddress.Any, 0);
 
         /// <summary>
+        ///     Fully qualified name of user using the tool (eg. MY-DOMAIN\Username).
         /// </summary>
         public string Username = "";
 
         /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             string Address = PeerConnectionAddress.Address.ToString();

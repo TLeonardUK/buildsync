@@ -33,8 +33,9 @@ namespace BuildSync.Core.Networking.Messages
         public List<IPEndPoint> PeerAddresses = new List<IPEndPoint>();
 
         /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             int Count = PeerAddresses.Count;

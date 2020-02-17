@@ -21,6 +21,9 @@
 
 namespace BuildSync.Core.Networking.Messages
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class NetMessage_DeleteUser : NetMessage
     {
         /// <summary>
@@ -28,9 +31,9 @@ namespace BuildSync.Core.Networking.Messages
         public string Username = "";
 
         /// <summary>
-        /// 
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Username);

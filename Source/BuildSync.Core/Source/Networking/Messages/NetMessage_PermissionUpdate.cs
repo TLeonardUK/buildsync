@@ -32,9 +32,9 @@ namespace BuildSync.Core.Networking.Messages
         public UserPermissionCollection Permissions = new UserPermissionCollection();
 
         /// <summary>
-        /// 
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             if (serializer.IsLoading)

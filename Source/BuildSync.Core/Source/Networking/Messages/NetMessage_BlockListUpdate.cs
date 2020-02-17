@@ -24,16 +24,21 @@ using BuildSync.Core.Downloads;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Server and Client->Client    
+    ///
+    ///     Describes what manifests and blocks the sender has available for distribution.
     /// </summary>
     public class NetMessage_BlockListUpdate : NetMessage
     {
         /// <summary>
+        ///     State of all manifests and their blocks that are held locally.
         /// </summary>
         public BlockListState BlockState = new BlockListState();
 
         /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             BlockState.Serialize(serializer);

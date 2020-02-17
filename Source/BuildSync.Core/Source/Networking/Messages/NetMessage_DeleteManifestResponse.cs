@@ -24,6 +24,10 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Server->Client
+    ///
+    ///     Sent by the server in response to a <see cref="NetMessage_DeleteResponse" /> 
+    ///     confirming that the manifest has been deleted the the manifest registry.
     /// </summary>
     public class NetMessage_DeleteManifestResponse : NetMessage
     {
@@ -32,8 +36,9 @@ namespace BuildSync.Core.Networking.Messages
         public Guid ManifestId;
 
         /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref ManifestId);

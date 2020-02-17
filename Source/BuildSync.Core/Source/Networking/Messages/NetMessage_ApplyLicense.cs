@@ -24,13 +24,21 @@ using BuildSync.Core.Licensing;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client -> Server
+    ///
+    ///     Applies a given license to the server. Can only be sent by users with the ManageServers permission.
     /// </summary>
     public class NetMessage_ApplyLicense : NetMessage
     {
         /// <summary>
+        ///     License to apply to the server.
         /// </summary>
         public License License = new License();
 
+        /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
+        /// </summary>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref License.LicensedTo);

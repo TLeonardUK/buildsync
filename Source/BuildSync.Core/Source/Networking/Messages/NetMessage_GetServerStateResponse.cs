@@ -27,6 +27,9 @@ namespace BuildSync.Core.Networking.Messages
     /// </summary>
     public class NetMessage_GetServerStateResponse : NetMessage
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public class ClientState
         {
             public string Address;
@@ -48,9 +51,9 @@ namespace BuildSync.Core.Networking.Messages
         public List<ClientState> ClientStates = new List<ClientState>();
 
         /// <summary>
-        /// 
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref BandwidthLimit);

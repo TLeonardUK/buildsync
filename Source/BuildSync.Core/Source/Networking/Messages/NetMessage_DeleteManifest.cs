@@ -24,6 +24,11 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Server
+    ///
+    ///     Requests a manifest with the given ID to be deleted from the servers
+    ///     manifest registry. Can only be sent by users who have the ManageBuilds
+    ///     permission on the directory the manifest is contained within.
     /// </summary>
     public class NetMessage_DeleteManifest : NetMessage
     {
@@ -32,8 +37,9 @@ namespace BuildSync.Core.Networking.Messages
         public Guid ManifestId;
 
         /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref ManifestId);

@@ -22,40 +22,51 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Server
+    ///
+    ///     Periodically sent to server to inform server about the senders current status.
     /// </summary>
     public class NetMessage_ClientStateUpdate : NetMessage
     {
         /// <summary>
+        ///     Numbers of peers the sender is currently connected to.
         /// </summary>
         public int ConnectedPeerCount;
 
         /// <summary>
+        ///     The amount of disk space in bytes the sender is currently using to store builds.
         /// </summary>
         public long DiskUsage;
 
         /// <summary>
+        ///     The rate in bytes per second the sender is currently downloading data.
         /// </summary>
         public long DownloadRate;
 
         /// <summary>
-        /// </summary>
-        public long TotalDownloaded;
-
-        /// <summary>
-        /// </summary>
-        public long TotalUploaded;
-
-        /// <summary>
+        ///     The rate in bytes per second the sender is currently uploading data.
         /// </summary>
         public long UploadRate;
 
         /// <summary>
+        ///     The total amount in bytes that the sender has downloaded this session.
+        /// </summary>
+        public long TotalDownloaded;
+
+        /// <summary>
+        ///     The total amount in bytes that the sender has uploaded this session.
+        /// </summary>
+        public long TotalUploaded;
+
+        /// <summary>
+        ///     Semantic version of the client application the sender is currently running.
         /// </summary>
         public string Version = "";
 
         /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        /// <param name="serializer"></param>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref UploadRate);
