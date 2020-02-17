@@ -15,8 +15,11 @@
   </Topic>
   <Topic id="285156ed-01f1-44ff-8120-f04243c706d2" visible="True" noFile="true" isExpanded="true" title="Server Application">
     <Topic id="7ec222ea-e029-4c7f-ac3a-c5477721719c" visible="True" title="Setting up the server" />
-    <Topic id="4e5aa09d-c818-440d-9417-d7900a0787e0" visible="True" isSelected="true" title="Licensing the server" />
-    <Topic id="22ddb329-8476-4aec-9c69-5fb743c0787b" visible="True" />
+    <Topic id="4e5aa09d-c818-440d-9417-d7900a0787e0" visible="True" title="Licensing the server" />
+    <Topic id="22ddb329-8476-4aec-9c69-5fb743c0787b" visible="True" isExpanded="true">
+      <Topic id="f14fe8f1-ecb4-4f38-879c-706ca81d6ea7" visible="True" />
+      <Topic id="23f695a2-95ed-4d94-bd98-9a8b94b65326" visible="True" isSelected="true" />
+    </Topic>
     <Topic id="17314223-f8c3-49c8-8bcc-e3eced59189f" visible="True" isExpanded="true" title="Using the command line">
       <Topic id="e1c33ec0-1a5a-4668-adb6-9256d66cbbd9" visible="True" title="AddUser" />
       <Topic id="1fa52e1f-ffcc-4961-8524-dc102ec3d932" visible="True" title="RemoveUser" />

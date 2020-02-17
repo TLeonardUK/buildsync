@@ -90,7 +90,7 @@ namespace BuildSync.Core.Downloads
         /// <param name="VirtualPath"></param>
         /// <param name="Priority"></param>
         /// <param name="KeepUpToDate"></param>
-        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, BuildSelectionRule Rule, BuildSelectionFilter Filter, string SelectionFilterFilePath, string ScmWorkspaceLocation, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName)
+        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, BuildSelectionRule Rule, BuildSelectionFilter Filter, string SelectionFilterFilePath, string ScmWorkspaceLocation, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName, string InstallLocation)
         {
             DownloadState State = new DownloadState();
             State.Id = Guid.NewGuid();
@@ -100,6 +100,7 @@ namespace BuildSync.Core.Downloads
             State.UpdateAutomatically = AutomaticallyUpdate;
             State.InstallAutomatically = AutomaticallyInstall;
             State.InstallDeviceName = InstallDeviceName;
+            State.InstallLocation = InstallLocation;
             State.SelectionRule = Rule;
             State.SelectionFilter = Filter;
             State.SelectionFilterFilePath = SelectionFilterFilePath;
@@ -430,6 +431,7 @@ namespace BuildSync.Core.Downloads
                     Downloader.Priority = State.Priority;
                     Downloader.InstallOnComplete = State.InstallAutomatically;
                     Downloader.InstallDeviceName = State.InstallDeviceName;
+                    Downloader.InstallLocation = State.InstallLocation;
 
                     // Have we finished this download?
                     if (Downloader.State == ManifestDownloadProgressState.Complete && 

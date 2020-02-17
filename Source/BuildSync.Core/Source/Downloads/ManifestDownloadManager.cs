@@ -648,15 +648,37 @@ namespace BuildSync.Core.Downloads
         private void PerformInstallation(ManifestDownloadState State)
         {
             string ConfigFilePath = Path.Combine(State.LocalFolder, "buildsync.json");
+            bool IsScript = false;
             if (!File.Exists(ConfigFilePath))
             {
-                return;
+                ConfigFilePath = Path.Combine(State.LocalFolder, "buildsync.cs");
+                IsScript = true;
+
+                if (!File.Exists(ConfigFilePath))
+                {
+                    return;
+                }
             }
 
-            BuildSettings Settings;
-            if (!SettingsBase.Load(ConfigFilePath, out Settings))
+            BuildSettings Settings = null;
+            if (!IsScript)
             {
-                throw new Exception("The included buildsync.json file could not be loaded, it may be malformed.");
+                if (!SettingsBase.Load(ConfigFilePath, out Settings))
+                {
+                    throw new Exception("The included buildsync.json file could not be loaded, it may be malformed.");
+                }
+            }
+            else
+            {
+                Settings = new BuildSettings();
+                try
+                {
+                    Settings.ScriptSource = File.ReadAllText(ConfigFilePath);
+                }
+                catch (Exception Ex)
+                {
+                    throw new Exception(string.Format("Failed to read file '{0}' due to exception: {1}", ConfigFilePath, Ex.Message));
+                }
             }
 
             List<BuildLaunchMode> Modes;
@@ -668,6 +690,7 @@ namespace BuildSync.Core.Downloads
                 foreach (BuildLaunchMode Mode in Modes)
                 {
                     Mode.AddStringVariable("INSTALL_DEVICE_NAME", State.InstallDeviceName);
+                    Mode.AddStringVariable("INSTALL_LOCATION", State.InstallLocation);
                     Mode.AddStringVariable("BUILD_DIR", State.LocalFolder);
                 }
             }
@@ -825,7 +848,7 @@ namespace BuildSync.Core.Downloads
                             {
                                 try
                                 {
-                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0} directory: {1}", State.InstallDeviceName, State.LocalFolder);
+                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", State.InstallDeviceName, State.InstallLocation, State.LocalFolder);
                                     PerformInstallation(State);
                                     ChangeState(State, ManifestDownloadProgressState.Complete);
                                 }

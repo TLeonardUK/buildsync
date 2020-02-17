@@ -56,9 +56,11 @@
             this.label11 = new System.Windows.Forms.Label();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.scmFilePanel = new System.Windows.Forms.Panel();
+            this.scmFileTextBox = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
             this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
-            this.scmFileTextBox = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.installLocationTextBox = new System.Windows.Forms.TextBox();
             this.scmSettingsPanel.SuspendLayout();
             this.buildSelectionRulePanel.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
@@ -79,7 +81,7 @@
             // 
             this.addDownloadButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.addDownloadButton.Enabled = false;
-            this.addDownloadButton.Location = new System.Drawing.Point(538, 450);
+            this.addDownloadButton.Location = new System.Drawing.Point(538, 523);
             this.addDownloadButton.Margin = new System.Windows.Forms.Padding(2);
             this.addDownloadButton.Name = "addDownloadButton";
             this.addDownloadButton.Size = new System.Drawing.Size(95, 29);
@@ -93,7 +95,7 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(292, 438);
+            this.panel1.Location = new System.Drawing.Point(292, 511);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(341, 1);
@@ -198,7 +200,7 @@
             this.label5.ForeColor = System.Drawing.SystemColors.ControlDark;
             this.label5.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.label5.ImageIndex = 0;
-            this.label5.Location = new System.Drawing.Point(56, 448);
+            this.label5.Location = new System.Drawing.Point(56, 521);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(227, 40);
             this.label5.TabIndex = 17;
@@ -219,7 +221,7 @@
             this.label6.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.label6.ImageIndex = 1;
             this.label6.ImageList = this.LegendImages;
-            this.label6.Location = new System.Drawing.Point(12, 448);
+            this.label6.Location = new System.Drawing.Point(12, 521);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(38, 40);
             this.label6.TabIndex = 19;
@@ -232,7 +234,7 @@
             this.label7.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.label7.ImageIndex = 0;
             this.label7.ImageList = this.LegendImages;
-            this.label7.Location = new System.Drawing.Point(12, 496);
+            this.label7.Location = new System.Drawing.Point(12, 569);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(38, 34);
             this.label7.TabIndex = 21;
@@ -244,7 +246,7 @@
             this.label8.ForeColor = System.Drawing.SystemColors.ControlDark;
             this.label8.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.label8.ImageIndex = 0;
-            this.label8.Location = new System.Drawing.Point(56, 496);
+            this.label8.Location = new System.Drawing.Point(56, 569);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(227, 34);
             this.label8.TabIndex = 20;
@@ -374,10 +376,12 @@
             this.flowLayoutPanel1.Controls.Add(this.autoInstallCheckBox);
             this.flowLayoutPanel1.Controls.Add(this.label4);
             this.flowLayoutPanel1.Controls.Add(this.deviceTextBox);
+            this.flowLayoutPanel1.Controls.Add(this.label13);
+            this.flowLayoutPanel1.Controls.Add(this.installLocationTextBox);
             this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(292, 29);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(341, 404);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(341, 477);
             this.flowLayoutPanel1.TabIndex = 29;
             this.flowLayoutPanel1.WrapContents = false;
             // 
@@ -392,6 +396,14 @@
             this.scmFilePanel.Size = new System.Drawing.Size(337, 37);
             this.scmFilePanel.TabIndex = 30;
             this.scmFilePanel.Visible = false;
+            // 
+            // scmFileTextBox
+            // 
+            this.scmFileTextBox.Location = new System.Drawing.Point(0, 17);
+            this.scmFileTextBox.Name = "scmFileTextBox";
+            this.scmFileTextBox.Size = new System.Drawing.Size(337, 20);
+            this.scmFileTextBox.TabIndex = 25;
+            this.scmFileTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
             // 
             // label12
             // 
@@ -412,23 +424,38 @@
             this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1);
             this.downloadFileSystemTree.Name = "downloadFileSystemTree";
             this.downloadFileSystemTree.SelectedPath = "";
-            this.downloadFileSystemTree.Size = new System.Drawing.Size(271, 410);
+            this.downloadFileSystemTree.ShowInternal = false;
+            this.downloadFileSystemTree.Size = new System.Drawing.Size(271, 483);
             this.downloadFileSystemTree.TabIndex = 13;
-            this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
             this.downloadFileSystemTree.OnDateUpdated += new System.EventHandler(this.DataStateChanged);
+            this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
             // 
-            // scmFileTextBox
+            // label13
             // 
-            this.scmFileTextBox.Location = new System.Drawing.Point(0, 17);
-            this.scmFileTextBox.Name = "scmFileTextBox";
-            this.scmFileTextBox.Size = new System.Drawing.Size(337, 20);
-            this.scmFileTextBox.TabIndex = 25;
-            this.scmFileTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
+            this.label13.AutoSize = true;
+            this.label13.Dock = System.Windows.Forms.DockStyle.Top;
+            this.label13.Location = new System.Drawing.Point(0, 369);
+            this.label13.Margin = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(340, 13);
+            this.label13.TabIndex = 31;
+            this.label13.Text = "Location or workspace to install to";
+            // 
+            // installLocationTextBox
+            // 
+            this.installLocationTextBox.Dock = System.Windows.Forms.DockStyle.Top;
+            this.installLocationTextBox.Location = new System.Drawing.Point(2, 384);
+            this.installLocationTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 8);
+            this.installLocationTextBox.Name = "installLocationTextBox";
+            this.installLocationTextBox.Size = new System.Drawing.Size(338, 20);
+            this.installLocationTextBox.TabIndex = 32;
+            this.installLocationTextBox.Text = "buildsync";
+            this.installLocationTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
             // 
             // AddDownloadForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(644, 539);
+            this.ClientSize = new System.Drawing.Size(644, 612);
             this.Controls.Add(this.flowLayoutPanel1);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label8);
@@ -491,5 +518,7 @@
         private System.Windows.Forms.Panel scmFilePanel;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox scmFileTextBox;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.TextBox installLocationTextBox;
     }
 }

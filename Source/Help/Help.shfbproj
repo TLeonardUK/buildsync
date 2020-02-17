@@ -155,10 +155,12 @@
     <None Include="Content\Server\Command Line\ListUsers.aml" />
     <None Include="Content\Server\Command Line\RemoveUser.aml" />
     <None Include="Content\Server\Command Line\RevokePermission.aml" />
+    <None Include="Content\Server\CSharp Format.aml" />
     <None Include="Content\Server\Installing.aml" />
     <None Include="Content\Client\Managing Builds.aml" />
     <None Include="Content\FAQ.aml" />
     <CodeSnippets Include="Content\Code\BuildSync.snippets" />
+    <None Include="Content\Server\JSON Format.aml" />
     <None Include="Content\Server\Licensing.aml" />
   </ItemGroup>
   <ItemGroup>

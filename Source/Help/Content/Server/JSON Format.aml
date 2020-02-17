@@ -1,0 +1,341 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="23f695a2-95ed-4d94-bd98-9a8b94b65326" revisionNumber="1">
+  <developerReferenceWithoutSyntaxDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+    
+    <section>
+      <title>Format Overview</title>
+      <content>
+        <para>
+          The root of the file contains an array of Mode Structures, each of these modes are shown as individual launch options in the client (See <link xlink:href="8e364b92-402a-495e-92c6-a05414ade9ca"/>).
+        </para>
+        <para>Each mode structure defines the executables to run when the build is launched, along with any user configurable options and installation commands.</para>
+      </content>
+    </section>
+
+    <section>
+      <title>Conditions</title>
+      <content>
+        <para>The Mode, Variable, Argument structures each include a Condition field. This condition value is evaluated as inline C# returning a bool, it can be used to do things like check files or sdk's exist. If the condition fails the struct will not be used when launching.</para>
+        <alert class="security">
+          <para>As build configuration files can execute arbitrary code, care should be taken to ensure only trusted sources are permitted to publish builds.</para>
+        </alert>
+      </content>
+    </section>
+
+    <section>
+      <title>Argument Expansion</title>
+      <content>
+        <para>The Condition, Executable, WorkingDirectory, Arguments and Value fields all support argument expansion. This allows you to insert the value of environment variables, built-in variables or the values users set launch arguments to. This can be done by using the standard batch format %VARIABLE_NAME%.</para>
+        <para>The following built-in variables are available:</para>
+
+        <table>
+          <tableHeader>
+            <row>
+              <entry>
+                <para>Identifier</para>
+              </entry>
+              <entry>
+                <para>Description</para>
+              </entry>
+            </row>
+          </tableHeader>
+          <row>
+            <entry>
+              <para>BUILD_DIR</para>
+            </entry>
+            <entry>
+              <para>This is the full path to the root folder of the build being launched.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>INSTALL_DEVICE_NAME</para>
+            </entry>
+            <entry>
+              <para>This is the name of the device the user can set in the download settings on the client. This can be used to point to a specific devkit or device.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>INSTALL_LOCATION</para>
+            </entry>
+            <entry>
+              <para>This is the location the user can set in the download settings on the client. This can be used to point to things like a workspace on a devkit or the local install directory of a project/engine.</para>
+            </entry>
+          </row>
+        </table>
+
+      </content>
+    </section>
+
+    <section>
+      <title>struct Mode</title>
+      <content>
+        <codeReference>BuildJson#Mode</codeReference>
+
+        <table>
+          <tableHeader>
+            <row>
+              <entry>
+                <para>Field</para>
+              </entry>
+              <entry>
+                <para>Description</para>
+              </entry>
+            </row>
+          </tableHeader>
+          <row>
+            <entry>
+              <para>Name</para>
+            </entry>
+            <entry>
+              <para>Name of the mode, this is shown in the client UI, this should be a general descriptions, (eg. "Launch Game", "Launch Editor", etc)</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Executable</para>
+            </entry>
+            <entry>
+              <para>Path to the executable to run when this mode is launched. Argument expansion is permitted in this value.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>WorkingDirectory</para>
+            </entry>
+            <entry>
+              <para>Optional path to the working directory to run the executable in. If not provided the executable directory is used. Argument expansion is permitted in this value.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Condition</para>
+            </entry>
+            <entry>
+              <para>Evaluated inline C# condition. If evaluates to false the mode is not available to launch in the UI. Can be used to hide modes that require specific SDK's installed to use. Argument expansion is permitted in this value.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>InstallSteps</para>
+            </entry>
+            <entry>
+              <para>Optional array of individual install steps that will be run when the build finishes downloading and before being launched.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Variables</para>
+            </entry>
+            <entry>
+              <para>Optional array of variables to allow the user to configure in the client when launching this mode. Can be used to configure which arguments are passed into the executable.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Arguments</para>
+            </entry>
+            <entry>
+              <para>Optional array of arguments that are passed to the executable when launched. They are only passed to the executable if their condition evaluates to true. Evaluation occurs after user has configured variables so their values can be used as part of the conditions.</para>
+            </entry>
+          </row>
+        </table>
+
+      </content>
+    </section>
+
+    <section>
+      <title>struct Variable</title>
+      <content>
+        <codeReference>BuildJson#Variable</codeReference>
+
+        <table>
+          <tableHeader>
+            <row>
+              <entry>
+                <para>Field</para>
+              </entry>
+              <entry>
+                <para>Description</para>
+              </entry>
+            </row>
+          </tableHeader>
+          <row>
+            <entry>
+              <para>Name</para>
+            </entry>
+            <entry>
+              <para>Name of this variable, it should be a standard C# identifier. This can be used with argument expansion to insert this variable into conditions elsewhere in the file.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>DataType</para>
+            </entry>
+            <entry>
+              <para>Data type of this variable, it can be either a string, integer, float or boolean.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>FriendlyName</para>
+            </entry>
+            <entry>
+              <para>Name shown to the user in the UI when configuring this value.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>FriendlyDescription</para>
+            </entry>
+            <entry>
+              <para>Description shown to the user in the UI when configuring this value. Should describe what effect the variable has.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>FriendlyCategory</para>
+            </entry>
+            <entry>
+              <para>Category to use to group variables together within the UI.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Condition</para>
+            </entry>
+            <entry>
+              <para>Evaluated inline C# condition. If evaluates to false the variable is not available in the client UI. Can be used to hide variables that require specific things installed to use. Argument expansion is permitted in this value.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Value</para>
+            </entry>
+            <entry>
+              <para>Default value of this variable.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Options</para>
+            </entry>
+            <entry>
+              <para>Array of possible string values for this variable. If provided this variable will be configured as a combo box in the UI, rather than allowing the user to enter arbitrary values. Only valid for string data types.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>MinValue</para>
+            </entry>
+            <entry>
+              <para>Minimum value that this variable can be set to. Only valid for integer or float data types.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>MaxValue</para>
+            </entry>
+            <entry>
+              <para>Maximum value that this variable can be set to. Only valid for integer or float data types.</para>
+            </entry>
+          </row>
+        </table>
+
+      </content>
+    </section>
+
+    <section>
+      <title>struct Argument</title>
+      <content>
+        <codeReference>BuildJson#Argument</codeReference>
+
+        <table>
+          <tableHeader>
+            <row>
+              <entry>
+                <para>Field</para>
+              </entry>
+              <entry>
+                <para>Description</para>
+              </entry>
+            </row>
+          </tableHeader>
+          <row>
+            <entry>
+              <para>Value</para>
+            </entry>
+            <entry>
+              <para>Value that will be passed on the command line when the mode that contains it is launched. Argument expansion is supported.  Expansion occurs after variables have bene configured, so user configured variables can also be inserted into this.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Condition</para>
+            </entry>
+            <entry>
+              <para>Evaluated inline C# condition. If evaluates to false the argument will not be passed on the command line when launched. Argument expansion is supported. Expansion occurs after variables have bene configured, so user configured variables can also be inserted into this.</para>
+            </entry>
+          </row>
+        </table>
+
+      </content>
+    </section>
+
+    <section>
+      <title>struct InstallStep</title>
+      <content>
+        <codeReference>BuildJson#InstallStep</codeReference>
+
+        <table>
+          <tableHeader>
+            <row>
+              <entry>
+                <para>Field</para>
+              </entry>
+              <entry>
+                <para>Description</para>
+              </entry>
+            </row>
+          </tableHeader>
+          <row>
+            <entry>
+              <para>Executable</para>
+            </entry>
+            <entry>
+              <para>Path to the executable to run when this step is run. Argument expansion is permitted in this value.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>WorkingDirectory</para>
+            </entry>
+            <entry>
+              <para>Optional path to the working directory to run the executable in. If not provided the executable directory is used. Argument expansion is permitted in this value.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>Arguments</para>
+            </entry>
+            <entry>
+              <para>Arguments to pass along the command line.  Argument expansion is permitted in this value.</para>
+            </entry>
+          </row>
+        </table>
+
+      </content>
+    </section>
+
+    <section>
+      <title>Example</title>
+      <content>
+        <codeReference>BuildJson#MainExample</codeReference>
+      </content>
+    </section>
+
+  </developerReferenceWithoutSyntaxDocument>
+</topic>

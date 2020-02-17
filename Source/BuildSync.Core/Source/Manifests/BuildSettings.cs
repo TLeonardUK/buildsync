@@ -22,10 +22,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Linq;
 using System.IO;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using BuildSync.Core.Scripting;
 using BuildSync.Core.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
@@ -113,6 +118,89 @@ namespace BuildSync.Core.Manifests
         public string Value { get; set; } = "";
 
         /// <summary>
+        /// 
+        /// </summary>
+        internal PropertyInfo ScriptProperty = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void InitFromScript(ScriptLaunchMode Build, PropertyInfo PropInfo)
+        {
+            Internal = false;
+            Condition = "true";
+            ConditionResult = true;
+
+            ScriptProperty = PropInfo;
+
+            Name = PropInfo.Name;
+            FriendlyCategory = PropInfo.GetCustomAttribute<CategoryAttribute>()?.Category;
+            FriendlyDescription = PropInfo.GetCustomAttribute<DescriptionAttribute>()?.Description;
+            FriendlyName = PropInfo.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName;
+
+            if (PropInfo.PropertyType == typeof(string))
+            {
+                Value = PropInfo.GetValue(Build) as string;
+                DataType = BuildLaunchVariableDataType.String;
+            }
+            else if (PropInfo.PropertyType == typeof(int))
+            {
+                Value = ((int)PropInfo.GetValue(Build)).ToString();
+                DataType = BuildLaunchVariableDataType.Int;
+            }
+            else if (PropInfo.PropertyType == typeof(float))
+            {
+                Value = ((float)PropInfo.GetValue(Build)).ToString();
+                DataType = BuildLaunchVariableDataType.Float;
+            }
+            else if (PropInfo.PropertyType == typeof(bool))
+            {
+                Value = ((bool)PropInfo.GetValue(Build)).ToString();
+                DataType = BuildLaunchVariableDataType.Bool;
+            }
+
+            RangeAttribute Range = PropInfo.GetCustomAttribute<RangeAttribute>();
+            if (Range != null)
+            {
+                Type MaxType = Range.Maximum.GetType();
+                Type MinType = Range.Minimum.GetType();
+                if (MaxType == typeof(int))
+                {
+                    MaxValue = (int)Range.Maximum;
+                }
+                if (MaxType == typeof(float))
+                {
+                    MaxValue = (float)Range.Maximum;
+                }
+                if (MaxType == typeof(double))
+                {
+                    MaxValue = (float)((double)Range.Maximum);
+                }
+                if (MinType == typeof(int))
+                {
+                    MinValue = (int)Range.Minimum;
+                }
+                if (MinType == typeof(float))
+                {
+                    MinValue = (float)Range.Minimum;
+                }
+                if (MinType == typeof(double))
+                {
+                    MinValue = (float)((double)Range.Minimum);
+                }
+            }
+
+            OptionsAttribute Ops = PropInfo.GetCustomAttribute<OptionsAttribute>();
+            if (Ops != null)
+            {
+                foreach (string Val in Ops.Values)
+                {
+                    Options.Add(Val);
+                }
+            }
+        }
+
+        /// <summary>
         /// </summary>
         /// <returns></returns>
         public BuildLaunchVariable ShallowClone()
@@ -146,6 +234,9 @@ namespace BuildSync.Core.Manifests
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
     [Serializable]
     public class BuildInstallStep
     {
@@ -220,6 +311,97 @@ namespace BuildSync.Core.Manifests
         public string WorkingDirectory { get; set; } = "";
 
         /// <summary>
+        /// 
+        /// </summary>
+        public ScriptLaunchMode ScriptInstance = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Build"></param>
+        public void InitFromScript(ScriptLaunchMode Build)
+        {
+            ScriptInstance = Build;
+
+            Name = Build.Name;
+
+            foreach (PropertyInfo Info in Build.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+            {
+                if (Info.PropertyType != typeof(string) &&
+                    Info.PropertyType != typeof(int) &&
+                    Info.PropertyType != typeof(float) &&
+                    Info.PropertyType != typeof(bool))
+                {
+                    continue;                    
+                }
+
+                BuildLaunchVariable Arg = new BuildLaunchVariable();
+                Arg.InitFromScript(Build, Info);
+
+                Variables.Add(Arg);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void CopyArgumentsToScript()
+        {
+            foreach (BuildLaunchVariable Var in Variables)
+            {
+                if (Var.ScriptProperty != null)
+                {
+                    if (Var.ScriptProperty.PropertyType == typeof(string))
+                    {
+                        Var.ScriptProperty.SetValue(ScriptInstance, Var.Value);
+                    }
+                    else if (Var.ScriptProperty.PropertyType == typeof(int))
+                    {
+                        Var.ScriptProperty.SetValue(ScriptInstance, int.Parse(Var.Value));
+                    }
+                    else if (Var.ScriptProperty.PropertyType == typeof(float))
+                    {
+                        Var.ScriptProperty.SetValue(ScriptInstance, float.Parse(Var.Value));
+                    }
+                    else if (Var.ScriptProperty.PropertyType == typeof(bool))
+                    {
+                        Var.ScriptProperty.SetValue(ScriptInstance, bool.Parse(Var.Value));
+                    }
+                }
+            }            
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        public string GetVariableValue(string Name)
+        {
+            foreach (BuildLaunchVariable Var in Variables)
+            {   
+                if (Var.Name == Name)
+                {
+                    return Var.Value;   
+                }
+            }
+            return "";
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public ScriptBuild MakeScriptBuild()
+        {
+            ScriptBuild Build = new ScriptBuild();
+            Build.InstallDevice = GetVariableValue("INSTALL_DEVICE_NAME");
+            Build.InstallLocation = GetVariableValue("INSTALL_LOCATION");
+            Build.Directory = GetVariableValue("BUILD_DIR");
+            return Build;
+        }
+
+        /// <summary>
         /// </summary>
         public void AddStringVariable(string Name, string Value)
         {
@@ -287,16 +469,29 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public bool Install(string LocalFolder, ref string ResultMessage)
         {
-            if (InstallSteps.Count == 0)
+            if (ScriptInstance != null)
             {
+                CopyArgumentsToScript();
+                if (!ScriptInstance.Install(MakeScriptBuild()))
+                {
+                    ResultMessage = "Script failed to install, check console output window for details.";
+                    return false;
+                }
                 return true;
             }
-
-            foreach (BuildInstallStep Step in InstallSteps)
+            else
             {
-                if (!InstallStep(LocalFolder, ref ResultMessage, Step))
+                if (InstallSteps.Count == 0)
                 {
-                    return false;
+                    return true;
+                }
+
+                foreach (BuildInstallStep Step in InstallSteps)
+                {
+                    if (!InstallStep(LocalFolder, ref ResultMessage, Step))
+                    {
+                        return false;
+                    }
                 }
             }
 
@@ -307,92 +502,105 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public bool Launch(string LocalFolder, ref string ResultMessage)
         {
-            // This is now done in launch dialog or manifest downloader.
-            /*if (InstallSteps.Count != 0)
+            if (ScriptInstance != null)
             {
-                if (!Install(LocalFolder, ref ResultMessage))
+                CopyArgumentsToScript();
+                if (!ScriptInstance.Launch(MakeScriptBuild()))
                 {
+                    ResultMessage = "Script failed to launch, check console output window for details.";
                     return false;
                 }
-            }*/
-
-            string ExePath = BuildSettings.ExpandArguments(Executable, Variables);
-            if (!Path.IsPathRooted(ExePath))
-            {
-                ExePath = Path.Combine(LocalFolder, ExePath);
-            }
-
-            string WorkingDir = BuildSettings.ExpandArguments(WorkingDirectory, Variables);
-            if (WorkingDir.Length == 0)
-            {
-                WorkingDir = Path.GetDirectoryName(ExePath);
+                return true;
             }
             else
             {
-                if (!Path.IsPathRooted(WorkingDir))
+                // This is now done in launch dialog or manifest downloader.
+                /*if (InstallSteps.Count != 0)
                 {
-                    WorkingDir = Path.Combine(LocalFolder, WorkingDir);
+                    if (!Install(LocalFolder, ref ResultMessage))
+                    {
+                        return false;
+                    }
+                }*/
+
+                string ExePath = BuildSettings.ExpandArguments(Executable, Variables);
+                if (!Path.IsPathRooted(ExePath))
+                {
+                    ExePath = Path.Combine(LocalFolder, ExePath);
                 }
-            }
+
+                string WorkingDir = BuildSettings.ExpandArguments(WorkingDirectory, Variables);
+                if (WorkingDir.Length == 0)
+                {
+                    WorkingDir = Path.GetDirectoryName(ExePath);
+                }
+                else
+                {
+                    if (!Path.IsPathRooted(WorkingDir))
+                    {
+                        WorkingDir = Path.Combine(LocalFolder, WorkingDir);
+                    }
+                }
 
 #if SHIPPING
-            if (!File.Exists(ExePath))
-            {
-                ResultMessage = "Could not find executable, expected to be located at: " + ExePath;
-                return false;
-            }
+                if (!File.Exists(ExePath))
+                {
+                    ResultMessage = "Could not find executable, expected to be located at: " + ExePath;
+                    return false;
+                }
 
-            if (!Directory.Exists(WorkingDir))
-            {
-                ResultMessage = "Could not find working directory, expected at: " + WorkingDir;
-                return false;
-            }
+                if (!Directory.Exists(WorkingDir))
+                {
+                    ResultMessage = "Could not find working directory, expected at: " + WorkingDir;
+                    return false;
+                }
 #endif
 
-            string CompiledArguments = "";
-            try
-            {
-                CompiledArguments = CompileArguments();
-            }
-            catch (InvalidOperationException Ex)
-            {
-                ResultMessage = "Error encountered while evaluating launch settings:\n\n" + Ex.Message;
-                return false;
-            }
-
-            Logger.Log(LogLevel.Info, LogCategory.Main, "Executing: {0} {1}", ExePath, CompiledArguments);
-
-            try
-            {
-                ProcessStartInfo StartInfo = new ProcessStartInfo();
-                StartInfo.FileName = ExePath;
-                StartInfo.WorkingDirectory = WorkingDir;
-                StartInfo.Arguments = CompiledArguments;
-                //StartInfo.RedirectStandardOutput = true;
-                //StartInfo.RedirectStandardError = true;
-                StartInfo.UseShellExecute = false;
-                StartInfo.CreateNoWindow = true;
-
-                Process process = Process.Start(StartInfo);
-                //process.WaitForExit();
-
-                /*process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                string CompiledArguments = "";
+                try
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data);
-                };
-
-                process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                    CompiledArguments = CompileArguments();
+                }
+                catch (InvalidOperationException Ex)
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data);
-                };
+                    ResultMessage = "Error encountered while evaluating launch settings:\n\n" + Ex.Message;
+                    return false;
+                }
 
-                process.BeginErrorReadLine();
-                process.BeginOutputReadLine();*/
-            }
-            catch (Exception Ex)
-            {
-                ResultMessage = "Failed to start executable with error:\n\n" + Ex.Message;
-                return false;
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Executing: {0} {1}", ExePath, CompiledArguments);
+
+                try
+                {
+                    ProcessStartInfo StartInfo = new ProcessStartInfo();
+                    StartInfo.FileName = ExePath;
+                    StartInfo.WorkingDirectory = WorkingDir;
+                    StartInfo.Arguments = CompiledArguments;
+                    //StartInfo.RedirectStandardOutput = true;
+                    //StartInfo.RedirectStandardError = true;
+                    StartInfo.UseShellExecute = false;
+                    StartInfo.CreateNoWindow = true;
+
+                    Process process = Process.Start(StartInfo);
+                    //process.WaitForExit();
+
+                    /*process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data);
+                    };
+
+                    process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data);
+                    };
+
+                    process.BeginErrorReadLine();
+                    process.BeginOutputReadLine();*/
+                }
+                catch (Exception Ex)
+                {
+                    ResultMessage = "Failed to start executable with error:\n\n" + Ex.Message;
+                    return false;
+                }
             }
 
             return true;
@@ -490,7 +698,15 @@ namespace BuildSync.Core.Manifests
     [Serializable]
     public class BuildSettings : SettingsBase
     {
+        /// <summary>
+        ///     All launch modes for build.
+        /// </summary>
         public List<BuildLaunchMode> Modes { get; set; } = new List<BuildLaunchMode>();
+
+        /// <summary>
+        ///     If loaded from a cs script file, this is the source file.
+        /// </summary>
+        public string ScriptSource = "";
 
         /// <summary>
         ///     Evaluates all conditions and returns a list of launch modes that are valid for execution.
@@ -500,18 +716,74 @@ namespace BuildSync.Core.Manifests
         {
             List<BuildLaunchMode> Result = new List<BuildLaunchMode>();
 
-            foreach (BuildLaunchMode Mode in Modes)
+            // If we are defined by a script, compile it.
+            if (ScriptSource.Length > 0)
             {
-                if (Evaluate(Mode.Condition, null))
+                try
                 {
-                    BuildLaunchMode NewMode = Mode.DeepClone();
+                    ScriptOptions Options = ScriptOptions.Default
+                        .WithImports("System", "System.IO", "System.Math", "System.ComponentModel", "System.ComponentModel.DataAnnotations", "BuildSync.Core.Scripting", "BuildSync.Core.Utils")
+                        .WithReferences("System", "System.Data", "System.Windows.Forms", typeof(ScriptBuild).Assembly.Location)
+                        .WithAllowUnsafe(false)
+                        .WithOptimizationLevel(OptimizationLevel.Debug);
 
-                    foreach (BuildLaunchVariable Var in NewMode.Variables)
+                    Script<object> script = CSharpScript.Create(ScriptSource, Options);
+                    script.Compile();
+                    using (var Stream = new MemoryStream())
                     {
-                        Var.ConditionResult = Evaluate(Var.Condition, null);
-                    }
+                        var EmitResult = script.GetCompilation().Emit(Stream);
+                        if (EmitResult.Success)
+                        {
+                            Stream.Seek(0, SeekOrigin.Begin);
+                            Assembly LoadedAssembly = Assembly.Load(Stream.ToArray());
 
-                    Result.Add(NewMode);
+                            foreach (Type Type in LoadedAssembly.GetTypes())
+                            {
+                                if (typeof(ScriptLaunchMode).IsAssignableFrom(Type))
+                                {
+                                    BuildLaunchMode mode = new BuildLaunchMode();
+                                    mode.InitFromScript(Activator.CreateInstance(Type) as ScriptLaunchMode);
+
+                                    Result.Add(mode);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string Errors = string.Join("\n", EmitResult.Diagnostics.Where(diagnostic => diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error).Select(d => $"{d.Id}: {d.GetMessage()}"));
+
+                            Console.WriteLine("Failed to compile build settings script file.");
+                            Console.WriteLine(Errors);
+
+                            throw new InvalidOperationException("Failed to compile script: " + Errors);
+                        }
+                    }
+                }
+                catch (CompilationErrorException e)
+                {
+                    string Errors = string.Join(Environment.NewLine, e.Diagnostics);
+
+                    Console.WriteLine("Failed to compile build settings script file.");
+                    Console.WriteLine(Errors);
+
+                    throw new InvalidOperationException("Failed to compile build settings script file with errors:\n\n" + Errors);
+                }
+            }
+            else
+            {
+                foreach (BuildLaunchMode Mode in Modes)
+                {
+                    if (Evaluate(Mode.Condition, null))
+                    {
+                        BuildLaunchMode NewMode = Mode.DeepClone();
+
+                        foreach (BuildLaunchVariable Var in NewMode.Variables)
+                        {
+                            Var.ConditionResult = Evaluate(Var.Condition, null);
+                        }
+
+                        Result.Add(NewMode);
+                    }
                 }
             }
 

@@ -232,18 +232,49 @@ namespace BuildSync.Client.Forms
         private void OnShown(object sender, EventArgs e)
         {
             string ConfigFilePath = Path.Combine(Downloader.LocalFolder, "buildsync.json");
+            bool IsScript = false;
             if (!File.Exists(ConfigFilePath))
             {
-                MessageBox.Show("Build has no configured launch settings. Ensure a buildsync.json file is added to all builds.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ConfigFilePath = Path.Combine(Downloader.LocalFolder, "buildsync.cs");
+                IsScript = true;
+            }
+
+
+            // DEBUG DEBUG DEBUG
+            //ConfigFilePath = @"F:\buildsync\Docs\Example Scripts\UE4 Binaries.buildsync.cs";
+            //IsScript = true;
+            // DEBUG DEBUG DEBUG
+
+            if (!File.Exists(ConfigFilePath))
+            {
+                MessageBox.Show("Build has no configured launch settings. Ensure a buildsync.json or buildsync.cs file is added to all builds.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
                 return;
             }
 
-            if (!SettingsBase.Load(ConfigFilePath, out Settings))
+            if (!IsScript)
             {
-                MessageBox.Show("The included buildsync.json file could not be loaded, it may be malformed.", "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
+                if (!SettingsBase.Load(ConfigFilePath, out Settings))
+                {
+                    MessageBox.Show("The included buildsync.json file could not be loaded, it may be malformed. Check console output window for details.", "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Close();
+                    return;
+                }
+            }
+            else
+            {
+                Settings = new BuildSettings();
+                try
+                {
+                    Settings.ScriptSource = File.ReadAllText(ConfigFilePath);
+                }
+                catch (Exception Ex)
+                {
+                    Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to read file '{0}' due to exception: {1}", ConfigFilePath, Ex.Message);
+                    MessageBox.Show("The included buildsync.cs file could not be loaded, it may be malformed. Check console output window for details.", "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Close();
+                    return;
+                }
             }
 
             List<BuildLaunchMode> Modes;
@@ -255,6 +286,7 @@ namespace BuildSync.Client.Forms
                 foreach (BuildLaunchMode Mode in Modes)
                 {
                     Mode.AddStringVariable("INSTALL_DEVICE_NAME", DownloadState.InstallDeviceName);
+                    Mode.AddStringVariable("INSTALL_LOCATION", DownloadState.InstallLocation);
                     Mode.AddStringVariable("BUILD_DIR", Downloader.LocalFolder);
                 }
             }

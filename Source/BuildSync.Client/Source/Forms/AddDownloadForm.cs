@@ -57,6 +57,7 @@ namespace BuildSync.Client.Forms
                 EditState.UpdateAutomatically = autoUpdateCheckBox.Checked;
                 EditState.InstallAutomatically = autoInstallCheckBox.Checked;
                 EditState.InstallDeviceName = deviceTextBox.Text;
+                EditState.InstallLocation = installLocationTextBox.Text;
                 EditState.VirtualPath = downloadFileSystemTree.SelectedPath;
                 EditState.SelectionRule = (BuildSelectionRule) selectionRuleComboBox.SelectedIndex;
                 EditState.SelectionFilter = (BuildSelectionFilter) selectionFilterComboBox.SelectedIndex;
@@ -75,7 +76,8 @@ namespace BuildSync.Client.Forms
                     workspaceComboBox.Text,
                     autoUpdateCheckBox.Checked,
                     autoInstallCheckBox.Checked,
-                    deviceTextBox.Text
+                    deviceTextBox.Text,
+                    installLocationTextBox.Text
                 );
             }
 
@@ -157,6 +159,7 @@ namespace BuildSync.Client.Forms
                 downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
 
                 deviceTextBox.Text = EditState.InstallDeviceName;
+                installLocationTextBox.Text = EditState.InstallLocation;
                 downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
                 addDownloadButton.Text = "Save Changes";
             }

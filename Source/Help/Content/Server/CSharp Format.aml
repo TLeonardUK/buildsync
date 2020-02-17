@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<topic id="f14fe8f1-ecb4-4f38-879c-706ca81d6ea7" revisionNumber="1">
+  <developerReferenceWithoutSyntaxDocument
+    xmlns="http://ddue.schemas.microsoft.com/authoring/2003/5"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+    
+    <section>
+      <title>Format Overview</title>
+      <content>
+        <para>
+          The file takes on the form of a CSharp script, without namespaces or using directives. It has access to the System, System.Data, System.Windows.Forms and BuildSync assemblies.
+        </para>
+        <para>
+          Within the script you can define any number of classes deriving from ScriptLaunchMode, these define the launch options available to the user. 
+        </para>
+      </content>
+    </section>
+
+    <section>
+      <title>ScriptLaunchMode Archetypes</title>
+      <content>
+        <para>
+          Each launch mode class can contain any number of public properties which are exposed to the user when launching a build. They can be decorated with standard attributes (DisplayName, Category, Desription, Range, Options, etc) to define what values they can hold and how they are displayed to the user.
+          Currently the only data types supported are string, int bool and float. This is to keep consistency with the json format.
+        </para>
+        <para>
+          Each launch mode class must contains three functions, the constructor, the overriden Install method and the overridden Launch method. 
+        </para>
+        <para>
+          The constructor should set the base class properties Name (which is the display name shown to the end-user) and IsAvailable (which determines if its shown at all).
+        </para>
+        <para>
+          The install method takes an instance of ScriptBuild, which defines several properties of the build to install. It returns true or false depending on if its succeeded or not.
+        </para>
+        <para>
+          The launch method takes an instance of ScriptBuild, which defines several properties of the build to launch. It returns true or false depending on if its succeeded or not.
+        </para>
+      </content>
+    </section>
+
+    <section>
+      <title>struct ScriptBuild</title>
+      <content>
+        <codeReference>BuildCSharp#ScriptBuild</codeReference>
+
+        <table>
+          <tableHeader>
+            <row>
+              <entry>
+                <para>Field</para>
+              </entry>
+              <entry>
+                <para>Type</para>
+              </entry>
+              <entry>
+                <para>Description</para>
+              </entry>
+            </row>
+          </tableHeader>
+          <row>
+            <entry>
+              <para>Directory</para>
+            </entry>
+            <entry>
+              <para>string</para>
+            </entry>
+            <entry>
+              <para>Path to directory build was downloaded to.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>InstallDevice</para>
+            </entry>
+            <entry>
+              <para>string</para>
+            </entry>
+            <entry>
+              <para>User defined device name or ip that build should be installed to.</para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <para>InstallLocation</para>
+            </entry>
+            <entry>
+              <para>string</para>
+            </entry>
+            <entry>
+              <para>User defined location or workspace name that build should be installed to.</para>
+            </entry>
+          </row>
+        </table>
+
+      </content>
+    </section>
+
+    <section>
+      <title>class ScriptUtils</title>
+      <content>
+        <para>
+          The class ScriptUtils is provided to make writing scripts easier. It contains a variety of different helper functions to perform a lot of typical actions. See source code for more information, a potentially-out-of-date function list is available below.
+        </para>
+        <codeReference>BuildCSharp#ScriptUtils</codeReference>
+      </content>
+    </section>
+    
+    <section>
+      <title>Debugging scripts</title>
+      <content>
+        <para>
+          Limited debugging support is available at the moment. If you try to launch a build with an invalid script an error popup will be given describing any syntax or similar errors. Further information is written to the console output window.
+        </para>
+        <para>
+          Its also possible to use the global logger to emit information to the console output window, which can help track down any potential problems. Use of Console.Write* functions are discouraged as they are not visible in the console output window.
+        </para>
+        <codeReference>BuildCSharp#Logger</codeReference>
+      </content>
+    </section>
+    
+    <section>
+      <title>Example</title>
+      <content>
+        <codeReference>BuildCSharp#MainExample</codeReference>
+      </content>
+    </section>
+
+  </developerReferenceWithoutSyntaxDocument>
+</topic>

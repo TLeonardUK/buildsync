@@ -94,6 +94,10 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
+        public string InstallLocation = "";
+
+        /// <summary>
+        /// </summary>
         public bool Installed = false;
 
         /// <summary>

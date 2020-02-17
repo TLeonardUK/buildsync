@@ -550,7 +550,7 @@ namespace BuildSync.Client
 
             if (InternalUpdateDownload == null)
             {
-                InternalUpdateDownload = DownloadManager.AddDownload(UpdateDownloadName, "$Internal$/Updates", 2, BuildSelectionRule.Newest, BuildSelectionFilter.None, "", "", true, false, "");
+                InternalUpdateDownload = DownloadManager.AddDownload(UpdateDownloadName, "$Internal$/Updates", 2, BuildSelectionRule.Newest, BuildSelectionFilter.None, "", "", true, false, "", "");
             }
 
             // Make sure we have to get the latest manifest id before updating.

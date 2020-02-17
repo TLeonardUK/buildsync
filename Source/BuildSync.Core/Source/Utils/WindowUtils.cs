@@ -53,6 +53,11 @@ namespace BuildSync.Core.Utils
             public int cChildren;
             public IntPtr lParam;
         }
+        public enum SymbolicLink
+        {
+            File = 0,
+            Directory = 1
+        }
 
         public const int SW_RESTORE = 9;
         public const int TV_FIRST = 0x1100;
@@ -225,5 +230,8 @@ namespace BuildSync.Core.Utils
 
         [DllImport("User32.dll")]
         private static extern bool ShowWindow(IntPtr handle, int nCmdShow);
+        
+        [DllImport("kernel32.dll")]
+        public static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, SymbolicLink dwFlags);
     }
 }

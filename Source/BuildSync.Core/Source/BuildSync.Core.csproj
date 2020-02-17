@@ -110,6 +110,7 @@
     <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Collections.Immutable.1.5.0\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
     </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Memory.4.5.3\lib\netstandard2.0\System.Memory.dll</HintPath>
@@ -210,12 +211,17 @@
     <Compile Include="Scm\IScmProvider.cs" />
     <Compile Include="Scm\Perforce\PerforceScmProvider.cs" />
     <Compile Include="Scm\ScmManager.cs" />
+    <Compile Include="Scripting\ScriptBuild.cs" />
+    <Compile Include="Scripting\ScriptLaunchMode.cs" />
+    <Compile Include="Scripting\ScriptUtils.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />
     <Compile Include="Utils\CompareUtils.cs" />
     <Compile Include="Utils\InstallUtils.cs" />
+    <Compile Include="Utils\JunctionPoint.cs" />
     <Compile Include="Utils\ListUtils.cs" />
     <Compile Include="Utils\ListViewColumnSorter.cs" />
+    <Compile Include="Utils\OptionsAttribute.cs" />
     <Compile Include="Utils\RateTracker.cs" />
     <Compile Include="Utils\CommandIPC.cs" />
     <Compile Include="Utils\Crc32.cs" />

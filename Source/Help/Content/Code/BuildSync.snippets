@@ -125,5 +125,89 @@
 }
     </sampleCode>
   </item>
+
+  <item id="BuildCSharp#ScriptBuild">
+    <sampleCode language="CSharp">
+        public class ScriptBuild
+        {
+          public string Directory;
+          public string InstallDevice;
+          public string InstallLocation;
+        }
+    </sampleCode>
+  </item>
+
+  <item id="BuildCSharp#ScriptUtils">
+    <sampleCode language="CSharp">
+      public static class ScriptUtils
+      {
+        public static bool CreateJunction(string SourceDirectory, string TargetDirectory);
+        public static bool Run(string ExePath, string WorkingDirectory, string Arguments);
+        public static int RunAndWait(string ExePath, string WorkingDirectory, string Arguments);
+      }
+    </sampleCode>
+  </item>
+
+  <item id="BuildCSharp#Logger">
+    <sampleCode language="CSharp">
+      Logger.Log(LogLevel.Info, LogCategory.Script, "Doing XYZ");
+    </sampleCode>
+  </item>
+  
+  <item id="BuildCSharp#MainExample">
+    <sampleCode language="CSharp">
+public class LaunchGame : ScriptLaunchMode
+{
+	[DisplayName("Launch in windowed mode?")]
+	[Description("Causes the game to launch in windowed rather than fullscreen.")]
+	[Category("Launch Settings")]
+	public bool USE_WINDOWED_MODE { get; set; } = false;
+	
+	[DisplayName("Controller index to use")]
+	[Description("If multiple controllers are installed the one with the given index will be given focus in the game.")]
+	[Category("Launch Settings")]
+	[Range(0, 4)]
+	public int CONTROLLER_INDEX { get; set; } = 0;
+
+	[DisplayName("Launch into map")]
+	[Description("If set this is the map that will be loaded directly into, bypassing menu screens.")]
+	[Category("Launch Settings")]
+	[Options("", "traversal_sandbox", "player_gym", "final_boss")]
+	public string START_MAP { get; set; } = "";
+	
+	public LaunchWindows()
+	{
+		Name = "Launch Game";			
+		IsAvailable = Environment.GetEnvironmentVariable("MY_SDK_ROOT");
+	}
+
+	public override bool Install(ScriptBuild Build)
+	{
+		Logger.Log(LogLevel.Info, LogCategory.Script, "Starting installation.");
+
+		string SdkPath = Environment.GetEnvironmentVariable("MY_SDK_ROOT");
+
+		return ScriptUtils.Run(Path.Combine(SdkPath, "install-package.exe"), "", Path.Combine(Build.Directory, "console-package.pkg"));
+	}
+
+	public override bool Launch(ScriptBuild Build)
+	{
+		Logger.Log(LogLevel.Info, LogCategory.Script, "Starting launch.");
+
+		string SdkPath = Environment.GetEnvironmentVariable("MY_SDK_ROOT");
+
+		string PackagePath = Path.Combine(Build.Directory, "console-package.pkg");
+		string CommandLine = "";
+
+		if (USE_WINDOWED_MODE) 			CommandLine += " -windowed -resx=1280 -resy=720";
+		if (START_MAP != "") 			CommandLine += " -start-map=" + START_MAP;
+		if (CONTROLLER_INDEX > 0) 		CommandLine += " -controller_index=" + CONTROLLER_INDEX;
+	
+		return ScriptUtils.Run(PackagePath, Build.Directory, CommandLine);
+	}
+}	
+    </sampleCode>
+  </item>
+
 </examples>
 

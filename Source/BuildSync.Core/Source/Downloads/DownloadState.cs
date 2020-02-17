@@ -89,7 +89,11 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
-        public string InstallDeviceName { get; set; }
+        public string InstallDeviceName { get; set; } = "";
+
+        /// <summary>
+        /// </summary>
+        public string InstallLocation { get; set; } = "";
 
         /// <summary>
         /// </summary>
@@ -113,7 +117,7 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
-        public string ScmWorkspaceLocation { get; set; }
+        public string ScmWorkspaceLocation { get; set; } = "";
 
         /// <summary>
         /// </summary>
@@ -121,7 +125,7 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
-        public string SelectionFilterFilePath { get; set; }
+        public string SelectionFilterFilePath { get; set; } = "";
 
         /// <summary>
         /// </summary>
@@ -133,7 +137,7 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
-        public string VirtualPath { get; set; }
+        public string VirtualPath { get; set; } = "";
 
         /// <summary>
         /// </summary>

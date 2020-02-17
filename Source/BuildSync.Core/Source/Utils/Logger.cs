@@ -49,7 +49,8 @@ namespace BuildSync.Core.Utils
         IO,
         Users,
         Licensing,
-        Scm
+        Scm,
+        Script
     }
 
     /// <summary>
