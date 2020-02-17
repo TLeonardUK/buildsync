@@ -158,6 +158,12 @@ namespace BuildSync.Core.Users
                         // If permission path is a sub-path of this path, we are good to go.
                         if (AllowIfHavePermissionToSubPath)
                         {
+                            // We can early out if we have root permission.
+                            if (SplitPath.Length == 0 || (SplitPath.Length == 1 && SplitPath[0] == ""))
+                            {
+                                return true;
+                            }
+
                             if (Permission.VirtualPathSplit.Length >= SplitPath.Length)
                             {
                                 bool IsValid = true;

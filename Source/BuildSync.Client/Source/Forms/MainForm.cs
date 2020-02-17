@@ -827,7 +827,7 @@ namespace BuildSync.Client.Forms
             manageBuildsToolStripMenuItem.Enabled = Connected;
             if (Connected)
             {
-                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, ""))
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, "", false, true))
                 {
                     manageBuildsToolStripMenuItem.Enabled = false;
                     manageBuildsToolStripMenuItem.Text = "Build Manager (Permission Required)";

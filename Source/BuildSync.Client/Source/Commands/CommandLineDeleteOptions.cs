@@ -58,7 +58,7 @@ namespace BuildSync.Client.Commands
                 return;
             }
 
-            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, ""))
+            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, "", false, true))
             {
                 IpcClient.Respond("FAILED: Permission denied to manage builds.");
                 return;
