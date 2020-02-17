@@ -34,6 +34,7 @@
             this.RemoveBuildButton = new System.Windows.Forms.Button();
             this.ButtonImageList = new System.Windows.Forms.ImageList(this.components);
             this.AddBuildButton = new System.Windows.Forms.Button();
+            this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // downloadFileSystemTree
@@ -83,6 +84,12 @@
             this.AddBuildButton.UseVisualStyleBackColor = true;
             this.AddBuildButton.Click += new System.EventHandler(this.AddBuildClicked);
             // 
+            // UpdateTimer
+            // 
+            this.UpdateTimer.Enabled = true;
+            this.UpdateTimer.Interval = 1000;
+            this.UpdateTimer.Tick += new System.EventHandler(this.UpdateTimer_Tick);
+            // 
             // ManageBuildsForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -110,5 +117,6 @@
         private System.Windows.Forms.Button RemoveBuildButton;
         private System.Windows.Forms.Button AddBuildButton;
         private System.Windows.Forms.ImageList ButtonImageList;
+        private System.Windows.Forms.Timer UpdateTimer;
     }
 }

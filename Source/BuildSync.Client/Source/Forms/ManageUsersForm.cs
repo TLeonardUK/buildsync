@@ -221,6 +221,12 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void RefreshUserList(object sender, EventArgs e)
         {
+            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageUsers, "", false, true))
+            {
+                Hide();
+                return;
+            }
+
             if (Visible)
             {
                 Program.NetClient.RequestUserList();

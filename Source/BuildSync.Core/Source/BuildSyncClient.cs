@@ -1601,7 +1601,7 @@ namespace BuildSync.Core
             {
                 NetMessage_GetUsersResponse Msg = BaseMessage as NetMessage_GetUsersResponse;
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved users list with {0} users.", Msg.Users.Count);
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved users list with {0} users.", Msg.Users.Count);
 
                 OnUserListRecieved?.Invoke(Msg.Users);
             }

@@ -24,6 +24,7 @@ using System.Collections;
 using System.Windows.Forms;
 using BuildSync.Core.Controls.Graph;
 using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -147,6 +148,12 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void RefreshTicked(object sender, EventArgs e)
         {
+            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageServer, "", false, true))
+            {
+                Hide();
+                return;
+            }
+
             Program.NetClient.RequestServerState();
         }
 

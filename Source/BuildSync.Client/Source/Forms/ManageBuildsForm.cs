@@ -21,6 +21,7 @@
 
 using System;
 using System.Windows.Forms;
+using BuildSync.Core.Users;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
@@ -84,6 +85,20 @@ namespace BuildSync.Client.Forms
         private void ValidateState()
         {
             RemoveBuildButton.Enabled = downloadFileSystemTree.SelectedManifestId != Guid.Empty;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void UpdateTimer_Tick(object sender, EventArgs e)
+        {
+            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, "", false, true))
+            {
+                Hide();
+                return;
+            }
         }
     }
 }

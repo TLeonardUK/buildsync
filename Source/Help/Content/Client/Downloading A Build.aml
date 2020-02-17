@@ -24,6 +24,7 @@
             <alert class="note">The <ui>Automatically keep up to date</ui> will automatically download the newest build in the selected build container when it is published.</alert>
             <alert class="note">The <ui>Automatically install</ui> will automatically run the install steps in the build configuration (See <link xlink:href="22ddb329-8476-4aec-9c69-5fb743c0787b"/>) when a download completes.</alert>
             <alert class="note">The <ui>Device name</ui> is the hostname or ip of the device that the build will install and run on when launched. For example when launching a console build this would be the devkit IP.</alert>
+            <alert class="note">The <ui>Install location</ui> is the location on disk on on the target device that the build will be installed on. For example when launching a console build this could be the workspace, or on a editor binaries build this could by the projects binaries folder.</alert>
             <alert class="note">The <ui>Build selection rule</ui> determines what build in a build container is selected for download.</alert>
             <alert class="note">The <ui>Build selection filter</ui> filters which builds in a build container are valid for selection as a download.</alert>
             <alert class="note">The <ui>Soure control workspace</ui> determines which workspace is used for any SCM dependent build selection filters. A workspace can be defined in the <ui>Source Control</ui> section of the <ui>Preferences</ui> window.</alert>
