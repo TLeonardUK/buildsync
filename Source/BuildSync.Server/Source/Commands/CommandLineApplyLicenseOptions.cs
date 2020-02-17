@@ -25,14 +25,22 @@ using CommandLine;
 
 namespace BuildSync.Server.Commands
 {
+    /// <summary>
+    ///     CLI command for applying a license file to the server.
+    /// </summary>
     [Verb("applylicense", HelpText = "Applys a local license file to the server.")]
     public class CommandLineApplyLicenseOptions
     {
+        /// <summary>
+        ///     Path on the local machine of the license file to apply.
+        /// </summary>
         [Value(0, MetaName = "FilePath", Required = true, HelpText = "Path on the local machine of the license file to apply.")]
         public string FilePath { get; set; } = "";
 
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             License license = License.Load(FilePath);

@@ -26,20 +26,34 @@ using CommandLine;
 
 namespace BuildSync.Server.Commands
 {
+    /// <summary>
+    ///     CLI command for granting an access permission to the given user on the server.
+    /// </summary>
     [Verb("grantpermission", HelpText = "Adds the given permission type to a user.")]
     public class CommandLineGrantPermissionOptions
     {
+        /// <summary>
+        ///     Virtual path that permission is valid on. All decendents also have permission.
+        /// </summary>
         [Value(2, MetaName = "Path", Required = false, HelpText = "Virtual path that permission is valid on. All decendents also have permission.")]
         public string Path { get; set; } = "";
 
+        /// <summary>
+        ///     Type of permission that should be granted.
+        /// </summary>
         [Value(1, MetaName = "Permission", Required = true, HelpText = "Type of permission that should be granted.")]
         public string Permission { get; set; } = "";
 
+        /// <summary>
+        ///     Username of user to give permission to, if on a domain the domain should be included in format Domain\\Username.
+        /// </summary>
         [Value(0, MetaName = "Username", Required = true, HelpText = "Username of user to give permission to, if on a domain the domain should be included in format Domain\\Username.")]
         public string Username { get; set; } = "";
 
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             UserPermissionType PermissionType;

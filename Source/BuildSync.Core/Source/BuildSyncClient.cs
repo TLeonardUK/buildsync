@@ -1485,7 +1485,7 @@ namespace BuildSync.Core
             {
                 NetMessage_BlockListUpdate Msg = BaseMessage as NetMessage_BlockListUpdate;
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved block list update from: {0}", Connection.Address.ToString());
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved block list update from: {0}", Connection.Address.ToString());
 
                 Peer peer = GetPeerByConnection(Connection);
                 if (peer != null)

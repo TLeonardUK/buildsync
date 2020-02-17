@@ -25,14 +25,22 @@ using CommandLine;
 
 namespace BuildSync.Server.Commands
 {
+    /// <summary>
+    ///     CLI command for removing a user who was previously added to the server.
+    /// </summary>
     [Verb("removeuser", HelpText = "Removes a user that can perform admin actions on the server.")]
     public class CommandLineRemoveUserOptions
     {
+        /// <summary>
+        ///     Username of user to remove, if on a domain the domain should be included in format Domain\\Username.
+        /// </summary>
         [Value(0, MetaName = "Username", Required = true, HelpText = "Username of user to remove, if on a domain the domain should be included in format Domain\\Username.")]
         public string Username { get; set; } = "";
 
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             User ExistingUser = Program.UserManager.FindUser(Username);

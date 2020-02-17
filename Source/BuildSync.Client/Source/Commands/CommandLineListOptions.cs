@@ -28,19 +28,21 @@ using CommandLine;
 namespace BuildSync.Client.Commands
 {
     /// <summary>
-    /// 
+    ///     CLI command for listing all builds within a given directory in the server manifest registry.
     /// </summary>
     [Verb("list", HelpText = "Lists all builds that exists at a given path on the server.")]
     public class CommandLineListOptions
     {
         /// <summary>
-        /// 
+        ///     Path, in the servers virtual file system, whose contents should be listed.
         /// </summary>
         [Value(0, MetaName = "VirtualPath", Required = false, HelpText = "Path, in the servers virtual file system, whose contents should be listed.")]
         public string VirtualPath { get; set; } = "";
 
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             VirtualPath = VirtualFileSystem.Normalize(VirtualPath);

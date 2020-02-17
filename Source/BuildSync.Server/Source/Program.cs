@@ -36,6 +36,9 @@ using CommandLine;
 
 namespace BuildSync.Server
 {
+    /// <summary>
+    ///     Application entry class.
+    /// </summary>
     public static class Program
     {
         /// <summary>

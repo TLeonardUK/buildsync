@@ -29,19 +29,21 @@ using CommandLine;
 namespace BuildSync.Client.Commands
 {
     /// <summary>
-    /// 
+    ///     CLI command for deleting a build that has previously been published to the server manifest registry.
     /// </summary>
     [Verb("delete", HelpText = "Deletes a build at the given path from the server.")]
     public class CommandLineDeleteOptions
     {
         /// <summary>
-        /// 
+        ///     Path, in the servers virtual file system, of the build that should be deleted.
         /// </summary>
         [Value(0, MetaName = "VirtualPath", Required = true, HelpText = "Path, in the servers virtual file system, of the build that should be deleted.")]
         public string VirtualPath { get; set; }
 
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             VirtualPath = VirtualFileSystem.Normalize(VirtualPath);

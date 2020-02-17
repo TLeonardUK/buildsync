@@ -25,14 +25,20 @@ using BuildSync.Core.Utils;
 namespace BuildSync.Cmd
 {
     /// <summary>
+    ///     Application entry class.
     /// 
+    ///     The BuildSync.Client.Cmd application is used purely as a stub application that
+    ///     opens a interprocess communication pipe to the locally running build-sync client
+    ///     and passes any command line arguments to it in the form of a command to execute.
     /// </summary>
     public class Program
     {
         /// <summary>
+        ///     Entry point.
         /// 
+        ///     Usage syntax: BuildSync.Client.Cmd.exe [Arguments to pass to server]
         /// </summary>
-        /// <param name="Args"></param>
+        /// <param name="Args">Command line arguments provided.</param>
         public static void Main(string[] Args)
         {
             try

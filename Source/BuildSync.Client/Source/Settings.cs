@@ -274,6 +274,12 @@ namespace BuildSync.Client
         /// </summary>
         public bool ShowInternalDownloads { get; set; } = false;
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public LogLevel LoggingLevel { get; set; } = LogLevel.Info;
+
         /// <summary>
         /// 
         /// </summary>

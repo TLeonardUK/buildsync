@@ -26,16 +26,50 @@ using BuildSync.Core.Utils;
 
 namespace BuildSync.Server
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [Serializable]
     public class Settings : SettingsBase
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public Dictionary<string, DateTime> ManifestLastSeenTimes { get; set; } = new Dictionary<string, DateTime>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         public long MaxBandwidth { get; set; } = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public int MaximumManifests { get; set; } = 500;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public int MaximumManifestUnseenDays { get; set; } = 30;
+        
+        /// <summary>
+        /// 
+        /// </summary>
         public bool RunOnStartup { get; set; } = true;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public int ServerPort { get; set; } = 12341;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public string StoragePath { get; set; } = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
         public List<User> Users { get; set; } = new List<User>();
     }
 }

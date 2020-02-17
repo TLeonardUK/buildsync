@@ -25,11 +25,16 @@ using CommandLine;
 
 namespace BuildSync.Server.Commands
 {
+    /// <summary>
+    ///     CLI command for listing all users, and their permissions, that are registered on the server.
+    /// </summary>
     [Verb("listusers", HelpText = "Lists all the users that can perform admin actions on the server.")]
     public class CommandLineListUsersOptions
     {
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             string Format = "{0,-30} | {1,-30}";

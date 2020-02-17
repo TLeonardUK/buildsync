@@ -45,6 +45,7 @@ namespace BuildSync.Client
     public delegate bool PumpLoopEventHandler();
 
     /// <summary>
+    ///     Application entry class.
     /// </summary>
     public static class Program
     {
@@ -268,6 +269,7 @@ namespace BuildSync.Client
 
             // General settings.
             ProcessUtils.SetLaunchOnStartup("Build Sync - Client", Settings.RunOnStartup);
+            Logger.MaximumVerbosity = Program.Settings.LoggingLevel;
         }
 
         /// <summary>

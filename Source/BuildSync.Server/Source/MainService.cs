@@ -25,15 +25,28 @@ using System.Timers;
 
 namespace BuildSync.Server
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public partial class MainService : ServiceBase
     {
+        /// <summary>
+        /// 
+        /// </summary>
         private Timer PollTimer;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public MainService()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
         protected override void OnStart(string[] args)
         {
 #if DEBUG
@@ -53,6 +66,9 @@ namespace BuildSync.Server
             Program.OnStart();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         protected override void OnStop()
         {
             PollTimer.Stop();

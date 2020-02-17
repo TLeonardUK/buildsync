@@ -27,17 +27,28 @@ using CommandLine;
 
 namespace BuildSync.Server.Commands
 {
+    /// <summary>
+    ///     CLI command for modifying the value of a setting that configures the behaviour of this tool.
+    /// </summary>
     [Verb("configure", HelpText = "Sets the value of a setting configuring the behaviour of this tool.")]
     public class CommandLineConfigureOptions
     {
+        /// <summary>
+        ///     Name of setting to modify.
+        /// </summary>
         [Value(0, MetaName = "Name", Required = true, HelpText = "Name of setting to modify.")]
         public string Name { get; set; }
 
+        /// <summary>
+        ///     New value of setting to modify.
+        /// </summary>
         [Value(1, MetaName = "Value", Required = true, HelpText = "New value of setting to modify.")]
         public string Value { get; set; }
 
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             PropertyInfo Property = null;

@@ -28,25 +28,27 @@ using CommandLine;
 namespace BuildSync.Client.Commands
 {
     /// <summary>
-    /// 
+    ///     CLI command for publishing a build onto the server manifest registry.
     /// </summary>
     [Verb("add", HelpText = "Adds a build to the given path on the server.")]
     public class CommandLineAddOptions
     {
         /// <summary>
-        /// 
+        ///     Path to a folder, on the local machine, that the build files exist in.
         /// </summary>
         [Value(1, MetaName = "LocalPath", Required = true, HelpText = "Path to a folder, on the local machine, that the build files exist in.")]
         public string LocalPath { get; set; }
 
         /// <summary>
-        /// 
+        ///     Path, in the servers virtual file system, that this build should be added at, eg. 'MyProject/Nightly/cs12345'.
         /// </summary>
         [Value(0, MetaName = "VirtualPath", Required = true, HelpText = "Path, in the servers virtual file system, that this build should be added at, eg. 'MyProject/Nightly/cs12345'.")]
         public string VirtualPath { get; set; }
 
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             VirtualPath = VirtualFileSystem.Normalize(VirtualPath);

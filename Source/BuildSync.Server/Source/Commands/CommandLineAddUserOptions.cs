@@ -24,14 +24,22 @@ using CommandLine;
 
 namespace BuildSync.Server.Commands
 {
+    /// <summary>
+    ///     CLI command for adding a user to the server. Bypasses the permissions that are normally required if doing this via the GUI.
+    /// </summary>
     [Verb("adduser", HelpText = "Adds a user that can perform admin actions on the server.")]
     public class CommandLineAddUserOptions
     {
+        /// <summary>
+        ///     Username of user to add, if on a domain the domain should be included in format Domain\\Username.
+        /// </summary>
         [Value(0, MetaName = "Username", Required = true, HelpText = "Username of user to add, if on a domain the domain should be included in format Domain\\Username.")]
         public string Username { get; set; } = "";
 
         /// <summary>
+        ///     Called when the CLI invokes this command.
         /// </summary>
+        /// <param name="IpcClient">Interprocess communication pipe to the application that invoked this command.</param>
         internal void Run(CommandIPC IpcClient)
         {
             if (Program.UserManager.FindUser(Username) != null)

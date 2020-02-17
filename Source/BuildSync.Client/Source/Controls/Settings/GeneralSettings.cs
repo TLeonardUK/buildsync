@@ -20,6 +20,9 @@
 */
 
 using System;
+using System.IO;
+using System.Diagnostics;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Controls.Settings
 {
@@ -44,14 +47,21 @@ namespace BuildSync.Client.Controls.Settings
             InitializeComponent();
 
             SkipValidity = true;
+
+            foreach (string key in Enum.GetNames(typeof(LogLevel)))
+            {
+                logLevelComboBox.Items.Add(key);
+            }
+
             RunOnStartupCheckbox.Checked = Program.Settings.RunOnStartup;
             MinimizeToTrayCheckbox.Checked = Program.Settings.MinimizeToTrayOnClose;
             runInstallWhenLaunchingCheckbox.Checked = Program.Settings.AlwaysRunInstallBeforeLaunching;
             skipVerificationCheckBox.Checked = Program.Settings.SkipValidation;
             skipInitialization.Checked = Program.Settings.SkipDiskAllocation;
             showInternalDownloadsCheckBox.Checked = Program.Settings.ShowInternalDownloads;
+            logLevelComboBox.SelectedIndex = (int)Program.Settings.LoggingLevel;
             SkipValidity = false;
-
+            
             UpdateValidityState();
         }
 
@@ -79,6 +89,20 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.SkipValidation = skipVerificationCheckBox.Checked;
             Program.Settings.SkipDiskAllocation = skipInitialization.Checked;
             Program.Settings.ShowInternalDownloads = showInternalDownloadsCheckBox.Checked;
+            Program.Settings.LoggingLevel = (LogLevel)logLevelComboBox.SelectedIndex;
+
+            Logger.MaximumVerbosity = Program.Settings.LoggingLevel;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ViewLogsClicked(object sender, EventArgs e)
+        {
+            string LoggingDir = Path.Combine(Program.AppDataDir, "Logging");
+            Process.Start("explorer", LoggingDir);
         }
     }
 }
