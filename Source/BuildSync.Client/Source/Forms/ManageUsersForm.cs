@@ -40,6 +40,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private bool IsEditingLabel = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private UserPermission SelectedPermission
         {
             get
@@ -130,6 +135,10 @@ namespace BuildSync.Client.Forms
             {
                 e.CancelEdit = true;
             }
+            else
+            {
+                IsEditingLabel = true;
+            }
         }
 
         /// <summary>
@@ -161,6 +170,7 @@ namespace BuildSync.Client.Forms
             }
 
             NewUser = null;
+            IsEditingLabel = false;
 
             UserListView.Sort();
 
@@ -237,6 +247,11 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private void RefreshUsers(List<User> Users)
         {
+            if (IsEditingLabel)
+            {
+                return;
+            }
+
             foreach (User user in Users)
             {
                 if (UserListView.Items[user.Username] != null)
