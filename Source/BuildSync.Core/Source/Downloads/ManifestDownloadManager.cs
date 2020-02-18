@@ -258,7 +258,7 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
-        private const int SplitIndexUpdateInterval = 60 * 1000;
+        private const int SplitIndexUpdateInterval = 3 * 60 * 1000;
 
         /// <summary>
         /// </summary>

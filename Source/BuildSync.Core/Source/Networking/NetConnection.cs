@@ -693,9 +693,9 @@ namespace BuildSync.Core.Networking
 
             Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             Socket.SendBufferSize = 128 * 1024;
-            Socket.SendTimeout = 2000;
+            Socket.SendTimeout = 10000;
             Socket.ReceiveBufferSize = 128 * 1024;
-            Socket.ReceiveTimeout = 2000;
+            Socket.ReceiveTimeout = 10000;
             Socket.NoDelay = true;
 
             if (ReuseAddresses)
