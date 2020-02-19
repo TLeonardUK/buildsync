@@ -250,6 +250,11 @@ namespace BuildSync.Core.Utils
         /// <param name="Size"></param>
         public void Resize(int NewSize)
         {
+            if (Ranges == null)
+            {
+                Ranges = new List<Range>();
+            }
+
             // If new size is less than current, reduce ranges until we are inside size.
             if (NewSize < Size)
             {
@@ -278,11 +283,6 @@ namespace BuildSync.Core.Utils
             // If new size is greater than current, increase last range (if state is false), or add new range.
             else if (NewSize > Size)
             {
-                if (Ranges == null)
-                {
-                    Ranges = new List<Range>();
-                }
-
                 if (Ranges.Count == 0)
                 {
                     Ranges.Add(new Range {Start = 0, End = NewSize - 1, State = false});
