@@ -186,7 +186,7 @@ namespace BuildSync.Core.Manifests
                 //Console.WriteLine("Block[{0}] {1}", BlockIndex, Info.Name);
 
                 long BlockCount = (Info.Length + (BlockSize - 1)) / BlockSize;
-                long BytesRemaining = BlockSize - Info.Length % BlockSize;
+                long BytesRemaining = (Info.Length % BlockSize) == 0 ? 0 : BlockSize - Info.Length % BlockSize;
                 BlockIndex += BlockCount;
 
                 // Try and fit some smaller files into the remaining block space.
@@ -631,9 +631,8 @@ namespace BuildSync.Core.Manifests
             FilesByPath = new Dictionary<string, BuildManifestFileInfo>();
 
             // Try and add in optimal block packing format.
-            //Console.WriteLine("======================================== CACHING BLOCK INFO ================================");
+            Console.WriteLine("======================================== CACHING BLOCK INFO ================================");
             long BlockIndex = 0;
-            long TotalBlockSize = 0;
             for (int fi = 0; fi < Files.Count;)
             {
                 BuildManifestFileInfo Info = Files[fi];
@@ -641,9 +640,9 @@ namespace BuildSync.Core.Manifests
                 fi++;
 
                 long BlockCount = (Info.Size + (BlockSize - 1)) / BlockSize;
-                long BytesRemaining = BlockSize - Info.Size % BlockSize;
+                long BytesRemaining = (Info.Size % BlockSize) == 0 ? 0 : BlockSize - Info.Size % BlockSize; 
 
-                //Console.WriteLine("Block[{0}] {1}", BlockIndex, Info.Path);
+                Console.WriteLine("Block[{0}] {1}", BlockIndex, Info.Path);
 
                 // Fill info for all the "full blocks" for this file.
                 long Total = 0;
@@ -665,7 +664,7 @@ namespace BuildSync.Core.Manifests
                     BlockInfo[BlockIndex].SubBlocks.Add(SubBlock);
                     BlockInfo[BlockIndex].TotalSize += SubBlock.FileSize;
 
-                    TotalBlockSize += SubBlock.FileSize;
+                    Debug.Assert(BlockInfo[BlockIndex].TotalSize <= BuildManifest.BlockSize);
 
                     Total += SubBlock.FileSize;
 
@@ -679,6 +678,7 @@ namespace BuildSync.Core.Manifests
                 int LastBlockIndex = Info.LastBlockIndex;
 
                 // Fill remaining space with blocks.
+                Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BuildManifest.BlockSize);
                 while (BytesRemaining > 0 && fi < Files.Count)
                 {
                     BuildManifestFileInfo NextInfo = Files[fi];
@@ -697,14 +697,16 @@ namespace BuildSync.Core.Manifests
                         BlockInfo[LastBlockIndex].SubBlocks.Add(SubBlock);
                         BlockInfo[LastBlockIndex].TotalSize += SubBlock.FileSize;
 
-                        //Console.WriteLine("\tSubblock[{0}] {1}", BlockIndex, SubBlock.File.Path);
+                        Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BuildManifest.BlockSize);
+
+                        Console.WriteLine("\tSubblock[{0}] {1}", BlockIndex, SubBlock.File.Path);
                     }
 
                     NextInfo.FirstBlockIndex = (int) BlockIndex - 1;
                     NextInfo.LastBlockIndex = (int) BlockIndex - 1;
 
-                    TotalBlockSize += NextInfo.Size;
                     BytesRemaining -= NextInfo.Size;
+                    Console.WriteLine("\tRemaining: {0}", BytesRemaining);
                     fi++;
                 }
             }
