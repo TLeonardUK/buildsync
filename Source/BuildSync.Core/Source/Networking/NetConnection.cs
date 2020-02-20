@@ -1137,19 +1137,27 @@ namespace BuildSync.Core.Networking
                         try
                         {
                             int BytesRecieved = Socket.EndReceive(Result);
-
-                            GlobalPacketStats.In(1);
-
-                            BandwidthStats.In(BytesRecieved);
-                            GlobalBandwidthStats.In(BytesRecieved);
-
-                            if (BytesRecieved < Size)
+                            if (BytesRecieved == 0)
                             {
-                                BeginRecievingHeader(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved); // TODO: This is fucked!?
-                                return;
+                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved header of 0 bytes from {0}, graceful disconnect assumed.", Address.ToString());
+                                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.0BytesRecieved");
+                                ShouldDisconnect = true;
                             }
+                            else
+                            {
+                                GlobalPacketStats.In(1);
 
-                            BeginRecievingPayload(MessageBuffer);
+                                BandwidthStats.In(BytesRecieved);
+                                GlobalBandwidthStats.In(BytesRecieved);
+
+                                if (BytesRecieved < Size)
+                                {
+                                    BeginRecievingHeader(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved); // TODO: This is fucked!?
+                                    return;
+                                }
+
+                                BeginRecievingPayload(MessageBuffer);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -1231,19 +1239,27 @@ namespace BuildSync.Core.Networking
                         try
                         {
                             int BytesRecieved = Socket.EndReceive(Result);
-
-                            BandwidthStats.In(BytesRecieved);
-                            GlobalBandwidthStats.In(BytesRecieved);
-
-                            if (BytesRecieved < Size)
+                            if (BytesRecieved == 0)
                             {
-                                BeginRecievingPayloadWithOffset(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved);
-                                return;
+                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved payload of 0 bytes from {0}, graceful disconnect assumed.", Address.ToString());
+                                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.0BytesRecieved");
+                                QueueDisconnect();
                             }
+                            else
+                            {
+                                BandwidthStats.In(BytesRecieved);
+                                GlobalBandwidthStats.In(BytesRecieved);
 
-                            ProcessBufferQueue.Add(new MessageQueueEntry {Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size});
+                                if (BytesRecieved < Size)
+                                {
+                                    BeginRecievingPayloadWithOffset(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved);
+                                    return;
+                                }
 
-                            BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader"));
+                                ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size });
+
+                                BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader"));
+                            }
                         }
                         catch (Exception ex)
                         {
