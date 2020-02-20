@@ -818,7 +818,7 @@ namespace BuildSync.Client.Forms
             }
             else
             {
-                peerCountLabel.Text = Program.NetClient.PeerCount + " peers connected";
+                peerCountLabel.Text = Program.NetClient.ConnectedPeerCount + " peers connected (" + Program.NetClient.PeerCount + " acknowledged)";
                 peerCountLabel.ForeColor = Color.Black;
             }
 

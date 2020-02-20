@@ -801,6 +801,27 @@ namespace BuildSync.Core
 
         /// <summary>
         /// </summary>
+        public int ConnectedPeerCount
+        {
+            get
+            {
+                lock (Peers)
+                {
+                    int Count = 0;
+                    foreach (Peer peer in Peers)
+                    {
+                        if (peer.Connection.IsReadyForData)
+                        {
+                            Count++;
+                        }
+                    }
+                    return Count;
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
         public bool TrafficEnabled
         {
             get => InternalTrafficEnabled;
@@ -1678,7 +1699,10 @@ namespace BuildSync.Core
                 }
                 else
                 {
-                    bool bRemoteHasPriority = ClientConnection.Address.Port < peer.Connection.Address.Port;
+                    // If we have multiple connections (typically caused because we both try and open a connection at the same time), we need to close one of them.
+                    // If we are in a cooldown from a previous connection attempt, just accept remote, otherwise accept whoever has the highest ip address.
+
+                    bool bRemoteHasPriority = (ClientConnection.Address.Address.Address < peer.Connection.Address.Address.Address || (!ClientConnection.IsConnected && !ClientConnection.IsConnecting));
 
                     Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}, but we already have a local connection, {1} takes priority.", ClientConnection.Address.ToString(), bRemoteHasPriority ? "REMOTE" : "LOCAL");
 

@@ -104,7 +104,7 @@ namespace BuildSync.Client.Forms
             List<string> ConnectedAddresses = new List<string>();
             foreach (Peer Peer in AllPeers)
             {
-                if (Peer.Connection.IsConnected && Peer.Connection.Address != null)
+                if (Peer.Connection.IsReadyForData && Peer.Connection.Address != null)
                 {
                     ConnectedAddresses.Add(Peer.Connection.Address.Address.ToString());
                 }
