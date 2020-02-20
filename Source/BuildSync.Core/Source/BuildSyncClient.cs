@@ -1681,43 +1681,41 @@ namespace BuildSync.Core
         /// <param name="ClientConnection"></param>
         private void PeerConnected(NetConnection Connection, NetConnection ClientConnection)
         {
-            Peer peer = null;
             lock (Peers)
             {
-                peer = GetPeerByAddress(ClientConnection.Address);
-                if (peer == null)
-                {
-                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}.", ClientConnection.Address.ToString());
+                Peer existingPeer = GetPeerByAddress(ClientConnection.Address);
+                
+                Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}.", ClientConnection.Address.ToString());
 
-                    peer = new Peer();
-                    peer.Address = ClientConnection.Address;
-                    peer.Connection = ClientConnection;
-                    peer.Connection.OnMessageRecieved += HandleMessage;
-                    peer.RemoteInitiated = true;
-                    peer.LastConnectionAttemptTime = 0;
-                    Peers.Add(peer);
-                }
-                else
-                {
+                Peer newPeer = new Peer();
+                newPeer.Address = ClientConnection.Address;
+                newPeer.Connection = ClientConnection;
+                newPeer.Connection.OnMessageRecieved += HandleMessage;
+                newPeer.RemoteInitiated = true;
+                newPeer.LastConnectionAttemptTime = 0;
+                Peers.Add(newPeer);
+
+                /*if (existingPeer != null)
+                { 
                     // If we have multiple connections (typically caused because we both try and open a connection at the same time), we need to close one of them.
-                    // If we are in a cooldown from a previous connection attempt, just accept remote, otherwise accept whoever has the highest ip address.
+                    bool bRemoteHasPriority = (newPeer.Connection.Address.Address.Address < existingPeer.Connection.Address.Address.Address);
 
-                    bool bRemoteHasPriority = (ClientConnection.Address.Address.Address < peer.Connection.Address.Address.Address || (!ClientConnection.IsConnected && !ClientConnection.IsConnecting));
-
-                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}, but we already have a local connection, {1} takes priority.", ClientConnection.Address.ToString(), bRemoteHasPriority ? "REMOTE" : "LOCAL");
+                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}, but we already have a local connection, {1} takes priority.", newPeer.Connection.Address.ToString(), bRemoteHasPriority ? "REMOTE" : "LOCAL");
 
                     // The peer with the lowest ip address takes priority.
                     if (bRemoteHasPriority)
                     {
                         // Their connection takes priority.
-                        peer.Connection.Disconnect();
+                        existingPeer.Connection.QueueDisconnect();
                     }
                     else
                     {
-                        // Our connection takes priority.
-                        ClientConnection.Disconnect();
+                        // Our connection takes priority.                        
+                        ClientConnection.QueueDisconnect();
+
+                        existingPeer.LastConnectionAttemptTime = 0;
                     }
-                }
+                }*/
             }
 
             // Exchange block list with remote.

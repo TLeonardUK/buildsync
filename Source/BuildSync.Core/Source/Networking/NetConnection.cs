@@ -610,7 +610,7 @@ namespace BuildSync.Core.Networking
 
         /// <summary>
         /// </summary>
-        private void QueueDisconnect(ulong Timeout = 0)
+        public void QueueDisconnect(ulong Timeout = 0)
         {
             if (!ShouldDisconnectDueToError)
             {
