@@ -344,11 +344,11 @@ namespace BuildSync.Core
             }
 
             return MaxInFlightBytes;
-#elif false
+#elif true
             // Keep at least 1 second of data in flight.
             double RealTargetMsOfData = Math.Max(TargetMsOfData, Connection.BestPing * 2.0f);
 
-            const double TrendUpwardsFactor = 1.5f;
+            const double TrendUpwardsFactor = 2.0f;
             double TargetSecondsOfData = RealTargetMsOfData / 1000.0;
             long TargetInFlight = (long) (Connection.BandwidthStats.PeakRateIn * TargetSecondsOfData);
 
@@ -364,7 +364,7 @@ namespace BuildSync.Core
             MaxInFlightBytes = (MaxInFlightBytes + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize * BuildManifest.BlockSize;
 
             return MaxInFlightBytes;
-#elif true
+#elif false
             // Fuck it, this is simpler and causes less edge cases. Worst case we are waiting for a slow peer to return
             // like 4 * worst case of the above one.
             return 40 * 1024 * 1024;
@@ -1703,7 +1703,7 @@ namespace BuildSync.Core
                 newPeer.LastConnectionAttemptTime = 0;
                 Peers.Add(newPeer);
 
-                if (existingPeer != null)
+                if (false)//existingPeer != null)
                 { 
                     // If we have multiple connections (typically caused because we both try and open a connection at the same time), we need to close one of them.
                     bool bRemoteHasPriority = (newPeer.Connection.Address.Address.Address < existingPeer.Connection.Address.Address.Address);
