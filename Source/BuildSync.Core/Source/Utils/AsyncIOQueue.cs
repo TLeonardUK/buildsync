@@ -268,6 +268,7 @@ namespace BuildSync.Core.Utils
             IsRunning = true;
 
             TaskThread = new Thread(ThreadEntry);
+            TaskThread.IsBackground = true;
             TaskThread.Name = "Async IO";
             TaskThread.Start();
         }

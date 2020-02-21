@@ -74,6 +74,7 @@ namespace BuildSync.Core.Scm.Git
             Root = FileUtils.NormalizePath(InRoot);
 
             CommandThread = new Thread(CommandThreadEntry);
+            CommandThread.IsBackground = true;
             CommandThread.Name = "Perforce Commands";
             CommandThread.Start();
         }

@@ -500,12 +500,14 @@ namespace BuildSync.Core.Networking
             }
 
             SendThread = new Thread(SendThreadEntry);
+            SendThread.IsBackground = true;
             SendThread.Name = "Net Send (" + Address + ")";
             SendThread.Start();
 
             ProcessBufferQueue = new BlockingCollection<MessageQueueEntry>();
 
             ProcessThread = new Thread(ProcessThreadEntry);
+            ProcessThread.IsBackground = true;
             ProcessThread.Name = "Net Process (" + Address + ")";
             ProcessThread.Start();
         }
@@ -1325,6 +1327,7 @@ namespace BuildSync.Core.Networking
             ConcurrentBag<byte[]> FallbackFreeQueue = ForSend ? FreeSendMessageBuffers : FreeRecieveMessageBuffers;
 
             byte[] Serialized = null;
+            int Time = Environment.TickCount;
             while (true)
             {
                 if (FreeGenericMessageBuffers.TryTake(out Serialized))
@@ -1345,7 +1348,7 @@ namespace BuildSync.Core.Networking
                 }
 
                 // If we can allocate another buffer do that, else, just keep trying until a buffer is available.
-                if (GenericMessageBufferCount < MaxGenericMessageBuffers)
+                if (GenericMessageBufferCount < MaxGenericMessageBuffers || (Environment.TickCount - Time > 1000))
                 {
                     break;
                 }
