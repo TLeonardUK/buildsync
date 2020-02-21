@@ -124,7 +124,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// </summary>
         /// <param name="Path"></param>
-        public void Open(string Path, int InMaxManifests)
+        public void Open(string Path, int InMaxManifests, bool CacheDownloadInfo)
         {
             MaximumManifests = InMaxManifests;
 
@@ -142,7 +142,7 @@ namespace BuildSync.Core.Manifests
 
                 try
                 {
-                    BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath);
+                    BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath, CacheDownloadInfo);
                     AddManifest(Manifest);
                 }
                 catch (Exception ex)

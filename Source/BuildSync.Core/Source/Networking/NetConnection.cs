@@ -568,6 +568,9 @@ namespace BuildSync.Core.Networking
 
             EndSendThread();
 
+            GlobalBandwidthThrottleIn.WakeAll();
+            GlobalBandwidthThrottleOut.WakeAll();
+
             // Block while any outstanding async calls are waiting to finish.
             for (int i = 0; i < OutstandingAsyncCalls.Length; i++)
             {
@@ -693,9 +696,9 @@ namespace BuildSync.Core.Networking
 
             Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             Socket.SendBufferSize = 128 * 1024;
-            Socket.SendTimeout = 10000;
+            Socket.SendTimeout = 0;// 30 * 1000;
             Socket.ReceiveBufferSize = 128 * 1024;
-            Socket.ReceiveTimeout = 10000;
+            Socket.ReceiveTimeout = 0;// 30 * 1000;
             Socket.NoDelay = true;
 
             if (ReuseAddresses)
@@ -721,9 +724,10 @@ namespace BuildSync.Core.Networking
                     {
                         Socket ClientSocket = Socket.EndAccept(Result);
                         ClientSocket.SendBufferSize = 128 * 1024;
-                        ClientSocket.SendTimeout = 2000;
+                        ClientSocket.SendTimeout = 0;// 30 * 1000;
                         ClientSocket.ReceiveBufferSize = 128 * 1024;
-                        ClientSocket.ReceiveTimeout = 2000;
+                        ClientSocket.ReceiveTimeout = 0;// 30 * 1000;
+
                         ClientSocket.NoDelay = true;
 
                         Logger.Log(LogLevel.Info, LogCategory.Transport, "Client connected from {0}", ClientSocket.RemoteEndPoint.ToString());

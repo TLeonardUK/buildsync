@@ -344,7 +344,7 @@ namespace BuildSync.Core
             }
 
             return MaxInFlightBytes;
-#elif true
+#elif false
             // Keep at least 1 second of data in flight.
             double RealTargetMsOfData = Math.Max(TargetMsOfData, Connection.BestPing * 2.0f);
 
@@ -364,6 +364,10 @@ namespace BuildSync.Core
             MaxInFlightBytes = (MaxInFlightBytes + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize * BuildManifest.BlockSize;
 
             return MaxInFlightBytes;
+#elif true
+            // Fuck it, this is simpler and causes less edge cases. Worst case we are waiting for a slow peer to return
+            // like 4 * worst case of the above one.
+            return 40 * 1024 * 1024;
 #else
             return 128 * 1024 * 1024; // Gigabit of data. We limit the actual amount based on our local link speed.
 #endif
@@ -571,7 +575,11 @@ namespace BuildSync.Core
 
         /// <summary>
         /// </summary>
-        private const int ConnectionAttemptInterval = 60 * 1000;
+        private const int ConnectionAttemptInterval = 30 * 1000;
+
+        /// <summary>
+        /// </summary>
+        private const int PeerConnectionAttemptInterval = 10 * 1000;
 
         /// <summary>
         /// </summary>
@@ -1293,7 +1301,7 @@ namespace BuildSync.Core
                         }
 
                         ulong Elapsed = TimeUtils.Ticks - peer.LastConnectionAttemptTime;
-                        if (peer.LastConnectionAttemptTime == 0 || Elapsed > ConnectionAttemptInterval)
+                        if (peer.LastConnectionAttemptTime == 0 || Elapsed > PeerConnectionAttemptInterval)
                         {
                             Logger.Log(LogLevel.Info, LogCategory.Peers, "Connecting to peer: {0}", peer.Address.ToString());
                             peer.Connection.BeginConnect(peer.Address.Address.ToString(), peer.Address.Port);
@@ -1695,7 +1703,7 @@ namespace BuildSync.Core
                 newPeer.LastConnectionAttemptTime = 0;
                 Peers.Add(newPeer);
 
-                /*if (existingPeer != null)
+                if (existingPeer != null)
                 { 
                     // If we have multiple connections (typically caused because we both try and open a connection at the same time), we need to close one of them.
                     bool bRemoteHasPriority = (newPeer.Connection.Address.Address.Address < existingPeer.Connection.Address.Address.Address);
@@ -1715,7 +1723,7 @@ namespace BuildSync.Core
 
                         existingPeer.LastConnectionAttemptTime = 0;
                     }
-                }*/
+                }
             }
 
             // Exchange block list with remote.

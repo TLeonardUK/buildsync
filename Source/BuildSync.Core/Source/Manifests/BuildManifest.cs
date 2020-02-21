@@ -526,10 +526,10 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         /// <param name="FilePath"></param>
         /// <returns></returns>
-        public static BuildManifest ReadFromFile(string FilePath)
+        public static BuildManifest ReadFromFile(string FilePath, bool CacheDownloadInfo)
         {
             BuildManifest Manifest = FileUtils.ReadFromBinaryFile<BuildManifest>(FilePath);
-            if (Manifest != null)
+            if (Manifest != null && CacheDownloadInfo)
             {
                 Manifest.CacheBlockInfo();
             }

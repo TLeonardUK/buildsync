@@ -222,7 +222,7 @@ namespace BuildSync.Server
             InitSettings();
 
             BuildRegistry = new BuildManifestRegistry();
-            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests);
+            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests, false);
             BuildRegistry.ManifestLastSeenTimes = new Dictionary<string, DateTime>(Settings.ManifestLastSeenTimes);
 
             LicenseMgr = new LicenseManager();

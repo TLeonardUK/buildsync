@@ -477,7 +477,7 @@ namespace BuildSync.Client
             NetClient = new BuildSyncClient();
 
             BuildRegistry = new BuildManifestRegistry();
-            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), int.MaxValue);
+            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), int.MaxValue, true);
 
             NetClient.Start(
                 Settings.ServerHostname,

@@ -805,7 +805,7 @@ namespace BuildSync.Core.Downloads
                                         );
                                         if (!State.Paused)
                                         {
-                                            ChangeState(State, ManifestDownloadProgressState.Downloading);
+                                            ChangeState(State, ManifestDownloadProgressState.DeltaCopying);
                                         }
                                     }
                                     catch (Exception Ex)
@@ -822,7 +822,7 @@ namespace BuildSync.Core.Downloads
                         }
                         else
                         {
-                            ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
+                            ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
                             Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to initialize, unable to close all streams to directory.");
                         }
                     }
@@ -835,6 +835,141 @@ namespace BuildSync.Core.Downloads
                 {
                     Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrying initialization after resume from error.");
                     ChangeState(State, ManifestDownloadProgressState.Initializing);
+                    break;
+                }
+
+                // Finding any manifests with files containing the same checksum. If found, copy over and mark blocks as available.
+                case ManifestDownloadProgressState.DeltaCopying:
+                {
+                    if (State.DeltaCopyTask == null)
+                    {
+                        if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
+                        {
+                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Finding existing files: {0}", State.LocalFolder);
+
+                            Dictionary<string, string> ExistingFiles = new Dictionary<string, string>();
+
+                            foreach (ManifestDownloadState OtherState in StateCollection.States)
+                            {
+                                if (OtherState.Manifest != null && State != OtherState && OtherState.State == ManifestDownloadProgressState.Complete)
+                                {
+                                    foreach (BuildManifestFileInfo File in OtherState.Manifest.Files)
+                                    {
+                                        if (File.Checksum.Length > 32 && !ExistingFiles.ContainsKey(File.Checksum)) // Make sure we aren't using CRC for this.
+                                        {
+                                            ExistingFiles.Add(File.Checksum, Path.Combine(OtherState.LocalFolder, File.Path));
+                                        }
+                                    }
+                                }
+                            }
+
+                            Dictionary<BuildManifestFileInfo, string> FilesToCopy = new Dictionary<BuildManifestFileInfo, string>();
+                            long TotalSize = 0;
+                            
+                            foreach (BuildManifestFileInfo File in State.Manifest.Files)
+                            {
+                                if (File.Checksum.Length > 32) // Make sure we aren't using CRC for this.
+                                {
+                                    if (ExistingFiles.ContainsKey(File.Checksum))
+                                    {
+                                        FilesToCopy.Add(File, ExistingFiles[File.Checksum]);
+                                        TotalSize += File.Size;
+                                    }
+                                }
+                            }
+                            
+                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Found {0} pre-existing files.", FilesToCopy.Count);
+
+                            State.DeltaCopyTask = Task.Run(
+                                () =>
+                                {
+                                    try
+                                    {
+                                        // TODO: Make progress of this more granular.
+                                        long BytesCopied = 0;
+                                        foreach (var Pair in FilesToCopy)
+                                        {
+                                            if (State.Paused)
+                                            {
+                                                break;   
+                                            }
+
+                                            string Src = Pair.Value;
+                                            BuildManifestFileInfo DstInfo = Pair.Key;
+                                            string Dst = Path.Combine(State.LocalFolder, DstInfo.Path);
+
+                                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Copying existing files: {0} -> {1}", Src, Dst);
+
+                                            File.Copy(Src, Dst, true);
+
+                                            BytesCopied += (new FileInfo(Dst)).Length; 
+
+                                            State.DeltaCopyProgress = BytesCopied / (float)TotalSize;
+                                            State.DeltaCopyRateStats.In(BytesCopied - State.InitializeRateStats.TotalIn);
+                                            State.DeltaCopyBytesRemaining = TotalSize - BytesCopied;
+                                        }
+                                        
+                                        if (!State.Paused)
+                                        {
+                                            // All blocks that purely contain these files should be marked as downloaded.
+                                            long TotalBytesSaved = 0;
+
+                                            foreach (var Pair in FilesToCopy)
+                                            {
+                                                BuildManifestFileInfo DstInfo = Pair.Key;
+                                                for (int i = DstInfo.FirstBlockIndex; i <= DstInfo.LastBlockIndex; i++)
+                                                {
+                                                    BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
+                                                    if (State.Manifest.GetBlockInfo(i, ref BlockInfo))
+                                                    {
+                                                        bool AllSubBlocksAreThisFile = true;
+                                                        foreach (BuildManifestSubBlockInfo SubBlockInfo in BlockInfo.SubBlocks)
+                                                        {
+                                                            if (SubBlockInfo.File != DstInfo)
+                                                            {
+                                                                AllSubBlocksAreThisFile = false;
+                                                                break;
+                                                            }
+                                                        }
+
+                                                        if (AllSubBlocksAreThisFile)
+                                                        {
+                                                            State.BlockStates.Set(i, true);
+                                                            TotalBytesSaved += BlockInfo.TotalSize;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            
+                                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Delta copying saved downloading {0}.", StringUtils.FormatAsSize(TotalSize));
+                                            
+                                            StateDirtyCount++;
+
+                                            // Start downloading.
+                                            ChangeState(State, ManifestDownloadProgressState.Downloading);
+                                        }
+
+                                        State.DeltaCopyRateStats.Reset();
+                                    }
+                                    catch (Exception Ex)
+                                    {
+                                        ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
+                                        Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to delta copy with error: {0}", Ex.Message);
+                                    }
+                                    finally
+                                    {
+                                        State.DeltaCopyTask = null;
+                                    }
+                                }
+                            );
+                        }
+                        else
+                        {
+                            ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
+                            Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to initialize, unable to close all streams to directory.");
+                        }
+                    }
+
                     break;
                 }
 
@@ -1144,6 +1279,13 @@ namespace BuildSync.Core.Downloads
                 if (State.Manifest != null)
                 {
                     TotalSize += State.Manifest.GetTotalSize();
+                }
+
+                // Don't allow any pruning to occur while delta copying as we may be moving data between 
+                // states we might want to download.
+                if (State.State == ManifestDownloadProgressState.DeltaCopying)
+                {
+                    return;   
                 }
             }
 

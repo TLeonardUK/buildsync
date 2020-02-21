@@ -63,6 +63,7 @@ namespace BuildSync.Core.Downloads
         Unknown,
         RetrievingManifest,
         Initializing,
+        DeltaCopying,
         Downloading,
         Complete,
         Validating,
@@ -87,6 +88,11 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         [NonSerialized]
         public RateTracker InitializeRateStats = new RateTracker(1000);
+
+        /// <summary>
+        /// </summary>
+        [NonSerialized]
+        public RateTracker DeltaCopyRateStats = new RateTracker(1000);
 
         /// <summary>
         /// </summary>
@@ -128,6 +134,11 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         [NonSerialized]
         internal Task InitializeTask = null;
+
+        /// <summary>
+        /// </summary>
+        [NonSerialized]
+        internal Task DeltaCopyTask = null;
 
         /// <summary>
         /// </summary>
@@ -183,6 +194,16 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         [JsonIgnore]
         public float InitializeProgress { get; internal set; }
+        
+        /// <summary>
+        /// </summary>
+        [JsonIgnore]
+        public long DeltaCopyBytesRemaining { get; set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonIgnore]
+        public float DeltaCopyProgress { get; internal set; }
 
         /// <summary>
         /// </summary>

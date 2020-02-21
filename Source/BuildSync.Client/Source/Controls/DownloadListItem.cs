@@ -152,6 +152,19 @@ namespace BuildSync.Client.Controls
                             SetStatus(Status, StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.InitializeProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
                             break;
                         }
+                        case ManifestDownloadProgressState.DeltaCopying:
+                        {
+                            double SecondsToInitialize = Downloader.DeltaCopyBytesRemaining / (double)Downloader.DeltaCopyRateStats.RateIn;
+                            if (Downloader.DeltaCopyRateStats.RateIn == 0)
+                            {
+                                SecondsToInitialize = 0;
+                            }
+
+                            string Status = string.Format("Copying existing blocks - {0}", StringUtils.FormatAsDuration((long)SecondsToInitialize));
+
+                            SetStatus(Status, StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.DeltaCopyProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                            break;
+                        }
                         case ManifestDownloadProgressState.Validating:
                         {
                             long SecondsToValidate = (long) (Downloader.ValidateBytesRemaining / (double) Downloader.ValidateRateStats.RateOut);

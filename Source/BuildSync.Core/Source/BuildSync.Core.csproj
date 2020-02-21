@@ -214,6 +214,7 @@
     <Compile Include="Scripting\ScriptBuild.cs" />
     <Compile Include="Scripting\ScriptLaunchMode.cs" />
     <Compile Include="Scripting\ScriptUtils.cs" />
+    <Compile Include="Sha1.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />
     <Compile Include="Utils\CompareUtils.cs" />

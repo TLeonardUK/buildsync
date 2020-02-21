@@ -55,6 +55,21 @@ namespace BuildSync.Core.Networking
 
         /// <summary>
         /// </summary>
+        private readonly object WakeObject = new object();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void WakeAll()
+        {
+            lock (WakeObject)
+            {
+                Monitor.PulseAll(WakeObject);
+            }
+        }
+
+        /// <summary>
+        /// </summary>
         /// <param name="Pending"></param>
         /// <returns></returns>
         public int Throttle(int Pending)
@@ -126,7 +141,11 @@ namespace BuildSync.Core.Networking
                 {
                     double RefillRequired = MinimumToSend - AmountToTake;
                     double TimeToFillMs = RefillRequired / Limit * 1000.0;
-                    Thread.Sleep((int) TimeToFillMs);
+
+                    lock (WakeObject)
+                    {
+                        Monitor.Wait(WakeObject, (int)TimeToFillMs);  
+                    }
                 }
             }
         }

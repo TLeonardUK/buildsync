@@ -122,7 +122,7 @@ namespace BuildSync.Core.Utils
         /// <returns></returns>
         public static string GetChecksum(string FilePath, RateTracker Tracker, ChecksumProgressEventHandler Callback = null)
         {
-            using (Crc32 crc = new Crc32())
+            using (SHA1Extended crc = new SHA1Extended())
             {
                 using (FileStream stream = File.Open(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
