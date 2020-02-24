@@ -27,11 +27,15 @@ Provided with the tool is a help file that you can access from the clients Help-
 The tool should be able to staurate a 1gbps connection if downloading/uploading from an SSD. Higher speeds are theoretical possible, but untested, and will probably run into other limits.
 
 ## Screenshots
-![Downloads](https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true)
-![Launch Build](https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true)
-![Build Manager](https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true)
-![Server Manager](https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true)
-![User Manager](https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true)
+<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true" width="150"></a>
+
+<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true" width="150"></a>
+
+<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true" width="150"></a>
+
+<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true" width="150"></a>
+
+<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true" width="150"></a>
 
 ## Contact Details
 Any questions you are welcome to send me an email;
