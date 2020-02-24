@@ -29,6 +29,11 @@ namespace BuildSync.Core.Networking.Messages
     public class NetMessage_GetUsersResponse : NetMessage
     {
         /// <summary>
+        /// 
+        /// </summary>
+        public override bool HasLargePayload => true;
+
+        /// <summary>
         /// </summary>
         public List<User> Users = new List<User>();
 

@@ -21,6 +21,7 @@
 
 //#define FAKE_LATENCY
 //#define TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
+//#define TRACK_MESSAGE_TYPES
 
 using System;
 using System.Collections.Concurrent;
@@ -69,6 +70,11 @@ namespace BuildSync.Core.Networking
     /// </summary>
     /// <param name="Connection"></param>
     public delegate void ClientDisconnectHandler(NetConnection Connection, NetConnection ClientConnection);
+
+    /// <summary>
+    /// </summary>
+    /// <param name="Connection"></param>
+    public delegate void MessageSentHandler(bool bSuccess);
 
     /// <summary>
     /// </summary>
@@ -204,6 +210,24 @@ namespace BuildSync.Core.Networking
 
     /// <summary>
     /// </summary>
+    public class Statistic_AvailableSmallMessageBuffers : Statistic
+    {
+        public Statistic_AvailableSmallMessageBuffers()
+        {
+            Name = @"Packets\Available Small Message Buffers";
+            MaxLabel = NetConnection.MaxSmallMessageBuffers.ToString();
+            MaxValue = NetConnection.MaxSmallMessageBuffers;
+            DefaultShown = false;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.FreeSmallMessageBuffers.Count);
+        }
+    }
+
+    /// <summary>
+    /// </summary>
     public class Statistic_PacketsIn : Statistic
     {
         public Statistic_PacketsIn()
@@ -286,6 +310,7 @@ namespace BuildSync.Core.Networking
         {
             public byte[] Data;
             public int BufferSize;
+            public MessageSentHandler Callback;
 
 #if FAKE_LATENCY
             public ulong SendTimeFakeLatency;
@@ -303,15 +328,18 @@ namespace BuildSync.Core.Networking
         private BlockingCollection<MessageQueueEntry> ProcessBufferQueue;
         private Thread ProcessThread;
 
+        internal static ConcurrentBag<byte[]> FreeSmallMessageBuffers = new ConcurrentBag<byte[]>();
         internal static ConcurrentBag<byte[]> FreeRecieveMessageBuffers = new ConcurrentBag<byte[]>();
         internal static ConcurrentBag<byte[]> FreeSendMessageBuffers = new ConcurrentBag<byte[]>();
         internal static ConcurrentBag<byte[]> FreeGenericMessageBuffers = new ConcurrentBag<byte[]>();
 
+        internal static int SmallMessageBufferCount;
         internal static int RecieveMessageBufferCount;
         internal static int SendMessageBufferCount;
         internal static int GenericMessageBufferCount;
 
 #if FAKE_LATENCY
+        internal const int MaxSmallMessageBuffers = 2048; // each buffer is 1kb each
         internal const int MaxRecieveMessageBuffers = 2;
         internal const int MaxSendMessageBuffers = 2;
         internal const int MaxGenericMessageBuffers = 256;
@@ -323,7 +351,11 @@ namespace BuildSync.Core.Networking
         internal const int MaxRecieveMessageBuffers = 32;
         internal const int MaxSendMessageBuffers = 32;
         internal const int MaxGenericMessageBuffers = 64;
+        internal const int MaxSmallMessageBuffers = 2048; // each buffer is 1kb each
 #endif
+
+        internal const int LargeBufferSize = 1 * 1024 * 1024 + 64; // based on 1mb block being most frequent large message + 64 bytes of overhead;
+        internal const int SmallBufferSize = 1024;
 
         private ulong MaxClientsExceededPurgeTime;
 
@@ -336,6 +368,11 @@ namespace BuildSync.Core.Networking
 #if TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
         private static Dictionary<string, int> MessageBufferAllocationSites = new Dictionary<string, int>();
         private static ulong MessageBufferAllocationSitePrintTimer = TimeUtils.Ticks;
+#endif
+
+#if TRACK_MESSAGE_TYPES
+        private static Dictionary<Type, int> TrackedMessageTypes = new Dictionary<Type, int>();
+        private static ulong TrackedMessageTypesPrintTimer = TimeUtils.Ticks;
 #endif
 
         private readonly NetMessage MessageHeaderTempStorage = new NetMessage();
@@ -535,7 +572,7 @@ namespace BuildSync.Core.Networking
                         continue;
                     }
 
-                    ReleaseMessageBuffer(Data.Data, "ProcessThreadEntry");
+                    ReleaseMessageBuffer(Data.Data, "ProcessThreadEntry", "Recieve", false);
                 }
             }
         }
@@ -840,7 +877,7 @@ namespace BuildSync.Core.Networking
                             }
 
                             BeginSendThread();
-                            BeginRecievingHeader(AllocMessageBuffer("ConnectToIP.RecieveHeader"));
+                            BeginRecievingHeader(AllocMessageBuffer("ConnectToIP.RecieveHeader", "Recieve", false, true));
 
                             // Send handshake.
                             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
@@ -987,7 +1024,7 @@ namespace BuildSync.Core.Networking
                 {
                     MessageQueueEntry Data;
                     SendQueue.TryDequeue(out Data);
-                    ReleaseMessageBuffer(Data.Data, "EndSendThread", true);
+                    ReleaseMessageBuffer(Data.Data, "EndSendThread", "Send", true);
                 }
             }
 
@@ -1033,23 +1070,67 @@ namespace BuildSync.Core.Networking
 
                 GlobalPacketStats.Out(1);
 
-                SendBlock(SendData.Data, 0, SendData.BufferSize);
+                bool bSuccess = SendBlock(SendData.Data, 0, SendData.BufferSize);
+
+                SendData.Callback?.Invoke(bSuccess);
             }
         }
+
+#if TRACK_MESSAGE_TYPES
+        /// <summary>
+        /// 
+        /// </summary>
+        private void TryPrintTrackedMessageTypes()
+        {
+            lock (TrackedMessageTypes)
+            {
+                ulong Elapsed = TimeUtils.Ticks - TrackedMessageTypesPrintTimer;
+                if (Elapsed >= 1000)
+                {
+                    Console.WriteLine("==== Message Types ====");
+                    int Total = 0;
+                    foreach (Type key in TrackedMessageTypes.Keys)
+                    {
+                        Console.WriteLine("[{0}] {1}", TrackedMessageTypes[key], key.Name);
+                        Total += TrackedMessageTypes[key];
+                    }
+                    Console.WriteLine("Sum: {0}", Total);
+
+                    TrackedMessageTypesPrintTimer = TimeUtils.Ticks;
+                }
+            }
+        }
+#endif
 
         /// <summary>
         /// </summary>
         /// <param name="Message"></param>
-        public void Send(NetMessage Message)
+        public void Send(NetMessage Message, MessageSentHandler Callback = null)
         {
+#if TRACK_MESSAGE_TYPES
+            Type MsgType = Message.GetType();
+
+            lock (TrackedMessageTypes)
+            {
+                if (!TrackedMessageTypes.ContainsKey(MsgType))
+                {
+                    TrackedMessageTypes.Add(MsgType, 0);
+                }
+                TrackedMessageTypes[MsgType] = TrackedMessageTypes[MsgType] + 1;
+            }
+
+            TryPrintTrackedMessageTypes();
+#endif
+
             lock (SendThreadQueueLock)
             {
                 if (IsSendingThreadTerminating)
                 {
+                    Callback?.Invoke(false);
                     return;
                 }
 
-                byte[] Serialized = AllocMessageBuffer("Send", true);
+                byte[] Serialized = AllocMessageBuffer("SendMessage", "Send", true, !Message.HasLargePayload);
                 int BufferLength = Message.ToByteArray(ref Serialized);
 
                 //Logger.Log(LogLevel.Info, LogCategory.Transport, "Sending message of type {0}", Message.GetType().Name);
@@ -1058,9 +1139,9 @@ namespace BuildSync.Core.Networking
 
 #if FAKE_LATENCY
                 int Latency = FakeLatencyBase + FakeLatencyRandom.Next(0, FakeLatencyJitter);
-                SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength, SendTimeFakeLatency = TimeUtils.Ticks + (ulong)Latency });
+                SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength, SendTimeFakeLatency = TimeUtils.Ticks + (ulong)Latency, Callback = Callback });
 #else
-                SendQueue.Enqueue(new MessageQueueEntry {Data = Serialized, BufferSize = BufferLength});
+                SendQueue.Enqueue(new MessageQueueEntry {Data = Serialized, BufferSize = BufferLength, Callback = Callback });
 #endif
 
                 Interlocked.Add(ref SendQueueBytes, BufferLength);
@@ -1074,8 +1155,10 @@ namespace BuildSync.Core.Networking
 
         /// <summary>
         /// </summary>
-        private void SendBlock(byte[] Block, int Offset, int Length)
+        private bool SendBlock(byte[] Block, int Offset, int Length)
         {
+            bool bSuccess = true;
+
             RecordBeginAsyncCall(AsyncCallType.Send);
             try
             {
@@ -1096,12 +1179,16 @@ namespace BuildSync.Core.Networking
             {
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to begin sending to client {0} with error: {1}", Address.ToString(), ex.Message);
                 QueueDisconnect();
+
+                bSuccess = false;
             }
             finally
             {
                 RecordEndAsyncCall(AsyncCallType.Send);
-                ReleaseMessageBuffer(Block, "SendBlockFinally", true);
+                ReleaseMessageBuffer(Block, "SendBlockFinally", "Send", true);
             }
+
+            return bSuccess;
         }
 
         /// <summary>
@@ -1117,7 +1204,7 @@ namespace BuildSync.Core.Networking
             try
             {
                 BeginSendThread();
-                BeginRecievingHeader(AllocMessageBuffer("BeginClient.RecieveHeader"));
+                BeginRecievingHeader(AllocMessageBuffer("BeginClient.RecieveHeader", "Recieve", false, true));
             }
             catch (Exception ex)
             {
@@ -1146,7 +1233,7 @@ namespace BuildSync.Core.Networking
                             if (BytesRecieved == 0)
                             {
                                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved header of 0 bytes from {0}, graceful disconnect assumed.", Address.ToString());
-                                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.0BytesRecieved");
+                                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.0BytesRecieved", "Recieve", false);
                                 ShouldDisconnect = true;
                             }
                             else
@@ -1158,7 +1245,7 @@ namespace BuildSync.Core.Networking
 
                                 if (BytesRecieved < Size)
                                 {
-                                    BeginRecievingHeader(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved); // TODO: This is fucked!?
+                                    BeginRecievingHeader(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved); 
                                     return;
                                 }
 
@@ -1168,7 +1255,7 @@ namespace BuildSync.Core.Networking
                         catch (Exception ex)
                         {
                             Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
-                            ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.Exception");
+                            ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.Exception", "Recieve", false);
                             ShouldDisconnect = true;
                         }
                         finally
@@ -1185,7 +1272,7 @@ namespace BuildSync.Core.Networking
             }
             catch (Exception ex)
             {
-                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.OuterException");
+                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.OuterException", "Recieve", false);
 
                 RecordEndAsyncCall(AsyncCallType.Recieve);
 
@@ -1205,11 +1292,22 @@ namespace BuildSync.Core.Networking
             if (TotalSize > NetMessage.HeaderSize + NetMessage.MaxPayloadSize)
             {
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved message with payload above max size {0}, disconnecting", MessageHeaderTempStorage.PayloadSize);
-                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingpayload.TotalSize");
+                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingpayload.TotalSize", "Recieve", false);
                 QueueDisconnect();
                 return;
             }
 
+            // All message buffers start as small ones, if this message is larger, upgrade.
+            if (TotalSize > 1024)
+            {
+                byte[] OldBuffer = MessageBuffer;
+                MessageBuffer = AllocMessageBuffer("BeginRecievingPayload.UpgradeSmallBufferAlloc", "Recieve", false, false);
+                Array.Copy(OldBuffer, 0, MessageBuffer, 0, NetMessage.HeaderSize);
+
+                ReleaseMessageBuffer(OldBuffer, "BeginRecievingPayload.UpgradeSmallBufferRelease", "Recieve", false);
+            }
+
+            // If buffer is still too small (which I don't think should ever happen in practice), enlargen it.
             if (MessageBuffer.Length < TotalSize)
             {
                 Array.Resize(ref MessageBuffer, TotalSize);
@@ -1219,7 +1317,7 @@ namespace BuildSync.Core.Networking
             if (MessageHeaderTempStorage.PayloadSize == 0)
             {
                 ProcessBufferQueue.Add(new MessageQueueEntry {Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize});
-                BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayload.RecieveNextHeader"));
+                BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayload.RecieveNextHeader", "Recieve", false, true));
             }
             else
             {
@@ -1248,7 +1346,7 @@ namespace BuildSync.Core.Networking
                             if (BytesRecieved == 0)
                             {
                                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved payload of 0 bytes from {0}, graceful disconnect assumed.", Address.ToString());
-                                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.0BytesRecieved");
+                                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.0BytesRecieved", "Recieve", false);
                                 QueueDisconnect();
                             }
                             else
@@ -1264,13 +1362,13 @@ namespace BuildSync.Core.Networking
 
                                 ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size });
 
-                                BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader"));
+                                BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader", "Recieve", false, true));
                             }
                         }
                         catch (Exception ex)
                         {
                             Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
-                            ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.Exception");
+                            ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.Exception", "Recieve", false);
                             QueueDisconnect();
                         }
                         finally
@@ -1282,7 +1380,7 @@ namespace BuildSync.Core.Networking
             }
             catch (Exception ex)
             {
-                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.OuterException");
+                ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.OuterException", "Recieve", false);
 
                 RecordEndAsyncCall(AsyncCallType.Recieve);
                 Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
@@ -1292,12 +1390,12 @@ namespace BuildSync.Core.Networking
 
         /// <summary>
         /// </summary>
-        public static void PreallocateBuffers(int RecieveCount, int SendCount, int GenericCount)
+        public static void PreallocateBuffers(int RecieveCount, int SendCount, int GenericCount, int SmallCount)
         {
             RecieveCount = Math.Min(RecieveCount, MaxRecieveMessageBuffers);
             for (int i = 0; i < RecieveCount; i++)
             {
-                byte[] Serialized = new byte[1 * 1024 * 1024 + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                byte[] Serialized = new byte[LargeBufferSize];
                 Interlocked.Increment(ref RecieveMessageBufferCount);
                 FreeRecieveMessageBuffers.Add(Serialized);
             }
@@ -1305,7 +1403,7 @@ namespace BuildSync.Core.Networking
             SendCount = Math.Min(SendCount, MaxSendMessageBuffers);
             for (int i = 0; i < SendCount; i++)
             {
-                byte[] Serialized = new byte[1 * 1024 * 1024 + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                byte[] Serialized = new byte[LargeBufferSize];
                 Interlocked.Increment(ref SendMessageBufferCount);
                 FreeSendMessageBuffers.Add(Serialized);
             }
@@ -1313,34 +1411,49 @@ namespace BuildSync.Core.Networking
             GenericCount = Math.Min(GenericCount, MaxGenericMessageBuffers);
             for (int i = 0; i < GenericCount; i++)
             {
-                byte[] Serialized = new byte[1 * 1024 * 1024 + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                byte[] Serialized = new byte[LargeBufferSize];
                 Interlocked.Increment(ref GenericMessageBufferCount);
                 FreeGenericMessageBuffers.Add(Serialized);
+            }
+
+            SmallCount = Math.Min(SmallCount, MaxSmallMessageBuffers);
+            for (int i = 0; i < SmallCount; i++)
+            {
+                byte[] Serialized = new byte[SmallBufferSize]; 
+                Interlocked.Increment(ref SmallMessageBufferCount);
+                FreeSmallMessageBuffers.Add(Serialized);
             }
         }
 
         /// <summary>
         /// </summary>
         /// <returns></returns>
-        private byte[] AllocMessageBuffer(string Site, bool ForSend = false)
+        private byte[] AllocMessageBuffer(string Site, string GlobalSite, bool ForSend, bool IsSmall)
         {
-            ConcurrentBag<byte[]> FallbackFreeQueue = ForSend ? FreeSendMessageBuffers : FreeRecieveMessageBuffers;
+            ConcurrentBag<byte[]> PrimaryQueue = FreeGenericMessageBuffers;
+            ConcurrentBag<byte[]> FallbackQueue = ForSend ? FreeSendMessageBuffers : FreeRecieveMessageBuffers;
+
+            if (IsSmall)
+            {
+                PrimaryQueue = FreeSmallMessageBuffers;
+                FallbackQueue = FreeGenericMessageBuffers;
+            }
 
             byte[] Serialized = null;
             int Time = Environment.TickCount;
             while (true)
             {
-                if (FreeGenericMessageBuffers.TryTake(out Serialized))
+                if (PrimaryQueue.TryTake(out Serialized))
                 {
                     break;
                 }
 
                 // Try and steal from fallback free queue.
-                lock (FallbackFreeQueue)
+                lock (FallbackQueue)
                 {
-                    if (FallbackFreeQueue.Count > 0)
+                    if (FallbackQueue.Count > 0)
                     {
-                        if (FallbackFreeQueue.TryTake(out Serialized))
+                        if (FallbackQueue.TryTake(out Serialized))
                         {
                             break;
                         }
@@ -1348,7 +1461,7 @@ namespace BuildSync.Core.Networking
                 }
 
                 // If we can allocate another buffer do that, else, just keep trying until a buffer is available.
-                if (GenericMessageBufferCount < MaxGenericMessageBuffers || (Environment.TickCount - Time > 1000))
+                if (GenericMessageBufferCount < MaxGenericMessageBuffers || (Environment.TickCount - Time > 100))
                 {
                     break;
                 }
@@ -1362,9 +1475,9 @@ namespace BuildSync.Core.Networking
 
             if (Serialized == null)
             {
-                Serialized = new byte[1 * 1024 * 1024 + 64]; // based on 1mb block being most frequent large message + 64 bytes of overhead
+                Serialized = new byte[LargeBufferSize];
                 Interlocked.Increment(ref GenericMessageBufferCount);
-                Logger.Log(LogLevel.Info, LogCategory.Transport, "Dynamically allocating new generic message buffer, now a total of {0} buffers ({1} in queue).", RecieveMessageBufferCount, FreeRecieveMessageBuffers.Count);
+                Logger.Log(LogLevel.Info, LogCategory.Transport, "Dynamically allocating new generic message buffer, now a total of {0} buffers ({1} in queue).", GenericMessageBufferCount, FreeGenericMessageBuffers.Count);
             }
 
 #if TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
@@ -1375,6 +1488,12 @@ namespace BuildSync.Core.Networking
                     MessageBufferAllocationSites.Add(Site, 0);
                 }
                 MessageBufferAllocationSites[Site] = MessageBufferAllocationSites[Site] + 1;
+
+                if (!MessageBufferAllocationSites.ContainsKey(GlobalSite))
+                {
+                    MessageBufferAllocationSites.Add(GlobalSite, 0);
+                }
+                MessageBufferAllocationSites[GlobalSite] = MessageBufferAllocationSites[GlobalSite] + 1;
 
                 TryPrintMessageBufferAllocationSites();
             }
@@ -1403,6 +1522,12 @@ namespace BuildSync.Core.Networking
                     }
                     Console.WriteLine("Sum: {0}", Total);
 
+                    Console.WriteLine("Free Send: {0}", FreeSendMessageBuffers.Count);
+                    Console.WriteLine("Free Recv: {0}", FreeRecieveMessageBuffers.Count);
+                    Console.WriteLine("Free Generic: {0}", FreeGenericMessageBuffers.Count);
+                    Console.WriteLine("Free Small: {0}", FreeSmallMessageBuffers.Count);
+
+
                     MessageBufferAllocationSitePrintTimer = TimeUtils.Ticks;
                 }
             }
@@ -1412,7 +1537,7 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// </summary>
         /// <param name="Buffer"></param>
-        private void ReleaseMessageBuffer(byte[] Buffer, string Site, bool ForSend = false)
+        private void ReleaseMessageBuffer(byte[] Buffer, string Site, string GlobalSite, bool ForSend)
         {
 #if TRACK_MESSAGE_BUFFER_ALLOCATION_SITES
             lock (MessageBufferAllocationSites)
@@ -1422,6 +1547,12 @@ namespace BuildSync.Core.Networking
                     MessageBufferAllocationSites.Add(Site, 0);
                 }
                 MessageBufferAllocationSites[Site] = MessageBufferAllocationSites[Site] - 1;
+
+                if (!MessageBufferAllocationSites.ContainsKey(GlobalSite))
+                {
+                    MessageBufferAllocationSites.Add(GlobalSite, 0);
+                }
+                MessageBufferAllocationSites[GlobalSite] = MessageBufferAllocationSites[GlobalSite] - 1;
             }
 #endif
 
@@ -1429,8 +1560,12 @@ namespace BuildSync.Core.Networking
             {
                 lock (FreeSendMessageBuffers)
                 {
+                    if (Buffer.Length <= SmallBufferSize)
+                    {
+                        FreeSmallMessageBuffers.Add(Buffer);
+                    }
                     // Always fill back up the specific buffer first, followed by generics.
-                    if (FreeSendMessageBuffers.Count < MaxSendMessageBuffers)
+                    else if (FreeSendMessageBuffers.Count < MaxSendMessageBuffers)
                     {
                         FreeSendMessageBuffers.Add(Buffer);
                     }
@@ -1444,8 +1579,12 @@ namespace BuildSync.Core.Networking
             {
                 lock (FreeRecieveMessageBuffers)
                 {
+                    if (Buffer.Length <= SmallBufferSize)
+                    {
+                        FreeSmallMessageBuffers.Add(Buffer);
+                    }
                     // Always fill back up the specific buffer first, followed by generics.
-                    if (FreeRecieveMessageBuffers.Count < MaxRecieveMessageBuffers)
+                    else if (FreeRecieveMessageBuffers.Count < MaxRecieveMessageBuffers)
                     {
                         FreeRecieveMessageBuffers.Add(Buffer);
                     }

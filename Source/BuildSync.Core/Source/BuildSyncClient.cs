@@ -627,7 +627,11 @@ namespace BuildSync.Core
 
         /// <summary>
         /// </summary>
-        private int ActivePeerRequests;
+        private int ActivePeerRequests = 0;
+
+        /// <summary>
+        /// </summary>
+        private int OutstandingBlockSends = 0;
 
         /// <summary>
         /// </summary>
@@ -868,7 +872,7 @@ namespace BuildSync.Core
 
             MemoryPool.PreallocateBuffers((int) BuildManifest.BlockSize, 128);
             MemoryPool.PreallocateBuffers(Crc32.BufferSize, 16);
-            NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers);
+            NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
         }
 
         /// <summary>
@@ -1952,7 +1956,8 @@ namespace BuildSync.Core
         /// </summary>
         private void UpdatePeerRequests()
         {
-            while (ActivePeerRequests < MaxConcurrentPeerRequests)
+            int ActiveRequests = ActivePeerRequests + OutstandingBlockSends;
+            while (ActiveRequests < MaxConcurrentPeerRequests)
             {
                 Peer BestPeer = null;
                 ulong BestPeerElapsed = ulong.MaxValue;
@@ -2006,9 +2011,12 @@ namespace BuildSync.Core
                                             Response.Data.SetNull();
                                         }
 
-                                        if (Request.Requester.IsConnected)
+                                        if (Request.Requester.IsReadyForData)
                                         {
-                                            Request.Requester.Send(Response);
+                                            Interlocked.Increment(ref OutstandingBlockSends);
+                                            Request.Requester.Send(Response, (bool success) => { 
+                                                Interlocked.Decrement(ref OutstandingBlockSends); 
+                                            });
                                         }
 
                                         Response.Data.SetNull(); // Free data it's been serialized by this point.

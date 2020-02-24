@@ -41,6 +41,7 @@ namespace BuildSync.Core.Networking
         public int PayloadSize;
 
         public virtual bool DoesRecieverHandleCleanup => false;
+        public virtual bool HasLargePayload => false;
 
         /// <summary>
         /// 

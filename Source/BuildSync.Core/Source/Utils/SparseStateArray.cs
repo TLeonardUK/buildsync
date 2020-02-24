@@ -162,16 +162,16 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// </summary>
         /// <param name="Array"></param>
-        public void FromArray(bool[] Array)
+        public void FromArray(bool[] Array, int ArrayLength)
         {
-            if (Size != Array.Length)
+            if (Size != ArrayLength)
             {
-                Resize(Array.Length);
+                Resize(ArrayLength);
             }
 
             Ranges.Clear();
 
-            for (int RangeStart = 0; RangeStart < Array.Length;)
+            for (int RangeStart = 0; RangeStart < ArrayLength;)
             {
                 int RangeEnd = RangeStart;
 
@@ -411,6 +411,11 @@ namespace BuildSync.Core.Utils
             ResultLength = Size;
         }
 
+        // Quick optimization to prevent memory churn, we should do this in a nicer way though.
+        private static bool[] TempUnionArray = new bool[0];
+        private static bool[] TempUnionOtherArray = new bool[0];
+        private static bool[] TempUnionResultArray = new bool[0];
+
         /// <summary>
         /// </summary>
         /// <param name="Other"></param>
@@ -423,15 +428,24 @@ namespace BuildSync.Core.Utils
             }
 
             // This is shit, do it in-place.
-            bool[] Array = ToArray();
-            bool[] OtherArray = Other.ToArray();
-            bool[] Union = new bool[Size];
-            for (int i = 0; i < Other.Size; i++)
+            lock (TempUnionArray)
             {
-                Union[i] = Array[i] || OtherArray[i];
-            }
+                int ArrayLength = 0;
+                ToArray(ref TempUnionArray, ref ArrayLength);
+                Other.ToArray(ref TempUnionOtherArray, ref ArrayLength);
 
-            FromArray(Union);
+                if (TempUnionResultArray.Length < ArrayLength)
+                {
+                    Array.Resize(ref TempUnionResultArray, ArrayLength);
+                }
+
+                for (int i = 0; i < ArrayLength; i++)
+                {
+                    TempUnionResultArray[i] = TempUnionArray[i] || TempUnionOtherArray[i];
+                }
+
+                FromArray(TempUnionResultArray, ArrayLength);
+            }
 
 #if DO_VALIDATION
             Validate();

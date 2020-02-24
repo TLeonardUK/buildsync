@@ -116,7 +116,7 @@ namespace BuildSync.Core
             ListenConnection.OnClientConnect += ClientConnected;
 
             MemoryPool.PreallocateBuffers((int) BuildManifest.BlockSize, 16);
-            NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers);
+            NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
         }
 
         /// <summary>

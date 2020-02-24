@@ -51,6 +51,11 @@ namespace BuildSync.Core.Networking.Messages
         public List<ClientState> ClientStates = new List<ClientState>();
 
         /// <summary>
+        /// 
+        /// </summary>
+        public override bool HasLargePayload => true;
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>

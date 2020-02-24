@@ -30,6 +30,8 @@ namespace BuildSync.Core.Networking.Messages
     /// </summary>
     public class NetMessage_BlockListUpdate : NetMessage
     {
+        public override bool HasLargePayload => true;
+
         /// <summary>
         ///     State of all manifests and their blocks that are held locally.
         /// </summary>
