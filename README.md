@@ -23,6 +23,9 @@ The source code comes as a visual studio 2019 solution. A few additional extensi
 ## Basic Usage
 Provided with the tool is a help file that you can access from the clients Help->View Help menu item. This gives a general description on setting it up and general usage.
 
+## Speeds
+The tool should be able to staurate a 1gbps connection if downloading/uploading from an SSD. Higher speeds are theoretical possible, but untested, and will probably run into other limits.
+
 ## Contact Details
 Any questions you are welcome to send me an email;
 
