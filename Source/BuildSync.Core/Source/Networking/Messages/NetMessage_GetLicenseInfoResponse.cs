@@ -24,10 +24,16 @@ using BuildSync.Core.Licensing;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Server->Client
+    ///
+    ///     Sent by a server in response to a <see cref="NetMessage_GetLicenseInfo" /> 
+    ///     providing tte licensing state of the server.
     /// </summary>
     public class NetMessage_GetLicenseInfoResponse : NetMessage
     {
         /// <summary>
+        ///     Partial license that is currently applied to the server. Does not
+        ///     include cryptographic material.
         /// </summary>
         public License License = new License();
 

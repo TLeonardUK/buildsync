@@ -32,15 +32,40 @@ namespace BuildSync.Core.Networking
     /// </summary>
     public class NetMessage
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public const int HeaderSize = 8;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public const int MaxPayloadSize = 100 * 1024 * 1024;
 
+        /// <summary>
+        /// 
+        /// </summary>
         private static readonly Dictionary<int, Type> MessageTypes = new Dictionary<int, Type>();
 
+        /// <summary>
+        /// 
+        /// </summary>
         public int Id;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public int PayloadSize;
 
+        /// <summary>
+        ///     Gets or sets if the reciver handles calling the Cleanup function at an appropriate time. If false
+        ///     the Cleanup function will be called as soon as the message handler has returned.
+        /// </summary>
         public virtual bool DoesRecieverHandleCleanup => false;
+
+        /// <summary>
+        ///     Gets or sets that this message can get large enough that no attempts should be made to fit it into small message buffers..
+        /// </summary>
         public virtual bool HasLargePayload => false;
 
         /// <summary>

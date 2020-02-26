@@ -30,6 +30,9 @@ namespace BuildSync.Core.Networking.Messages
     /// </summary>
     public class NetMessage_BlockListUpdate : NetMessage
     {
+        /// <summary>
+        ///     Gets or sets that this message can get large enough that no attempts should be made to fit it into small message buffers..
+        /// </summary>
         public override bool HasLargePayload => true;
 
         /// <summary>

@@ -33,6 +33,7 @@ namespace BuildSync.Core.Networking.Messages
     public class NetMessage_DeleteManifest : NetMessage
     {
         /// <summary>
+        ///     Id of manifest to remove from registry.
         /// </summary>
         public Guid ManifestId;
 

@@ -22,10 +22,15 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Server
+    ///
+    ///     Requests a all builds manifests contained within the servers registry
+    ///     at the given sub path.
     /// </summary>
     public class NetMessage_GetBuilds : NetMessage
     {
         /// <summary>
+        ///     Parent path from which all child builds are retrieved.
         /// </summary>
         public string RootPath = "";
 

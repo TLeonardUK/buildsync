@@ -22,10 +22,15 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Server->Client
+    ///
+    ///     Sent by the server to enforce a global bandwidth limit on the client. This
+    ///     is used by the server for congestion management.
     /// </summary>
     public class NetMessage_EnforceBandwidthLimit : NetMessage
     {
         /// <summary>
+        ///     Maximum global bandwidth client should use in bytes per second.
         /// </summary>
         public long BandwidthLimit;
 

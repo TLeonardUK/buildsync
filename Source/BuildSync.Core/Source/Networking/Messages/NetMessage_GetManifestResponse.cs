@@ -24,14 +24,20 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Server->Client
+    ///
+    ///     Sent by a server in response to a <see cref="NetMessage_GetManifest" /> 
+    ///     providing the manifest that was requested.
     /// </summary>
     public class NetMessage_GetManifestResponse : NetMessage
     {
         /// <summary>
+        ///     Raw bytes of the serialized manifest.
         /// </summary>
         public byte[] Data;
 
         /// <summary>
+        ///     Unique Id of the manifest provided.
         /// </summary>
         public Guid ManifestId;
 

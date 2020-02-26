@@ -22,11 +22,16 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
+    ///     Client->Server
+    ///
+    ///     Requests a user with the given name is removed from the server
+    ///     manifest registry. Can only be sent by users who have the ManageUsers
+    ///     permission.
     /// </summary>
     public class NetMessage_DeleteUser : NetMessage
     {
         /// <summary>
+        ///     Name of user to delete.
         /// </summary>
         public string Username = "";
 

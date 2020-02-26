@@ -24,24 +24,41 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Server->Client
+    ///
+    ///     Sent by a server in response to a <see cref="NetMessage_GetBuilds" /> 
+    ///     providing the data that was requested by the original sender.
     /// </summary>
     public class NetMessage_GetBuildsResponse : NetMessage
     {
         /// <summary>
-        /// 
+        ///     Represents an individual build returned by this message.
         /// </summary>
         public struct BuildInfo
         {
+            /// <summary>
+            ///     Full path within the manifest registry of this build.
+            /// </summary>
             public string VirtualPath;
+
+            /// <summary>
+            ///     Unique id of this build manifest.
+            /// </summary>
             public Guid Guid;
+            
+            /// <summary>
+            ///     Time that build was added to the manifest registry.
+            /// </summary>
             public DateTime CreateTime;
         }
 
         /// <summary>
+        ///     Array of all child builds that were retrieved.
         /// </summary>
         public BuildInfo[] Builds = new BuildInfo[0];
 
         /// <summary>
+        ///     Parent path from which all child builds were retrieved.
         /// </summary>
         public string RootPath = "";
 

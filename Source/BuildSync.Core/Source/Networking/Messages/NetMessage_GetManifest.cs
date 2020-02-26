@@ -24,10 +24,14 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Server
+    ///
+    ///     Requests the full manifest file that has the provided id.
     /// </summary>
     public class NetMessage_GetManifest : NetMessage
     {
         /// <summary>
+        ///     Unique id for the manifest to retrieve.
         /// </summary>
         public Guid ManifestId;
 

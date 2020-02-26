@@ -24,14 +24,20 @@ using System;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Client
+    ///
+    ///     Requests a block of data for the given manifest that the sending client
+    ///     believes the destination client has available. 
     /// </summary>
     public class NetMessage_GetBlock : NetMessage
     {
         /// <summary>
+        ///     Index of block to retrieve.
         /// </summary>
         public int BlockIndex;
 
         /// <summary>
+        ///     Id of manifest to retrieve block for.
         /// </summary>
         public Guid ManifestId;
 

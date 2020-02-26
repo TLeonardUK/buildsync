@@ -25,28 +25,36 @@ using BuildSync.Core.Manifests;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Client
+    ///
+    ///     Sent by a client in response to a <see cref="NetMessage_GetBlock" /> 
+    ///     providing the data that was requested by the original sender.
     /// </summary>
     public class NetMessage_GetBlockResponse : NetMessage
     {
         /// <summary>
+        ///     Block index of data contained.
         /// </summary>
         public int BlockIndex;
 
         /// <summary>
-        /// </summary>
-        public NetCachedArray Data = new NetCachedArray();
-
-        /// <summary>
+        ///     Id of manifest that block originated from.
         /// </summary>
         public Guid ManifestId;
 
         /// <summary>
-        /// 
+        ///     Buffer containing the blocks data.
+        /// </summary>
+        public NetCachedArray Data = new NetCachedArray();
+
+        /// <summary>
+        ///     Gets or sets if the reciver handles calling the Cleanup function at an appropriate time. If false
+        ///     the Cleanup function will be called as soon as the message handler has returned.
         /// </summary>
         public override bool DoesRecieverHandleCleanup => true;
 
         /// <summary>
-        /// 
+        ///     Gets or sets that this message can get large enough that no attempts should be made to fit it into small message buffers..
         /// </summary>
         public override bool HasLargePayload => true;
 
@@ -59,17 +67,11 @@ namespace BuildSync.Core.Networking.Messages
             serializer.Serialize(ref ManifestId);
             serializer.Serialize(ref BlockIndex);
 
-            //  Stopwatch totalstop = new Stopwatch();
-            //  totalstop.Start();
-
             // TODO: Modify this so it stores a reference to the deserializing buffer
             // rather than doing a pointless and time consuming copy.
             if (!serializer.Serialize(ref Data, (int) BuildManifest.BlockSize, true))
             {
             }
-
-            // totalstop.Stop();
-            // Logger.Log(LogLevel.Info, LogCategory.Transport, "Elapsed ms to {0} data: {1}", serializer.IsLoading ? "read" : "write", ((float)totalstop.ElapsedTicks / (Stopwatch.Frequency / 1000.0)));
         }
 
         /// <summary>
