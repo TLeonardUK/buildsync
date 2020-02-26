@@ -26,6 +26,8 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using BuildSync.Core;
+using BuildSync.Core.Server;
+using BuildSync.Core.Client;
 using BuildSync.Core.Licensing;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
@@ -59,7 +61,7 @@ namespace BuildSync.Server
 
         /// <summary>
         /// </summary>
-        public static BuildSyncServer NetServer;
+        public static Core.Server.Server NetServer;
 
         /// <summary>
         /// </summary>
@@ -240,7 +242,7 @@ namespace BuildSync.Server
                 SaveSettings();
             };
 
-            NetServer = new BuildSyncServer();
+            NetServer = new Core.Server.Server();
             NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager, LicenseMgr);
             NetServer.BandwidthLimit = Settings.MaxBandwidth;
         }

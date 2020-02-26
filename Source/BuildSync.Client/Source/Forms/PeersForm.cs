@@ -24,6 +24,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using BuildSync.Core;
+using BuildSync.Core.Client;
 using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
 

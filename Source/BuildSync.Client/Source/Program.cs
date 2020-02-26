@@ -27,6 +27,7 @@ using System.Windows.Forms;
 using BuildSync.Client.Commands;
 using BuildSync.Client.Forms;
 using BuildSync.Core;
+using BuildSync.Core.Client;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
@@ -83,7 +84,7 @@ namespace BuildSync.Client
 
         /// <summary>
         /// </summary>
-        public static BuildSyncClient NetClient;
+        public static Core.Client.Client NetClient;
 
         /// <summary>
         /// </summary>
@@ -474,7 +475,7 @@ namespace BuildSync.Client
 
             InitSettings();
 
-            NetClient = new BuildSyncClient();
+            NetClient = new Core.Client.Client();
 
             BuildRegistry = new BuildManifestRegistry();
             BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), int.MaxValue, true);
@@ -644,8 +645,8 @@ namespace BuildSync.Client
                     Record.PeakRateIn = Math.Max(Record.PeakRateIn, Record.AverageRateIn);
                     Record.PeakRateOut = Math.Max(Record.PeakRateOut, Record.AverageRateOut);
 
-                    Record.TargetInFlightData = Peer.GetMaxInFlightData(BuildSyncClient.TargetMillisecondsOfDataInFlight);
-                    Record.CurrentInFlightData = Record.TargetInFlightData - Peer.GetAvailableInFlightData(BuildSyncClient.TargetMillisecondsOfDataInFlight);
+                    Record.TargetInFlightData = Peer.GetMaxInFlightData(Core.Client.Client.TargetMillisecondsOfDataInFlight);
+                    Record.CurrentInFlightData = Record.TargetInFlightData - Peer.GetAvailableInFlightData(Core.Client.Client.TargetMillisecondsOfDataInFlight);
 
                     Record.Ping = (long) Peer.Connection.Ping.Get();
                     Record.BestPing = (long) Peer.Connection.BestPing;

@@ -21,6 +21,7 @@
 
 using System;
 using BuildSync.Core;
+using BuildSync.Core.Client;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
 using CommandLine;

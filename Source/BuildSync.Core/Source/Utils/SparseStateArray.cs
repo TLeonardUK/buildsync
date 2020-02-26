@@ -31,6 +31,14 @@ namespace BuildSync.Core.Utils
     [Serializable]
     public class SparseStateArray
     {
+        // Quick optimization to prevent memory churn, we should do this in a nicer way though.
+        private static bool[] TempUnionArray = new bool[0];
+        private static bool[] TempUnionOtherArray = new bool[0];
+        private static bool[] TempUnionResultArray = new bool[0];
+
+        /// <summary>
+        /// 
+        /// </summary>
         [Serializable]
         public struct Range
         {
@@ -39,7 +47,14 @@ namespace BuildSync.Core.Utils
             public bool State { get; set; }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public List<Range> Ranges { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public int Size { get; set; }
 
         /// <summary>
@@ -410,11 +425,6 @@ namespace BuildSync.Core.Utils
 
             ResultLength = Size;
         }
-
-        // Quick optimization to prevent memory churn, we should do this in a nicer way though.
-        private static bool[] TempUnionArray = new bool[0];
-        private static bool[] TempUnionOtherArray = new bool[0];
-        private static bool[] TempUnionResultArray = new bool[0];
 
         /// <summary>
         /// </summary>

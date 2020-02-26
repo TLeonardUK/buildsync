@@ -31,12 +31,18 @@ namespace BuildSync.Core.Networking
     /// </summary>
     public class NetCachedArray
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public class Bucket
         {
             public List<byte[]> Buffers = new List<byte[]>();
             public int Size;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         private static readonly List<Bucket> Buckets = new List<Bucket>();
 
         /// <summary>
@@ -82,6 +88,9 @@ namespace BuildSync.Core.Networking
             return true;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void SetNull()
         {
             if (Data != null)

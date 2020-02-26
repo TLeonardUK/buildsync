@@ -52,6 +52,9 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public static class MemoryPool
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public class Bucket
         {
             public List<byte[]> Buffers = new List<byte[]>();
@@ -59,7 +62,14 @@ namespace BuildSync.Core.Utils
             public int TotalAllocated;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         private static readonly List<Bucket> Buckets = new List<Bucket>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         private static long MemoryAllocated;
 
         /// <summary>

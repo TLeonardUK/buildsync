@@ -24,6 +24,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using BuildSync.Core;
+using BuildSync.Core.Client;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking.Messages;

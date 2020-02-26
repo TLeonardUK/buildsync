@@ -29,6 +29,9 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public static class HostnameCache
     {
+        /// <summary>
+        /// 
+        /// </summary>
         private static readonly Dictionary<string, string> Resolved = new Dictionary<string, string>();
 
         /// <summary>

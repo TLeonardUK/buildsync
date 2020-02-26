@@ -19,24 +19,20 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System.Runtime.InteropServices;
+using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using BuildSync.Core.Networking;
+using BuildSync.Core.Utils;
 
-namespace BuildSync.Core.Utils
+namespace BuildSync.Core.Users
 {
     /// <summary>
     /// </summary>
-    public static class TimeUtils
+    [Serializable]
+    public class User
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        public static ulong Ticks => GetTickCount64();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        [DllImport("kernel32.dll")]
-        public static extern ulong GetTickCount64();
+        public UserPermissionCollection Permissions { get; set; } = new UserPermissionCollection();
+        public string Username { get; set; } = "";
     }
 }

@@ -21,9 +21,11 @@
 
 using System;
 using BuildSync.Core;
+using BuildSync.Core.Client;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Client;
 using CommandLine;
 
 namespace BuildSync.Client.Commands

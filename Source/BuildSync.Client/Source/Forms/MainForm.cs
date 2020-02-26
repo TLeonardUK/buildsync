@@ -34,6 +34,7 @@ using BuildSync.Client.Controls;
 using BuildSync.Client.Properties;
 using BuildSync.Client.Tasks;
 using BuildSync.Core;
+using BuildSync.Core.Client;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;

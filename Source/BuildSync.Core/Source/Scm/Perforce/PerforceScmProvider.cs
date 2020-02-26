@@ -63,7 +63,7 @@ namespace BuildSync.Core.Scm.Perforce
 
         /// <summary>
         /// </summary>
-        private Server ServerInstance;
+        private global::Perforce.P4.Server ServerInstance;
 
         /// <summary>
         /// </summary>
@@ -225,8 +225,8 @@ namespace BuildSync.Core.Scm.Perforce
             Options options = new Options();
             options["-u"] = Username;
 
-            IList<Client> Clients = Repository.GetClients(options);
-            foreach (Client client in Clients)
+            IList<global::Perforce.P4.Client > Clients = Repository.GetClients(options);
+            foreach (global::Perforce.P4.Client client in Clients)
             {
                 if (FileUtils.NormalizePath(client.Root) == Root)
                 {
@@ -257,7 +257,7 @@ namespace BuildSync.Core.Scm.Perforce
                 {
                     try
                     {
-                        ServerInstance = new Server(new ServerAddress(Server));
+                        ServerInstance = new global::Perforce.P4.Server(new ServerAddress(Server));
                         Repository = new Repository(ServerInstance);
                         Repository.Connection.UserName = Username;
 

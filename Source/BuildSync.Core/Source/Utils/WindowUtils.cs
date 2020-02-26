@@ -206,31 +206,89 @@ namespace BuildSync.Core.Utils
             SendMessage(pBar.Handle, 1040, (IntPtr)state, IntPtr.Zero);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lpClassName"></param>
+        /// <param name="lpWindowName"></param>
+        /// <returns></returns>
         [DllImport("USER32.DLL", CharSet = CharSet.Unicode)]
         public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="processAccess"></param>
+        /// <param name="bInheritHandle"></param>
+        /// <param name="processId"></param>
+        /// <returns></returns>
 
         [DllImport("kernel32.dll")]
         public static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="hObject"></param>
+        /// <returns></returns>
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool CloseHandle(IntPtr hObject);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="hProcess"></param>
+        /// <param name="hModule"></param>
+        /// <param name="lpBaseName"></param>
+        /// <param name="nSize"></param>
+        /// <returns></returns>
         [DllImport("psapi.dll")]
         private static extern uint GetModuleFileNameEx(IntPtr hProcess, IntPtr hModule, [Out] StringBuilder lpBaseName, [In] [MarshalAs(UnmanagedType.U4)] int nSize);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
         [DllImport("User32.dll")]
         private static extern bool IsIconic(IntPtr handle);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="hWnd"></param>
+        /// <param name="Msg"></param>
+        /// <param name="w"></param>
+        /// <param name="l"></param>
+        /// <returns></returns>
         [DllImport("User32.dll", CharSet = CharSet.Auto, SetLastError = false)]
         private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr w, IntPtr l);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
         [DllImport("User32.dll")]
         private static extern bool SetForegroundWindow(IntPtr handle);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="nCmdShow"></param>
+        /// <returns></returns>
         [DllImport("User32.dll")]
         private static extern bool ShowWindow(IntPtr handle, int nCmdShow);
         
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lpSymlinkFileName"></param>
+        /// <param name="lpTargetFileName"></param>
+        /// <param name="dwFlags"></param>
+        /// <returns></returns>
         [DllImport("kernel32.dll")]
         public static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, SymbolicLink dwFlags);
     }

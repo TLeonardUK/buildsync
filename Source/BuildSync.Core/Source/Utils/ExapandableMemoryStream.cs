@@ -31,6 +31,10 @@ namespace BuildSync.Core.Utils
         private static FieldInfo ExpandableField;
         private static FieldInfo ExposableField;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Input"></param>
         public ExpandableMemoryStream(byte[] Input)
             : base(Input)
         {

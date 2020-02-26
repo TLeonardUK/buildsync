@@ -24,6 +24,9 @@ using System.Reflection;
 
 namespace BuildSync.Core.Utils
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public static class EnumUtils
     {
         /// <summary>

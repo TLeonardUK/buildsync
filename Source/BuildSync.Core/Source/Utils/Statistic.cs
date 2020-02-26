@@ -30,12 +30,34 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public abstract class Statistic
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public static Dictionary<Type, Statistic> Instances = new Dictionary<Type, Statistic>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         public bool DefaultShown = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public string MaxLabel = "128 MB/s";
+
+        /// <summary>
+        /// 
+        /// </summary>
         public float MaxValue = 128.0f;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public string Name = @"IO\Untitled (MB/s)";
 
+        /// <summary>
+        /// 
+        /// </summary>
         public GraphSeries Series = new GraphSeries();
 
         /// <summary>

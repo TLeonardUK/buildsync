@@ -29,6 +29,9 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public static class ProcessUtils
     {
+        /// <summary>
+        /// 
+        /// </summary>
         private const int ATTACH_PARENT_PROCESS = -1;
 
         /// <summary>
@@ -54,6 +57,12 @@ namespace BuildSync.Core.Utils
                 rk.DeleteValue(AppName, false);
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dwProcessId"></param>
+        /// <returns></returns>
 
         [DllImport("kernel32.dll")]
         private static extern bool AttachConsole(int dwProcessId);

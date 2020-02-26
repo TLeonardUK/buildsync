@@ -27,8 +27,19 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public static class StringUtils
     {
+        /// <summary>
+        /// 
+        /// </summary>
         public static string[] RatePrefixes = {"bits/s", "Kb/s", "Mb/s", "Gb/s", "Tb/s"};
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static string[] RatePrefixesBytes = {"bytes/s", "KB/s", "MB/s", "GB/s", "TB/s"};
+
+        /// <summary>
+        /// 
+        /// </summary>
         public static string[] SizePrefixes = {"bytes", "KB", "MB", "GB", "TB"};
 
         /// <summary>

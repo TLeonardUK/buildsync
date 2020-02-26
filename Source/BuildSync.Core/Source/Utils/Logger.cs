@@ -30,11 +30,11 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public enum LogLevel
     {
-        Verbose, // Debug information
-        Info, // General logs and useful information
-        Display, // Logs that should always display for the purpose of command line processing.
-        Warning, // Problems which may not be desirable but which will not cause an issue.
-        Error // Problems which will cause a direct issue.
+        Verbose,    // Debug information
+        Info,       // General logs and useful information
+        Display,    // Logs that should always display for the purpose of command line processing.
+        Warning,    // Problems which may not be desirable but which will not cause an issue.
+        Error       // Problems which will cause a direct issue.
     }
 
     /// <summary>

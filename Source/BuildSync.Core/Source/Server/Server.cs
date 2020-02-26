@@ -30,36 +30,12 @@ using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 
-namespace BuildSync.Core
+namespace BuildSync.Core.Server
 {
     /// <summary>
     /// </summary>
-    public class BuildSyncServer
+    public class Server
     {
-        /// <summary>
-        /// </summary>
-        public class ClientState
-        {
-            public long BandwidthLimit;
-
-            public BlockListState BlockState;
-            public int ConnectedPeerCount;
-            public long DiskUsage;
-            public long DownloadRate;
-
-            public IPEndPoint PeerConnectionAddress;
-
-            public bool PermissionsNeedUpdate;
-            public List<IPEndPoint> RelevantPeerAddresses = new List<IPEndPoint>();
-            public bool RelevantPeerAddressesNeedUpdate;
-
-            public long TotalDownloaded;
-            public long TotalUploaded;
-            public long UploadRate;
-            public string Username = "";
-            public string Version = "";
-        }
-
         /// <summary>
         /// </summary>
         private const int ListenAttemptInterval = 2 * 1000;
@@ -110,7 +86,7 @@ namespace BuildSync.Core
 
         /// <summary>
         /// </summary>
-        public BuildSyncServer()
+        public Server()
         {
             ListenConnection.OnClientMessageRecieved += HandleMessage;
             ListenConnection.OnClientConnect += ClientConnected;
@@ -154,7 +130,7 @@ namespace BuildSync.Core
             {
                 if (Connection.Metadata != null)
                 {
-                    ClientState State = Connection.Metadata as ClientState;
+                    ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                     // Determine if client is actively download for bandwidth limitation later.
                     if (State.BlockState != null)
@@ -243,7 +219,7 @@ namespace BuildSync.Core
             long PerClientBandwidthLimit = ActivelyDownloadingClients.Count > 0 ? BandwidthLimit / ActivelyDownloadingClients.Count : 0;
             foreach (NetConnection Connection in ActivelyDownloadingClients)
             {
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
                 if (State.BandwidthLimit != PerClientBandwidthLimit)
                 {
                     NetMessage_EnforceBandwidthLimit Msg = new NetMessage_EnforceBandwidthLimit();
@@ -279,7 +255,7 @@ namespace BuildSync.Core
                 {
                     if (Connection.Metadata != null)
                     {
-                        ClientState State = Connection.Metadata as ClientState;
+                        ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
                         if (State.Username == user.Username)
                         {
                             State.PermissionsNeedUpdate = true;
@@ -295,7 +271,7 @@ namespace BuildSync.Core
         /// <param name="ClientConnection"></param>
         private void ClientConnected(NetConnection Connection, NetConnection ClientConnection)
         {
-            ClientConnection.Metadata = new ClientState();
+            ClientConnection.Metadata = new ServerConnectedClient();
         }
 
         /// <summary>
@@ -307,8 +283,8 @@ namespace BuildSync.Core
         {
             List<IPEndPoint> Result = new List<IPEndPoint>();
 
-            ClientState ForClientState = ForClient.Metadata as ClientState;
-            if (ForClientState.BlockState == null)
+            ServerConnectedClient ForServerConnectedClient = ForClient.Metadata as ServerConnectedClient;
+            if (ForServerConnectedClient.BlockState == null)
             {
                 return Result;
             }
@@ -325,20 +301,20 @@ namespace BuildSync.Core
                     continue;
                 }
 
-                ClientState ClientState = Connection.Metadata as ClientState;
-                if (ClientState.BlockState == null)
+                ServerConnectedClient ServerConnectedClient = Connection.Metadata as ServerConnectedClient;
+                if (ServerConnectedClient.BlockState == null)
                 {
                     continue;
                 }
 
-                if (ClientState.PeerConnectionAddress == null)
+                if (ServerConnectedClient.PeerConnectionAddress == null)
                 {
                     continue;
                 }
 
-                if (ClientState.BlockState.HasAnyBlocksNeeded(ForClientState.BlockState))
+                if (ServerConnectedClient.BlockState.HasAnyBlocksNeeded(ForServerConnectedClient.BlockState))
                 {
-                    Result.Add(ClientState.PeerConnectionAddress);
+                    Result.Add(ServerConnectedClient.PeerConnectionAddress);
                 }
             }
 
@@ -369,7 +345,7 @@ namespace BuildSync.Core
             else if (BaseMessage is NetMessage_PublishManifest)
             {
                 NetMessage_PublishManifest Msg = BaseMessage as NetMessage_PublishManifest;
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 NetMessage_PublishManifestResponse ResponseMsg = new NetMessage_PublishManifestResponse();
                 ResponseMsg.Result = PublishManifestResult.Failed;
@@ -422,7 +398,7 @@ namespace BuildSync.Core
             {
                 NetMessage_BlockListUpdate Msg = BaseMessage as NetMessage_BlockListUpdate;
 
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 if (State.BlockState != null)
                 {
@@ -449,8 +425,8 @@ namespace BuildSync.Core
                 {
                     if (ClientConnection.Metadata != null)
                     {
-                        ClientState SubState = ClientConnection.Metadata as ClientState;
-                        SubState.RelevantPeerAddressesNeedUpdate = true;
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        Sub.RelevantPeerAddressesNeedUpdate = true;
                     }
                 }
 
@@ -464,7 +440,7 @@ namespace BuildSync.Core
             {
                 NetMessage_ConnectionInfo Msg = BaseMessage as NetMessage_ConnectionInfo;
 
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 State.PeerConnectionAddress = Msg.PeerConnectionAddress;
 
@@ -480,8 +456,8 @@ namespace BuildSync.Core
                 {
                     if (ClientConnection.Metadata != null)
                     {
-                        ClientState SubState = ClientConnection.Metadata as ClientState;
-                        SubState.RelevantPeerAddressesNeedUpdate = true;
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        Sub.RelevantPeerAddressesNeedUpdate = true;
                     }
                 }
 
@@ -522,7 +498,7 @@ namespace BuildSync.Core
             {
                 NetMessage_DeleteManifest Msg = BaseMessage as NetMessage_DeleteManifest;
 
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for deleting manifest: {0}", Msg.ManifestId.ToString());
 
@@ -561,7 +537,7 @@ namespace BuildSync.Core
             {
                 NetMessage_GetUsers Msg = BaseMessage as NetMessage_GetUsers;
 
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
                 {
@@ -583,7 +559,7 @@ namespace BuildSync.Core
             {
                 NetMessage_SetUserPermissions Msg = BaseMessage as NetMessage_SetUserPermissions;
 
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
                 {
@@ -603,7 +579,7 @@ namespace BuildSync.Core
             {
                 NetMessage_DeleteUser Msg = BaseMessage as NetMessage_DeleteUser;
 
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
                 {
@@ -649,7 +625,7 @@ namespace BuildSync.Core
             // ------------------------------------------------------------------------------
             else if (BaseMessage is NetMessage_GetServerState)
             {
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageServer, ""))
                 {
@@ -665,18 +641,18 @@ namespace BuildSync.Core
                 {
                     if (ClientConnection.Metadata != null)
                     {
-                        ClientState SubState = ClientConnection.Metadata as ClientState;
-                        if (SubState.PeerConnectionAddress != null)
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        if (Sub.PeerConnectionAddress != null)
                         {
                             NetMessage_GetServerStateResponse.ClientState NewState = new NetMessage_GetServerStateResponse.ClientState();
-                            NewState.Address = SubState.PeerConnectionAddress.Address.ToString();
-                            NewState.DownloadRate = SubState.DownloadRate;
-                            NewState.UploadRate = SubState.UploadRate;
-                            NewState.TotalDownloaded = SubState.TotalDownloaded;
-                            NewState.TotalUploaded = SubState.TotalUploaded;
-                            NewState.ConnectedPeerCount = SubState.ConnectedPeerCount;
-                            NewState.DiskUsage = SubState.DiskUsage;
-                            NewState.Version = SubState.Version;
+                            NewState.Address = Sub.PeerConnectionAddress.Address.ToString();
+                            NewState.DownloadRate = Sub.DownloadRate;
+                            NewState.UploadRate = Sub.UploadRate;
+                            NewState.TotalDownloaded = Sub.TotalDownloaded;
+                            NewState.TotalUploaded = Sub.TotalUploaded;
+                            NewState.ConnectedPeerCount = Sub.ConnectedPeerCount;
+                            NewState.DiskUsage = Sub.DiskUsage;
+                            NewState.Version = Sub.Version;
 
                             ResponseMsg.ClientStates.Add(NewState);
                         }
@@ -693,7 +669,7 @@ namespace BuildSync.Core
             {
                 NetMessage_ClientStateUpdate Msg = BaseMessage as NetMessage_ClientStateUpdate;
 
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 State.TotalDownloaded = Msg.TotalDownloaded;
                 State.TotalUploaded = Msg.TotalUploaded;
@@ -709,7 +685,7 @@ namespace BuildSync.Core
             // ------------------------------------------------------------------------------
             else if (BaseMessage is NetMessage_SetServerMaxBandwidth)
             {
-                ClientState State = Connection.Metadata as ClientState;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
                 if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageServer, ""))
                 {
@@ -750,16 +726,16 @@ namespace BuildSync.Core
                     continue;
                 }
 
-                ClientState ClientState = Connection.Metadata as ClientState;
-                if (ClientState.BlockState == null)
+                ServerConnectedClient ServerConnectedClient = Connection.Metadata as ServerConnectedClient;
+                if (ServerConnectedClient.BlockState == null)
                 {
                     continue;
                 }
 
-                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer[{0}]", ClientState.PeerConnectionAddress == null ? "Unknown" : ClientState.PeerConnectionAddress.ToString());
-                for (int i = 0; i < ClientState.BlockState.States.Length; i++)
+                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer[{0}]", ServerConnectedClient.PeerConnectionAddress == null ? "Unknown" : ServerConnectedClient.PeerConnectionAddress.ToString());
+                for (int i = 0; i < ServerConnectedClient.BlockState.States.Length; i++)
                 {
-                    ManifestBlockListState State = ClientState.BlockState.States[i];
+                    ManifestBlockListState State = ServerConnectedClient.BlockState.States[i];
                     Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tManifest[{0}] Id={1} Active={2}", i, State.Id.ToString(), State.IsActive);
                     if (State.BlockState.Ranges != null)
                     {
@@ -777,7 +753,7 @@ namespace BuildSync.Core
         /// <param name="Root"></param>
         private void SendBuildsUpdate(NetConnection Connection, string RootPath)
         {
-            ClientState State = Connection.Metadata as ClientState;
+            ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
             List<string> Children = ManifestRegistry.GetVirtualPathChildren(RootPath);
 
