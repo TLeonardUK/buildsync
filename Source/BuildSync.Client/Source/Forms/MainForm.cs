@@ -233,6 +233,11 @@ namespace BuildSync.Client.Forms
 #endif
 
             MainDownloadList.ContextMenuStrip = downloadListContextMenu;
+            
+            if (AppVersion.NonLicensed)
+            {
+                viewLicenseMenuToolstrip.Visible = false;   
+            }
 
             if (!RestoreLayout())
             {

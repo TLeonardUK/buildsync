@@ -1705,11 +1705,14 @@ namespace BuildSync.Core.Networking
                     }
 #endif
 
-                    if (ParentConnection != null && ParentConnection.Clients.Count > ParentConnection.MaxConnectedClients)
+                    if (!AppVersion.NonLicensed)
                     {
-                        Logger.Log(LogLevel.Error, LogCategory.Transport, "Exceeded maximum seats, rejecting client connection..", Address.ToString());
-                        Response.ResultType = HandshakeResultType.MaxSeatsExceeded;
-                        HandshakeFailed = true;
+                        if (ParentConnection != null && ParentConnection.Clients.Count > ParentConnection.MaxConnectedClients)
+                        {
+                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Exceeded maximum seats, rejecting client connection..", Address.ToString());
+                            Response.ResultType = HandshakeResultType.MaxSeatsExceeded;
+                            HandshakeFailed = true;
+                        }
                     }
 
                     if (ParentConnection != null)

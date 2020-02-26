@@ -23,6 +23,10 @@ using BuildSync.Core.Utils;
 
 namespace BuildSync.Core
 {
+    /// <summary>
+    ///     Version and flavour of the application.
+    ///     Parts of this class are auto-generated so care should be taken when modifying it.
+    /// </summary>
     public class AppVersion
     {
         // AUTO GENERATION
@@ -36,5 +40,10 @@ namespace BuildSync.Core
 
         public static string VersionString = MajorVersion + "." + MinorVersion + "." + PatchVersion + "." + BuildVersion;
         public static int VersionNumber = StringUtils.ConvertSemanticVerisonNumber(VersionString);
+
+        /// <summary>
+        ///     Determines if all licensing ui/limits are removed.
+        /// </summary>
+        public static bool NonLicensed = true;
     }
 }

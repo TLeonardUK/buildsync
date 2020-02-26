@@ -76,7 +76,7 @@
     <ManifestCertificateThumbprint>161008EE168BC42B1F590B2E4E19C0FEC9D5D1E4</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>..\Publishing\SigningKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>..\..\..\Publishing\SigningKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateManifests>false</GenerateManifests>
