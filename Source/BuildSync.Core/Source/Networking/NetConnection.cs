@@ -82,15 +82,18 @@ namespace BuildSync.Core.Networking
     {
         public Statistic_BandwidthIn()
         {
-            Name = @"IO\Download Speed (MB/s)";
+            Name = @"IO\Download Speed";
             MaxLabel = "128 MB/s";
-            MaxValue = 128.0f;
+            MaxValue = 128.0f * 1024.0f * 1024.0f;
             DefaultShown = true;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsTransferRate = true;
         }
 
         public override void Gather()
         {
-            AddSample(NetConnection.GlobalBandwidthStats.RateIn / 1024.0f / 1024.0f);
+            AddSample(NetConnection.GlobalBandwidthStats.RateIn);
         }
     }
 
@@ -100,15 +103,18 @@ namespace BuildSync.Core.Networking
     {
         public Statistic_BandwidthOut()
         {
-            Name = @"IO\Upload Speed (MB/s)";
+            Name = @"IO\Upload Speed";
             MaxLabel = "128 MB/s";
-            MaxValue = 128.0f;
+            MaxValue = 128.0f * 1024.0f * 1024.0f;
             DefaultShown = true;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsTransferRate = true;
         }
 
         public override void Gather()
         {
-            AddSample(NetConnection.GlobalBandwidthStats.RateOut / 1024.0f / 1024.0f);
+            AddSample(NetConnection.GlobalBandwidthStats.RateOut);
         }
     }
 
@@ -164,6 +170,9 @@ namespace BuildSync.Core.Networking
             MaxLabel = NetConnection.MaxRecieveMessageBuffers.ToString();
             MaxValue = NetConnection.MaxRecieveMessageBuffers;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -182,6 +191,9 @@ namespace BuildSync.Core.Networking
             MaxLabel = NetConnection.MaxSendMessageBuffers.ToString();
             MaxValue = NetConnection.MaxSendMessageBuffers;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -200,6 +212,9 @@ namespace BuildSync.Core.Networking
             MaxLabel = NetConnection.MaxGenericMessageBuffers.ToString();
             MaxValue = NetConnection.MaxGenericMessageBuffers;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -218,6 +233,9 @@ namespace BuildSync.Core.Networking
             MaxLabel = NetConnection.MaxSmallMessageBuffers.ToString();
             MaxValue = NetConnection.MaxSmallMessageBuffers;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -233,9 +251,12 @@ namespace BuildSync.Core.Networking
         public Statistic_PacketsIn()
         {
             Name = @"Packets\Packets In";
-            MaxLabel = "256";
-            MaxValue = 256;
+            MaxLabel = "16";
+            MaxValue = 16;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -251,9 +272,12 @@ namespace BuildSync.Core.Networking
         public Statistic_PacketsOut()
         {
             Name = @"Packets\Packets Out";
-            MaxLabel = "256";
-            MaxValue = 256;
+            MaxLabel = "16";
+            MaxValue = 16;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -269,12 +293,15 @@ namespace BuildSync.Core.Networking
         public Statistic_RequestFailures()
         {
             Name = @"Packets\Process Failures (OOM)";
-            MaxLabel = "100";
-            MaxValue = 100;
+            MaxLabel = "10";
+            MaxValue = 10;
             DefaultShown = false;
 
             Series.Outline = Drawing.PrimaryOutlineColors[4];
             Series.Fill = Drawing.PrimaryFillColors[4];
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -1660,7 +1687,7 @@ namespace BuildSync.Core.Networking
                     Ping.Add(Elapsed);
 
                     LastPingSendTime = TimeUtils.Ticks;
-                    PingOutstanding = true;
+                    PingOutstanding = false;
                 }
                 else if (Message is NetMessage_Handshake)
                 {

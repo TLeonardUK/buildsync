@@ -88,6 +88,30 @@ namespace BuildSync.Core.Controls.Graph
         internal List<GraphDataPoint> Data { get; } = new List<GraphDataPoint>();
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Value"></param>
+        public string FormatValue(float Value)
+        {
+            if (YAxis.FormatMaxLabelAsSize)
+            {
+                return StringUtils.FormatAsSize((long)Value); // TODO: add some formatting to this.
+            }
+
+            if (YAxis.FormatMaxLabelAsTransferRate)
+            {
+                return StringUtils.FormatAsTransferRate((long)Value); // TODO: add some formatting to this.
+            }
+
+            if (YAxis.FormatMaxLabelAsInteger)
+            {
+                return ((long)Value).ToString();
+            }
+
+            return Value.ToString();
+        }
+
+        /// <summary>
         ///     Adds a new data point to the graph.
         /// </summary>
         /// <param name="x">Data points value on the x-axis.</param>
@@ -112,19 +136,11 @@ namespace BuildSync.Core.Controls.Graph
                 float OriginalMax = YAxis.Max;
 
                 YAxis.Max = Math.Max(y, YAxis.Max);
-                YAxis.GridInterval = YAxis.Max / 10.0f;
+                YAxis.GridInterval = YAxis.Max / 5.0f;
 
                 if (YAxis.Max != OriginalMax)
                 {
-                    if (YAxis.FormatMaxLabelAsSize)
-                    {
-                        YAxis.MaxLabel = StringUtils.FormatAsSize((long) YAxis.Max); // TODO: add some formatting to this.
-                    }
-
-                    if (YAxis.FormatMaxLabelAsTransferRate)
-                    {
-                        YAxis.MaxLabel = StringUtils.FormatAsTransferRate((long) YAxis.Max); // TODO: add some formatting to this.
-                    }
+                    YAxis.MaxLabel = FormatValue(YAxis.Max);
                 }
             }
 
@@ -195,7 +211,7 @@ namespace BuildSync.Core.Controls.Graph
 
                         // Linear interpolate to get value at x-value.
                         float delta = (x - prevPoint.X) / (point.X - prevPoint.X);
-                        result = prevPoint.X + (point.X - prevPoint.X) * delta;
+                        result = prevPoint.Y + (point.Y - prevPoint.Y) * delta;
 
                         return true;
                     }

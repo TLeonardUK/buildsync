@@ -36,6 +36,16 @@ namespace BuildSync.Core.Controls.Graph
     public partial class GraphControl : UserControl
     {
         /// <summary>
+        /// 
+        /// </summary>
+        private float ValueUnderCursor = 0.0f;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private float CursorValueYCoord = 0.0f;
+
+        /// <summary>
         ///     Determines if we are currently drawining label information.
         /// </summary>
         private bool drawLabels = true;
@@ -106,6 +116,10 @@ namespace BuildSync.Core.Controls.Graph
         {
             Brush backgroundBrush = Brushes.White;
             Pen gridPen = Pens.LightGray;
+            Pen linePen = Pens.Black;
+
+            CursorValueYCoord = 0;
+            ValueUnderCursor = 0;
 
             Rectangle clipArea = new Rectangle(
                 clipRactangle.X,
@@ -122,6 +136,7 @@ namespace BuildSync.Core.Controls.Graph
 
             // Can't do anything else without some graph series!
             Pen primaryOutlinePen = Pens.Black;
+            Brush primaryOutlineBrush = Brushes.Black;
             if (Series != null && Series.Length != 0)
             {
                 // Draw each series.
@@ -140,6 +155,7 @@ namespace BuildSync.Core.Controls.Graph
                 }
 
                 primaryOutlinePen = new Pen(primarySeries.Outline);
+                primaryOutlineBrush = new SolidBrush(primarySeries.Outline);
 
                 graphNameLabel.Text = primarySeries.Name;
                 xSeriesMaxLabel.Text = primarySeries.XAxis.MaxLabel;
@@ -191,6 +207,43 @@ namespace BuildSync.Core.Controls.Graph
                         yGridLinePosition += yGridLineSteps;
                     }
                 }
+
+                // Draw mouse line.
+                Point relativeCursor = mainPanel.PointToClient(Cursor.Position);
+                if (clipArea.Contains(relativeCursor.X, relativeCursor.Y))// && CursorValueYCoord > 0)
+                {
+                    string ValueText = primarySeries.FormatValue(ValueUnderCursor);
+                    SizeF ValueTextSize = graphics.MeasureString(ValueText, SystemFonts.DefaultFont);
+                    float ValueTextPadding = 3.0f;
+                    float ClipAreaPadding = 5.0f;
+
+                    float ValueTextX = relativeCursor.X - (ValueTextSize.Width * 0.5f);
+                    float ValueTextY = CursorValueYCoord - ValueTextSize.Height - 10;
+
+                    if (ValueTextX < clipArea.X + ClipAreaPadding)
+                    {
+                        ValueTextX = clipArea.X + ClipAreaPadding;
+                    }
+                    if (ValueTextY < clipArea.Y + ClipAreaPadding)
+                    {
+                        ValueTextY = clipArea.Y + ClipAreaPadding;
+                    }
+                    if (ValueTextX > clipArea.X + clipArea.Width - (ValueTextSize.Width) - ClipAreaPadding)
+                    {
+                        ValueTextX = clipArea.X + clipArea.Width - (ValueTextSize.Width) - ClipAreaPadding;
+                    }
+                    if (ValueTextY > clipArea.Y + clipArea.Height - (ValueTextSize.Height) - ClipAreaPadding)
+                    {
+                        ValueTextY = clipArea.Y + clipArea.Height - (ValueTextSize.Height) - ClipAreaPadding;
+                    }
+
+                    graphics.DrawLine(primaryOutlinePen, relativeCursor.X, clipArea.Y, relativeCursor.X, clipArea.Y + clipArea.Height);
+                    graphics.FillEllipse(primaryOutlineBrush, relativeCursor.X - 2.0f, CursorValueYCoord - 2.0f, 5.0f, 5.0f);
+
+                    graphics.FillRectangle(new SolidBrush(Color.FromArgb(200, SystemColors.Control.R, SystemColors.Control.G, SystemColors.Control.B)), ValueTextX - ValueTextPadding, ValueTextY - ValueTextPadding, ValueTextSize.Width + (ValueTextPadding * 2), ValueTextSize.Height + (ValueTextPadding * 2));
+                    graphics.DrawRectangle(new Pen(Color.FromArgb(255, SystemColors.ControlDark.R, SystemColors.ControlDark.G, SystemColors.ControlDark.B)), ValueTextX - ValueTextPadding, ValueTextY - ValueTextPadding, ValueTextSize.Width + (ValueTextPadding * 2), ValueTextSize.Height + (ValueTextPadding * 2));
+                    graphics.DrawString(ValueText, SystemFonts.DefaultFont, Brushes.Black, ValueTextX, ValueTextY);
+                }
             }
 
             // Draw the outline of the graph in the primary series color.
@@ -228,6 +281,8 @@ namespace BuildSync.Core.Controls.Graph
         /// <param name="area">Area within the graphics viewport to render the data series.</param>
         private void PaintSeries(GraphSeries series, Graphics graphics, Rectangle area)
         {
+            Point relativeCursor = mainPanel.PointToClient(Cursor.Position);
+
             // Figure out general ranges and shape of graph series.
             List<GraphDataPoint> data = series.Data;
             if (data.Count == 0)
@@ -251,6 +306,18 @@ namespace BuildSync.Core.Controls.Graph
             int vertIndex = 0;
             polygon[vertIndex++] = new PointF(polygonX, area.Y + area.Height);
 
+            //if (relativeCursor.X >= polygonX)
+            //{
+                float cursorPolygonRelativeX = Math.Max(0.0f, relativeCursor.X - polygonX);
+                float cursorXDelta = cursorPolygonRelativeX / polygonWidth;
+                series.GetValueAtPoint(xMinValue + (xRange * cursorXDelta), out ValueUnderCursor);
+
+                float cursorYScalar = Math.Min(1.0f, Math.Max(0.0f, (ValueUnderCursor - series.YAxis.Min) / yFullRange));
+                float cursorVertY = area.Y + area.Height - area.Height * cursorYScalar;
+
+                CursorValueYCoord = cursorVertY;
+            //}
+
             foreach (GraphDataPoint point in data)
             {
                 float xOffset = (point.X - xMinValue - series.XAxis.Min) / xFullRange;
@@ -273,6 +340,17 @@ namespace BuildSync.Core.Controls.Graph
             // Draw our fancy new polygon.
             graphics.FillPolygon(new SolidBrush(series.Fill), polygon);
             graphics.DrawPolygon(outlinePen, polygon);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MouseMoved(object sender, MouseEventArgs e)
+        {
+            mainPanel.Invalidate();
+            mainPanel.Refresh();
         }
     }
 }

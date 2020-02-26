@@ -1298,8 +1298,7 @@ namespace BuildSync.Core.Downloads
                     if (!State.Active)
                     {
                         if (!FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder) &&
-                            State.Manifest != null &&
-                            !State.Manifest.VirtualPath.StartsWith("$")) // Ignore internal downloads, which are used for updates etc, we always want to maintain maximum availability of these.
+                            State.Manifest != null)
                         {
                             DeletionCandidates.Add(State);
                         }

@@ -137,7 +137,7 @@ namespace BuildSync.Client.Forms
                 series.YAxis.FormatMaxLabelAsTransferRate = true;
                 series.MinimumInterval = 1.0f / 2.0f;
                 series.YAxis.Max = 1024L;
-                series.YAxis.GridInterval = series.YAxis.Max / 10;
+                series.YAxis.GridInterval = series.YAxis.Max / 5;
                 BandwithGraph.Series = new GraphSeries[1] {series};
             }
         }

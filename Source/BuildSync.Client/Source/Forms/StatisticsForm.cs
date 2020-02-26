@@ -86,7 +86,7 @@ namespace BuildSync.Client.Forms
             stat.Series.YAxis.MinLabel = "";
             stat.Series.YAxis.MaxLabel = stat.MaxLabel;
             stat.Series.YAxis.Max = stat.MaxValue;
-            stat.Series.YAxis.GridInterval = stat.MaxValue / 10;
+            stat.Series.YAxis.GridInterval = stat.MaxValue / 5;
 
             Stats.Add(stat);
 

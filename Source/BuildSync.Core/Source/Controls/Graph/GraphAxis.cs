@@ -47,12 +47,17 @@ namespace BuildSync.Core.Controls.Graph
         public bool FormatMaxLabelAsTransferRate { get; set; } = false;
 
         /// <summary>
+        ///     Gets or sets if the max value label on the y axis should be formatted as a transfer rate if using auto-adjust.
+        /// </summary>
+        public bool FormatMaxLabelAsInteger { get; set; } = false;        
+
+        /// <summary>
         ///     Gets or sets the interval that grid lines should be drawn on this axis.
         /// </summary>
         /// <remarks>
         ///     Typical value is something in the range of Max / 10.
         /// </remarks>
-        public float GridInterval { get; set; } = 10;
+        public float GridInterval { get; set; } = 5;
 
         /// <summary>
         ///     Gets or sets maximum value this axis can hold. This will determine the bounds

@@ -41,15 +41,18 @@ namespace BuildSync.Core.Utils
     {
         public Statistic_DiskIn()
         {
-            Name = @"IO\Disk Write (MB/s)";
-            MaxLabel = "512 MB/s";
-            MaxValue = 512.0f;
+            Name = @"IO\Disk Write";
+            MaxLabel = "32 MB/s";
+            MaxValue = 32.0f * 1024.0f * 1024.0f;
             DefaultShown = true;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsTransferRate = true;
         }
 
         public override void Gather()
         {
-            AddSample(AsyncIOQueue.GlobalBandwidthStats.RateIn / 1024.0f / 1024.0f);
+            AddSample(AsyncIOQueue.GlobalBandwidthStats.RateIn);
         }
     }
 
@@ -59,15 +62,18 @@ namespace BuildSync.Core.Utils
     {
         public Statistic_DiskOut()
         {
-            Name = @"IO\Disk Read (MB/s)";
-            MaxLabel = "512 MB/s";
-            MaxValue = 512.0f;
+            Name = @"IO\Disk Read";
+            MaxLabel = "32 MB/s";
+            MaxValue = 32.0f * 1024.0f * 1024.0f;
             DefaultShown = true;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsTransferRate = true;
         }
 
         public override void Gather()
         {
-            AddSample(AsyncIOQueue.GlobalBandwidthStats.RateOut / 1024.0f / 1024.0f);
+            AddSample(AsyncIOQueue.GlobalBandwidthStats.RateOut);
         }
     }
 
@@ -77,15 +83,18 @@ namespace BuildSync.Core.Utils
     {
         public Statistic_DiskInQueue()
         {
-            Name = @"IO\Disk Write Queue (MB)";
-            MaxLabel = "1024 MB";
-            MaxValue = 1024.0f;
+            Name = @"IO\Disk Write Queue";
+            MaxLabel = "32 MB";
+            MaxValue = 32.0f * 1024.0f * 1024.0f;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsTransferRate = true;
         }
 
         public override void Gather()
         {
-            AddSample(AsyncIOQueue.QueuedIn / 1024.0f / 1024.0f);
+            AddSample(AsyncIOQueue.QueuedIn);
         }
     }
 
@@ -95,10 +104,13 @@ namespace BuildSync.Core.Utils
     {
         public Statistic_DiskOutQueue()
         {
-            Name = @"IO\Disk Read Queue (MB)";
-            MaxLabel = "1024 MB";
-            MaxValue = 1024.0f;
+            Name = @"IO\Disk Read Queue";
+            MaxLabel = "32 MB";
+            MaxValue = 32.0f * 1024.0f * 1024.0f;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsTransferRate = true;
         }
 
         public override void Gather()
@@ -114,11 +126,12 @@ namespace BuildSync.Core.Utils
         public Statistic_DiskOutLatency()
         {
             Name = @"IO\Disk Read Latency (ms)";
-            MaxLabel = "1000";
-            MaxValue = 1000.0f;
+            MaxLabel = "100";
+            MaxValue = 100.0f;
             DefaultShown = false;
 
             Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -134,11 +147,12 @@ namespace BuildSync.Core.Utils
         public Statistic_DiskInLatency()
         {
             Name = @"IO\Disk Write Latency (ms)";
-            MaxLabel = "1000";
-            MaxValue = 1000.0f;
+            MaxLabel = "100";
+            MaxValue = 100.0f;
             DefaultShown = false;
 
             Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -154,11 +168,12 @@ namespace BuildSync.Core.Utils
         public Statistic_IOQueueSize()
         {
             Name = @"IO\Task Queue Size";
-            MaxLabel = "50";
-            MaxValue = 50.0f;
+            MaxLabel = "10";
+            MaxValue = 10.0f;
             DefaultShown = false;
 
             Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()
@@ -174,11 +189,12 @@ namespace BuildSync.Core.Utils
         public Statistic_IOTaskProcessTime()
         {
             Name = @"IO\Task Process Time (ms)";
-            MaxLabel = "50";
-            MaxValue = 50.0f;
+            MaxLabel = "10";
+            MaxValue = 10.0f;
             DefaultShown = false;
 
             Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()

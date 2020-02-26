@@ -33,9 +33,12 @@ namespace BuildSync.Core.Utils
         public Statistic_MemoryBlocksFree()
         {
             Name = @"Memory\Blocks Free";
-            MaxLabel = "512";
-            MaxValue = 512.0f;
+            MaxLabel = "32";
+            MaxValue = 32.0f;
             DefaultShown = true;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
 
         public override void Gather()

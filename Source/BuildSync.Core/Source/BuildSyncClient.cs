@@ -87,9 +87,12 @@ namespace BuildSync.Core
         public Statistic_PeerCount()
         {
             Name = @"Peers\Peer Count";
-            MaxLabel = "64";
-            MaxValue = 64;
+            MaxLabel = "8";
+            MaxValue = 8;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
     }
 
@@ -100,9 +103,12 @@ namespace BuildSync.Core
         public Statistic_DataInFlight()
         {
             Name = @"Peers\Data In Flight";
-            MaxLabel = "256 MB";
-            MaxValue = 256;
+            MaxLabel = "32 MB";
+            MaxValue = 32;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsSize = true;
         }
     }
 
@@ -113,9 +119,12 @@ namespace BuildSync.Core
         public Statistic_BlocksInFlight()
         {
             Name = @"Peers\Blocks In Flight";
-            MaxLabel = "256";
-            MaxValue = 256;
+            MaxLabel = "32";
+            MaxValue = 32;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
     }
 
@@ -126,9 +135,12 @@ namespace BuildSync.Core
         public Statistic_AverageBlockLatency()
         {
             Name = @"Peers\Average Block Latency (ms)";
-            MaxLabel = "5000 ms";
-            MaxValue = 5000;
+            MaxLabel = "1000 ms";
+            MaxValue = 1000;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
     }
 
@@ -139,9 +151,12 @@ namespace BuildSync.Core
         public Statistic_AverageBlockSize()
         {
             Name = @"Peers\Average Block Size (MB)";
-            MaxLabel = "5 mb";
-            MaxValue = 5;
+            MaxLabel = "2 mb";
+            MaxValue = 2;
             DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsSize = true;
         }
     }
 
@@ -152,12 +167,15 @@ namespace BuildSync.Core
         public Statistic_RequestFailures()
         {
             Name = @"Peers\Request Failures";
-            MaxLabel = "100";
-            MaxValue = 100;
+            MaxLabel = "10";
+            MaxValue = 10;
             DefaultShown = false;
 
             Series.Outline = Drawing.PrimaryOutlineColors[4];
             Series.Fill = Drawing.PrimaryFillColors[4];
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
     }
 
@@ -168,11 +186,12 @@ namespace BuildSync.Core
         public Statistic_BlockListUpdates()
         {
             Name = @"Peers\Block List Updates";
-            MaxLabel = "32";
-            MaxValue = 32;
+            MaxLabel = "8";
+            MaxValue = 8;
             DefaultShown = false;
 
             Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
     }
 
@@ -183,11 +202,12 @@ namespace BuildSync.Core
         public Statistic_PendingBlockRequests()
         {
             Name = @"Peers\Pending Block Requests";
-            MaxLabel = "128";
-            MaxValue = 128;
+            MaxLabel = "32";
+            MaxValue = 32;
             DefaultShown = false;
 
             Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
     }
 
@@ -198,11 +218,12 @@ namespace BuildSync.Core
         public Statistic_ActiveBlockRequests()
         {
             Name = @"Peers\Active Block Requests";
-            MaxLabel = "128";
-            MaxValue = 128;
+            MaxLabel = "32";
+            MaxValue = 32;
             DefaultShown = false;
 
             Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
         }
     }
 
