@@ -37,6 +37,8 @@ namespace BuildSync.Client.Forms
             InitializeComponent();
 
             downloadFileSystemTree.CanSelectBuildContainers = false;
+
+            ValidateState();
         }
 
         /// <summary>
@@ -45,7 +47,9 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void AddBuildClicked(object sender, EventArgs e)
         {
-            new PublishBuildForm().ShowDialog(this);
+            PublishBuildForm Form = new PublishBuildForm();
+            Form.VirtualPath = downloadFileSystemTree.SelectedPathRaw != "" ? downloadFileSystemTree.SelectedPathRaw + "/1" : "";
+            Form.ShowDialog(this);
         }
 
         /// <summary>
@@ -81,10 +85,27 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DownloadClicked(object sender, EventArgs e)
+        {
+            AddDownloadForm Form = new AddDownloadForm();
+            Form.SelectedPath = downloadFileSystemTree.SelectedPathRaw;
+            Form.ShowDialog(this);
+        }
+
+        /// <summary>
         /// </summary>
         private void ValidateState()
         {
-            RemoveBuildButton.Enabled = downloadFileSystemTree.SelectedManifestId != Guid.Empty;
+            bool CanManage = Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, "", false, true);
+
+            deleteToolStripMenuItem.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
+            addDownloadToolStripMenuItem1.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId == Guid.Empty);
+            addTagToolStripMenuItem.Enabled = false;// CanManage && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
+            downloadToolStripMenuItem.Enabled = (downloadFileSystemTree.SelectedManifestId != Guid.Empty || downloadFileSystemTree.IsSelectedBuildContainer);
         }
 
         /// <summary>
@@ -94,11 +115,6 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void UpdateTimer_Tick(object sender, EventArgs e)
         {
-            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, "", false, true))
-            {
-                Hide();
-                return;
-            }
         }
     }
 }

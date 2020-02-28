@@ -545,6 +545,14 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.connection.quality.verylow.png" />
+    <None Include="Resources\appbar.connection.quality.veryhigh.png" />
+    <None Include="Resources\appbar.connection.quality.medium.png" />
+    <None Include="Resources\appbar.connection.quality.low.png" />
+    <None Include="Resources\appbar.connection.quality.high.png" />
+    <None Include="Resources\appbar.connection.quality.extremelylow.png" />
+    <None Include="Resources\appbar.folder1.png" />
+    <None Include="Resources\appbar.tag.png" />
     <None Include="Resources\appbar.database.png" />
     <None Include="Resources\appbar.folder.png" />
     <None Include="Resources\appbar.folder.open.png" />

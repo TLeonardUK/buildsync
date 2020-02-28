@@ -321,7 +321,7 @@
             this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(350, 432);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(350, 444);
             this.flowLayoutPanel1.TabIndex = 29;
             this.flowLayoutPanel1.WrapContents = false;
             // 
@@ -384,7 +384,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             this.splitContainer1.IsSplitterFixed = true;
-            this.splitContainer1.Location = new System.Drawing.Point(8, 24);
+            this.splitContainer1.Location = new System.Drawing.Point(8, 12);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -398,7 +398,7 @@
             this.splitContainer1.Panel2.Controls.Add(this.label6);
             this.splitContainer1.Panel2.Controls.Add(this.label5);
             this.splitContainer1.Panel2.Controls.Add(this.downloadFileSystemTree);
-            this.splitContainer1.Size = new System.Drawing.Size(1060, 432);
+            this.splitContainer1.Size = new System.Drawing.Size(1060, 444);
             this.splitContainer1.SplitterDistance = 350;
             this.splitContainer1.TabIndex = 30;
             // 
@@ -409,7 +409,7 @@
             this.label7.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.label7.ImageIndex = 0;
             this.label7.ImageList = this.LegendImages;
-            this.label7.Location = new System.Drawing.Point(269, 392);
+            this.label7.Location = new System.Drawing.Point(269, 404);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(38, 34);
             this.label7.TabIndex = 23;
@@ -421,7 +421,7 @@
             this.label8.ForeColor = System.Drawing.SystemColors.ControlDark;
             this.label8.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.label8.ImageIndex = 0;
-            this.label8.Location = new System.Drawing.Point(313, 392);
+            this.label8.Location = new System.Drawing.Point(313, 404);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(227, 34);
             this.label8.TabIndex = 22;
@@ -435,7 +435,7 @@
             this.label6.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.label6.ImageIndex = 1;
             this.label6.ImageList = this.LegendImages;
-            this.label6.Location = new System.Drawing.Point(-1, 392);
+            this.label6.Location = new System.Drawing.Point(-1, 404);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(38, 40);
             this.label6.TabIndex = 21;
@@ -447,7 +447,7 @@
             this.label5.ForeColor = System.Drawing.SystemColors.ControlDark;
             this.label5.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.label5.ImageIndex = 0;
-            this.label5.Location = new System.Drawing.Point(43, 392);
+            this.label5.Location = new System.Drawing.Point(43, 404);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(227, 40);
             this.label5.TabIndex = 20;
@@ -464,7 +464,7 @@
             this.downloadFileSystemTree.Padding = new System.Windows.Forms.Padding(0, 0, 0, 50);
             this.downloadFileSystemTree.SelectedPath = "";
             this.downloadFileSystemTree.ShowInternal = false;
-            this.downloadFileSystemTree.Size = new System.Drawing.Size(706, 432);
+            this.downloadFileSystemTree.Size = new System.Drawing.Size(706, 444);
             this.downloadFileSystemTree.TabIndex = 13;
             this.downloadFileSystemTree.OnDateUpdated += new System.EventHandler(this.DataStateChanged);
             this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);

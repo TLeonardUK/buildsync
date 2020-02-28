@@ -82,6 +82,8 @@ namespace BuildSync.Client.Controls
             public bool IsBuildContainer;
             public Guid ManifestId;
             public string Availability;
+            public Image AvailabilityIcon;
+            public string TagsFormatted;
         }
 
         /// <summary>
@@ -112,6 +114,16 @@ namespace BuildSync.Client.Controls
         private TreeModel Model = null;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private bool InternallyChangingPathText = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool NodeSelectedAutomatically = false;
+
+        /// <summary>
         /// </summary>
         public Guid SelectedManifestId
         {
@@ -128,6 +140,26 @@ namespace BuildSync.Client.Controls
                 }
 
                 return Guid.Empty;
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        public bool IsSelectedBuildContainer
+        {
+            get
+            {
+                TreeNodeAdv SelectedNode = MainTreeView.SelectedNode;
+                if (SelectedNode != null)
+                {
+                    DownloadFileSystemTreeNode Metadata = SelectedNode.Tag as DownloadFileSystemTreeNode;
+                    if (Metadata != null)
+                    {
+                        return Metadata.IsBuildContainer;
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -156,10 +188,46 @@ namespace BuildSync.Client.Controls
                 SelectNextPath();
             }
         }
+        
+        /// <summary>
+        /// </summary>
+        public string SelectedPathRaw
+        {
+            get
+            {
+                TreeNodeAdv SelectedNode = MainTreeView.SelectedNode;
+                if (SelectedNode != null)
+                {
+                    DownloadFileSystemTreeNode Metadata = SelectedNode.Tag as DownloadFileSystemTreeNode;
+                    if (Metadata != null)
+                    {
+                        return Metadata.FullPath;
+                    }
+                }
+
+                return "";
+            }
+            set
+            {
+                PathsToSelect = BuildFileSystem.GetSubPaths(value);
+                PathsToSelect.Reverse();
+                SelectNextPath();
+            }
+        }
 
         /// <summary>
         /// </summary>
         public bool ShowInternal { get; set; } = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void UpdatePathText(string Text)
+        {
+            InternallyChangingPathText = true;
+            pathTextBox.Text = Text;
+            InternallyChangingPathText = false;
+        }
 
         /// <summary>
         /// </summary>
@@ -174,7 +242,7 @@ namespace BuildSync.Client.Controls
 
             TreeColumn NameColumn = new TreeColumn();
             NameColumn.Header = "Name";
-            NameColumn.Width = 300;
+            NameColumn.Width = 200;
             MainTreeView.Columns.Add(NameColumn);
             
                 ScaledNodeIcon IconControl = new ScaledNodeIcon();
@@ -213,11 +281,28 @@ namespace BuildSync.Client.Controls
             AvailabilityColumn.Header = "Availability";
             AvailabilityColumn.Width = 200;
             MainTreeView.Columns.Add(AvailabilityColumn);
+            
+                ScaledNodeIcon AvailabilityIconControl = new ScaledNodeIcon();
+                AvailabilityIconControl.ParentColumn = AvailabilityColumn;
+                AvailabilityIconControl.DataPropertyName = "AvailabilityIcon";
+                AvailabilityIconControl.FixedSize = new Size((int)(MainTreeView.RowHeight * 1.5f), (int)(MainTreeView.RowHeight * 1.5f));
+                AvailabilityIconControl.Offset = new Size(0, 5);
+                MainTreeView.NodeControls.Add(AvailabilityIconControl);
 
                 NodeTextBox AvailabilityControl = new NodeTextBox();
                 AvailabilityControl.ParentColumn = AvailabilityColumn;
                 AvailabilityControl.DataPropertyName = "Availability";
                 MainTreeView.NodeControls.Add(AvailabilityControl);
+                
+            TreeColumn TagsColumn = new TreeColumn();
+            TagsColumn.Header = "Tags";
+            TagsColumn.Width = 100;
+            MainTreeView.Columns.Add(TagsColumn);
+
+                NodeTextBox TagControl = new NodeTextBox();
+                TagControl.ParentColumn = TagsColumn;
+                TagControl.DataPropertyName = "TagsFormatted";
+                MainTreeView.NodeControls.Add(TagControl);
         }
 
         /// <summary>
@@ -227,6 +312,13 @@ namespace BuildSync.Client.Controls
         private void AfterNodeSelected(object sender, EventArgs e)
         {
             OnSelectedNodeChanged?.Invoke(this, null);
+
+            if (!NodeSelectedAutomatically)
+            {
+                InternallyChangingPathText = true;
+                pathTextBox.Text = SelectedPathRaw;
+                InternallyChangingPathText = false;
+            }
         }
 
         /// <summary>
@@ -371,6 +463,7 @@ namespace BuildSync.Client.Controls
                         TrNode.FullPath = Node.Path;
                         TrNode.Name = Node.Name;
                         TrNode.Icon = Resources.appbar_box;
+                        TrNode.AvailabilityIcon = null;
 
                         if (Node.Metadata != null)
                         {
@@ -382,22 +475,41 @@ namespace BuildSync.Client.Controls
                             TrNode.SizeFormatted = StringUtils.FormatAsSize((long)BuildInfo.TotalSize);
                             TrNode.CreateTimeFormatted = BuildInfo.CreateTime.ToString("dd/MM/yyyy HH:mm");
 
-                            if (BuildInfo.AvailablePeers >= 5)
+                            // 9        = very high
+                            // 7,8      = high
+                            // 4,5,6,   = medium
+                            // 2,3      = low
+                            // 1        = very low
+                            // 0        = not
+
+                            TrNode.Availability = BuildInfo.AvailablePeers + " peers have entire build";
+                            if (BuildInfo.AvailablePeers >= 9)
                             {
-                                TrNode.Availability = "High (" + BuildInfo.AvailablePeers + " peers have full build)";
+                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_veryhigh;
+                            }
+                            else if (BuildInfo.AvailablePeers >= 7)
+                            {
+                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_high;
                             }
                             else if (BuildInfo.AvailablePeers >= 3)
                             {
-                                TrNode.Availability = "Medium (" + BuildInfo.AvailablePeers + " peers have full build)";
+                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_medium;
                             }
-                            else if (BuildInfo.AvailablePeers > 0)
+                            else if (BuildInfo.AvailablePeers >= 2)
                             {
-                                TrNode.Availability = "Low (" + BuildInfo.AvailablePeers + " peers have full build)";
+                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_low;
+                            }
+                            else if (BuildInfo.AvailablePeers >= 1)
+                            {
+                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_verylow;
                             }
                             else
                             {
+                                TrNode.AvailabilityIcon = Resources.appbar_close;
                                 TrNode.Availability = "Last available " + BuildInfo.LastSeenOnPeer.ToString("dd/MM/yyyy HH:mm");
                             }
+                            
+                            TrNode.TagsFormatted = "Broken, Important";
                         }
                         else
                         {
@@ -412,6 +524,8 @@ namespace BuildSync.Client.Controls
                             TrNode.SizeFormatted = "";
                             TrNode.Availability = "";
                             TrNode.CreateTimeFormatted = "";
+                            TrNode.AvailabilityIcon = null;
+                            TrNode.TagsFormatted = "";
                         }
 
                         if (TrNode.IsBuild)
@@ -531,6 +645,8 @@ namespace BuildSync.Client.Controls
         /// </summary>
         private void SelectNextPath()
         {
+            NodeSelectedAutomatically = true;
+
             while (PathsToSelect.Count > 0)
             {
                 string NextNode = PathsToSelect[0];
@@ -548,7 +664,21 @@ namespace BuildSync.Client.Controls
 
                 PathsToSelect.RemoveAt(0);
             }
+
+            NodeSelectedAutomatically = false;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PathTextChanged(object sender, EventArgs e)
+        {
+            if (!InternallyChangingPathText)
+            {
+                SelectedPathRaw = pathTextBox.Text;
+            }
+        }
     }
 }

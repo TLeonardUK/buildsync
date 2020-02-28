@@ -143,6 +143,66 @@ namespace BuildSync.Client.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap appbar_connection_quality_extremelylow {
+            get {
+                object obj = ResourceManager.GetObject("appbar_connection_quality_extremelylow", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_connection_quality_high {
+            get {
+                object obj = ResourceManager.GetObject("appbar_connection_quality_high", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_connection_quality_low {
+            get {
+                object obj = ResourceManager.GetObject("appbar_connection_quality_low", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_connection_quality_medium {
+            get {
+                object obj = ResourceManager.GetObject("appbar_connection_quality_medium", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_connection_quality_veryhigh {
+            get {
+                object obj = ResourceManager.GetObject("appbar_connection_quality_veryhigh", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_connection_quality_verylow {
+            get {
+                object obj = ResourceManager.GetObject("appbar_connection_quality_verylow", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap appbar_console {
             get {
                 object obj = ResourceManager.GetObject("appbar.console", resourceCulture);
@@ -226,16 +286,6 @@ namespace BuildSync.Client.Properties {
         internal static System.Drawing.Bitmap appbar_download {
             get {
                 object obj = ResourceManager.GetObject("appbar.download", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap appbar_folder {
-            get {
-                object obj = ResourceManager.GetObject("appbar_folder", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -346,6 +396,16 @@ namespace BuildSync.Client.Properties {
         internal static System.Drawing.Bitmap appbar_settings {
             get {
                 object obj = ResourceManager.GetObject("appbar.settings", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_tag {
+            get {
+                object obj = ResourceManager.GetObject("appbar.tag", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

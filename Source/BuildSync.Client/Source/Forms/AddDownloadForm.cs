@@ -36,6 +36,15 @@ namespace BuildSync.Client.Forms
         public DownloadState EditState;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public string SelectedPath
+        {
+            get { return downloadFileSystemTree.SelectedPath; }
+            set { downloadFileSystemTree.SelectedPath = value; downloadFileSystemTree.UpdatePathText(value); }
+        }
+
+        /// <summary>
         /// </summary>
         public AddDownloadForm()
         {
@@ -162,6 +171,8 @@ namespace BuildSync.Client.Forms
                 installLocationTextBox.Text = EditState.InstallLocation;
                 downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
                 addDownloadButton.Text = "Save Changes";
+
+                downloadFileSystemTree.UpdatePathText(EditState.VirtualPath);
             }
 
             if (workspaceComboBox.Items.Count == 0)

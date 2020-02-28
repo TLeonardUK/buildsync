@@ -30,40 +30,22 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManageBuildsForm));
-            this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
-            this.RemoveBuildButton = new System.Windows.Forms.Button();
             this.ButtonImageList = new System.Windows.Forms.ImageList(this.components);
-            this.AddBuildButton = new System.Windows.Forms.Button();
             this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.downloadListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            this.addDownloadToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.addTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.customTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.brokenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.milestoneToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.downloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
+            this.downloadListContextMenu.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // downloadFileSystemTree
-            // 
-            this.downloadFileSystemTree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.downloadFileSystemTree.CanSelectBuildContainers = true;
-            this.downloadFileSystemTree.Location = new System.Drawing.Point(6, 38);
-            this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1);
-            this.downloadFileSystemTree.Name = "downloadFileSystemTree";
-            this.downloadFileSystemTree.SelectedPath = "";
-            this.downloadFileSystemTree.ShowInternal = true;
-            this.downloadFileSystemTree.Size = new System.Drawing.Size(344, 417);
-            this.downloadFileSystemTree.TabIndex = 22;
-            this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DateStateChanged);
-            // 
-            // RemoveBuildButton
-            // 
-            this.RemoveBuildButton.Enabled = false;
-            this.RemoveBuildButton.ImageIndex = 1;
-            this.RemoveBuildButton.ImageList = this.ButtonImageList;
-            this.RemoveBuildButton.Location = new System.Drawing.Point(42, 5);
-            this.RemoveBuildButton.Margin = new System.Windows.Forms.Padding(2);
-            this.RemoveBuildButton.Name = "RemoveBuildButton";
-            this.RemoveBuildButton.Size = new System.Drawing.Size(30, 29);
-            this.RemoveBuildButton.TabIndex = 15;
-            this.RemoveBuildButton.UseVisualStyleBackColor = true;
-            this.RemoveBuildButton.Click += new System.EventHandler(this.RemoveBuildClicked);
             // 
             // ButtonImageList
             // 
@@ -72,31 +54,116 @@
             this.ButtonImageList.Images.SetKeyName(0, "appbar.add.png");
             this.ButtonImageList.Images.SetKeyName(1, "appbar.delete.png");
             // 
-            // AddBuildButton
-            // 
-            this.AddBuildButton.ImageIndex = 0;
-            this.AddBuildButton.ImageList = this.ButtonImageList;
-            this.AddBuildButton.Location = new System.Drawing.Point(5, 5);
-            this.AddBuildButton.Margin = new System.Windows.Forms.Padding(2);
-            this.AddBuildButton.Name = "AddBuildButton";
-            this.AddBuildButton.Size = new System.Drawing.Size(30, 29);
-            this.AddBuildButton.TabIndex = 23;
-            this.AddBuildButton.UseVisualStyleBackColor = true;
-            this.AddBuildButton.Click += new System.EventHandler(this.AddBuildClicked);
-            // 
             // UpdateTimer
             // 
             this.UpdateTimer.Enabled = true;
             this.UpdateTimer.Interval = 1000;
             this.UpdateTimer.Tick += new System.EventHandler(this.UpdateTimer_Tick);
             // 
+            // downloadListContextMenu
+            // 
+            this.downloadListContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
+            this.downloadListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addDownloadToolStripMenuItem1,
+            this.addTagToolStripMenuItem,
+            this.toolStripSeparator6,
+            this.downloadToolStripMenuItem,
+            this.toolStripSeparator9,
+            this.deleteToolStripMenuItem});
+            this.downloadListContextMenu.Name = "downloadListContextMenu";
+            this.downloadListContextMenu.Size = new System.Drawing.Size(189, 158);
+            // 
+            // toolStripSeparator6
+            // 
+            this.toolStripSeparator6.Name = "toolStripSeparator6";
+            this.toolStripSeparator6.Size = new System.Drawing.Size(185, 6);
+            // 
+            // toolStripSeparator9
+            // 
+            this.toolStripSeparator9.Name = "toolStripSeparator9";
+            this.toolStripSeparator9.Size = new System.Drawing.Size(185, 6);
+            // 
+            // addDownloadToolStripMenuItem1
+            // 
+            this.addDownloadToolStripMenuItem1.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
+            this.addDownloadToolStripMenuItem1.Name = "addDownloadToolStripMenuItem1";
+            this.addDownloadToolStripMenuItem1.Size = new System.Drawing.Size(188, 30);
+            this.addDownloadToolStripMenuItem1.Text = "Add Build ...";
+            this.addDownloadToolStripMenuItem1.Click += new System.EventHandler(this.AddBuildClicked);
+            // 
+            // addTagToolStripMenuItem
+            // 
+            this.addTagToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.customTagToolStripMenuItem,
+            this.toolStripSeparator1,
+            this.brokenToolStripMenuItem,
+            this.milestoneToolStripMenuItem});
+            this.addTagToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_tag;
+            this.addTagToolStripMenuItem.Name = "addTagToolStripMenuItem";
+            this.addTagToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.addTagToolStripMenuItem.Text = "Add Tag ...";
+            // 
+            // customTagToolStripMenuItem
+            // 
+            this.customTagToolStripMenuItem.Name = "customTagToolStripMenuItem";
+            this.customTagToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
+            this.customTagToolStripMenuItem.Text = "Custom Tag";
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(134, 6);
+            // 
+            // brokenToolStripMenuItem
+            // 
+            this.brokenToolStripMenuItem.Name = "brokenToolStripMenuItem";
+            this.brokenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
+            this.brokenToolStripMenuItem.Text = "Broken";
+            // 
+            // milestoneToolStripMenuItem
+            // 
+            this.milestoneToolStripMenuItem.Name = "milestoneToolStripMenuItem";
+            this.milestoneToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
+            this.milestoneToolStripMenuItem.Text = "Milestone";
+            // 
+            // downloadToolStripMenuItem
+            // 
+            this.downloadToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_download;
+            this.downloadToolStripMenuItem.Name = "downloadToolStripMenuItem";
+            this.downloadToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.downloadToolStripMenuItem.Text = "Download ...";
+            this.downloadToolStripMenuItem.Click += new System.EventHandler(this.DownloadClicked);
+            // 
+            // deleteToolStripMenuItem
+            // 
+            this.deleteToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_delete;
+            this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.deleteToolStripMenuItem.Text = "Delete";
+            this.deleteToolStripMenuItem.Click += new System.EventHandler(this.RemoveBuildClicked);
+            // 
+            // downloadFileSystemTree
+            // 
+            this.downloadFileSystemTree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.downloadFileSystemTree.CanSelectBuildContainers = true;
+            this.downloadFileSystemTree.ContextMenuStrip = this.downloadListContextMenu;
+            this.downloadFileSystemTree.Location = new System.Drawing.Point(0, 0);
+            this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1);
+            this.downloadFileSystemTree.Name = "downloadFileSystemTree";
+            this.downloadFileSystemTree.SelectedPath = "";
+            this.downloadFileSystemTree.SelectedPathRaw = "";
+            this.downloadFileSystemTree.ShowInternal = true;
+            this.downloadFileSystemTree.Size = new System.Drawing.Size(1093, 460);
+            this.downloadFileSystemTree.TabIndex = 22;
+            this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DateStateChanged);
+            // 
             // ManageBuildsForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(355, 460);
-            this.Controls.Add(this.AddBuildButton);
+            this.ClientSize = new System.Drawing.Size(1093, 460);
             this.Controls.Add(this.downloadFileSystemTree);
-            this.Controls.Add(this.RemoveBuildButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.HideOnClose = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -106,7 +173,8 @@
             this.Name = "ManageBuildsForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Build Manager";
+            this.Text = "Build Explorer";
+            this.downloadListContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -114,9 +182,18 @@
         #endregion
 
         private Controls.DownloadFileSystemTree downloadFileSystemTree;
-        private System.Windows.Forms.Button RemoveBuildButton;
-        private System.Windows.Forms.Button AddBuildButton;
         private System.Windows.Forms.ImageList ButtonImageList;
         private System.Windows.Forms.Timer UpdateTimer;
+        private System.Windows.Forms.ContextMenuStrip downloadListContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem addDownloadToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
+        private System.Windows.Forms.ToolStripMenuItem addTagToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem customTagToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem brokenToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem milestoneToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
+        private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem downloadToolStripMenuItem;
     }
 }

@@ -36,6 +36,15 @@ namespace BuildSync.Client.Forms
         private PublishBuildTask Publisher;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public string VirtualPath
+        {
+            get { return VirtualPathTextBox.Text; }
+            set { VirtualPathTextBox.Text = value; }
+        }
+
+        /// <summary>
         /// </summary>
         public PublishBuildForm()
         {
