@@ -3,7 +3,7 @@
   <?define ComponentRules="OneToOne"?>
   <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
   <?define SourceDir="..\..\Build\Deploy"?>
-  <Module Id="BuildSync" Language="1033" Version="1.0.0.400">
+  <Module Id="BuildSync" Language="1033" Version="1.0.0.411">
     <Package Id="2bfad680-e708-481c-9cd4-f285482e7ace" Manufacturer="Tim Leonard" InstallerVersion="200" Description="Tool for distributing application builds" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" />
@@ -39,6 +39,9 @@
         </Component>
         <Component Id="owc8E6D480EBF8E2E304795EDCB349DD37B" Guid="2eb1c63e-1243-a985-cfe2-559525145a92">
           <File Id="owf8E6D480EBF8E2E304795EDCB349DD37B" Source="$(var.SourceDir)\BuildSync.Server.exe.config" KeyPath="yes" />
+        </Component>
+        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA334D" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb75E">
+          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA334D" Source="$(var.SourceDir)\Aga.Controls.dll" KeyPath="yes" />
         </Component>
         <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA334E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb75d">
           <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA334E" Source="$(var.SourceDir)\CommandLine.dll" KeyPath="yes" />

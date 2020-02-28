@@ -131,7 +131,7 @@ namespace BuildSync.Core.Manifests
             string Id = ManifestId.ToString();
             lock (ManifestLastSeenTimes)
             {
-                if (!ManifestLastSeenTimes.ContainsKey(Id))
+                if (ManifestLastSeenTimes.ContainsKey(Id))
                 {
                     return ManifestLastSeenTimes[Id];
                 }
@@ -245,8 +245,9 @@ namespace BuildSync.Core.Manifests
                         TimeSpan Elapsed = DateTime.UtcNow - ManifestLastSeenTimes[Id];
                         if (Elapsed.TotalDays > MaxDaysOld)
                         {
-                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Pruning manifest '{0}' as it's {1} days since it was last seen on any peer.", Manifest.Guid.ToString(), Elapsed.TotalDays);
+                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Pruning manifest '{0}' '{1}' as it's {2} days since it was last seen on any peer.", Manifest.Guid.ToString(), Manifest.VirtualPath, (int)Elapsed.TotalDays);
 
+                            ManifestFileSystem.RemoveNode(Manifest.VirtualPath);
                             Manifests.RemoveAt(i);
                             i--;
 

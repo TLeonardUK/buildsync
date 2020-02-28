@@ -884,7 +884,7 @@ namespace BuildSync.Core.Server
             ResponseMsg.Builds = Result.ToArray();
 
             // If build is old enough, send simplified response.
-            if (State.VersionNumeric <= 100000396)
+            if (State.VersionNumeric <= 100000397)
             {
                 ResponseMsg.SendLegacyVersion = true;
             }

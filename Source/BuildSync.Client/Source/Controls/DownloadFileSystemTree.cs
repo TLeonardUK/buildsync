@@ -380,7 +380,7 @@ namespace BuildSync.Client.Controls
                             TrNode.ManifestId = BuildInfo.Guid;
                             TrNode.CreateTime = Node.CreateTime;
                             TrNode.SizeFormatted = StringUtils.FormatAsSize((long)BuildInfo.TotalSize);
-                            TrNode.CreateTimeFormatted = BuildInfo.CreateTime.ToString("MM/dd/yyyy HH:mm");
+                            TrNode.CreateTimeFormatted = BuildInfo.CreateTime.ToString("dd/MM/yyyy HH:mm");
 
                             if (BuildInfo.AvailablePeers >= 5)
                             {
@@ -396,7 +396,7 @@ namespace BuildSync.Client.Controls
                             }
                             else
                             {
-                                TrNode.Availability = "Last available " + BuildInfo.LastSeenOnPeer.ToString("MM/dd/yyyy HH:mm");
+                                TrNode.Availability = "Last available " + BuildInfo.LastSeenOnPeer.ToString("dd/MM/yyyy HH:mm");
                             }
                         }
                         else

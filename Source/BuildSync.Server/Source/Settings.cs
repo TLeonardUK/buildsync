@@ -50,7 +50,7 @@ namespace BuildSync.Server
         /// <summary>
         /// 
         /// </summary>
-        public int MaximumManifestUnseenDays { get; set; } = 30;
+        public int MaximumManifestUnseenDays { get; set; } = 14;
         
         /// <summary>
         /// 

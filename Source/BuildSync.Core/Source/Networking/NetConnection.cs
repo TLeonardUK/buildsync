@@ -804,12 +804,9 @@ namespace BuildSync.Core.Networking
                         MessageRecievedHandler MessageRecievedLambda = null;
                         MessageRecievedLambda = (NetConnection, Message) =>
                         {
-                            lock (Clients)
+                            lock (EventQueue)
                             {
-                                lock (EventQueue)
-                                {
-                                    EventQueue.Enqueue(() => { OnClientMessageRecieved?.Invoke(ClientConnection, Message); });
-                                }
+                                EventQueue.Enqueue(() => { OnClientMessageRecieved?.Invoke(ClientConnection, Message); });
                             }
                         };
 
@@ -840,11 +837,10 @@ namespace BuildSync.Core.Networking
                         lock (Clients)
                         {
                             Clients.Add(ClientConnection);
-
-                            lock (EventQueue)
-                            {
-                                EventQueue.Enqueue(() => { OnClientConnect?.Invoke(this, ClientConnection); });
-                            }
+                        }
+                        lock (EventQueue)
+                        {
+                            EventQueue.Enqueue(() => { OnClientConnect?.Invoke(this, ClientConnection); });
                         }
 
                         ClientConnection.BeginClient();
