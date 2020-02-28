@@ -274,6 +274,7 @@ namespace BuildSync.Core.Manifests
 
             // Calculate which data goes in eahc block.
             Manifest.CacheBlockInfo();
+            Manifest.CacheSizeInfo();
             Manifest.DebugCheck();
 
             // Calculate checksum for each individual block.
@@ -336,6 +337,7 @@ namespace BuildSync.Core.Manifests
             if (Manifest != null)
             {
                 Manifest.CacheBlockInfo();
+                Manifest.CacheSizeInfo();
             }
 
             return Manifest;
@@ -533,6 +535,7 @@ namespace BuildSync.Core.Manifests
             {
                 Manifest.CacheBlockInfo();
             }
+            Manifest.CacheSizeInfo();
 
             return Manifest;
         }
@@ -623,6 +626,24 @@ namespace BuildSync.Core.Manifests
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        private void CacheSizeInfo()
+        {
+            // Calcualte total size.
+            TotalSize = 0;
+            foreach (BuildManifestFileInfo FileInfo in Files)
+            {
+                TotalSize += FileInfo.Size;
+
+                if (FilesByPath != null)
+                {
+                    FilesByPath.Add(FileInfo.Path, FileInfo);
+                }
+            }
+        }
+
+        /// <summary>
         /// </summary>
         private void CacheBlockInfo()
         {
@@ -709,14 +730,6 @@ namespace BuildSync.Core.Manifests
                     //Console.WriteLine("\tRemaining: {0}", BytesRemaining);
                     fi++;
                 }
-            }
-
-            // Calcualte total size.
-            TotalSize = 0;
-            foreach (BuildManifestFileInfo FileInfo in Files)
-            {
-                TotalSize += FileInfo.Size;
-                FilesByPath.Add(FileInfo.Path, FileInfo);
             }
         }
     }

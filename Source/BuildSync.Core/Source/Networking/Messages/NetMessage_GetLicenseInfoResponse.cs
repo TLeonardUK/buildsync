@@ -27,7 +27,7 @@ namespace BuildSync.Core.Networking.Messages
     ///     Server->Client
     ///
     ///     Sent by a server in response to a <see cref="NetMessage_GetLicenseInfo" /> 
-    ///     providing tte licensing state of the server.
+    ///     providing the licensing state of the server.
     /// </summary>
     public class NetMessage_GetLicenseInfoResponse : NetMessage
     {

@@ -30,27 +30,9 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DownloadFileSystemTree));
-            this.MainTreeView = new System.Windows.Forms.TreeView();
             this.TreeImageList = new System.Windows.Forms.ImageList(this.components);
+            this.MainTreeView = new Aga.Controls.Tree.TreeViewAdv();
             this.SuspendLayout();
-            // 
-            // MainTreeView
-            // 
-            this.MainTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.MainTreeView.FullRowSelect = true;
-            this.MainTreeView.HideSelection = false;
-            this.MainTreeView.ImageIndex = 0;
-            this.MainTreeView.ImageList = this.TreeImageList;
-            this.MainTreeView.Indent = 10;
-            this.MainTreeView.ItemHeight = 24;
-            this.MainTreeView.Location = new System.Drawing.Point(0, 0);
-            this.MainTreeView.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.MainTreeView.Name = "MainTreeView";
-            this.MainTreeView.SelectedImageIndex = 0;
-            this.MainTreeView.Size = new System.Drawing.Size(100, 97);
-            this.MainTreeView.TabIndex = 0;
-            this.MainTreeView.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.OnNodeExpanded);
-            this.MainTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.AfterNodeSelected);
             // 
             // TreeImageList
             // 
@@ -61,21 +43,41 @@
             this.TreeImageList.Images.SetKeyName(2, "appbar.folder.open.png");
             this.TreeImageList.Images.SetKeyName(3, "appbar.database.png");
             // 
+            // MainTreeView
+            // 
+            this.MainTreeView.BackColor = System.Drawing.SystemColors.Window;
+            this.MainTreeView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.MainTreeView.DefaultToolTipProvider = null;
+            this.MainTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.MainTreeView.DragDropMarkColor = System.Drawing.Color.Black;
+            this.MainTreeView.FullRowSelect = true;
+            this.MainTreeView.LineColor = System.Drawing.SystemColors.ControlDark;
+            this.MainTreeView.Location = new System.Drawing.Point(0, 0);
+            this.MainTreeView.Model = null;
+            this.MainTreeView.Name = "MainTreeView";
+            this.MainTreeView.RowHeight = 22;
+            this.MainTreeView.SelectedNode = null;
+            this.MainTreeView.Size = new System.Drawing.Size(445, 243);
+            this.MainTreeView.TabIndex = 1;
+            this.MainTreeView.Text = "treeViewAdv1";
+            this.MainTreeView.UseColumns = true;
+            this.MainTreeView.SelectionChanged += new System.EventHandler(this.AfterNodeSelected);
+            this.MainTreeView.Expanded += new System.EventHandler<Aga.Controls.Tree.TreeViewAdvEventArgs>(this.OnNodeExpanded);
+            // 
             // DownloadFileSystemTree
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.Controls.Add(this.MainTreeView);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "DownloadFileSystemTree";
-            this.Size = new System.Drawing.Size(100, 97);
+            this.Size = new System.Drawing.Size(445, 243);
             this.Load += new System.EventHandler(this.OnLoaded);
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private System.Windows.Forms.TreeView MainTreeView;
         private System.Windows.Forms.ImageList TreeImageList;
+        private Aga.Controls.Tree.TreeViewAdv MainTreeView;
     }
 }

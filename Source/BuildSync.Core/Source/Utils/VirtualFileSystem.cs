@@ -285,7 +285,7 @@ namespace BuildSync.Core.Utils
                 {
                     if (SubPath.Length > 0)
                     {
-                        SubPath += @"\";
+                        SubPath += @"/";
                     }
 
                     SubPath += Segments[j];

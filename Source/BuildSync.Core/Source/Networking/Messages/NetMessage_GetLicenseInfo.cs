@@ -22,6 +22,9 @@
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Server
+    ///
+    ///     Requests the current licensing state of the server.
     /// </summary>
     public class NetMessage_GetLicenseInfo : NetMessage
     {

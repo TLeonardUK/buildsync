@@ -495,7 +495,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ManageBuildsClicked(object sender, EventArgs e)
         {
-            ShowContent(ManageBuildsForm, DockState.DockRight);
+            ShowContent(ManageBuildsForm, DockState.Document);
         }
 
         /// <summary>

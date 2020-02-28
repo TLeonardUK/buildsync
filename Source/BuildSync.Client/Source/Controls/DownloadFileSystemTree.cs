@@ -21,10 +21,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
+using Aga.Controls.Tree;
+using Aga.Controls.Tree.NodeControls;
+using BuildSync.Client.Properties;
 
 namespace BuildSync.Client.Controls
 {
@@ -32,14 +37,51 @@ namespace BuildSync.Client.Controls
     /// </summary>
     public partial class DownloadFileSystemTree : UserControl
     {
-        /// <summary>
-        /// </summary>
-        public class DownloadFileSystemTreeNodeMetadata
+        public class ScaledNodeIcon : NodeIcon
         {
+            public Size FixedSize;
+            public Size Offset;
+
+            public ScaledNodeIcon()
+            {
+                ScaleMode = ImageScaleMode.Fit;
+            }
+
+            public override Size MeasureSize(TreeNodeAdv node, DrawContext context)
+            {
+                return FixedSize;
+            }
+
+            public override void Draw(TreeNodeAdv node, DrawContext context)
+            {
+                Image icon = this.GetIcon(node);
+                if (icon == null)
+                    return;
+                Rectangle bounds = this.GetBounds(node, context);
+                if (icon.Width <= 0 || icon.Height <= 0)
+                    return;
+
+                context.Graphics.DrawImage(
+                    icon, 
+                    (bounds.X + (bounds.Width * 0.5f)) - (FixedSize.Width * 0.5f) + Offset.Width,
+                    (bounds.Y + (bounds.Height * 0.5f)) - (FixedSize.Height * 0.5f) + Offset.Height,
+                    FixedSize.Width,
+                    FixedSize.Height);
+            }
+        }
+
+        public class DownloadFileSystemTreeNode : Node
+        {
+            public Image Icon;
+            public string Name;
+            public string FullPath;
             public DateTime CreateTime;
+            public string CreateTimeFormatted;
+            public string SizeFormatted;
             public bool IsBuild;
             public bool IsBuildContainer;
             public Guid ManifestId;
+            public string Availability;
         }
 
         /// <summary>
@@ -65,15 +107,20 @@ namespace BuildSync.Client.Controls
         public bool CanSelectBuildContainers { get; set; } = true;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private TreeModel Model = null;
+
+        /// <summary>
         /// </summary>
         public Guid SelectedManifestId
         {
             get
             {
-                TreeNode SelectedNode = MainTreeView.SelectedNode;
+                TreeNodeAdv SelectedNode = MainTreeView.SelectedNode;
                 if (SelectedNode != null)
                 {
-                    DownloadFileSystemTreeNodeMetadata Metadata = SelectedNode.Tag as DownloadFileSystemTreeNodeMetadata;
+                    DownloadFileSystemTreeNode Metadata = SelectedNode.Tag as DownloadFileSystemTreeNode;
                     if (Metadata != null)
                     {
                         return Metadata.ManifestId;
@@ -90,13 +137,13 @@ namespace BuildSync.Client.Controls
         {
             get
             {
-                TreeNode SelectedNode = MainTreeView.SelectedNode;
+                TreeNodeAdv SelectedNode = MainTreeView.SelectedNode;
                 if (SelectedNode != null)
                 {
-                    DownloadFileSystemTreeNodeMetadata Metadata = SelectedNode.Tag as DownloadFileSystemTreeNodeMetadata;
+                    DownloadFileSystemTreeNode Metadata = SelectedNode.Tag as DownloadFileSystemTreeNode;
                     if (Metadata != null && (Metadata.IsBuild || Metadata.IsBuildContainer && CanSelectBuildContainers))
                     {
-                        return SelectedNode.FullPath;
+                        return Metadata.FullPath;
                     }
                 }
 
@@ -121,42 +168,129 @@ namespace BuildSync.Client.Controls
             InitializeComponent();
 
             HandleDestroyed += OnDestroyed;
+
+            Model = new TreeModel();
+            MainTreeView.Model = Model;
+
+            TreeColumn NameColumn = new TreeColumn();
+            NameColumn.Header = "Name";
+            NameColumn.Width = 300;
+            MainTreeView.Columns.Add(NameColumn);
+            
+                ScaledNodeIcon IconControl = new ScaledNodeIcon();
+                IconControl.ParentColumn = NameColumn;
+                IconControl.DataPropertyName = "Icon";
+                IconControl.FixedSize = new Size((int)(MainTreeView.RowHeight * 1.5f), (int)(MainTreeView.RowHeight * 1.5f));
+                IconControl.Offset = new Size(0, 5);
+                MainTreeView.NodeControls.Add(IconControl);
+
+                NodeTextBox TextControl = new NodeTextBox();
+                TextControl.ParentColumn = NameColumn;
+                TextControl.DataPropertyName = "Name";
+                MainTreeView.NodeControls.Add(TextControl);
+                
+            TreeColumn SizeColumn = new TreeColumn();
+            SizeColumn.Header = "Size";
+            SizeColumn.Width = 70;
+            MainTreeView.Columns.Add(SizeColumn);
+
+                NodeTextBox SizeControl = new NodeTextBox();
+                SizeControl.ParentColumn = SizeColumn;
+                SizeControl.DataPropertyName = "SizeFormatted";
+                MainTreeView.NodeControls.Add(SizeControl);
+
+            TreeColumn CreatedColumn = new TreeColumn();
+            CreatedColumn.Header = "Created";
+            CreatedColumn.Width = 120;
+            MainTreeView.Columns.Add(CreatedColumn);
+
+                NodeTextBox CreatedControl = new NodeTextBox();
+                CreatedControl.ParentColumn = CreatedColumn;
+                CreatedControl.DataPropertyName = "CreateTimeFormatted";
+                MainTreeView.NodeControls.Add(CreatedControl);
+
+            TreeColumn AvailabilityColumn = new TreeColumn();
+            AvailabilityColumn.Header = "Availability";
+            AvailabilityColumn.Width = 200;
+            MainTreeView.Columns.Add(AvailabilityColumn);
+
+                NodeTextBox AvailabilityControl = new NodeTextBox();
+                AvailabilityControl.ParentColumn = AvailabilityColumn;
+                AvailabilityControl.DataPropertyName = "Availability";
+                MainTreeView.NodeControls.Add(AvailabilityControl);
         }
 
         /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void AfterNodeSelected(object sender, TreeViewEventArgs e)
+        private void AfterNodeSelected(object sender, EventArgs e)
         {
             OnSelectedNodeChanged?.Invoke(this, null);
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Collection"></param>
+        /// <param name="Key"></param>
+        /// <returns></returns>
+        private Node CollectionGetByName(Collection<Node> Collection, string Key)
+        {
+            foreach (DownloadFileSystemTreeNode node in Collection)
+            {
+                if (node.Name == Key)
+                {
+                    return node;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="VirtualPath"></param>
-        private TreeNode GetNodeByPath(string VirtualPath)
+        private Node GetNodeByPath(string VirtualPath)
         {
             string[] PathSegments = VirtualPath.Split('\\', '/');
-            TreeNode Node = null;
-            TreeNodeCollection NodeCollection = MainTreeView.Nodes;
+            Node SearchNode = null;
+            Collection<Node> NodeCollection = Model.Root.Nodes;
 
             for (int i = 0; i < PathSegments.Length; i++)
             {
                 string Name = PathSegments[i];
-                if (NodeCollection.ContainsKey(Name))
+
+                Node NamedNode = CollectionGetByName(NodeCollection, Name);
+                if (NamedNode != null)
                 {
-                    Node = NodeCollection[Name];
-                    NodeCollection = Node.Nodes;
+                    SearchNode = NamedNode;
+                    NodeCollection = SearchNode.Nodes;
                 }
                 else
                 {
-                    Node = null;
+                    SearchNode = null;
                     break;
                 }
             }
 
-            return Node;
+            return SearchNode;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="VirtualPath"></param>
+        private TreeNodeAdv GetViewNodeByPath(string VirtualPath)
+        {
+            foreach (TreeNodeAdv Node in MainTreeView.AllNodes)
+            {
+                DownloadFileSystemTreeNode Meta = Node.Tag as DownloadFileSystemTreeNode;
+                if (Meta != null && Meta.FullPath == VirtualPath)
+                {
+                    return Node;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -173,7 +307,7 @@ namespace BuildSync.Client.Controls
                     {
                         VirtualPath = Build.VirtualPath,
                         CreateTime = Build.Guid == Guid.Empty ? DateTime.UtcNow : Build.CreateTime,
-                        Metadata = Build.Guid
+                        Metadata = Build
                     }
                 );
             }
@@ -226,39 +360,75 @@ namespace BuildSync.Client.Controls
                             return;
                         }
 
-                        TreeNodeCollection NodeCollection = MainTreeView.Nodes;
+                        Collection<Node> NodeCollection = Model.Root.Nodes;
                         if (Node.Parent != null && Node.Parent.Name != "")
                         {
                             NodeCollection = GetNodeByPath(Node.Parent.Path).Nodes;
                         }
 
-                        DownloadFileSystemTreeNodeMetadata Metadata = new DownloadFileSystemTreeNodeMetadata();
-                        Metadata.IsBuild = Node.Metadata != null ? (Guid) Node.Metadata != Guid.Empty : false;
-                        Metadata.IsBuildContainer = false;
-                        Metadata.ManifestId = Node.Metadata != null ? (Guid) Node.Metadata : Guid.Empty;
-                        Metadata.CreateTime = Node.Metadata != null ? Node.CreateTime : DateTime.UtcNow;
-
-                        TreeNode TrNode = new TreeNode(Node.Name);
-                        TrNode.Tag = Metadata;
+                        DownloadFileSystemTreeNode TrNode = new DownloadFileSystemTreeNode();
+                        TrNode.IsBuildContainer = false;
+                        TrNode.FullPath = Node.Path;
                         TrNode.Name = Node.Name;
-                        if (Metadata.IsBuild)
+                        TrNode.Icon = Resources.appbar_box;
+
+                        if (Node.Metadata != null)
                         {
-                            TrNode.SelectedImageIndex = 0;
-                            TrNode.ImageIndex = 0;
+                            NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Node.Metadata;
+
+                            TrNode.IsBuild = BuildInfo.Guid != Guid.Empty;
+                            TrNode.ManifestId = BuildInfo.Guid;
+                            TrNode.CreateTime = Node.CreateTime;
+                            TrNode.SizeFormatted = StringUtils.FormatAsSize((long)BuildInfo.TotalSize);
+                            TrNode.CreateTimeFormatted = BuildInfo.CreateTime.ToString("MM/dd/yyyy HH:mm");
+
+                            if (BuildInfo.AvailablePeers >= 5)
+                            {
+                                TrNode.Availability = "High (" + BuildInfo.AvailablePeers + " peers have full build)";
+                            }
+                            else if (BuildInfo.AvailablePeers >= 3)
+                            {
+                                TrNode.Availability = "Medium (" + BuildInfo.AvailablePeers + " peers have full build)";
+                            }
+                            else if (BuildInfo.AvailablePeers > 0)
+                            {
+                                TrNode.Availability = "Low (" + BuildInfo.AvailablePeers + " peers have full build)";
+                            }
+                            else
+                            {
+                                TrNode.Availability = "Last available " + BuildInfo.LastSeenOnPeer.ToString("MM/dd/yyyy HH:mm");
+                            }
                         }
                         else
                         {
-                            TrNode.SelectedImageIndex = 2;
-                            TrNode.ImageIndex = 2;
+                            TrNode.IsBuild = false;
+                            TrNode.IsBuildContainer = false;
+                            TrNode.ManifestId = Guid.Empty;
+                            TrNode.CreateTime = DateTime.UtcNow;
+                        }
+
+                        if (!TrNode.IsBuild)
+                        {
+                            TrNode.SizeFormatted = "";
+                            TrNode.Availability = "";
+                            TrNode.CreateTimeFormatted = "";
+                        }
+
+                        if (TrNode.IsBuild)
+                        {
+                            TrNode.Icon = Resources.appbar_box;
+                        }
+                        else
+                        {
+                            TrNode.Icon = Resources.appbar_folder_open;
                         }
 
                         // Insert based on create time.
                         bool Inserted = false;
                         for (int i = 0; i < NodeCollection.Count; i++)
                         {
-                            TreeNode SubNode = NodeCollection[i];
-                            DownloadFileSystemTreeNodeMetadata SubNodeMetadata = SubNode.Tag as DownloadFileSystemTreeNodeMetadata;
-                            if (SubNodeMetadata.CreateTime < Metadata.CreateTime)
+                            DownloadFileSystemTreeNode SubNode = NodeCollection[i] as DownloadFileSystemTreeNode;
+                            if (SubNode != null && SubNode.CreateTime < TrNode.CreateTime)
                             {
                                 NodeCollection.Insert(i, TrNode);
                                 Inserted = true;
@@ -272,26 +442,41 @@ namespace BuildSync.Client.Controls
                         }
 
                         // If its a build, the folder parent becomes a "container".
-                        if (Metadata.IsBuild && TrNode.Parent != null)
+                        if (TrNode.IsBuild && TrNode.Parent != null)
                         {
-                            DownloadFileSystemTreeNodeMetadata ParentMetadata = TrNode.Parent.Tag as DownloadFileSystemTreeNodeMetadata;
-                            if (ParentMetadata != null)
+                            DownloadFileSystemTreeNode ParentNode = TrNode.Parent as DownloadFileSystemTreeNode;
+                            if (ParentNode != null)
                             {
-                                ParentMetadata.IsBuildContainer = true;
+                                ParentNode.IsBuildContainer = true;
+                                ParentNode.Icon = Resources.appbar_database;
                             }
 
-                            TrNode.Parent.SelectedImageIndex = 3;
-                            TrNode.Parent.ImageIndex = 3;
                         }
 
                         // If parent node is expanded, then request all children of this node.
-                        if (TrNode.Parent == null || TrNode.Parent.IsExpanded)
+                        TreeNodeAdv ParentViewNode = null;
+                        if (TrNode.Parent != null)
                         {
-                            if (!Metadata.IsBuild)
+                            DownloadFileSystemTreeNode ParentNode = TrNode.Parent as DownloadFileSystemTreeNode;
+                            if (ParentNode != null)
+                            {
+                                ParentViewNode = GetViewNodeByPath(ParentNode.FullPath);
+                            }
+                            else
+                            {
+                                ParentViewNode = MainTreeView.Root;
+                            }
+                        }
+
+                        if (ParentViewNode == null || ParentViewNode.IsExpanded)
+                        {
+                            if (!TrNode.IsBuild)
                             {
                                 BuildFileSystem.GetChildrenNames(Node.Path);
                             }
                         }
+
+                        MainTreeView.FullUpdate();
 
                         SelectNextPath();
 
@@ -311,8 +496,11 @@ namespace BuildSync.Client.Controls
                             return;
                         }
 
-                        TreeNode TrNode = GetNodeByPath(Node.Path);
-                        TrNode.Remove();
+                        Node ModelNode = GetNodeByPath(Node.Path);
+                        if (ModelNode != null && ModelNode.Parent != null)
+                        {
+                            ModelNode.Parent.Nodes.Remove(ModelNode);
+                        }
                     })
                 );
             };
@@ -324,15 +512,15 @@ namespace BuildSync.Client.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnNodeExpanded(object sender, TreeViewEventArgs e)
+        private void OnNodeExpanded(object sender, Aga.Controls.Tree.TreeViewAdvEventArgs e)
         {
             // Retrieve all sub nodes.
-            foreach (TreeNode Node in e.Node.Nodes)
+            foreach (TreeNodeAdv SNode in e.Node.Children)
             {
-                DownloadFileSystemTreeNodeMetadata Metadata = Node.Tag as DownloadFileSystemTreeNodeMetadata;
+                DownloadFileSystemTreeNode Metadata = SNode.Tag as DownloadFileSystemTreeNode;
                 if (Metadata == null || !Metadata.IsBuild)
                 {
-                    BuildFileSystem.GetChildrenNames(Node.FullPath);
+                    BuildFileSystem.GetChildrenNames(Metadata.FullPath);
                 }
             }
 
@@ -348,7 +536,7 @@ namespace BuildSync.Client.Controls
                 string NextNode = PathsToSelect[0];
                 if (NextNode != "")
                 {
-                    TreeNode Node = GetNodeByPath(NextNode);
+                    TreeNodeAdv Node = GetViewNodeByPath(NextNode);
                     if (Node == null)
                     {
                         return;
@@ -361,5 +549,6 @@ namespace BuildSync.Client.Controls
                 PathsToSelect.RemoveAt(0);
             }
         }
+
     }
 }

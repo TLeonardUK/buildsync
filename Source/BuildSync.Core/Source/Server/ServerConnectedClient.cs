@@ -105,6 +105,11 @@ namespace BuildSync.Core.Server
         /// 
         /// </summary>
         public string Version = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int VersionNumeric = 0;
     }
 
 }

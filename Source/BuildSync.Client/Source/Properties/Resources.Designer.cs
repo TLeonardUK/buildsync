@@ -183,6 +183,16 @@ namespace BuildSync.Client.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap appbar_database {
+            get {
+                object obj = ResourceManager.GetObject("appbar_database", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap appbar_delete {
             get {
                 object obj = ResourceManager.GetObject("appbar.delete", resourceCulture);
@@ -216,6 +226,26 @@ namespace BuildSync.Client.Properties {
         internal static System.Drawing.Bitmap appbar_download {
             get {
                 object obj = ResourceManager.GetObject("appbar.download", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_folder {
+            get {
+                object obj = ResourceManager.GetObject("appbar_folder", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_folder_open {
+            get {
+                object obj = ResourceManager.GetObject("appbar_folder_open", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -30,7 +30,6 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AddDownloadForm));
-            this.label1 = new System.Windows.Forms.Label();
             this.addDownloadButton = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label3 = new System.Windows.Forms.Label();
@@ -41,11 +40,7 @@
             this.autoInstallCheckBox = new System.Windows.Forms.CheckBox();
             this.deviceTextBox = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
             this.LegendImages = new System.Windows.Forms.ImageList(this.components);
-            this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
             this.selectionRuleComboBox = new System.Windows.Forms.ComboBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
@@ -58,30 +53,29 @@
             this.scmFilePanel = new System.Windows.Forms.Panel();
             this.scmFileTextBox = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
-            this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
             this.label13 = new System.Windows.Forms.Label();
             this.installLocationTextBox = new System.Windows.Forms.TextBox();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
             this.scmSettingsPanel.SuspendLayout();
             this.buildSelectionRulePanel.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
             this.scmFilePanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(9, 8);
-            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(149, 13);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Location to retrieve build from:";
             // 
             // addDownloadButton
             // 
             this.addDownloadButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.addDownloadButton.Enabled = false;
-            this.addDownloadButton.Location = new System.Drawing.Point(538, 523);
+            this.addDownloadButton.Location = new System.Drawing.Point(974, 472);
             this.addDownloadButton.Margin = new System.Windows.Forms.Padding(2);
             this.addDownloadButton.Name = "addDownloadButton";
             this.addDownloadButton.Size = new System.Drawing.Size(95, 29);
@@ -95,10 +89,10 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(292, 511);
+            this.panel1.Location = new System.Drawing.Point(10, 461);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(341, 1);
+            this.panel1.Size = new System.Drawing.Size(1059, 1);
             this.panel1.TabIndex = 3;
             // 
             // label3
@@ -194,64 +188,12 @@
             this.label4.TabIndex = 15;
             this.label4.Text = "Device name or ip to use when installing and running";
             // 
-            // label5
-            // 
-            this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label5.ForeColor = System.Drawing.SystemColors.ControlDark;
-            this.label5.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.label5.ImageIndex = 0;
-            this.label5.Location = new System.Drawing.Point(56, 521);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(227, 40);
-            this.label5.TabIndex = 17;
-            this.label5.Text = "This is a build container, selecting it will result in downloading a build in it " +
-    "that matches the build selection rule.\r\n";
-            // 
             // LegendImages
             // 
             this.LegendImages.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("LegendImages.ImageStream")));
             this.LegendImages.TransparentColor = System.Drawing.Color.Transparent;
             this.LegendImages.Images.SetKeyName(0, "appbar.box.png");
             this.LegendImages.Images.SetKeyName(1, "appbar.database.png");
-            // 
-            // label6
-            // 
-            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label6.ForeColor = System.Drawing.SystemColors.ControlDark;
-            this.label6.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.label6.ImageIndex = 1;
-            this.label6.ImageList = this.LegendImages;
-            this.label6.Location = new System.Drawing.Point(12, 521);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(38, 40);
-            this.label6.TabIndex = 19;
-            this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // label7
-            // 
-            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label7.ForeColor = System.Drawing.SystemColors.ControlDark;
-            this.label7.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.label7.ImageIndex = 0;
-            this.label7.ImageList = this.LegendImages;
-            this.label7.Location = new System.Drawing.Point(12, 569);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(38, 34);
-            this.label7.TabIndex = 21;
-            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // label8
-            // 
-            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label8.ForeColor = System.Drawing.SystemColors.ControlDark;
-            this.label8.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.label8.ImageIndex = 0;
-            this.label8.Location = new System.Drawing.Point(56, 569);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(227, 34);
-            this.label8.TabIndex = 20;
-            this.label8.Text = "This is an individual build, selecting it will always download that specific buil" +
-    "d.\r\n";
             // 
             // selectionRuleComboBox
             // 
@@ -362,9 +304,6 @@
             // 
             // flowLayoutPanel1
             // 
-            this.flowLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.flowLayoutPanel1.Controls.Add(this.label2);
             this.flowLayoutPanel1.Controls.Add(this.nameTextBox);
             this.flowLayoutPanel1.Controls.Add(this.label3);
@@ -378,10 +317,11 @@
             this.flowLayoutPanel1.Controls.Add(this.deviceTextBox);
             this.flowLayoutPanel1.Controls.Add(this.label13);
             this.flowLayoutPanel1.Controls.Add(this.installLocationTextBox);
+            this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.flowLayoutPanel1.Location = new System.Drawing.Point(292, 29);
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-            this.flowLayoutPanel1.Size = new System.Drawing.Size(341, 477);
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(350, 432);
             this.flowLayoutPanel1.TabIndex = 29;
             this.flowLayoutPanel1.WrapContents = false;
             // 
@@ -415,21 +355,6 @@
             this.label12.TabIndex = 24;
             this.label12.Text = "Source control, workspace relative, file path";
             // 
-            // downloadFileSystemTree
-            // 
-            this.downloadFileSystemTree.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.downloadFileSystemTree.CanSelectBuildContainers = true;
-            this.downloadFileSystemTree.Location = new System.Drawing.Point(12, 29);
-            this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1);
-            this.downloadFileSystemTree.Name = "downloadFileSystemTree";
-            this.downloadFileSystemTree.SelectedPath = "";
-            this.downloadFileSystemTree.ShowInternal = false;
-            this.downloadFileSystemTree.Size = new System.Drawing.Size(271, 483);
-            this.downloadFileSystemTree.TabIndex = 13;
-            this.downloadFileSystemTree.OnDateUpdated += new System.EventHandler(this.DataStateChanged);
-            this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
-            // 
             // label13
             // 
             this.label13.AutoSize = true;
@@ -452,19 +377,105 @@
             this.installLocationTextBox.Text = "buildsync";
             this.installLocationTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
             // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.splitContainer1.IsSplitterFixed = true;
+            this.splitContainer1.Location = new System.Drawing.Point(8, 24);
+            this.splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.flowLayoutPanel1);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.label7);
+            this.splitContainer1.Panel2.Controls.Add(this.label8);
+            this.splitContainer1.Panel2.Controls.Add(this.label6);
+            this.splitContainer1.Panel2.Controls.Add(this.label5);
+            this.splitContainer1.Panel2.Controls.Add(this.downloadFileSystemTree);
+            this.splitContainer1.Size = new System.Drawing.Size(1060, 432);
+            this.splitContainer1.SplitterDistance = 350;
+            this.splitContainer1.TabIndex = 30;
+            // 
+            // label7
+            // 
+            this.label7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label7.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.label7.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label7.ImageIndex = 0;
+            this.label7.ImageList = this.LegendImages;
+            this.label7.Location = new System.Drawing.Point(269, 392);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(38, 34);
+            this.label7.TabIndex = 23;
+            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // label8
+            // 
+            this.label8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label8.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.label8.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label8.ImageIndex = 0;
+            this.label8.Location = new System.Drawing.Point(313, 392);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(227, 34);
+            this.label8.TabIndex = 22;
+            this.label8.Text = "This is an individual build, selecting it will always download that specific buil" +
+    "d.\r\n";
+            // 
+            // label6
+            // 
+            this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label6.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.label6.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label6.ImageIndex = 1;
+            this.label6.ImageList = this.LegendImages;
+            this.label6.Location = new System.Drawing.Point(-1, 392);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(38, 40);
+            this.label6.TabIndex = 21;
+            this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // label5
+            // 
+            this.label5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.label5.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.label5.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label5.ImageIndex = 0;
+            this.label5.Location = new System.Drawing.Point(43, 392);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(227, 40);
+            this.label5.TabIndex = 20;
+            this.label5.Text = "This is a build container, selecting it will result in downloading a build in it " +
+    "that matches the build selection rule.\r\n";
+            // 
+            // downloadFileSystemTree
+            // 
+            this.downloadFileSystemTree.CanSelectBuildContainers = true;
+            this.downloadFileSystemTree.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.downloadFileSystemTree.Location = new System.Drawing.Point(0, 0);
+            this.downloadFileSystemTree.Margin = new System.Windows.Forms.Padding(1);
+            this.downloadFileSystemTree.Name = "downloadFileSystemTree";
+            this.downloadFileSystemTree.Padding = new System.Windows.Forms.Padding(0, 0, 0, 50);
+            this.downloadFileSystemTree.SelectedPath = "";
+            this.downloadFileSystemTree.ShowInternal = false;
+            this.downloadFileSystemTree.Size = new System.Drawing.Size(706, 432);
+            this.downloadFileSystemTree.TabIndex = 13;
+            this.downloadFileSystemTree.OnDateUpdated += new System.EventHandler(this.DataStateChanged);
+            this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
+            // 
             // AddDownloadForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(644, 612);
-            this.Controls.Add(this.flowLayoutPanel1);
-            this.Controls.Add(this.label7);
-            this.Controls.Add(this.label8);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.downloadFileSystemTree);
+            this.ClientSize = new System.Drawing.Size(1080, 510);
+            this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.addDownloadButton);
-            this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Margin = new System.Windows.Forms.Padding(2);
             this.MinimumSize = new System.Drawing.Size(660, 460);
@@ -483,13 +494,15 @@
             this.flowLayoutPanel1.PerformLayout();
             this.scmFilePanel.ResumeLayout(false);
             this.scmFilePanel.PerformLayout();
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button addDownloadButton;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label label3;
@@ -501,11 +514,7 @@
         private System.Windows.Forms.CheckBox autoInstallCheckBox;
         private System.Windows.Forms.TextBox deviceTextBox;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ImageList LegendImages;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Label label8;
         private System.Windows.Forms.ComboBox selectionRuleComboBox;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
@@ -520,5 +529,10 @@
         private System.Windows.Forms.TextBox scmFileTextBox;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.TextBox installLocationTextBox;
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label5;
     }
 }

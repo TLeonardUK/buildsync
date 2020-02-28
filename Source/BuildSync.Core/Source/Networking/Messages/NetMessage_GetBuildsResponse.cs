@@ -50,6 +50,21 @@ namespace BuildSync.Core.Networking.Messages
             ///     Time that build was added to the manifest registry.
             /// </summary>
             public DateTime CreateTime;
+
+            /// <summary>
+            ///     Size of entire build.
+            /// </summary>
+            public ulong TotalSize;
+
+            /// <summary>
+            ///     How many peers are connected with parts of this build.
+            /// </summary>
+            public ulong AvailablePeers;
+
+            /// <summary>
+            ///     Last time a copy of this build was seen available.
+            /// </summary>
+            public DateTime LastSeenOnPeer;
         }
 
         /// <summary>
@@ -61,6 +76,11 @@ namespace BuildSync.Core.Networking.Messages
         ///     Parent path from which all child builds were retrieved.
         /// </summary>
         public string RootPath = "";
+
+        /// <summary>
+        ///     If true the old format message without availability information will be sent.
+        /// </summary>
+        public bool SendLegacyVersion = false;
 
         /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
@@ -79,6 +99,13 @@ namespace BuildSync.Core.Networking.Messages
                 serializer.Serialize(ref Builds[i].VirtualPath);
                 serializer.Serialize(ref Builds[i].Guid);
                 serializer.Serialize(ref Builds[i].CreateTime);
+
+                if (!SendLegacyVersion)
+                {
+                    serializer.Serialize(ref Builds[i].TotalSize);
+                    serializer.Serialize(ref Builds[i].AvailablePeers);
+                    serializer.Serialize(ref Builds[i].LastSeenOnPeer);
+                }
             }
         }
     }

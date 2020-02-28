@@ -37,6 +37,14 @@ namespace BuildSync.Core.Server
     public class Server
     {
         /// <summary>
+        /// 
+        /// </summary>
+        private class ServerClientManifestInfo
+        {
+            public int PeersWithAllBlocks;
+        };
+
+        /// <summary>
         /// </summary>
         private const int ListenAttemptInterval = 2 * 1000;
 
@@ -85,13 +93,19 @@ namespace BuildSync.Core.Server
         public int ClientCount => ListenConnection.AllClients.Count;
 
         /// <summary>
+        /// 
+        /// </summary>
+        Dictionary<Guid, ServerClientManifestInfo> ClientManifestInfo = new Dictionary<Guid, ServerClientManifestInfo>();
+
+        /// <summary>
         /// </summary>
         public Server()
         {
             ListenConnection.OnClientMessageRecieved += HandleMessage;
             ListenConnection.OnClientConnect += ClientConnected;
+            ListenConnection.OnClientDisconnect += ClientDisconnected;
 
-            MemoryPool.PreallocateBuffers((int) BuildManifest.BlockSize, 16);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 16);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
         }
 
@@ -276,6 +290,15 @@ namespace BuildSync.Core.Server
 
         /// <summary>
         /// </summary>
+        /// <param name="Connection"></param>
+        /// <param name="ClientConnection"></param>
+        private void ClientDisconnected(NetConnection Connection, NetConnection ClientConnection)
+        {
+            UpdateGlobalBlockInformation();
+        }
+
+        /// <summary>
+        /// </summary>
         /// <param name="Clients"></param>
         /// <param name="ForClient"></param>
         /// <returns></returns>
@@ -319,6 +342,52 @@ namespace BuildSync.Core.Server
             }
 
             return Result;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void UpdateGlobalBlockInformation()
+        {
+            ClientManifestInfo.Clear();
+
+            List<NetConnection> Clients = ListenConnection.AllClients;
+            foreach (NetConnection ClientConnection in Clients)
+            {
+                if (ClientConnection.Metadata != null)
+                {
+                    ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                    if (Sub.BlockState != null)
+                    {
+                        foreach (ManifestBlockListState State in Sub.BlockState.States)
+                        {
+                            if (!ClientManifestInfo.ContainsKey(State.Id))
+                            {
+                                ClientManifestInfo.Add(State.Id, new ServerClientManifestInfo());
+                            }
+
+                            if (State.BlockState.AreAllSet(true))
+                            {
+                                ClientManifestInfo[State.Id].PeersWithAllBlocks++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public int GetPeerCountForManifest(Guid Id)
+        {
+            if (ClientManifestInfo.ContainsKey(Id))
+            {
+                return ClientManifestInfo[Id].PeersWithAllBlocks;
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -430,6 +499,7 @@ namespace BuildSync.Core.Server
                     }
                 }
 
+                UpdateGlobalBlockInformation();
                 PrintClientBlockStates();
             }
 
@@ -678,6 +748,7 @@ namespace BuildSync.Core.Server
                 State.ConnectedPeerCount = Msg.ConnectedPeerCount;
                 State.DiskUsage = Msg.DiskUsage;
                 State.Version = Msg.Version;
+                State.VersionNumeric = StringUtils.ConvertSemanticVerisonNumber(State.Version);
             }
 
             // ------------------------------------------------------------------------------
@@ -775,9 +846,12 @@ namespace BuildSync.Core.Server
                             {
                                 Guid = Guid.Empty,
                                 CreateTime = DateTime.UtcNow,
-                                VirtualPath = Children[i]
+                                VirtualPath = Children[i],
+                                AvailablePeers = 0,
+                                LastSeenOnPeer = DateTime.UtcNow,
+                                TotalSize = 0
                             }
-                        );
+                        ); ;
                     }
                 }
             }
@@ -795,7 +869,10 @@ namespace BuildSync.Core.Server
                             {
                                 Guid = Manifest.Guid,
                                 CreateTime = Manifest.CreateTime,
-                                VirtualPath = Children[i]
+                                VirtualPath = Children[i],
+                                AvailablePeers = (ulong)GetPeerCountForManifest(Manifest.Guid),
+                                LastSeenOnPeer = ManifestRegistry.GetLastSeenTime(Manifest.Guid),
+                                TotalSize = (ulong)Manifest.GetTotalSize()
                             }
                         );
 
@@ -805,6 +882,12 @@ namespace BuildSync.Core.Server
             }
 
             ResponseMsg.Builds = Result.ToArray();
+
+            // If build is old enough, send simplified response.
+            if (State.VersionNumeric <= 100000396)
+            {
+                ResponseMsg.SendLegacyVersion = true;
+            }
 
             Connection.Send(ResponseMsg);
         }

@@ -122,6 +122,24 @@ namespace BuildSync.Core.Manifests
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        /// <returns></returns>
+        public DateTime GetLastSeenTime(Guid ManifestId)
+        {
+            string Id = ManifestId.ToString();
+            lock (ManifestLastSeenTimes)
+            {
+                if (!ManifestLastSeenTimes.ContainsKey(Id))
+                {
+                    return ManifestLastSeenTimes[Id];
+                }
+            }
+            return DateTime.UtcNow;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Path"></param>
         public void Open(string Path, int InMaxManifests, bool CacheDownloadInfo)
@@ -147,8 +165,8 @@ namespace BuildSync.Core.Manifests
                 }
                 catch (Exception ex)
                 {
-                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read manifest '{0}', due to error {1}, deleting manifest.", FilePath, ex.Message);
-                    File.Delete(FilePath);
+                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read manifest '{0}', due to error {1}", FilePath, ex.Message);
+                //    File.Delete(FilePath);
                 }
             }
 
