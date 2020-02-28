@@ -99,6 +99,11 @@ namespace BuildSync.Client.Forms
         private bool DisableLayoutStoring;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private bool IsResizing = false;
+
+        /// <summary>
         /// </summary>
         private readonly DeserializeDockContent DeserializedDockContent;
 
@@ -178,6 +183,8 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private bool RestoreLayout()
         {
+            SuspendLayout();
+
             if (Program.Settings.LayoutState != null)
             {
                 using (MemoryStream Stream = new MemoryStream(Program.Settings.LayoutState))
@@ -185,9 +192,12 @@ namespace BuildSync.Client.Forms
                     Size = Program.Settings.LayoutSize;
                     CloseAllContent();
                     DockPanel.LoadFromXml(Stream, DeserializedDockContent);
+                    ResumeLayout();
                     return true;
                 }
             }
+
+            ResumeLayout();
 
             return false;
         }
@@ -929,6 +939,12 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void PollTimerTick(object sender, EventArgs e)
         {
+            //if (IsResizing)
+            //{
+                //ResumeLayout(true);
+                //SuspendLayout();
+            //}
+
             Program.OnPoll();
         }
 
@@ -939,6 +955,28 @@ namespace BuildSync.Client.Forms
         private void AutoUpdaterClicked(object sender, EventArgs e)
         {
             Program.InstallAutoUpdate();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnBeginResize(object sender, EventArgs e)
+        {
+            //SuspendLayout();
+            //IsResizing = true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnEndResize(object sender, EventArgs e)
+        {
+            //ResumeLayout(true);
+            //IsResizing = false;
         }
 
         #endregion

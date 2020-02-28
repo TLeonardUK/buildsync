@@ -41,6 +41,41 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         public static string[] SizePrefixes = {"bytes", "KB", "MB", "GB", "TB"};
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static int GetStableHashCode(this string input) 
+        { 
+            // Same as string.GetHashCode, but only uses the 32bit version.
+            unsafe 
+            {
+                fixed (char *src = input) 
+                { 
+                    int hash1 = (5381<<16) + 5381;
+                    int hash2 = hash1;
+ 
+                    int* pint = (int *)src;
+                    int len = input.Length;
+                    while (len > 2)
+                    {
+                        hash1 = ((hash1 << 5) + hash1 + (hash1 >> 27)) ^ pint[0];
+                        hash2 = ((hash2 << 5) + hash2 + (hash2 >> 27)) ^ pint[1];
+                        pint += 2;
+                        len  -= 4;
+                    }
+ 
+                    if (len > 0)
+                    {
+                        hash1 = ((hash1 << 5) + hash1 + (hash1 >> 27)) ^ pint[0];
+                    }
+
+                    return hash1 + (hash2 * 1566083941);
+                }
+            }
+        }
 
         /// <summary>
         /// 

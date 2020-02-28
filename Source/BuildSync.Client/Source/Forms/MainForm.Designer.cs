@@ -624,6 +624,8 @@
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
 			this.Load += new System.EventHandler(this.FormLoaded);
 			this.Shown += new System.EventHandler(this.FormShown);
+			this.ResizeBegin += new System.EventHandler(this.OnBeginResize);
+			this.ResizeEnd += new System.EventHandler(this.OnEndResize);
 			this.ClientSizeChanged += new System.EventHandler(this.ClientSizeHasChanged);
 			this.statusStrip.ResumeLayout(false);
 			this.statusStrip.PerformLayout();

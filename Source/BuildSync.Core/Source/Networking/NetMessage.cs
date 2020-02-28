@@ -160,7 +160,7 @@ namespace BuildSync.Core.Networking
                         {
                             if (typeof(NetMessage).IsAssignableFrom(Type))
                             {
-                                MessageTypes.Add(Type.Name.GetHashCode(), Type);
+                                MessageTypes.Add(Type.Name.GetStableHashCode(), Type);
                             }
                         }
                     }
@@ -198,7 +198,7 @@ namespace BuildSync.Core.Networking
 
             long PayloadStart = dataStream.Position;
             SerializePayload(new NetMessageSerializer(dataWriter));
-            Id = GetType().Name.GetHashCode();
+            Id = GetType().Name.GetStableHashCode();
             PayloadSize = (int) (dataStream.Position - PayloadStart);
 
             dataStream.Seek(0, SeekOrigin.Begin);

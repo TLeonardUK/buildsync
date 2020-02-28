@@ -374,48 +374,48 @@ namespace BuildSync.Client
                 using (new SingleGlobalInstance(100))
                 {
 #endif
-            BuildSettings.Init();
+                    BuildSettings.Init();
 
-            OnStart();
+                    OnStart();
 
-            /*
-                    PollTimer = new System.Timers.Timer(20);
-                    PollTimer.Elapsed += (object sender, ElapsedEventArgs e) =>
-                    {
-                        if (Monitor.TryEnter(PollTimer))
-                        {
-                            try
+                    /*
+                            PollTimer = new System.Timers.Timer(20);
+                            PollTimer.Elapsed += (object sender, ElapsedEventArgs e) =>
                             {
-                                // Make sure it invokes on main thread, maybe spend some time
-                                // make all the ui->program interaction thread safe?
-                                if (AppForm != null && AppForm.IsHandleCreated && !AppForm.IsDisposed && !AppForm.Disposing)
+                                if (Monitor.TryEnter(PollTimer))
                                 {
                                     try
                                     {
-                                        AppForm.Invoke((MethodInvoker)(() =>
+                                        // Make sure it invokes on main thread, maybe spend some time
+                                        // make all the ui->program interaction thread safe?
+                                        if (AppForm != null && AppForm.IsHandleCreated && !AppForm.IsDisposed && !AppForm.Disposing)
                                         {
-                                            OnPoll();
-                                        }));
+                                            try
+                                            {
+                                                AppForm.Invoke((MethodInvoker)(() =>
+                                                {
+                                                    OnPoll();
+                                                }));
+                                            }
+                                            catch (ObjectDisposedException)
+                                            {
+                                                // Ignore ...
+                                            }
+                                        }
                                     }
-                                    catch (ObjectDisposedException)
+                                    finally
                                     {
-                                        // Ignore ...
+                                        Monitor.Exit(PollTimer);
                                     }
                                 }
-                            }
-                            finally
-                            {
-                                Monitor.Exit(PollTimer);
-                            }
-                        }
-                    };
-                    PollTimer.Start();
-            */
+                            };
+                            PollTimer.Start();
+                    */
 
-            AppForm = new MainForm();
-            Application.Run(AppForm);
+                    AppForm = new MainForm();
+                    Application.Run(AppForm);
 
-            OnStop();
+                    OnStop();
 #if SHIPPING
                 }
             }
