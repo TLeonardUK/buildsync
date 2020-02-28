@@ -45,6 +45,16 @@ namespace BuildSync.Core.Server
         };
 
         /// <summary>
+        /// 
+        /// </summary>
+        struct ManifestDeletionCandidate
+        {
+            public Guid Id;
+            public DateTime LastSeen;
+            public int NumberOfPeersWithFullBuild;
+        }
+
+        /// <summary>
         /// </summary>
         private const int ListenAttemptInterval = 2 * 1000;
 
@@ -768,6 +778,58 @@ namespace BuildSync.Core.Server
                 BandwidthLimit = Msg.BandwidthLimit;
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' changed global bandwidth limit to {1}.", State.Username, StringUtils.FormatAsTransferRate(Msg.BandwidthLimit));
+            }
+
+            // ------------------------------------------------------------------------------
+            // Select a manifest for the client to delete.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_ChooseDeletionCandidate)
+            {
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                NetMessage_ChooseDeletionCandidate Msg = BaseMessage as NetMessage_ChooseDeletionCandidate;
+
+                // Sort first by number 
+                List<ManifestDeletionCandidate> Candidates = new List<ManifestDeletionCandidate>();
+                foreach (Guid Id in Msg.CandidateManifestIds)
+                {
+                    ManifestDeletionCandidate Candidate;
+                    Candidate.Id = Id;
+                    Candidate.LastSeen = ManifestRegistry.GetLastSeenTime(Id);
+                    Candidate.NumberOfPeersWithFullBuild = Math.Max(0, GetPeerCountForManifest(Id) - 1); // Don't take our peer into account.
+                    Candidates.Add(Candidate);
+                }
+
+                if (Candidates.Count > 0)
+                {
+                    Candidates.Sort((Item1, Item2) => {
+
+                        // Our aim is to maintain highest availability of all builds, to do that:
+                        //      Compare first by number of peers, the ones with the most are the lowest priority.
+                        //      If same number of peers, prioritize deletion of ones seen most recently.
+                        if (Item1.NumberOfPeersWithFullBuild == Item2.NumberOfPeersWithFullBuild)
+                        {
+                            return -Item1.LastSeen.CompareTo(Item2.LastSeen);
+                        }
+                        else
+                        {
+                            return -Item1.NumberOfPeersWithFullBuild.CompareTo(Item2.NumberOfPeersWithFullBuild);
+                        }
+
+                    });
+
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "User '{0}' asked us to select manifest to delete, priority order:", State.Username);
+                    foreach (ManifestDeletionCandidate Candidate in Candidates)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "\tManifest Id={0} PeersWithFullBuild={1} LastSeen={2}", Candidate.Id, Candidate.NumberOfPeersWithFullBuild, Candidate.LastSeen.ToString());
+                    }
+
+                    Guid ChosenCandidate = Candidates[0].Id;
+                    
+                    NetMessage_ChooseDeletionCandidateResponse Response = new NetMessage_ChooseDeletionCandidateResponse();
+                    Response.ManifestId = ChosenCandidate;
+                    Connection.Send(Response);
+                }
             }
         }
 

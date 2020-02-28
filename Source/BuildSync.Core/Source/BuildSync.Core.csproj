@@ -191,6 +191,8 @@
   <ItemGroup>
     <Compile Include="Client\Client.cs" />
     <Compile Include="Client\Peer.cs" />
+    <Compile Include="Networking\Messages\NetMessage_ChooseDeletionCandidate.cs" />
+    <Compile Include="Networking\Messages\NetMessage_ChooseDeletionCandidateResponse.cs" />
     <Compile Include="Networking\NetDiscoveryServer.cs" />
     <Compile Include="Server\Server.cs" />
     <Compile Include="Controls\Graph\GraphAxis.cs" />

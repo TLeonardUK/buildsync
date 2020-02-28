@@ -830,6 +830,24 @@ namespace BuildSync.Core.Client
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public bool RequestChooseDeletionCandidate(List<Guid> Candidates)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request deletion candidate, no connection to server?");
+                return false;
+            }
+
+            NetMessage_ChooseDeletionCandidate Msg = new NetMessage_ChooseDeletionCandidate();
+            Msg.CandidateManifestIds = Candidates;
+            Connection.Send(Msg);
+
+            return true;
+        }
+    
+        /// <summary>
         /// </summary>
         /// <param name="Path"></param>
         public bool RequestServerState()
@@ -937,6 +955,8 @@ namespace BuildSync.Core.Client
             ManifestRegistry = BuildManifest;
             ManifestDownloadManager = DownloadManager;
             ManifestDownloadManager.OnManifestRequested += Id => { RequestManifest(Id); };
+            ManifestDownloadManager.OnRequestChooseDeletionCandidate += Candidates => { RequestChooseDeletionCandidate(Candidates); };
+
             Started = true;
         }
 
@@ -1168,6 +1188,16 @@ namespace BuildSync.Core.Client
                 Permissions = Msg.Permissions;
                 OnPermissionsUpdated?.Invoke();
             }
+
+            // Server has chosen which manifest we should delete.
+            else if (BaseMessage is NetMessage_ChooseDeletionCandidateResponse)
+            {
+                NetMessage_ChooseDeletionCandidateResponse Msg = BaseMessage as NetMessage_ChooseDeletionCandidateResponse;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved candidate deletion response.");
+
+                ManifestDownloadManager.PruneManifest(Msg.ManifestId);
+            }            
 
             // Server is sending us a manifest we previously requested.
             else if (BaseMessage is NetMessage_GetManifestResponse)

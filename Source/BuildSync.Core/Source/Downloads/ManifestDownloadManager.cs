@@ -51,6 +51,10 @@ namespace BuildSync.Core.Downloads
 
     /// <summary>
     /// </summary>
+    public delegate void RequestChooseDeletionCandidateHandler(List<Guid> Candidates);
+
+    /// <summary>
+    /// </summary>
     public struct ManifestDownloadRequiredBlock
     {
         public Guid ManifestId;
@@ -120,6 +124,11 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         public event DownloadErrorHandler OnDownloadError;
+
+        /// <summary>
+        ///
+        /// </summary>
+        public event RequestChooseDeletionCandidateHandler OnRequestChooseDeletionCandidate;
 
         /// <summary>
         /// </summary>
@@ -291,6 +300,11 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         private readonly List<ManifestDownloadQueue> ManifestQueues = new List<ManifestDownloadQueue>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ulong TimeSinceLastPruneRequest = 0;
 
         /// <summary>
         /// </summary>
@@ -1289,29 +1303,52 @@ namespace BuildSync.Core.Downloads
                 }
             }
 
-            if (TotalSize > StorageMaxSize)
+            if (TotalSize > StorageMaxSize && TimeUtils.Ticks - TimeSinceLastPruneRequest > 3000) // Throttle send rate to give server time to respond.
             {
-                // Select manifests for deletion.
-                List<ManifestDownloadState> DeletionCandidates = new List<ManifestDownloadState>();
-                foreach (ManifestDownloadState State in StateCollection.States)
+                if (!CleanUpOrphanBuilds())
                 {
-                    if (!State.Active)
+                    // Select manifests for deletion.
+                    List<ManifestDownloadState> DeletionCandidates = new List<ManifestDownloadState>();
+                    foreach (ManifestDownloadState State in StateCollection.States)
                     {
-                        if (!FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder) &&
-                            State.Manifest != null)
+                        if (!State.Active)
                         {
-                            DeletionCandidates.Add(State);
+                            if (!FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder) &&
+                                State.Manifest != null)
+                            {
+                                DeletionCandidates.Add(State);
+                            }
                         }
                     }
+                    if (DeletionCandidates.Count > 0)
+                    {
+                        DeletionCandidates.Sort((Item1, Item2) => Item1.LastActive.CompareTo(Item2.LastActive));
+
+                        // Request the server to select the next candidate for deletion.
+                        List<Guid> DeletionCandidatesIds = new List<Guid>();
+                        foreach (ManifestDownloadState State in DeletionCandidates)
+                        {
+                            DeletionCandidatesIds.Add(State.ManifestId);
+                        }
+
+                        OnRequestChooseDeletionCandidate?.Invoke(DeletionCandidatesIds);
+
+                        TimeSinceLastPruneRequest = TimeUtils.Ticks;
+                    }
                 }
+            }
+        }
 
-                DeletionCandidates.Sort((Item1, Item2) => Item1.LastActive.CompareTo(Item2.LastActive));
-
-                // Delete this state.
-                if (DeletionCandidates.Count > 0)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Id"></param>
+        public void PruneManifest(Guid Id)
+        {
+            foreach (ManifestDownloadState State in StateCollection.States)
+            {
+                if (State.ManifestId == Id)
                 {
-                    ManifestDownloadState State = DeletionCandidates[0];
-
                     Logger.Log(LogLevel.Info, LogCategory.Manifest, "Deleting download to prune storage space: {0}", State.ManifestId.ToString());
 
                     // Remove state from our state collection.
@@ -1323,16 +1360,20 @@ namespace BuildSync.Core.Downloads
 
                     // Remove the manifest from the registry.
                     ManifestRegistry.UnregisterManifest(State.ManifestId);
-                }
 
-                CleanUpOrphanBuilds();
+                    break;
+                }
             }
+
+            TimeSinceLastPruneRequest = 0;
         }
 
         /// <summary>
         /// </summary>
-        private void CleanUpOrphanBuilds()
+        private bool CleanUpOrphanBuilds()
         {
+            bool Result = false;
+
             if (Directory.Exists(StorageRootPath))
             {
                 // Check if there are any folders in the storage directory that do not have a manifest associated with them.
@@ -1352,6 +1393,7 @@ namespace BuildSync.Core.Downloads
                                 {
                                     PendingOrphanCleanups.Add(Dir);
                                     IOQueue.DeleteDir(Dir, bSuccess => { PendingOrphanCleanups.Remove(Dir); });
+                                    Result = true;
                                 }
                             }
                         }
@@ -1363,11 +1405,14 @@ namespace BuildSync.Core.Downloads
                             {
                                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Found build directory for manifest, but no download state, added as local download, might have been orphaned due to settings save failure?: {0}", Dir);
                                 AddLocalDownload(Manifest, Dir, false);
+                                Result = true;
                             }
                         }
                     }
                 }
             }
+
+            return Result;
         }
 
         /// <summary>
