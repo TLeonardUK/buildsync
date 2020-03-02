@@ -27,9 +27,9 @@ using CommandLine;
 namespace BuildSync.Server.Commands
 {
     /// <summary>
-    ///     CLI command for revoking a previously granted access permission for the given user.
+    ///     CLI command for revoking a previously granted access permission for the given group.
     /// </summary>
-    [Verb("revokepermission", HelpText = "Removes the given permission type from a user.")]
+    [Verb("revokepermission", HelpText = "Removes the given permission type from a group.")]
     public class CommandLineRevokePermissionOptions
     {
         /// <summary>
@@ -45,10 +45,10 @@ namespace BuildSync.Server.Commands
         public string Permission { get; set; } = "";
 
         /// <summary>
-        ///     Username of user to remove permission from, if on a domain the domain should be included in format Domain\\Username.
+        ///     Name of group to remove permission from.
         /// </summary>
-        [Value(0, MetaName = "Username", Required = true, HelpText = "Username of user to remove permission from, if on a domain the domain should be included in format Domain\\Username.")]
-        public string Username { get; set; } = "";
+        [Value(1, MetaName = "Name", Required = true, HelpText = "Name of group to remove permission from")]
+        public string GroupName { get; set; } = "";
 
         /// <summary>
         ///     Called when the CLI invokes this command.
@@ -63,21 +63,15 @@ namespace BuildSync.Server.Commands
                 return;
             }
 
-            User user = Program.UserManager.FindUser(Username);
-            if (user == null)
+            UserGroup group = Program.UserManager.FindGroup(GroupName);
+            if (group == null)
             {
-                IpcClient.Respond(string.Format("FAILED: Username '{0}' does not exist.", Username));
+                IpcClient.Respond(string.Format("FAILED: Group '{0}' does not exist.", GroupName));
             }
             else
             {
-                if (!Program.UserManager.CheckPermission(Username, PermissionType, Path, true))
-                {
-                    IpcClient.Respond("FAILED: User does not have the permission.");
-                    return;
-                }
-
-                Program.UserManager.RevokePermission(user, PermissionType, Path);
-                IpcClient.Respond(string.Format("SUCCESS: Revoked user '{0}' permission '{1}' on '{2}'.", Username, Permission, Path));
+                Program.UserManager.RevokePermission(group, PermissionType, Path);
+                IpcClient.Respond(string.Format("SUCCESS: Revoked group '{0}' permission '{1}' on '{2}'.", GroupName, Permission, Path));
             }
         }
     }

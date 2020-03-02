@@ -149,11 +149,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\CommandLineAddUserGroupOptions.cs" />
     <Compile Include="Commands\CommandLineAddUserOptions.cs" />
+    <Compile Include="Commands\CommandLineAddUserToGroupOptions.cs" />
     <Compile Include="Commands\CommandLineApplyLicenseOptions.cs" />
     <Compile Include="Commands\CommandLineConfigureOptions.cs" />
     <Compile Include="Commands\CommandLineGrantPermissionOptions.cs" />
+    <Compile Include="Commands\CommandLineListUserGroupsOptions.cs" />
     <Compile Include="Commands\CommandLineListUsersOptions.cs" />
+    <Compile Include="Commands\CommandLineRemoveUserFromGroupOptions.cs" />
+    <Compile Include="Commands\CommandLineRemoveUserGroupOptions.cs" />
     <Compile Include="Commands\CommandLineRemoveUserOptions.cs" />
     <Compile Include="Commands\CommandLineRevokePermissionOptions.cs" />
     <Compile Include="MainService.cs">

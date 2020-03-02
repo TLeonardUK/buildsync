@@ -33,6 +33,7 @@ namespace BuildSync.Core.Users
     public class User
     {
         public UserPermissionCollection Permissions { get; set; } = new UserPermissionCollection();
+        public List<string> Groups { get; set; } = new List<string>();
         public string Username { get; set; } = "";
     }
 }

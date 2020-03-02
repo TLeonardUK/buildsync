@@ -71,5 +71,10 @@ namespace BuildSync.Server
         /// 
         /// </summary>
         public List<User> Users { get; set; } = new List<User>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
     }
 }

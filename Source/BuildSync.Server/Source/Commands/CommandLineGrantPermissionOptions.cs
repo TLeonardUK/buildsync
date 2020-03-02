@@ -27,9 +27,9 @@ using CommandLine;
 namespace BuildSync.Server.Commands
 {
     /// <summary>
-    ///     CLI command for granting an access permission to the given user on the server.
+    ///     CLI command for granting an access permission to the given group on the server.
     /// </summary>
-    [Verb("grantpermission", HelpText = "Adds the given permission type to a user.")]
+    [Verb("grantpermission", HelpText = "Adds the given permission type to a group.")]
     public class CommandLineGrantPermissionOptions
     {
         /// <summary>
@@ -45,10 +45,10 @@ namespace BuildSync.Server.Commands
         public string Permission { get; set; } = "";
 
         /// <summary>
-        ///     Username of user to give permission to, if on a domain the domain should be included in format Domain\\Username.
+        ///     Name of group to give permission to.
         /// </summary>
-        [Value(0, MetaName = "Username", Required = true, HelpText = "Username of user to give permission to, if on a domain the domain should be included in format Domain\\Username.")]
-        public string Username { get; set; } = "";
+        [Value(0, MetaName = "Name", Required = true, HelpText = "Name of group to give permission to.")]
+        public string Name { get; set; } = "";
 
         /// <summary>
         ///     Called when the CLI invokes this command.
@@ -63,21 +63,15 @@ namespace BuildSync.Server.Commands
                 return;
             }
 
-            User user = Program.UserManager.FindUser(Username);
-            if (user == null)
+            UserGroup group = Program.UserManager.FindGroup(Name);
+            if (group == null)
             {
-                IpcClient.Respond(string.Format("FAILED: Username '{0}' does not exist.", Username));
+                IpcClient.Respond(string.Format("FAILED: Group '{0}' does not exist.", Name));
             }
             else
             {
-                if (Program.UserManager.CheckPermission(Username, PermissionType, Path, true))
-                {
-                    IpcClient.Respond("FAILED: User already has the permission.");
-                    return;
-                }
-
-                Program.UserManager.GrantPermission(user, PermissionType, Path);
-                IpcClient.Respond(string.Format("SUCCESS: Granted user '{0}' permission '{1}' on '{2}'.", Username, Permission, Path));
+                Program.UserManager.GrantPermission(group, PermissionType, Path);
+                IpcClient.Respond(string.Format("SUCCESS: Granted group '{0}' permission '{1}' on '{2}'.", Name, Permission, Path));
             }
         }
     }

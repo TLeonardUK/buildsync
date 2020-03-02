@@ -37,6 +37,10 @@ namespace BuildSync.Core.Users
 
     /// <summary>
     /// </summary>
+    public delegate void UserGroupsUpdatedEventHandler();
+
+    /// <summary>
+    /// </summary>
     public class UserManager
     {
         /// <summary>
@@ -49,16 +53,28 @@ namespace BuildSync.Core.Users
 
         /// <summary>
         /// </summary>
+        public event UserGroupsUpdatedEventHandler UserGroupsUpdated;
+
+        /// <summary>
+        /// </summary>
         public List<User> Users { get; } = new List<User>();
 
         /// <summary>
         /// </summary>
+        public List<UserGroup> UserGroups { get; } = new List<UserGroup>();
+
+        /// <summary>
+        /// </summary>
         /// <param name="InitialUsers"></param>
-        public UserManager(List<User> InitialUsers = null)
+        public UserManager(List<User> InitialUsers = null, List<UserGroup> InitialGroups = null)
         {
             if (InitialUsers != null)
             {
                 Users = InitialUsers;
+            }
+            if (InitialGroups != null)
+            {
+                UserGroups = InitialGroups;
             }
         }
 
@@ -172,30 +188,174 @@ namespace BuildSync.Core.Users
 
         /// <summary>
         /// </summary>
-        /// <param name="Username"></param>
+        /// <param name="Name"></param>
         /// <returns></returns>
-        public void GrantPermission(User User, UserPermissionType Permission, string Path)
+        public UserGroup CreateGroup(string Name)
         {
-            User.Permissions.GrantPermission(Permission, Path);
+            UserGroup group = FindGroup(Name);
+            if (group != null)
+            {
+                return group;
+            }
 
-            Logger.Log(LogLevel.Info, LogCategory.Users, "Granted user '{0}' permission '{1}'", User.Username, Permission.ToString());
+            group = new UserGroup();
+            group.Name = Name;
+            UserGroups.Add(group);
 
-            UsersUpdated?.Invoke();
-            PermissionsUpdated?.Invoke(User);
+            Logger.Log(LogLevel.Info, LogCategory.Users, "Added new user group '{0}'", Name);
+
+            UserGroupsUpdated?.Invoke();
+
+            return group;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
+        public void DeleteGroup(UserGroup group)
+        {
+            UserGroups.Remove(group);
+
+            Logger.Log(LogLevel.Info, LogCategory.Users, "Deleted user group '{0}'", group.Name);
+
+            foreach (User user in Users)
+            {
+                if (user.Groups.Contains(group.Name))
+                {
+                    user.Groups.Remove(group.Name);
+                    PermissionsUpdated?.Invoke(user);
+                }
+            }
+
+            UserGroupsUpdated?.Invoke();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        public void DeleteGroup(string Name)
+        {
+            UserGroup group = FindGroup(Name);
+            if (group == null)
+            {
+                return;
+            }
+
+            DeleteGroup(group);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        public UserGroup FindGroup(string Name)
+        {
+            foreach (UserGroup group in UserGroups)
+            {
+                if (group.Name.ToLower() == Name.ToLower())
+                {
+                    return group;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        public UserGroup GetOrCreateGroup(string Name)
+        {
+            UserGroup group = FindGroup(Name);
+            if (group == null)
+            {
+                group = CreateGroup(Name);
+            }
+
+            return group;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="group"></param>
+        public void AddUserToGroup(User user, UserGroup group)
+        {
+            if (!user.Groups.Contains(group.Name))
+            {
+                user.Groups.Add(group.Name);
+                Logger.Log(LogLevel.Info, LogCategory.Users, "Adding user '{0}' to group '{1}'", user.Username, group.Name);
+
+                PermissionsUpdated?.Invoke(user);
+                UserGroupsUpdated?.Invoke();
+                UsersUpdated?.Invoke();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="group"></param>
+        public void RemoveUserFromGroup(User user, UserGroup group)
+        {
+            if (user.Groups.Contains(group.Name))
+            {
+                user.Groups.Remove(group.Name);
+                Logger.Log(LogLevel.Info, LogCategory.Users, "Removing user '{0}' from group '{1}'", user.Username, group.Name);
+
+                PermissionsUpdated?.Invoke(user);
+                UserGroupsUpdated?.Invoke();
+                UsersUpdated?.Invoke();
+            }
         }
 
         /// <summary>
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
-        public void RevokePermission(User User, UserPermissionType Permission, string Path)
+        public void GrantPermission(UserGroup Group, UserPermissionType Permission, string Path)
         {
-            User.Permissions.RevokePermission(Permission, Path);
+            Group.Permissions.GrantPermission(Permission, Path);
 
-            Logger.Log(LogLevel.Info, LogCategory.Users, "Revoked user '{0}' permission '{1}'", User.Username, Permission.ToString());
+            Logger.Log(LogLevel.Info, LogCategory.Users, "Granted group '{0}' permission '{1}'", Group.Name, Permission.ToString());
 
             UsersUpdated?.Invoke();
-            PermissionsUpdated?.Invoke(User);
+            UserGroupsUpdated?.Invoke();
+
+            foreach (User user in Users)
+            {
+                if (user.Groups.Contains(Group.Name))
+                {
+                    PermissionsUpdated?.Invoke(user);
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public void RevokePermission(UserGroup Group, UserPermissionType Permission, string Path)
+        {
+            Group.Permissions.RevokePermission(Permission, Path);
+
+            Logger.Log(LogLevel.Info, LogCategory.Users, "Revoked group '{0}' permission '{1}'", Group.Name, Permission.ToString());
+
+            UsersUpdated?.Invoke();
+            UserGroupsUpdated?.Invoke();
+
+            foreach (User user in Users)
+            {
+                if (user.Groups.Contains(Group.Name))
+                {
+                    PermissionsUpdated?.Invoke(user);
+                }
+            }
         }
 
         /// <summary>

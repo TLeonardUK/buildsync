@@ -141,33 +141,33 @@ namespace BuildSync.Server
 #endif
 
 #if true
-            SetConsoleCtrlHandler(
-                CtrlType =>
-                {
-                    if (CtrlType == CtrlTypes.CTRL_C_EVENT ||
-                        CtrlType == CtrlTypes.CTRL_BREAK_EVENT ||
-                        CtrlType == CtrlTypes.CTRL_CLOSE_EVENT ||
-                        CtrlType == CtrlTypes.CTRL_LOGOFF_EVENT ||
-                        CtrlType == CtrlTypes.CTRL_SHUTDOWN_EVENT)
+                    SetConsoleCtrlHandler(
+                        CtrlType =>
+                        {
+                            if (CtrlType == CtrlTypes.CTRL_C_EVENT ||
+                                CtrlType == CtrlTypes.CTRL_BREAK_EVENT ||
+                                CtrlType == CtrlTypes.CTRL_CLOSE_EVENT ||
+                                CtrlType == CtrlTypes.CTRL_LOGOFF_EVENT ||
+                                CtrlType == CtrlTypes.CTRL_SHUTDOWN_EVENT)
+                            {
+                                Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved close event from console.");
+                                IsClosing = true;
+                                return true;
+                            }
+
+                            return false;
+                        }, true
+                    );
+
+                    OnStart();
+
+                    while (!IsClosing)
                     {
-                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved close event from console.");
-                        IsClosing = true;
-                        return true;
+                        OnPoll();
+                        Thread.Sleep(1);
                     }
 
-                    return false;
-                }, true
-            );
-
-            OnStart();
-
-            while (!IsClosing)
-            {
-                OnPoll();
-                Thread.Sleep(1);
-            }
-
-            OnStop();
+                    OnStop();
 #else
                     ServiceBase[] ServicesToRun;
                     ServicesToRun = new ServiceBase[]
@@ -230,10 +230,15 @@ namespace BuildSync.Server
             LicenseMgr = new LicenseManager();
             LicenseMgr.Start(Path.Combine(AppDataDir, "License.dat"));
 
-            UserManager = new UserManager(Settings.Users);
+            UserManager = new UserManager(Settings.Users, Settings.UserGroups);
             UserManager.UsersUpdated += () =>
             {
                 Settings.Users = UserManager.Users;
+                SaveSettings();
+            };
+            UserManager.UserGroupsUpdated += () =>
+            {
+                Settings.UserGroups = UserManager.UserGroups;
                 SaveSettings();
             };
             UserManager.PermissionsUpdated += user =>
@@ -316,6 +321,11 @@ namespace BuildSync.Server
                         parserResult.WithParsed<CommandLineAddUserOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineRemoveUserOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineListUsersOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineAddUserGroupOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineRemoveUserGroupOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineAddUserToGroupOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineRemoveUserFromGroupOptions>(opts => { opts.Run(IPCServer); });
+                        parserResult.WithParsed<CommandLineListUserGroupsOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineGrantPermissionOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineRevokePermissionOptions>(opts => { opts.Run(IPCServer); });
                         parserResult.WithParsed<CommandLineApplyLicenseOptions>(opts => { opts.Run(IPCServer); });
