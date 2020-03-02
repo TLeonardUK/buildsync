@@ -509,7 +509,7 @@ namespace BuildSync.Client.Controls
                                 TrNode.Availability = "Last available " + BuildInfo.LastSeenOnPeer.ToString("dd/MM/yyyy HH:mm");
                             }
                             
-                            TrNode.TagsFormatted = "Broken, Important";
+                            TrNode.TagsFormatted = "";
                         }
                         else
                         {

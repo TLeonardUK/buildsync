@@ -886,8 +886,11 @@ namespace BuildSync.Core.Downloads
                                 {
                                     if (ExistingFiles.ContainsKey(File.Checksum))
                                     {
-                                        FilesToCopy.Add(File, ExistingFiles[File.Checksum]);
-                                        TotalSize += File.Size;
+                                        if (System.IO.File.Exists(ExistingFiles[File.Checksum]))
+                                        {
+                                            FilesToCopy.Add(File, ExistingFiles[File.Checksum]);
+                                            TotalSize += File.Size;
+                                        }
                                     }
                                 }
                             }
