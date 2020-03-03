@@ -37,18 +37,18 @@ namespace BuildSync.Core.Users
         [Description("Write")]
         Write,
 
-        [Description("Read")]
-        Read,
-
         [Description("Modify Users")]
         ModifyUsers,
 
-        [Description("Modify Server")]
-        ModifyServer,
-        
+        [Description("Read")]
+        Read,
+
         [Description("Push Update")]
         PushUpdate,
-        
+
+        [Description("Modify Server")]
+        ModifyServer,
+                
         [Description("Unknown")]
         Unknown
     }
