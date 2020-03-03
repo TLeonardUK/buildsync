@@ -48,7 +48,10 @@ namespace BuildSync.Core.Users
 
         [Description("Modify Server")]
         ModifyServer,
-                
+
+        [Description("Add Users To Group")]
+        AddUsersToGroup,
+
         [Description("Unknown")]
         Unknown
     }
@@ -124,6 +127,24 @@ namespace BuildSync.Core.Users
             NewPermission.Type = Type;
             NewPermission.VirtualPath = Path;
             Permissions.Add(NewPermission);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Type"></param>
+        /// <returns></returns>
+        public bool HasAnyPermissionOfType(UserPermissionType Type)
+        {
+            foreach (UserPermission Permission in Permissions)
+            {
+                if (Permission.Type == Type)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

@@ -138,7 +138,8 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void RefreshUserList(object sender, EventArgs e)
         {
-            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyUsers, "", false, true))
+            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyUsers, "", false, true) &&
+                !Program.NetClient.Permissions.HasAnyPermissionOfType(UserPermissionType.AddUsersToGroup))
             {
                 Hide();
                 return;
@@ -193,7 +194,7 @@ namespace BuildSync.Client.Forms
         {
             foreach (UserTreeNode Node in ParentNode.Nodes)
             {
-                if (Node.IsPermission && Node.Name == Permission.Type.ToString() && Node.PermissionPath == Permission.VirtualPath)
+                if (Node.IsPermission && Node.PermissionType == Permission.Type && Node.PermissionPath == Permission.VirtualPath)
                 {
                     return Node;
                 }
@@ -285,8 +286,8 @@ namespace BuildSync.Client.Forms
                     bool Found = false;
                     foreach (UserPermission Permission in Group.Permissions.Permissions)
                     {
-                        if (Permission.Type.ToString() == Node.Name &&
-                            Permission.VirtualPath.ToString() == Node.PermissionPath)
+                        if (Permission.Type == Node.PermissionType &&
+                            Permission.VirtualPath == Node.PermissionPath)
                         {
                             Found = true;
                             break;
@@ -457,29 +458,36 @@ namespace BuildSync.Client.Forms
         {
             UserTreeNode Node = MainTreeView.SelectedNode == null ? null : MainTreeView.SelectedNode.Tag as UserTreeNode;
 
+            bool hasFullPermission = Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyUsers, "", false, true);
+
             deleteMenuItem.Enabled = false;
             addMenuItem.Text = "Add User Group ...";
             deleteMenuItem.Text = "Delete User Group";
+
+            addMenuItem.Enabled = hasFullPermission;
 
             if (Node != null)
             {
                 if (Node.IsPermission || Node.IsPermissionFolder)
                 {
                     deleteMenuItem.Text = "Delete Permission";
-                    deleteMenuItem.Enabled = Node.IsPermission;
+                    deleteMenuItem.Enabled = Node.IsPermission && hasFullPermission;
 
                     addMenuItem.Text = "Add Permission ...";
+                    addMenuItem.Enabled = hasFullPermission;
                 }
                 else if (Node.IsUser || Node.IsUserFolder)
                 {
                     deleteMenuItem.Text = "Remove User From Group ...";
-                    deleteMenuItem.Enabled = (Node.IsUser && Node.Group.Name != "All Users");
+                    deleteMenuItem.Enabled = (Node.IsUser && Node.Group.Name != "All Users") && (Program.NetClient.Permissions.HasPermission(UserPermissionType.AddUsersToGroup, Node.Group.Name) || hasFullPermission);
 
                     addMenuItem.Text = "Add User To Group ...";
+                    addMenuItem.Enabled = Program.NetClient.Permissions.HasPermission(UserPermissionType.AddUsersToGroup, Node.Group.Name) || hasFullPermission;
                 }
                 else if (Node.IsGroup)
                 {
                     deleteMenuItem.Enabled = (Node.Name != "All Users");
+                    addMenuItem.Enabled = hasFullPermission;
                 }
             }
         }

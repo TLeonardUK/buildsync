@@ -843,7 +843,8 @@ namespace BuildSync.Client.Forms
             manageUsersToolStripMenuItem.Enabled = Connected;
             if (Connected)
             {
-                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyUsers, ""))
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyUsers, "") &&
+                    !Program.NetClient.Permissions.HasAnyPermissionOfType(UserPermissionType.AddUsersToGroup))
                 {
                     manageUsersToolStripMenuItem.Enabled = false;
                     manageUsersToolStripMenuItem.Text = "User Manager (Permission Required)";

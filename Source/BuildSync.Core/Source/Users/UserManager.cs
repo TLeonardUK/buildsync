@@ -136,6 +136,39 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public bool HasAnyPermission(User User, UserPermissionType Permission)
+        {
+            foreach (string GroupName in User.Groups)
+            {
+                UserGroup group = FindGroup(GroupName);
+                if (group.Permissions.HasAnyPermissionOfType(Permission))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public bool HasAnyPermission(string Username, UserPermissionType Permission)
+        {
+            User user = FindUser(Username);
+            if (user == null)
+            {
+                return false;
+            }
+
+            return HasAnyPermission(user, Permission);
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="Username"></param>

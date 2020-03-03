@@ -617,17 +617,31 @@ namespace BuildSync.Core.Server
 
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, "") ||
+                    !UserManager.HasAnyPermission(State.Username, UserPermissionType.AddUsersToGroup))
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to get usernames without permission.", State.Username);
                     return;
                 }
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for user list.");
-
                 NetMessage_GetUsersResponse ResponseMsg = new NetMessage_GetUsersResponse();
                 ResponseMsg.Users = UserManager.Users;
-                ResponseMsg.UserGroups = UserManager.UserGroups;
+
+                if (UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                {
+                    ResponseMsg.UserGroups = UserManager.UserGroups;
+                }
+                else
+                {
+                    foreach (UserGroup group in UserManager.UserGroups)
+                    {
+                        if (UserManager.CheckPermission(State.Username, UserPermissionType.AddUsersToGroup, group.Name))
+                        {
+                            ResponseMsg.UserGroups.Add(group);
+                        }
+                    }
+                }
+
                 Connection.Send(ResponseMsg);
             }
 
@@ -680,7 +694,8 @@ namespace BuildSync.Core.Server
 
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, "") &&
+                    !UserManager.CheckPermission(State.Username, UserPermissionType.AddUsersToGroup, Msg.GroupName))
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set modify users without permission.", State.Username);
                     return;
@@ -700,7 +715,8 @@ namespace BuildSync.Core.Server
 
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, "") &&
+                    !UserManager.CheckPermission(State.Username, UserPermissionType.AddUsersToGroup, Msg.GroupName))
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set modify users without permission.", State.Username);
                     return;
