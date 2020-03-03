@@ -29,7 +29,7 @@
           <content>
             <para>Clicking add build will show this window:</para>
             <mediaLink><image placement="center" xlink:href="add_builds"/></mediaLink>
-            <para>The <ui>Virtual Path</ui> is the path to the build in the build file system, paths are in the format "Folder/Folder/Container/BuildName".</para>
+            <para>The <ui>Path</ui> is the path to the build in the build file system, paths are in the format "Folder/Folder/Container/BuildName".</para>
             <para>The <ui>Local Path</ui> is the root of the build data on the local machine that you wish to add.</para>
             <alert class="caution">Once processing is started to publish the build, it should not be interrupted, and can take a extensive amount of time for large builds.</alert>
           </content>

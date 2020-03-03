@@ -20,25 +20,23 @@
 */
 
 using System;
-using System.ComponentModel;
 using System.Windows.Forms;
 using BuildSync.Core.Users;
-using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Forms
 {
     /// <summary>
     /// </summary>
-    public partial class AddPermissionForm : Form
+    public partial class AddUserForm : Form
     {
         /// <summary>
         /// 
         /// </summary>
-        public UserPermission Permission = new UserPermission();
+        public string Username = "";
 
         /// <summary>
         /// </summary>
-        public AddPermissionForm()
+        public AddUserForm()
         {
             InitializeComponent();
         }
@@ -47,7 +45,7 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void addDownloadButton_Click(object sender, EventArgs e)
+        private void OkClicked(object sender, EventArgs e)
         {
             DialogResult = DialogResult.OK;
             Close();
@@ -59,23 +57,8 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
-            foreach (Enum val in Enum.GetValues(typeof(UserPermissionType)))
-            {
-                permissionTypeComboBox.Items.Add(val.GetAttributeOfType<DescriptionAttribute>().Description);
-            }
+            nameTextBox.Text = Username;
 
-            permissionTypeComboBox.SelectedIndex = (int) UserPermissionType.Unknown;
-
-            UpdateState();
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void PermissionChanged(object sender, EventArgs e)
-        {
-            Permission.Type = (UserPermissionType) permissionTypeComboBox.SelectedIndex;
             UpdateState();
         }
 
@@ -83,16 +66,17 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private void UpdateState()
         {
-            addDownloadButton.Enabled = Permission.Type != UserPermissionType.Unknown;
+            addGroupButton.Enabled = (nameTextBox.Text.Trim().Length > 0);
+            Username = nameTextBox.Text;
         }
 
         /// <summary>
+        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void VirtualPathChanged(object sender, EventArgs e)
+        private void NameTextChanged(object sender, EventArgs e)
         {
-            Permission.VirtualPath = virtualPathTextBox.Text;
             UpdateState();
         }
     }

@@ -75,9 +75,9 @@
             this.label2.Location = new System.Drawing.Point(8, 61);
             this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(61, 13);
+            this.label2.Size = new System.Drawing.Size(29, 13);
             this.label2.TabIndex = 17;
-            this.label2.Text = "Virtual Path";
+            this.label2.Text = "Path";
             // 
             // panel1
             // 

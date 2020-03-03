@@ -274,6 +274,18 @@
     <Compile Include="Forms\AddDownloadForm.Designer.cs">
       <DependentUpon>AddDownloadForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\AddUserForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AddUserForm.Designer.cs">
+      <DependentUpon>AddUserForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\AddUserGroupForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AddUserGroupForm.Designer.cs">
+      <DependentUpon>AddUserGroupForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\AddPermissionForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -417,6 +429,12 @@
     <EmbeddedResource Include="Forms\AddDownloadForm.resx">
       <DependentUpon>AddDownloadForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\AddUserForm.resx">
+      <DependentUpon>AddUserForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\AddUserGroupForm.resx">
+      <DependentUpon>AddUserGroupForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\AddPermissionForm.resx">
       <DependentUpon>AddPermissionForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -545,6 +563,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.star.png" />
+    <None Include="Resources\appbar.folder.star.png" />
+    <None Include="Resources\appbar.folder.people.png" />
+    <None Include="Resources\appbar.minus.png" />
+    <None Include="Resources\appbar.shield.png" />
+    <None Include="Resources\appbar.group.png" />
     <None Include="Resources\appbar.connection.quality.verylow.png" />
     <None Include="Resources\appbar.connection.quality.veryhigh.png" />
     <None Include="Resources\appbar.connection.quality.medium.png" />

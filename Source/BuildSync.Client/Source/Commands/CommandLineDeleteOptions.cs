@@ -62,7 +62,7 @@ namespace BuildSync.Client.Commands
                 return;
             }
 
-            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, "", false, true))
+            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.Write, "", false, true))
             {
                 IpcClient.Respond("FAILED: Permission denied to manage builds.");
                 return;
@@ -80,7 +80,7 @@ namespace BuildSync.Client.Commands
                         {
                             if (Info.Guid == Guid.Empty)
                             {
-                                IpcClient.Respond("FAILED: Virtual path is not a build.");
+                                IpcClient.Respond("FAILED: Path is not a build.");
                                 IsComplete = true;
                             }
                             else
@@ -96,7 +96,7 @@ namespace BuildSync.Client.Commands
 
                     if (!Found)
                     {
-                        IpcClient.Respond("FAILED: Virtual path is not a build.");
+                        IpcClient.Respond("FAILED: Path is not a build.");
                         IsComplete = true;
                     }
 

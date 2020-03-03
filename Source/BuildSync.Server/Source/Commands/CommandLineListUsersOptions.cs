@@ -39,18 +39,18 @@ namespace BuildSync.Server.Commands
         {
             string Format = "{0,-30} | {1,-30}";
 
-            IpcClient.Respond(string.Format(Format, "Username", "Permissions"));
+            IpcClient.Respond(string.Format(Format, "Username", "Groups"));
             foreach (User user in Program.UserManager.Users)
             {
                 string Permissions = "";
-                foreach (UserPermission Permission in user.Permissions.Permissions)
+                foreach (string Group in user.Groups)
                 {
                     if (Permissions.Length != 0)
                     {
                         Permissions += ",";
                     }
 
-                    Permissions += Permission.Type + "@\"" + Permission.VirtualPath + "\"";
+                    Permissions += Group;
                 }
 
                 IpcClient.Respond(string.Format(Format, user.Username, Permissions));

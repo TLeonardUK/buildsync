@@ -19,19 +19,26 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Users;
+
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
     ///     Client->Server
     ///
-    ///     Requests a user with the given name is removed from the server
-    ///     manifest registry. Can only be sent by users who have the ModifyUsers
+    ///     Requests a user is removed from the given usergroup.
+    ///     Can only be sent by users who have the ModifyUsers
     ///     permission.
     /// </summary>
-    public class NetMessage_DeleteUser : NetMessage
+    public class NetMessage_RemoveUserFromUserGroup : NetMessage
     {
         /// <summary>
-        ///     Name of user to delete.
+        ///     Name of usergroup to add to.
+        /// </summary>
+        public string GroupName = "";
+
+        /// <summary>
+        ///     Name of user to add to group.
         /// </summary>
         public string Username = "";
 
@@ -41,6 +48,7 @@ namespace BuildSync.Core.Networking.Messages
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
+            serializer.Serialize(ref GroupName);
             serializer.Serialize(ref Username);
         }
     }

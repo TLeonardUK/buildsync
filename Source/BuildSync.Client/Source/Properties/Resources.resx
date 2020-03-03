@@ -124,8 +124,17 @@
   <data name="appbar_database" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.database.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="appbar_group" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.group.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="appbar_connection_quality_veryhigh" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.connection.quality.veryhigh.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="appbar.people" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.people.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="appbar_shield" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.shield.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="appbar.disk.upload" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.disk.upload.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -145,8 +154,14 @@
   <data name="ic_error_red_48pt" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ic_error_red_48pt.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="appbar_connection_quality_verylow" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.connection.quality.verylow.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="appbar.graph.histogram" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.graph.histogram.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="appbar.folder" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.folder1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="appbar.console" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.console.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -193,8 +208,14 @@
   <data name="appbar.close" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.close.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="appbar_connection_quality_extremelylow" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.connection.quality.extremelylow.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="appbar.control.play" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.control.play.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="appbar_connection_quality_high" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.connection.quality.high.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="appbar.arrow.up.down" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.arrow.up.down.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -223,25 +244,22 @@
   <data name="appbar.download" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.download.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="appbar.folder" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\appbar.folder1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="appbar_connection_quality_extremelylow" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\appbar.connection.quality.extremelylow.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="appbar_connection_quality_high" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\appbar.connection.quality.high.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="appbar_connection_quality_medium" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.connection.quality.medium.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="appbar_connection_quality_low" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\appbar.connection.quality.low.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="appbar_connection_quality_medium" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\appbar.connection.quality.medium.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="appbar.minus" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.minus.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="appbar_connection_quality_veryhigh" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\appbar.connection.quality.veryhigh.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="appbar_folder_people" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.folder.people.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="appbar_connection_quality_verylow" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\appbar.connection.quality.verylow.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="appbar_folder_star" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.folder.star.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="appbar_star" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\appbar.star.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

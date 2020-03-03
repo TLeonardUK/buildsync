@@ -38,11 +38,16 @@ namespace BuildSync.Core.Networking.Messages
         public List<User> Users = new List<User>();
 
         /// <summary>
+        /// </summary>
+        public List<UserGroup> UserGroups = new List<UserGroup>();
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
+            // Serialize users.
             int Count = Users.Count;
             serializer.Serialize(ref Count);
 
@@ -57,7 +62,38 @@ namespace BuildSync.Core.Networking.Messages
                 serializer.Serialize(ref Username);
 
                 Users[i].Username = Username;
-                Users[i].Permissions.Serialize(serializer);
+
+                int GroupCount = Users[i].Groups.Count;
+                serializer.Serialize(ref GroupCount);
+                for (int j = 0; j < GroupCount; j++)
+                {
+                    if (serializer.IsLoading)
+                    {
+                        Users[i].Groups.Add("");
+                    }
+
+                    string GroupName = Users[i].Groups[j];
+                    serializer.Serialize(ref GroupName);
+                    Users[i].Groups[j] = GroupName;
+                }
+            }
+            
+            // Serialize usergroups
+            Count = UserGroups.Count;
+            serializer.Serialize(ref Count);
+
+            for (int i = 0; i < Count; i++)
+            {
+                if (serializer.IsLoading)
+                {
+                    UserGroups.Add(new UserGroup());
+                }
+
+                string Name = UserGroups[i].Name;
+                serializer.Serialize(ref Name);
+
+                UserGroups[i].Name = Name;
+                UserGroups[i].Permissions.Serialize(serializer);
             }
         }
     }

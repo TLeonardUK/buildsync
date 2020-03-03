@@ -19,21 +19,33 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using BuildSync.Core.Users;
+
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
     ///     Client->Server
     ///
-    ///     Requests a user with the given name is removed from the server
-    ///     manifest registry. Can only be sent by users who have the ModifyUsers
+    ///     Requests a permission is removed from the given usergroup.
+    ///     Can only be sent by users who have the ModifyUsers
     ///     permission.
     /// </summary>
-    public class NetMessage_DeleteUser : NetMessage
+    public class NetMessage_RemoveUserGroupPermission : NetMessage
     {
         /// <summary>
-        ///     Name of user to delete.
+        ///     Name of usergroup to create.
         /// </summary>
-        public string Username = "";
+        public string GroupName = "";
+
+        /// <summary>
+        ///     Type of permission to add.
+        /// </summary>
+        public UserPermissionType PermissionType;
+
+        /// <summary>
+        ///     Path permission should take effect on.
+        /// </summary>
+        public string PermissionPath;
 
         /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
@@ -41,7 +53,9 @@ namespace BuildSync.Core.Networking.Messages
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
-            serializer.Serialize(ref Username);
+            serializer.Serialize(ref GroupName);
+            serializer.SerializeEnum(ref PermissionType);
+            serializer.Serialize(ref PermissionPath);
         }
     }
 }

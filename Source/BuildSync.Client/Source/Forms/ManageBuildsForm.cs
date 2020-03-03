@@ -100,7 +100,7 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private void ValidateState()
         {
-            bool CanManage = Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageBuilds, "", false, true);
+            bool CanManage = Program.NetClient.Permissions.HasPermission(UserPermissionType.Write, "", false, true);
 
             deleteToolStripMenuItem.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
             addDownloadToolStripMenuItem1.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId == Guid.Empty);

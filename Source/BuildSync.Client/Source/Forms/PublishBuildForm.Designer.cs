@@ -85,7 +85,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(61, 13);
             this.label1.TabIndex = 19;
-            this.label1.Text = "Virtual Path";
+            this.label1.Text = "Path";
             // 
             // LocalFolderTextBox
             // 
@@ -151,7 +151,7 @@
             this.label4.Size = new System.Drawing.Size(541, 45);
             this.label4.TabIndex = 26;
             this.label4.Text = "This will create a build manifest out of the contents of a given folder and publi" +
-    "sh it to the server at the given virtual path. This process may take a while.\r\n";
+    "sh it to the server at the given path. This process may take a while.\r\n";
             // 
             // ProgressTimer
             // 

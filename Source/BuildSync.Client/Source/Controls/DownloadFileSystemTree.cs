@@ -37,39 +37,6 @@ namespace BuildSync.Client.Controls
     /// </summary>
     public partial class DownloadFileSystemTree : UserControl
     {
-        public class ScaledNodeIcon : NodeIcon
-        {
-            public Size FixedSize;
-            public Size Offset;
-
-            public ScaledNodeIcon()
-            {
-                ScaleMode = ImageScaleMode.Fit;
-            }
-
-            public override Size MeasureSize(TreeNodeAdv node, DrawContext context)
-            {
-                return FixedSize;
-            }
-
-            public override void Draw(TreeNodeAdv node, DrawContext context)
-            {
-                Image icon = this.GetIcon(node);
-                if (icon == null)
-                    return;
-                Rectangle bounds = this.GetBounds(node, context);
-                if (icon.Width <= 0 || icon.Height <= 0)
-                    return;
-
-                context.Graphics.DrawImage(
-                    icon, 
-                    (bounds.X + (bounds.Width * 0.5f)) - (FixedSize.Width * 0.5f) + Offset.Width,
-                    (bounds.Y + (bounds.Height * 0.5f)) - (FixedSize.Height * 0.5f) + Offset.Height,
-                    FixedSize.Width,
-                    FixedSize.Height);
-            }
-        }
-
         public class DownloadFileSystemTreeNode : Node
         {
             public Image Icon;

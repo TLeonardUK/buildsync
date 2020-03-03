@@ -27,7 +27,7 @@ namespace BuildSync.Core.Networking.Messages
     ///     Client->Server
     ///
     ///     Requests a manifest with the given ID to be deleted from the servers
-    ///     manifest registry. Can only be sent by users who have the ManageBuilds
+    ///     manifest registry. Can only be sent by users who have the Write
     ///     permission on the directory the manifest is contained within.
     /// </summary>
     public class NetMessage_DeleteManifest : NetMessage

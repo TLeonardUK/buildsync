@@ -28,247 +28,96 @@
         /// </summary>
         private void InitializeComponent()
         {
-			this.components = new System.ComponentModel.Container();
-			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManageUsersForm));
-			this.label1 = new System.Windows.Forms.Label();
-			this.ButtonImageIndex = new System.Windows.Forms.ImageList(this.components);
-			this.UserListView = new System.Windows.Forms.ListView();
-			this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.UserImageList = new System.Windows.Forms.ImageList(this.components);
-			this.PermissionListView = new System.Windows.Forms.ListView();
-			this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.label2 = new System.Windows.Forms.Label();
-			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-			this.RemoveUserButton = new System.Windows.Forms.Button();
-			this.AddUserButton = new System.Windows.Forms.Button();
-			this.AddPermissionButton = new System.Windows.Forms.Button();
-			this.RemovePermissionButton = new System.Windows.Forms.Button();
-			this.userRefreshTime = new System.Windows.Forms.Timer(this.components);
-			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-			this.splitContainer1.Panel1.SuspendLayout();
-			this.splitContainer1.Panel2.SuspendLayout();
-			this.splitContainer1.SuspendLayout();
-			this.SuspendLayout();
-			// 
-			// label1
-			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(3, 13);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(34, 13);
-			this.label1.TabIndex = 32;
-			this.label1.Text = "Users";
-			// 
-			// ButtonImageIndex
-			// 
-			this.ButtonImageIndex.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("ButtonImageIndex.ImageStream")));
-			this.ButtonImageIndex.TransparentColor = System.Drawing.Color.Transparent;
-			this.ButtonImageIndex.Images.SetKeyName(0, "appbar.add.png");
-			this.ButtonImageIndex.Images.SetKeyName(1, "appbar.delete.png");
-			this.ButtonImageIndex.Images.SetKeyName(2, "appbar.user.add.png");
-			this.ButtonImageIndex.Images.SetKeyName(3, "appbar.user.delete.png");
-			// 
-			// UserListView
-			// 
-			this.UserListView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.UserListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader3});
-			this.UserListView.FullRowSelect = true;
-			this.UserListView.GridLines = true;
-			this.UserListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-			this.UserListView.HideSelection = false;
-			this.UserListView.LabelEdit = true;
-			this.UserListView.Location = new System.Drawing.Point(0, 39);
-			this.UserListView.Name = "UserListView";
-			this.UserListView.Size = new System.Drawing.Size(230, 270);
-			this.UserListView.SmallImageList = this.UserImageList;
-			this.UserListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
-			this.UserListView.TabIndex = 33;
-			this.UserListView.UseCompatibleStateImageBehavior = false;
-			this.UserListView.View = System.Windows.Forms.View.Details;
-			this.UserListView.AfterLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.FinishLabelEdit);
-			this.UserListView.BeforeLabelEdit += new System.Windows.Forms.LabelEditEventHandler(this.BeginLabelEdit);
-			this.UserListView.SelectedIndexChanged += new System.EventHandler(this.UserListSelectedItemChanged);
-			// 
-			// columnHeader3
-			// 
-			this.columnHeader3.Text = "Username";
-			this.columnHeader3.Width = 220;
-			// 
-			// UserImageList
-			// 
-			this.UserImageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("UserImageList.ImageStream")));
-			this.UserImageList.TransparentColor = System.Drawing.Color.Transparent;
-			this.UserImageList.Images.SetKeyName(0, "appbar.user.png");
-			// 
-			// PermissionListView
-			// 
-			this.PermissionListView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.PermissionListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader1,
-            this.columnHeader2});
-			this.PermissionListView.FullRowSelect = true;
-			this.PermissionListView.GridLines = true;
-			this.PermissionListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-			this.PermissionListView.HideSelection = false;
-			this.PermissionListView.Location = new System.Drawing.Point(2, 39);
-			this.PermissionListView.Name = "PermissionListView";
-			this.PermissionListView.Size = new System.Drawing.Size(409, 270);
-			this.PermissionListView.TabIndex = 36;
-			this.PermissionListView.UseCompatibleStateImageBehavior = false;
-			this.PermissionListView.View = System.Windows.Forms.View.Details;
-			this.PermissionListView.SelectedIndexChanged += new System.EventHandler(this.PermissionListSelectedItemChanged);
-			// 
-			// columnHeader1
-			// 
-			this.columnHeader1.Text = "Permission Type";
-			this.columnHeader1.Width = 150;
-			// 
-			// columnHeader2
-			// 
-			this.columnHeader2.Text = "Virtual Path";
-			this.columnHeader2.Width = 250;
-			// 
-			// label2
-			// 
-			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(3, 13);
-			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(62, 13);
-			this.label2.TabIndex = 37;
-			this.label2.Text = "Permissions";
-			// 
-			// splitContainer1
-			// 
-			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.splitContainer1.Location = new System.Drawing.Point(5, 2);
-			this.splitContainer1.Name = "splitContainer1";
-			// 
-			// splitContainer1.Panel1
-			// 
-			this.splitContainer1.Panel1.Controls.Add(this.UserListView);
-			this.splitContainer1.Panel1.Controls.Add(this.RemoveUserButton);
-			this.splitContainer1.Panel1.Controls.Add(this.AddUserButton);
-			this.splitContainer1.Panel1.Controls.Add(this.label1);
-			// 
-			// splitContainer1.Panel2
-			// 
-			this.splitContainer1.Panel2.Controls.Add(this.AddPermissionButton);
-			this.splitContainer1.Panel2.Controls.Add(this.PermissionListView);
-			this.splitContainer1.Panel2.Controls.Add(this.label2);
-			this.splitContainer1.Panel2.Controls.Add(this.RemovePermissionButton);
-			this.splitContainer1.Size = new System.Drawing.Size(649, 309);
-			this.splitContainer1.SplitterDistance = 230;
-			this.splitContainer1.TabIndex = 40;
-			// 
-			// RemoveUserButton
-			// 
-			this.RemoveUserButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.RemoveUserButton.ImageIndex = 3;
-			this.RemoveUserButton.ImageList = this.ButtonImageIndex;
-			this.RemoveUserButton.Location = new System.Drawing.Point(194, 5);
-			this.RemoveUserButton.Margin = new System.Windows.Forms.Padding(2);
-			this.RemoveUserButton.Name = "RemoveUserButton";
-			this.RemoveUserButton.Size = new System.Drawing.Size(30, 29);
-			this.RemoveUserButton.TabIndex = 27;
-			this.RemoveUserButton.UseVisualStyleBackColor = true;
-			this.RemoveUserButton.Click += new System.EventHandler(this.RemoveUserButtonClicked);
-			// 
-			// AddUserButton
-			// 
-			this.AddUserButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.AddUserButton.ImageIndex = 2;
-			this.AddUserButton.ImageList = this.ButtonImageIndex;
-			this.AddUserButton.Location = new System.Drawing.Point(157, 5);
-			this.AddUserButton.Margin = new System.Windows.Forms.Padding(2);
-			this.AddUserButton.Name = "AddUserButton";
-			this.AddUserButton.Size = new System.Drawing.Size(30, 29);
-			this.AddUserButton.TabIndex = 29;
-			this.AddUserButton.UseVisualStyleBackColor = true;
-			this.AddUserButton.Click += new System.EventHandler(this.AddUserButtonClicked);
-			// 
-			// AddPermissionButton
-			// 
-			this.AddPermissionButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.AddPermissionButton.ImageIndex = 0;
-			this.AddPermissionButton.ImageList = this.ButtonImageIndex;
-			this.AddPermissionButton.Location = new System.Drawing.Point(346, 5);
-			this.AddPermissionButton.Margin = new System.Windows.Forms.Padding(2);
-			this.AddPermissionButton.Name = "AddPermissionButton";
-			this.AddPermissionButton.Size = new System.Drawing.Size(30, 29);
-			this.AddPermissionButton.TabIndex = 45;
-			this.AddPermissionButton.UseVisualStyleBackColor = true;
-			this.AddPermissionButton.Click += new System.EventHandler(this.AddPermissionButtonClicked);
-			// 
-			// RemovePermissionButton
-			// 
-			this.RemovePermissionButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.RemovePermissionButton.ImageIndex = 1;
-			this.RemovePermissionButton.ImageList = this.ButtonImageIndex;
-			this.RemovePermissionButton.Location = new System.Drawing.Point(381, 5);
-			this.RemovePermissionButton.Margin = new System.Windows.Forms.Padding(2);
-			this.RemovePermissionButton.Name = "RemovePermissionButton";
-			this.RemovePermissionButton.Size = new System.Drawing.Size(30, 29);
-			this.RemovePermissionButton.TabIndex = 38;
-			this.RemovePermissionButton.UseVisualStyleBackColor = true;
-			this.RemovePermissionButton.Click += new System.EventHandler(this.RemovePermissionButtonClicked);
-			// 
-			// userRefreshTime
-			// 
-			this.userRefreshTime.Enabled = true;
-			this.userRefreshTime.Interval = 1000;
-			this.userRefreshTime.Tick += new System.EventHandler(this.RefreshUserList);
-			// 
-			// ManageUsersForm
-			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(658, 315);
-			this.Controls.Add(this.splitContainer1);
-			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
-			this.HideOnClose = true;
-			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-			this.MaximizeBox = false;
-			this.MinimizeBox = false;
-			this.Name = "ManageUsersForm";
-			this.ShowInTaskbar = false;
-			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-			this.Text = "User Manager";
-			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
-			this.Shown += new System.EventHandler(this.OnShown);
-			this.splitContainer1.Panel1.ResumeLayout(false);
-			this.splitContainer1.Panel1.PerformLayout();
-			this.splitContainer1.Panel2.ResumeLayout(false);
-			this.splitContainer1.Panel2.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-			this.splitContainer1.ResumeLayout(false);
-			this.ResumeLayout(false);
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManageUsersForm));
+            this.MainTreeView = new Aga.Controls.Tree.TreeViewAdv();
+            this.userListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.RefreshTimer = new System.Windows.Forms.Timer(this.components);
+            this.addMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.userListContextMenu.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // MainTreeView
+            // 
+            this.MainTreeView.BackColor = System.Drawing.SystemColors.Window;
+            this.MainTreeView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.MainTreeView.ContextMenuStrip = this.userListContextMenu;
+            this.MainTreeView.DefaultToolTipProvider = null;
+            this.MainTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.MainTreeView.DragDropMarkColor = System.Drawing.Color.Black;
+            this.MainTreeView.FullRowSelect = true;
+            this.MainTreeView.LineColor = System.Drawing.SystemColors.ControlDark;
+            this.MainTreeView.Location = new System.Drawing.Point(0, 0);
+            this.MainTreeView.Model = null;
+            this.MainTreeView.Name = "MainTreeView";
+            this.MainTreeView.RowHeight = 22;
+            this.MainTreeView.SelectedNode = null;
+            this.MainTreeView.Size = new System.Drawing.Size(658, 315);
+            this.MainTreeView.TabIndex = 2;
+            this.MainTreeView.Text = "treeViewAdv1";
+            this.MainTreeView.UseColumns = true;
+            this.MainTreeView.SelectionChanged += new System.EventHandler(this.SelectionChanged);
+            // 
+            // userListContextMenu
+            // 
+            this.userListContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
+            this.userListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addMenuItem,
+            this.deleteMenuItem});
+            this.userListContextMenu.Name = "downloadListContextMenu";
+            this.userListContextMenu.Size = new System.Drawing.Size(189, 86);
+            // 
+            // RefreshTimer
+            // 
+            this.RefreshTimer.Enabled = true;
+            this.RefreshTimer.Interval = 1000;
+            this.RefreshTimer.Tick += new System.EventHandler(this.RefreshUserList);
+            // 
+            // addMenuItem
+            // 
+            this.addMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
+            this.addMenuItem.Name = "addMenuItem";
+            this.addMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.addMenuItem.Text = "Add User ...";
+            this.addMenuItem.Click += new System.EventHandler(this.AddClicked);
+            // 
+            // deleteMenuItem
+            // 
+            this.deleteMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_minus;
+            this.deleteMenuItem.Name = "deleteMenuItem";
+            this.deleteMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.deleteMenuItem.Text = "Remove ...";
+            this.deleteMenuItem.Click += new System.EventHandler(this.DeleteClicked);
+            // 
+            // ManageUsersForm
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(658, 315);
+            this.Controls.Add(this.MainTreeView);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.HideOnClose = true;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.Name = "ManageUsersForm";
+            this.ShowInTaskbar = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "User Manager";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
+            this.Shown += new System.EventHandler(this.OnShown);
+            this.userListContextMenu.ResumeLayout(false);
+            this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button AddUserButton;
-        private System.Windows.Forms.Button RemoveUserButton;
-        private System.Windows.Forms.ListView UserListView;
-        private System.Windows.Forms.ListView PermissionListView;
-        private System.Windows.Forms.ColumnHeader columnHeader1;
-        private System.Windows.Forms.ColumnHeader columnHeader2;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button RemovePermissionButton;
-        private System.Windows.Forms.SplitContainer splitContainer1;
-        private System.Windows.Forms.Button AddPermissionButton;
-        private System.Windows.Forms.ImageList UserImageList;
-        private System.Windows.Forms.ImageList ButtonImageIndex;
-        private System.Windows.Forms.ColumnHeader columnHeader3;
-		private System.Windows.Forms.Timer userRefreshTime;
-	}
+        private Aga.Controls.Tree.TreeViewAdv MainTreeView;
+        private System.Windows.Forms.Timer RefreshTimer;
+        private System.Windows.Forms.ContextMenuStrip userListContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem addMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem deleteMenuItem;
+    }
 }

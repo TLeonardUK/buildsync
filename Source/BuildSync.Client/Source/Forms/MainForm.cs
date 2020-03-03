@@ -843,7 +843,7 @@ namespace BuildSync.Client.Forms
             manageUsersToolStripMenuItem.Enabled = Connected;
             if (Connected)
             {
-                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageUsers, ""))
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyUsers, ""))
                 {
                     manageUsersToolStripMenuItem.Enabled = false;
                     manageUsersToolStripMenuItem.Text = "User Manager (Permission Required)";
@@ -854,7 +854,7 @@ namespace BuildSync.Client.Forms
             serverManagerToolStripMenuItem.Enabled = Connected;
             if (Connected)
             {
-                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageServer, ""))
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyServer, ""))
                 {
                     serverManagerToolStripMenuItem.Enabled = false;
                     serverManagerToolStripMenuItem.Text = "Server Manager (Permission Required)";
@@ -865,7 +865,7 @@ namespace BuildSync.Client.Forms
             pushUpdateToolStripMenuItem.Enabled = Connected;
             if (Connected)
             {
-                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ForceUpdate, ""))
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.PushUpdate, ""))
                 {
                     pushUpdateToolStripMenuItem.Enabled = false;
                     pushUpdateToolStripMenuItem.Text = "Push Update (Permission Required)";

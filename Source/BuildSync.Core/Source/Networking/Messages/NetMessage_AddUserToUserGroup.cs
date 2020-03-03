@@ -24,15 +24,21 @@ using BuildSync.Core.Users;
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    /// 
+    ///     Client->Server
+    ///
+    ///     Requests a user is added to the given usergroup.
+    ///     Can only be sent by users who have the ModifyUsers
+    ///     permission.
     /// </summary>
-    public class NetMessage_SetUserPermissions : NetMessage
+    public class NetMessage_AddUserToUserGroup : NetMessage
     {
         /// <summary>
+        ///     Name of usergroup to add to.
         /// </summary>
-        public UserPermissionCollection Permissions = new UserPermissionCollection();
+        public string GroupName = "";
 
         /// <summary>
+        ///     Name of user to add to group.
         /// </summary>
         public string Username = "";
 
@@ -42,14 +48,8 @@ namespace BuildSync.Core.Networking.Messages
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
+            serializer.Serialize(ref GroupName);
             serializer.Serialize(ref Username);
-
-            if (serializer.IsLoading)
-            {
-                Permissions = new UserPermissionCollection();
-            }
-
-            Permissions.Serialize(serializer);
         }
     }
 }

@@ -72,7 +72,7 @@
             // 
             // columnHeader2
             // 
-            this.columnHeader2.Text = "Virtual Path";
+            this.columnHeader2.Text = "Path";
             this.columnHeader2.Width = 150;
             // 
             // columnHeader5

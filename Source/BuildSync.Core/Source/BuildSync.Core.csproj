@@ -124,6 +124,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Aga.Controls, Version=1.7.0.0, Culture=neutral, PublicKeyToken=fcc90fbf924463a3, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\TreeViewAdv.1.7.0.0\lib\net\Aga.Controls.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Bcl.AsyncInterfaces.1.1.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
@@ -191,8 +194,14 @@
   <ItemGroup>
     <Compile Include="Client\Client.cs" />
     <Compile Include="Client\Peer.cs" />
+    <Compile Include="Networking\Messages\NetMessage_DeleteUserGroup.cs" />
+    <Compile Include="Networking\Messages\NetMessage_RemoveUserToUserGroup.cs" />
+    <Compile Include="Networking\Messages\NetMessage_RemoveUserGroupPermission.cs" />
+    <Compile Include="Networking\Messages\NetMessage_AddUserGroupPermission.cs" />
+    <Compile Include="Networking\Messages\NetMessage_AddUserToUserGroup.cs" />
     <Compile Include="Networking\Messages\NetMessage_ChooseDeletionCandidate.cs" />
     <Compile Include="Networking\Messages\NetMessage_ChooseDeletionCandidateResponse.cs" />
+    <Compile Include="Networking\Messages\NetMessage_CreateUserGroup.cs" />
     <Compile Include="Networking\NetDiscoveryServer.cs" />
     <Compile Include="Server\Server.cs" />
     <Compile Include="Controls\Graph\GraphAxis.cs" />
@@ -244,7 +253,6 @@
     <Compile Include="Networking\Messages\NetMessage_GetServerState.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetServerStateResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_SetServerMaxBandwidth.cs" />
-    <Compile Include="Networking\Messages\NetMessage_SetUserPermissions.cs" />
     <Compile Include="Networking\NetCachedArray.cs" />
     <Compile Include="Networking\NetConnection.cs" />
     <Compile Include="Networking\NetDiscoveryClient.cs" />
@@ -291,6 +299,9 @@
     <Compile Include="Utils\Statistic.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\TimeUtils.cs" />
+    <Compile Include="Utils\TreeViewUtils.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Utils\VirtualFileSystem.cs" />
     <Compile Include="Utils\WindowUtils.cs" />
     <Compile Include="Version.cs" />

@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using BuildSync.Core.Networking;
@@ -33,11 +34,22 @@ namespace BuildSync.Core.Users
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum UserPermissionType
     {
-        ManageBuilds,
-        ManageUsers,
-        Access,
-        ForceUpdate,
-        ManageServer,
+        [Description("Write")]
+        Write,
+
+        [Description("Read")]
+        Read,
+
+        [Description("Modify Users")]
+        ModifyUsers,
+
+        [Description("Modify Server")]
+        ModifyServer,
+        
+        [Description("Push Update")]
+        PushUpdate,
+        
+        [Description("Unknown")]
         Unknown
     }
 
@@ -81,6 +93,18 @@ namespace BuildSync.Core.Users
         public List<UserPermission> Permissions { get; set; } = new List<UserPermission>();
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Other"></param>
+        public void Merge(UserPermissionCollection Other)
+        {
+            foreach (UserPermission OtherPermission in Other.Permissions)
+            {
+                GrantPermission(OtherPermission.Type, OtherPermission.VirtualPath);
+            }
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Permission"></param>
         /// <param name="Path"></param>
@@ -110,7 +134,7 @@ namespace BuildSync.Core.Users
         public bool HasPermission(UserPermissionType Type, string Path, bool IgnoreInheritedPermissions = false, bool AllowIfHavePermissionToSubPath = false)
         {
             // We can always view internal paths (ones that start with $), these are used for updates etc.
-            if (Path.StartsWith("$") && Type == UserPermissionType.Access)
+            if (Path.StartsWith("$") && Type == UserPermissionType.Read)
             {
                 return true;
             }

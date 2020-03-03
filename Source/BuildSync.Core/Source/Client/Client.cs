@@ -66,7 +66,7 @@ namespace BuildSync.Core.Client
 
     /// <summary>
     /// </summary>
-    public delegate void UserListRecievedHandler(List<User> Users);
+    public delegate void UserListRecievedHandler(List<User> Users, List<UserGroup> UserGroups);
 
     /// <summary>
     /// </summary>
@@ -587,6 +587,120 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
+        /// <param name="Path"></param>
+        public bool DeleteUserGroup(string Name)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete user group, no connection to server?");
+                return false;
+            }
+
+            NetMessage_DeleteUserGroup Msg = new NetMessage_DeleteUserGroup();
+            Msg.Name = Name;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool CreateUserGroup(string Name)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create user group, no connection to server?");
+                return false;
+            }
+
+            NetMessage_CreateUserGroup Msg = new NetMessage_CreateUserGroup();
+            Msg.Name = Name;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool RemoveUserGroupPermission(string GroupName, UserPermissionType Type, string Path)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to remove user group permission, no connection to server?");
+                return false;
+            }
+
+            NetMessage_RemoveUserGroupPermission Msg = new NetMessage_RemoveUserGroupPermission();
+            Msg.GroupName = GroupName;
+            Msg.PermissionType = Type;
+            Msg.PermissionPath = Path;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool AddUserGroupPermission(string GroupName, UserPermissionType Type, string Path)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to add user group permission, no connection to server?");
+                return false;
+            }
+
+            NetMessage_AddUserGroupPermission Msg = new NetMessage_AddUserGroupPermission();
+            Msg.GroupName = GroupName;
+            Msg.PermissionType = Type;
+            Msg.PermissionPath = Path;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool RemoveUserFromUserGroup(string GroupName, string Username)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to remove user from user group, no connection to server?");
+                return false;
+            }
+
+            NetMessage_RemoveUserFromUserGroup Msg = new NetMessage_RemoveUserFromUserGroup();
+            Msg.GroupName = GroupName;
+            Msg.Username = Username;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool AddUserToUserGroup(string GroupName, string Username)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to add user to user group, no connection to server?");
+                return false;
+            }
+
+            NetMessage_AddUserToUserGroup Msg = new NetMessage_AddUserToUserGroup();
+            Msg.GroupName = GroupName;
+            Msg.Username = Username;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
         public void Disconnect()
         {
             Started = false;
@@ -925,25 +1039,6 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
-        /// <param name="Path"></param>
-        public bool SetUserPermissions(string Username, UserPermissionCollection Permissions)
-        {
-            if (!Connection.IsReadyForData)
-            {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to set user permissions, no connection to server?");
-                return false;
-            }
-
-            NetMessage_SetUserPermissions Msg = new NetMessage_SetUserPermissions();
-            Msg.Username = Username;
-            Msg.Permissions = Permissions;
-            Connection.Send(Msg);
-
-            return true;
-        }
-
-        /// <summary>
-        /// </summary>
         /// <param name="Hostname"></param>
         /// <param name="Port"></param>
         public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, BuildManifestRegistry BuildManifest, ManifestDownloadManager DownloadManager)
@@ -1185,6 +1280,12 @@ namespace BuildSync.Core.Client
 
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved permissions update.");
 
+                Logger.Log(LogLevel.Info, LogCategory.Main, "My Permissions:");
+                foreach (UserPermission Permission in Msg.Permissions.Permissions)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "\tType={0} Path={1}", Permission.Type.ToString(), Permission.VirtualPath);
+                }
+
                 Permissions = Msg.Permissions;
                 OnPermissionsUpdated?.Invoke();
             }
@@ -1339,7 +1440,7 @@ namespace BuildSync.Core.Client
 
                 Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved users list with {0} users.", Msg.Users.Count);
 
-                OnUserListRecieved?.Invoke(Msg.Users);
+                OnUserListRecieved?.Invoke(Msg.Users, Msg.UserGroups);
             }
 
             // Receive license info,

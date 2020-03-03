@@ -19,20 +19,29 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
-using BuildSync.Core.Networking;
-using BuildSync.Core.Utils;
-
-namespace BuildSync.Core.Users
+namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
+    ///     Client->Server
+    ///
+    ///     Requests a user group with the given name is deleted.
+    ///     Can only be sent by users who have the ModifyUsers
+    ///     permission.
     /// </summary>
-    [Serializable]
-    public class User
+    public class NetMessage_DeleteUserGroup : NetMessage
     {
-        public List<string> Groups { get; set; } = new List<string>();
-        public string Username { get; set; } = "";
+        /// <summary>
+        ///     Name of usergroup to create.
+        /// </summary>
+        public string Name = "";
+
+        /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
+        /// </summary>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
+        protected override void SerializePayload(NetMessageSerializer serializer)
+        {
+            serializer.Serialize(ref Name);
+        }
     }
 }

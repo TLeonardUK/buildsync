@@ -73,7 +73,13 @@ namespace BuildSync.Core.Utils
                     Logger.Log(LogLevel.Info, LogCategory.Main, "Backup setings file found '{0}', attempting to load.", BackupPath);
 
                     Result = Load(BackupPath, out SaveItem);
-                    File.Delete(BackupPath);
+                    if (!Result)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "Failed to load settings, aborting so as not to lose data.");
+                        Environment.FailFast("Failed to load configuration files.");
+                    }
+
+                    //File.Delete(BackupPath);
                 }
             }
 

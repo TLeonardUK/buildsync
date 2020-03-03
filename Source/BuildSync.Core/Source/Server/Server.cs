@@ -172,10 +172,8 @@ namespace BuildSync.Core.Server
                     // Send user an update of the permissions they have.
                     if (State.PermissionsNeedUpdate)
                     {
-                        User user = UserManager.GetOrCreateUser(State.Username);
-
                         NetMessage_PermissionUpdate Msg = new NetMessage_PermissionUpdate();
-                        Msg.Permissions = user.Permissions;
+                        Msg.Permissions = UserManager.GetUserCombinedPermissions(State.Username);
                         Connection.Send(Msg);
 
                         State.PermissionsNeedUpdate = false;
@@ -436,11 +434,11 @@ namespace BuildSync.Core.Server
                     Manifest = BuildManifest.FromByteArray(Msg.Data);
                     ResponseMsg.ManifestId = Msg.ManifestId;
 
-                    if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageBuilds, Manifest.VirtualPath))
+                    if (!UserManager.CheckPermission(State.Username, UserPermissionType.Write, Manifest.VirtualPath))
                     {
                         ResponseMsg.Result = PublishManifestResult.PermissionDenied;
                     }
-                    // Check something doesn't already exist at the virtual path.
+                    // Check something doesn't already exist at the path.
                     else if (ManifestRegistry.GetManifestByPath(Manifest.VirtualPath) != null)
                     {
                         ResponseMsg.Result = PublishManifestResult.VirtualPathAlreadyExists;
@@ -589,7 +587,7 @@ namespace BuildSync.Core.Server
                     {
                         string Path = Manifest.VirtualPath;
 
-                        if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageBuilds, Path))
+                        if (!UserManager.CheckPermission(State.Username, UserPermissionType.Write, Path))
                         {
                             Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to delete build without permission.", State.Username);
                             return;
@@ -619,7 +617,7 @@ namespace BuildSync.Core.Server
 
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to get usernames without permission.", State.Username);
                     return;
@@ -629,27 +627,128 @@ namespace BuildSync.Core.Server
 
                 NetMessage_GetUsersResponse ResponseMsg = new NetMessage_GetUsersResponse();
                 ResponseMsg.Users = UserManager.Users;
+                ResponseMsg.UserGroups = UserManager.UserGroups;
                 Connection.Send(ResponseMsg);
             }
 
             // ------------------------------------------------------------------------------
-            // Client requested to set a users permissions
+            // Client requested to create a usergroup.
             // ------------------------------------------------------------------------------
-            else if (BaseMessage is NetMessage_SetUserPermissions)
+            else if (BaseMessage is NetMessage_CreateUserGroup)
             {
-                NetMessage_SetUserPermissions Msg = BaseMessage as NetMessage_SetUserPermissions;
+                NetMessage_CreateUserGroup Msg = BaseMessage as NetMessage_CreateUserGroup;
 
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
                 {
-                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set user permissions without permission.", State.Username);
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set modify users without permission.", State.Username);
                     return;
                 }
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request for setting permissions of '{0}'", Msg.Username);
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to create usergroup '{0}'", Msg.Name);
 
-                UserManager.SetPermissions(Msg.Username, Msg.Permissions);
+                UserManager.CreateGroup(Msg.Name);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Client requested to delete a usergroup.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_CreateUserGroup)
+            {
+                NetMessage_DeleteUserGroup Msg = BaseMessage as NetMessage_DeleteUserGroup;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set modify users without permission.", State.Username);
+                    return;
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to delete usergroup '{0}'", Msg.Name);
+
+                UserManager.DeleteGroup(Msg.Name);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Client requested to add a given user to a user group.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_AddUserToUserGroup)
+            {
+                NetMessage_AddUserToUserGroup Msg = BaseMessage as NetMessage_AddUserToUserGroup;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set modify users without permission.", State.Username);
+                    return;
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to add user '{0}' to group '{1}'", Msg.Username, Msg.GroupName);
+
+                UserManager.AddUserToGroup(Msg.Username, Msg.GroupName);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Client requested to removed a given user from a user group.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RemoveUserFromUserGroup)
+            {
+                NetMessage_RemoveUserFromUserGroup Msg = BaseMessage as NetMessage_RemoveUserFromUserGroup;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set modify users without permission.", State.Username);
+                    return;
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to remove user '{0}' from group '{1}'", Msg.Username, Msg.GroupName);
+
+                UserManager.RemoveUserFromGroup(Msg.Username, Msg.GroupName);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Client requested to add a given permission to the given group.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_AddUserGroupPermission)
+            {
+                NetMessage_AddUserGroupPermission Msg = BaseMessage as NetMessage_AddUserGroupPermission;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set modify users without permission.", State.Username);
+                    return;
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to add permission '{0}' to group '{1}'", Msg.PermissionType.ToString(), Msg.GroupName);
+
+                UserManager.GrantPermission(Msg.GroupName, Msg.PermissionType, Msg.PermissionPath);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Client requested to remove a given permission from the given group.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RemoveUserGroupPermission)
+            {
+                NetMessage_RemoveUserGroupPermission Msg = BaseMessage as NetMessage_RemoveUserGroupPermission;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to set modify users without permission.", State.Username);
+                    return;
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to remove permission '{0}' from group '{1}'", Msg.PermissionType.ToString(), Msg.GroupName);
+
+                UserManager.RevokePermission(Msg.GroupName, Msg.PermissionType, Msg.PermissionPath);
             }
 
             // ------------------------------------------------------------------------------
@@ -661,7 +760,7 @@ namespace BuildSync.Core.Server
 
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageUsers, ""))
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, ""))
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to delete user without permission.", State.Username);
                     return;
@@ -707,7 +806,7 @@ namespace BuildSync.Core.Server
             {
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageServer, ""))
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyServer, ""))
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to manager server without permission.", State.Username);
                     return;
@@ -768,7 +867,7 @@ namespace BuildSync.Core.Server
             {
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ManageServer, ""))
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyServer, ""))
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to manager server without permission.", State.Username);
                     return;
@@ -901,7 +1000,7 @@ namespace BuildSync.Core.Server
                 BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
                 if (Manifest == null)
                 {
-                    if (UserManager.CheckPermission(State.Username, UserPermissionType.Access, Children[i], false, true))
+                    if (UserManager.CheckPermission(State.Username, UserPermissionType.Read, Children[i], false, true))
                     {
                         Result.Add(
                             new NetMessage_GetBuildsResponse.BuildInfo
@@ -919,7 +1018,7 @@ namespace BuildSync.Core.Server
             }
 
             // Builds second.
-            if (UserManager.CheckPermission(State.Username, UserPermissionType.Access, RootPath))
+            if (UserManager.CheckPermission(State.Username, UserPermissionType.Read, RootPath))
             {
                 for (int i = 0; i < Children.Count; i++)
                 {

@@ -35,7 +35,7 @@ namespace BuildSync.Server.Commands
         /// <summary>
         ///     Virtual path that permission is valid on. All decendents also have permission.
         /// </summary>
-        [Value(2, MetaName = "Path", Required = false, HelpText = "Virtual path that permission is valid on. All decendents also have permission.")]
+        [Value(2, MetaName = "Path", Required = false, HelpText = "Path that permission is valid on. All decendents also have permission.")]
         public string Path { get; set; } = "";
 
         /// <summary>

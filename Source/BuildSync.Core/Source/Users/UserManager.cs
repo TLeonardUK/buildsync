@@ -76,6 +76,30 @@ namespace BuildSync.Core.Users
             {
                 UserGroups = InitialGroups;
             }
+
+            if (UserGroups.Count == 0)
+            {
+                UserGroup AllUsersGroup = new UserGroup();
+                AllUsersGroup.Name = "All Users";
+                UserGroups.Add(AllUsersGroup);
+
+                UserGroup AdminsGroup = new UserGroup();
+                AdminsGroup.Name = "Administrators";
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.Read, "");
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.PushUpdate, "");
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.Write, "");
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.ModifyServer, "");
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.ModifyUsers, "");
+                UserGroups.Add(AdminsGroup);
+            }
+
+            foreach (User user in Users)
+            {
+                if (!user.Groups.Contains("All Users"))
+                {
+                    user.Groups.Add("All Users");
+                }
+            }
         }
 
         /// <summary>
@@ -84,7 +108,16 @@ namespace BuildSync.Core.Users
         /// <returns></returns>
         public bool CheckPermission(User User, UserPermissionType Permission, string Path, bool IgnoreInheritedPermissions = false, bool AllowIfHavePermissionToSubPath = false)
         {
-            return User.Permissions.HasPermission(Permission, Path, IgnoreInheritedPermissions, AllowIfHavePermissionToSubPath);
+            foreach (string GroupName in User.Groups)
+            {
+                UserGroup group = FindGroup(GroupName);   
+                if (group.Permissions.HasPermission(Permission, Path, IgnoreInheritedPermissions, AllowIfHavePermissionToSubPath))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -103,6 +136,29 @@ namespace BuildSync.Core.Users
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public UserPermissionCollection GetUserCombinedPermissions(string Username)
+        {
+            User user = GetOrCreateUser(Username);
+
+            UserPermissionCollection Collection = new UserPermissionCollection();
+
+            foreach (string GroupName in user.Groups)
+            {
+                UserGroup group = FindGroup(GroupName);
+                if (group != null)
+                {
+                    Collection.Merge(group.Permissions);
+                }
+            }
+
+            return Collection;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
@@ -116,6 +172,14 @@ namespace BuildSync.Core.Users
 
             user = new User();
             user.Username = Username;
+            user.Groups.Add("All Users");
+
+            // First user is always an administrator.
+            if (Users.Count == 0)
+            {
+                user.Groups.Add("Administrators");
+            }
+
             Users.Add(user);
 
             Logger.Log(LogLevel.Info, LogCategory.Users, "Added new user '{0}'", Username);
@@ -283,6 +347,28 @@ namespace BuildSync.Core.Users
         /// </summary>
         /// <param name="user"></param>
         /// <param name="group"></param>
+        public void AddUserToGroup(string userName, string groupName)
+        {
+            User user = GetOrCreateUser(userName);
+            if (user == null)
+            {
+                return;
+            }
+
+            UserGroup group = FindGroup(groupName);
+            if (group == null)
+            {
+                return;
+            }
+
+            AddUserToGroup(user, group);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="group"></param>
         public void AddUserToGroup(User user, UserGroup group)
         {
             if (!user.Groups.Contains(group.Name))
@@ -301,6 +387,28 @@ namespace BuildSync.Core.Users
         /// </summary>
         /// <param name="user"></param>
         /// <param name="group"></param>
+        public void RemoveUserFromGroup(string userName, string groupName)
+        {
+            User user = GetOrCreateUser(userName);
+            if (user == null)
+            {
+                return;
+            }
+
+            UserGroup group = FindGroup(groupName);
+            if (group == null)
+            {
+                return;
+            }
+
+            RemoveUserFromGroup(user, group);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="group"></param>
         public void RemoveUserFromGroup(User user, UserGroup group)
         {
             if (user.Groups.Contains(group.Name))
@@ -312,6 +420,21 @@ namespace BuildSync.Core.Users
                 UserGroupsUpdated?.Invoke();
                 UsersUpdated?.Invoke();
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
+        public void GrantPermission(string GroupName, UserPermissionType Permission, string Path)
+        {
+            UserGroup group = FindGroup(GroupName);
+            if (group == null)
+            {
+                return;
+            }
+
+            GrantPermission(group, Permission, Path);
         }
 
         /// <summary>
@@ -340,6 +463,21 @@ namespace BuildSync.Core.Users
         /// </summary>
         /// <param name="Username"></param>
         /// <returns></returns>
+        public void RevokePermission(string GroupName, UserPermissionType Permission, string Path)
+        {
+            UserGroup group = FindGroup(GroupName);
+            if (group == null)
+            {
+                return;
+            }
+
+            RevokePermission(group, Permission, Path);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Username"></param>
+        /// <returns></returns>
         public void RevokePermission(UserGroup Group, UserPermissionType Permission, string Path)
         {
             Group.Permissions.RevokePermission(Permission, Path);
@@ -356,26 +494,6 @@ namespace BuildSync.Core.Users
                     PermissionsUpdated?.Invoke(user);
                 }
             }
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="Username"></param>
-        /// <param name="Permissions"></param>
-        /// <returns></returns>
-        public bool SetPermissions(string Username, UserPermissionCollection Permissions)
-        {
-            User user = GetOrCreateUser(Username);
-            if (user == null)
-            {
-                return false;
-            }
-
-            user.Permissions = Permissions;
-
-            PermissionsUpdated?.Invoke(user);
-
-            return true;
         }
     }
 }

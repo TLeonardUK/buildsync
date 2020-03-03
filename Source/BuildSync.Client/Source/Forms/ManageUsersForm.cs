@@ -20,10 +20,16 @@
 */
 
 using System;
+using System.Drawing;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using BuildSync.Core.Users;
+using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
+using Aga.Controls.Tree;
+using Aga.Controls.Tree.NodeControls;
+using BuildSync.Client.Properties;
 
 namespace BuildSync.Client.Forms
 {
@@ -32,47 +38,30 @@ namespace BuildSync.Client.Forms
     /// </summary>
     public partial class ManageUsersForm : DockContent
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        private User NewUser;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool IsEditingLabel = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private UserPermission SelectedPermission
+        public class UserTreeNode : Node
         {
-            get
-            {
-                if (PermissionListView.SelectedItems.Count == 0)
-                {
-                    return null;
-                }
+            public Image Icon;
+            public string Name;
+            public string PermissionPath;
+            public UserPermissionType PermissionType;
 
-                return PermissionListView.SelectedItems[0].Tag as UserPermission;
-            }
+            public bool IsGroup;
+            public bool IsFolder;
+            public bool IsUser;
+            public bool IsPermission;
+            public bool IsPermissionFolder;
+            public bool IsUserFolder;
+            
+            public UserTreeNode GroupPermissionsNode;
+            public UserTreeNode GroupUsersNode;
+
+            public UserGroup Group;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        private User SelectedUser
-        {
-            get
-            {
-                if (UserListView.SelectedItems.Count == 0)
-                {
-                    return null;
-                }
-
-                return UserListView.SelectedItems[0].Tag as User;
-            }
-        }
+        private TreeModel Model = null;
 
         /// <summary>
         /// 
@@ -80,65 +69,36 @@ namespace BuildSync.Client.Forms
         public ManageUsersForm()
         {
             InitializeComponent();
-        }
+            
+            Model = new TreeModel();
+            MainTreeView.Model = Model;
 
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void AddPermissionButtonClicked(object sender, EventArgs e)
-        {
-            User AddUser = SelectedUser;
+            TreeColumn NameColumn = new TreeColumn();
+            NameColumn.Header = "Name";
+            NameColumn.Width = 400;
+            MainTreeView.Columns.Add(NameColumn);
+            
+                ScaledNodeIcon IconControl = new ScaledNodeIcon();
+                IconControl.ParentColumn = NameColumn;
+                IconControl.DataPropertyName = "Icon";
+                IconControl.FixedSize = new Size((int)(MainTreeView.RowHeight * 1.5f), (int)(MainTreeView.RowHeight * 1.5f));
+                IconControl.Offset = new Size(0, 5);
+                MainTreeView.NodeControls.Add(IconControl);
 
-            AddPermissionForm Dialog = new AddPermissionForm();
-            if (Dialog.ShowDialog() == DialogResult.OK)
-            {
-                AddUser.Permissions.Permissions.Add(Dialog.Permission);
-                SaveUser(SelectedUser);
-                RefreshPermissions();
-            }
-        }
+                NodeTextBox TextControl = new NodeTextBox();
+                TextControl.ParentColumn = NameColumn;
+                TextControl.DataPropertyName = "Name";
+                MainTreeView.NodeControls.Add(TextControl);
 
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void AddUserButtonClicked(object sender, EventArgs e)
-        {
-            NewUser = new User();
-            NewUser.Username = "Untitled";
+            TreeColumn PathColumn = new TreeColumn();
+            PathColumn.Header = "Path";
+            PathColumn.Width = 200;
+            MainTreeView.Columns.Add(PathColumn);
 
-            ListViewItem item = new ListViewItem(NewUser.Username);
-            item.Tag = NewUser;
-            item.ImageIndex = 0;
-            UserListView.Items.Add(item);
-
-            item.BeginEdit();
-
-            foreach (ListViewItem SubItem in UserListView.SelectedItems)
-            {
-                SubItem.Selected = false;
-            }
-
-            item.Selected = true;
-
-            UpdateState();
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void BeginLabelEdit(object sender, LabelEditEventArgs e)
-        {
-            if (UserListView.Items[e.Item].Tag != NewUser)
-            {
-                e.CancelEdit = true;
-            }
-            else
-            {
-                IsEditingLabel = true;
-            }
+                NodeTextBox CreatedControl = new NodeTextBox();
+                CreatedControl.ParentColumn = PathColumn;
+                CreatedControl.DataPropertyName = "PermissionPath";
+                MainTreeView.NodeControls.Add(CreatedControl);
         }
 
         /// <summary>
@@ -150,33 +110,7 @@ namespace BuildSync.Client.Forms
         {
             Close();
         }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void FinishLabelEdit(object sender, LabelEditEventArgs e)
-        {
-            string newUsername = e.Label == null ? "" : e.Label.Trim();
-
-            if (newUsername == "Untitled" || newUsername.Length <= 0)
-            {
-                UserListView.Items.RemoveAt(e.Item);
-            }
-            else
-            {
-                NewUser.Username = newUsername;
-                SaveUser(NewUser);
-            }
-
-            NewUser = null;
-            IsEditingLabel = false;
-
-            UserListView.Sort();
-
-            UpdateState();
-        }
-
+        
         /// <summary>
         /// </summary>
         /// <param name="sender"></param>
@@ -194,44 +128,17 @@ namespace BuildSync.Client.Forms
         {
             Program.NetClient.OnUserListRecieved += UserListRecieved;
             Program.NetClient.RequestUserList();
+
+            SelectionChanged(null, null);
         }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void PermissionListSelectedItemChanged(object sender, EventArgs e)
-        {
-            UpdateState();
-        }
-
-        /// <summary>
-        /// </summary>
-        private void RefreshPermissions()
-        {
-            PermissionListView.Items.Clear();
-
-            User user = SelectedUser;
-            if (user == null)
-            {
-                return;
-            }
-
-            foreach (UserPermission Permission in user.Permissions.Permissions)
-            {
-                ListViewItem item = new ListViewItem(new[] {Permission.Type.ToString(), Permission.VirtualPath});
-                item.Tag = Permission;
-                PermissionListView.Items.Add(item);
-            }
-        }
-
+        
         /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void RefreshUserList(object sender, EventArgs e)
         {
-            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ManageUsers, "", false, true))
+            if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyUsers, "", false, true))
             {
                 Hide();
                 return;
@@ -244,115 +151,337 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
         /// </summary>
-        private void RefreshUsers(List<User> Users)
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        private UserTreeNode GetUsergroupNode(string Name)
         {
-            if (IsEditingLabel)
+            foreach (UserTreeNode Node in Model.Root.Nodes)
             {
-                return;
+                if (Node.IsGroup && Node.Name == Name)
+                {
+                    return Node;
+                }
             }
+            return null;
+        }
 
-            foreach (User user in Users)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        private UserTreeNode GetUserNode(string Name, UserTreeNode ParentNode)
+        {
+            foreach (UserTreeNode Node in ParentNode.Nodes)
             {
-                if (UserListView.Items[user.Username] != null)
+                if (Node.IsUser && Node.Name == Name)
+                {
+                    return Node;
+                }
+            }
+            return null;
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        private UserTreeNode GetPermissionNode(UserPermission Permission, UserTreeNode ParentNode)
+        {
+            foreach (UserTreeNode Node in ParentNode.Nodes)
+            {
+                if (Node.IsPermission && Node.Name == Permission.Type.ToString() && Node.PermissionPath == Permission.VirtualPath)
+                {
+                    return Node;
+                }
+            }
+            return null;
+        }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Group"></param>
+        /// <param name="Users"></param>
+        private void RefreshGroup(UserGroup Group, UserTreeNode GroupNode, List<User> Users)
+        {
+            // Add all new users.
+            foreach (User User in Users)
+            {
+                if (!User.Groups.Contains(Group.Name))
                 {
                     continue;
                 }
 
-                ListViewItem item = new ListViewItem(user.Username);
-                item.Tag = user;
-                item.Name = user.Username;
-                item.ImageIndex = 0;
-                UserListView.Items.Add(item);
+                if (GetUserNode(User.Username, GroupNode.GroupUsersNode) != null)
+                {
+                    continue;
+                }
+
+                UserTreeNode UserNode = new UserTreeNode();
+                UserNode.Name = User.Username;
+                UserNode.Icon = Resources.appbar_people;
+                UserNode.IsUser = true;
+                UserNode.Group = Group;
+                GroupNode.GroupUsersNode.Nodes.Add(UserNode);
             }
 
-            List<ListViewItem> OldItems = new List<ListViewItem>();
-            foreach (ListViewItem item in UserListView.Items)
+            // Remove old users.
+            for (int i = 0; i < GroupNode.GroupUsersNode.Nodes.Count; i++)
             {
-                bool Exists = false;
-                foreach (User user in Users)
+                UserTreeNode Node = GroupNode.GroupUsersNode.Nodes[i] as UserTreeNode;
+                if (Node.IsUser)
                 {
-                    if (user.Username == item.Name)
+                    bool Found = false;
+                    foreach (User user in Users)
                     {
-                        Exists = true;
-                        break;
+                        if (!user.Groups.Contains(Group.Name))
+                        {
+                            continue;
+                        }
+
+                        if (user.Username == Node.Name)
+                        {
+                            Found = true;
+                            break;
+                        }
+                    }
+
+                    if (!Found)
+                    {
+                        GroupNode.GroupUsersNode.Nodes.RemoveAt(i);
+                        i--;
                     }
                 }
+            }
 
-                if (!Exists)
+            // All all new permissions.
+            foreach (UserPermission Permission in Group.Permissions.Permissions)
+            {
+                if (GetPermissionNode(Permission, GroupNode.GroupPermissionsNode) != null)
                 {
-                    OldItems.Add(item);
+                    continue;
+                }
+
+                UserTreeNode PermissionNode = new UserTreeNode();
+                PermissionNode.Name = Permission.Type.GetAttributeOfType<DescriptionAttribute>().Description;
+                PermissionNode.PermissionType = Permission.Type;
+                PermissionNode.PermissionPath = Permission.VirtualPath;
+                PermissionNode.Icon = Resources.appbar_star;
+                PermissionNode.IsPermission = true;
+                PermissionNode.Group = Group;
+                GroupNode.GroupPermissionsNode.Nodes.Add(PermissionNode);
+            }
+
+            // Remove old permissions.
+            for (int i = 0; i < GroupNode.GroupPermissionsNode.Nodes.Count; i++)
+            {
+                UserTreeNode Node = GroupNode.GroupPermissionsNode.Nodes[i] as UserTreeNode;
+                if (Node.IsPermission)
+                {
+                    bool Found = false;
+                    foreach (UserPermission Permission in Group.Permissions.Permissions)
+                    {
+                        if (Permission.Type.ToString() == Node.Name &&
+                            Permission.VirtualPath.ToString() == Node.PermissionPath)
+                        {
+                            Found = true;
+                            break;
+                        }
+                    }
+
+                    if (!Found)
+                    {
+                        GroupNode.GroupPermissionsNode.Nodes.RemoveAt(i);
+                        i--;
+                    }
                 }
             }
+        }
 
-            foreach (ListViewItem item in OldItems)
+        /// <summary>
+        /// </summary>
+        private void RefreshUsers(List<User> Users, List<UserGroup> UserGroups)
+        {
+            // Add all users group.
+            foreach (UserGroup Group in UserGroups)
             {
-                UserListView.Items.Remove(item);
+                if (GetUsergroupNode(Group.Name) != null)
+                {
+                    continue;
+                }
+
+                UserTreeNode GroupNode = new UserTreeNode();
+                GroupNode.Name = Group.Name;
+                GroupNode.Icon = Resources.appbar_group;
+                GroupNode.IsGroup = true;
+                GroupNode.Group = Group;
+                Model.Root.Nodes.Add(GroupNode);
+
+                UserTreeNode GroupPermissionsNode = new UserTreeNode();
+                GroupPermissionsNode.Name = "Permissions";
+                GroupPermissionsNode.Icon = Resources.appbar_folder_star;
+                GroupPermissionsNode.IsFolder = true;
+                GroupPermissionsNode.IsPermissionFolder = true;
+                GroupPermissionsNode.Group = Group;
+                GroupNode.Nodes.Add(GroupPermissionsNode);
+
+                UserTreeNode GroupUsersNode = new UserTreeNode();
+                GroupUsersNode.Name = "Users";
+                GroupUsersNode.Icon = Resources.appbar_folder_people;
+                GroupUsersNode.IsFolder = true;
+                GroupUsersNode.IsUserFolder = true;
+                GroupUsersNode.Group = Group;
+                GroupNode.Nodes.Add(GroupUsersNode);
+
+                GroupNode.GroupPermissionsNode = GroupPermissionsNode;
+                GroupNode.GroupUsersNode = GroupUsersNode;
             }
 
-            UserListView.Sort();
+            // Remove old user groups.
+            for (int i = 0; i < Model.Root.Nodes.Count; i++)
+            {
+                UserTreeNode Node = Model.Root.Nodes[i] as UserTreeNode;
+                if (Node.IsGroup)
+                {
+                    bool Found = false;
+                    foreach (UserGroup Group in UserGroups)
+                    {
+                        if (Group.Name == Node.Name)
+                        {
+                            RefreshGroup(Group, Node, Users);
+
+                            Found = true;
+                            break;
+                        }
+                    }
+
+                    if (!Found)
+                    {
+                        Model.Root.Nodes.RemoveAt(i);
+                        i--;    
+                    }
+                }
+            }
         }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void RemovePermissionButtonClicked(object sender, EventArgs e)
-        {
-            SelectedUser.Permissions.Permissions.Remove(SelectedPermission);
-            RefreshPermissions();
-            SaveUser(SelectedUser);
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void RemoveUserButtonClicked(object sender, EventArgs e)
-        {
-            User User = SelectedUser;
-
-            ListViewItem Selected = UserListView.SelectedItems[0];
-            Selected.Selected = false;
-
-            UserListView.Items.Remove(Selected);
-
-            Program.NetClient.DeleteUser(User.Username);
-        }
-
-        /// <summary>
-        /// </summary>
-        private void SaveUser(User ToSave)
-        {
-            Program.NetClient.SetUserPermissions(ToSave.Username, ToSave.Permissions);
-        }
-
-        /// <summary>
-        /// </summary>
-        private void UpdateState()
-        {
-            AddUserButton.Enabled = true;
-            RemoveUserButton.Enabled = SelectedUser != null;
-            AddPermissionButton.Enabled = SelectedUser != null;
-            RemovePermissionButton.Enabled = SelectedUser != null && SelectedPermission != null;
-        }
-
+        
         /// <summary>
         /// </summary>
         /// <param name="Users"></param>
-        private void UserListRecieved(List<User> Users)
+        private void UserListRecieved(List<User> Users, List<UserGroup> UserGroups)
         {
-            RefreshUsers(Users);
+            RefreshUsers(Users, UserGroups);
         }
 
         /// <summary>
+        /// 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void UserListSelectedItemChanged(object sender, EventArgs e)
+        private void DeleteClicked(object sender, EventArgs e)
         {
-            RefreshPermissions();
-            UpdateState();
+            UserTreeNode Node = MainTreeView.SelectedNode == null ? null : MainTreeView.SelectedNode.Tag as UserTreeNode;
+            if (Node == null)
+            {
+                return;
+            }
+
+            // Remove usergroup.
+            if (Node.IsGroup)
+            {
+                Program.NetClient.DeleteUserGroup(Node.Group.Name);
+            }
+
+            // Remove permission.
+            else if (Node.IsPermission)
+            {
+                Program.NetClient.RemoveUserGroupPermission(Node.Group.Name, Node.PermissionType, Node.PermissionPath);
+            }
+
+            // Remove user.
+            else if (Node.IsUser)
+            {
+                Program.NetClient.RemoveUserFromUserGroup(Node.Group.Name, Node.Name);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void AddClicked(object sender, EventArgs e)
+        {
+            UserTreeNode Node = MainTreeView.SelectedNode == null ? null : MainTreeView.SelectedNode.Tag as UserTreeNode;
+          
+            // Add usergroup.
+            if (Node == null || Node.IsGroup)
+            {
+                AddUserGroupForm form = new AddUserGroupForm();
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.NetClient.CreateUserGroup(form.GroupName);
+                }
+            }
+
+            // Add permission.
+            else if (Node.IsPermission || Node.IsPermissionFolder)
+            {
+                AddPermissionForm form = new AddPermissionForm();
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.NetClient.AddUserGroupPermission(Node.Group.Name, form.Permission.Type, form.Permission.VirtualPath);
+                }
+            }
+
+            // Add user.
+            else if (Node.IsUser || Node.IsUserFolder)
+            {
+                AddUserForm form = new AddUserForm();
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.NetClient.AddUserToUserGroup(Node.Group.Name, form.Username);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SelectionChanged(object sender, EventArgs e)
+        {
+            UserTreeNode Node = MainTreeView.SelectedNode == null ? null : MainTreeView.SelectedNode.Tag as UserTreeNode;
+
+            deleteMenuItem.Enabled = false;
+            addMenuItem.Text = "Add User Group ...";
+            deleteMenuItem.Text = "Delete User Group";
+
+            if (Node != null)
+            {
+                if (Node.IsPermission || Node.IsPermissionFolder)
+                {
+                    deleteMenuItem.Text = "Delete Permission";
+                    deleteMenuItem.Enabled = Node.IsPermission;
+
+                    addMenuItem.Text = "Add Permission ...";
+                }
+                else if (Node.IsUser || Node.IsUserFolder)
+                {
+                    deleteMenuItem.Text = "Remove User From Group ...";
+                    deleteMenuItem.Enabled = (Node.IsUser && Node.Group.Name != "All Users");
+
+                    addMenuItem.Text = "Add User To Group ...";
+                }
+                else if (Node.IsGroup)
+                {
+                    deleteMenuItem.Enabled = (Node.Name != "All Users");
+                }
+            }
         }
     }
 }
