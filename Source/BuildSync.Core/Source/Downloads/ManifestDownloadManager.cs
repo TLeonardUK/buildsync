@@ -951,6 +951,15 @@ namespace BuildSync.Core.Downloads
                             Logger.Log(LogLevel.Info, LogCategory.Manifest, "Finding existing files: {0}", State.LocalFolder);
 
                             Dictionary<string, string> ExistingFiles = new Dictionary<string, string>();
+                            Dictionary<string, string> WantedFiles = new Dictionary<string, string>();
+
+                            foreach (BuildManifestFileInfo File in State.Manifest.Files)
+                            {
+                                if (File.Checksum.Length > 32) // Make sure we aren't using CRC for this.
+                                {
+                                    WantedFiles.Add(File.Path, "");
+                                }
+                            }
 
                             foreach (ManifestDownloadState OtherState in StateCollection.States)
                             {
@@ -958,9 +967,34 @@ namespace BuildSync.Core.Downloads
                                 {
                                     foreach (BuildManifestFileInfo File in OtherState.Manifest.Files)
                                     {
-                                        if (File.Checksum.Length > 32 && !ExistingFiles.ContainsKey(File.Checksum)) // Make sure we aren't using CRC for this.
+                                        if (File.Checksum.Length > 32 && !ExistingFiles.ContainsKey(File.Checksum) && WantedFiles.ContainsKey(File.Path)) // Make sure we aren't using CRC for this.
                                         {
-                                            ExistingFiles.Add(File.Checksum, Path.Combine(OtherState.LocalFolder, File.Path));
+                                            string LocalFile = Path.Combine(OtherState.LocalFolder, File.Path);
+                                            bool IsValid = false;
+
+                                            if (System.IO.File.Exists(LocalFile))
+                                            {
+                                                // Ensure file has not been changed.
+                                                lock (OtherState.FileCompletedStates)
+                                                {
+                                                    foreach (ManifestFileCompletedState CompletedState in OtherState.FileCompletedStates)
+                                                    {
+                                                        if (File.Path == CompletedState.Path)
+                                                        {
+                                                            if (GetFileLastWriteTime(LocalFile) == CompletedState.ModifiedTimestampOnCompleted)
+                                                            {
+                                                                IsValid = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            if (IsValid)
+                                            {
+                                                ExistingFiles.Add(File.Checksum, LocalFile);
+                                            }
                                         }
                                     }
                                 }
@@ -971,16 +1005,10 @@ namespace BuildSync.Core.Downloads
                             
                             foreach (BuildManifestFileInfo File in State.Manifest.Files)
                             {
-                                if (File.Checksum.Length > 32) // Make sure we aren't using CRC for this.
+                                if (File.Checksum.Length > 32 && ExistingFiles.ContainsKey(File.Checksum)) // Make sure we aren't using CRC for this.
                                 {
-                                    if (ExistingFiles.ContainsKey(File.Checksum))
-                                    {
-                                        if (System.IO.File.Exists(ExistingFiles[File.Checksum]))
-                                        {
-                                            DeltaCopyFilesToCopy.Add(File, ExistingFiles[File.Checksum]);
-                                            TotalSize += File.Size;
-                                        }
-                                    }
+                                    DeltaCopyFilesToCopy.Add(File, ExistingFiles[File.Checksum]);
+                                    TotalSize += File.Size;
                                 }
                             }
                             
@@ -993,7 +1021,6 @@ namespace BuildSync.Core.Downloads
 
                                     try
                                     {
-                                        // TODO: Make progress of this more granular.
                                         long BytesCopied = 0;
                                         foreach (var Pair in DeltaCopyFilesToCopy)
                                         {
@@ -1008,9 +1035,19 @@ namespace BuildSync.Core.Downloads
 
                                             Logger.Log(LogLevel.Info, LogCategory.Manifest, "Copying existing files: {0} -> {1}", Src, Dst);
 
-                                            File.Copy(Src, Dst, true);
+                                            long FileLength = (new FileInfo(Dst)).Length;
+                                            long BytesCopiedStart = BytesCopied;
 
-                                            BytesCopied += (new FileInfo(Dst)).Length; 
+                                            FileCopyEx.Copy(Src, Dst, true, true, (o, pce) =>
+                                            {
+                                                BytesCopied = BytesCopiedStart + (long)(FileLength * (pce.ProgressPercentage / 100.0f));
+
+                                                State.DeltaCopyProgress = BytesCopied / (float)TotalSize;
+                                                State.DeltaCopyRateStats.In(BytesCopied - State.InitializeRateStats.TotalIn);
+                                                State.DeltaCopyBytesRemaining = TotalSize - BytesCopied;
+                                            });
+
+                                            BytesCopied = BytesCopiedStart + FileLength;
 
                                             State.DeltaCopyProgress = BytesCopied / (float)TotalSize;
                                             State.DeltaCopyRateStats.In(BytesCopied - State.InitializeRateStats.TotalIn);

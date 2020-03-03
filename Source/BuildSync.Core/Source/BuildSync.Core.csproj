@@ -194,6 +194,12 @@
   <ItemGroup>
     <Compile Include="Client\Client.cs" />
     <Compile Include="Client\Peer.cs" />
+    <Compile Include="Controls\SegmentedProgressBar.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\SegmentedProgressBar.Designer.cs">
+      <DependentUpon>SegmentedProgressBar.cs</DependentUpon>
+    </Compile>
     <Compile Include="Networking\Messages\NetMessage_DeleteUserGroup.cs" />
     <Compile Include="Networking\Messages\NetMessage_RemoveUserToUserGroup.cs" />
     <Compile Include="Networking\Messages\NetMessage_RemoveUserGroupPermission.cs" />
@@ -270,6 +276,7 @@
     <Compile Include="Users\User.cs" />
     <Compile Include="Users\UserGroup.cs" />
     <Compile Include="Users\UserPermission.cs" />
+    <Compile Include="Utils\FileCopyEx.cs" />
     <Compile Include="Utils\Sha1.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />
@@ -315,6 +322,9 @@
     <EmbeddedResource Include="Controls\Graph\Graph.resx" />
     <EmbeddedResource Include="Controls\Graph\GraphControl.resx">
       <DependentUpon>GraphControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\SegmentedProgressBar.resx">
+      <DependentUpon>SegmentedProgressBar.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\public.cer" />
   </ItemGroup>

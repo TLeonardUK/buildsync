@@ -31,9 +31,9 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DownloadListItem));
             this.MainPanel = new System.Windows.Forms.Panel();
+            this.MainProgressBar = new BuildSync.Core.Controls.SegmentedProgressBar();
             this.blockStatusPanel = new BuildSync.Client.Controls.BlockStatusPanel();
             this.collapseButton = new System.Windows.Forms.Button();
-            this.ProgressBar = new System.Windows.Forms.ProgressBar();
             this.NameLabel = new System.Windows.Forms.Label();
             this.PlayButton = new System.Windows.Forms.Button();
             this.Buttonimages = new System.Windows.Forms.ImageList(this.components);
@@ -57,9 +57,9 @@
             // 
             this.MainPanel.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.MainPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.MainPanel.Controls.Add(this.MainProgressBar);
             this.MainPanel.Controls.Add(this.blockStatusPanel);
             this.MainPanel.Controls.Add(this.collapseButton);
-            this.MainPanel.Controls.Add(this.ProgressBar);
             this.MainPanel.Controls.Add(this.NameLabel);
             this.MainPanel.Controls.Add(this.PlayButton);
             this.MainPanel.Controls.Add(this.flowLayoutPanel1);
@@ -72,6 +72,15 @@
             this.MainPanel.Size = new System.Drawing.Size(602, 46);
             this.MainPanel.TabIndex = 0;
             this.MainPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.MainPanel_Paint);
+            // 
+            // MainProgressBar
+            // 
+            this.MainProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.MainProgressBar.Location = new System.Drawing.Point(8, 24);
+            this.MainProgressBar.Name = "MainProgressBar";
+            this.MainProgressBar.Size = new System.Drawing.Size(455, 16);
+            this.MainProgressBar.TabIndex = 10;
             // 
             // blockStatusPanel
             // 
@@ -93,17 +102,6 @@
             this.collapseButton.TabIndex = 8;
             this.collapseButton.UseVisualStyleBackColor = true;
             this.collapseButton.Click += new System.EventHandler(this.CollapseButtonClicked);
-            // 
-            // ProgressBar
-            // 
-            this.ProgressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ProgressBar.Location = new System.Drawing.Point(8, 25);
-            this.ProgressBar.Margin = new System.Windows.Forms.Padding(2);
-            this.ProgressBar.Name = "ProgressBar";
-            this.ProgressBar.Size = new System.Drawing.Size(455, 14);
-            this.ProgressBar.TabIndex = 0;
-            this.ProgressBar.Value = 50;
             // 
             // NameLabel
             // 
@@ -298,7 +296,6 @@
         #endregion
 
         private System.Windows.Forms.Panel MainPanel;
-        private System.Windows.Forms.ProgressBar ProgressBar;
         private System.Windows.Forms.Label NameLabel;
         private System.Windows.Forms.Label BuildLabel;
         private System.Windows.Forms.Button SettingsButton;
@@ -316,5 +313,6 @@
         private System.Windows.Forms.Button collapseButton;
         private System.Windows.Forms.Timer blockRefreshTimer;
         private BlockStatusPanel blockStatusPanel;
+        private Core.Controls.SegmentedProgressBar MainProgressBar;
     }
 }

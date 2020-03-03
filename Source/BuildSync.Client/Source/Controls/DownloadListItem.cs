@@ -25,6 +25,7 @@ using System.Windows.Forms;
 using BuildSync.Client.Forms;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Controls;
 
 namespace BuildSync.Client.Controls
 {
@@ -62,7 +63,50 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// </summary>
         private bool InternalSelected;
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool SkipDiskAllocation = false;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool SkipValidation = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool InstallAutomatically = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private SegmentedProgressBar.Segment AllocatingSegment = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private SegmentedProgressBar.Segment CopyingSegment = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private SegmentedProgressBar.Segment DowloadingSegment = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private SegmentedProgressBar.Segment ValidatingSegment = null;
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        private SegmentedProgressBar.Segment InstallingSegment = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public bool Selected
         {
             get => InternalSelected;
@@ -87,6 +131,62 @@ namespace BuildSync.Client.Controls
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public void UpdateProgressSegments()
+        {
+            if (SkipDiskAllocation == Program.Settings.SkipDiskAllocation &&
+                SkipValidation == Program.Settings.SkipValidation &&
+                InstallAutomatically == State.InstallAutomatically &&
+                MainProgressBar.Segments.Count != 0)
+            {
+                return;
+            }
+
+            SkipDiskAllocation = Program.Settings.SkipDiskAllocation;
+            SkipValidation = Program.Settings.SkipValidation;
+            InstallAutomatically = State.InstallAutomatically;
+
+            MainProgressBar.Segments.Clear();
+
+            if (!SkipDiskAllocation)
+            {
+                AllocatingSegment = new SegmentedProgressBar.Segment() { Proportion = 1.0f, Text = "Disk Allocation", Color = Color.LightGreen, Progress = 0.0f };
+                MainProgressBar.Segments.Add(AllocatingSegment);
+            }
+            else
+            {
+                AllocatingSegment = null;
+            }
+
+            CopyingSegment = new SegmentedProgressBar.Segment() { Proportion = 1.0f, Text = "Copy Files", Color = Color.LightGreen, Progress = 0.0f };
+            MainProgressBar.Segments.Add(CopyingSegment);
+
+            DowloadingSegment = new SegmentedProgressBar.Segment() { Proportion = 3.0f, Text = "Download", Color = Color.LightGreen, Progress = 0.0f };
+            MainProgressBar.Segments.Add(DowloadingSegment);
+
+            if (!SkipValidation)
+            {
+                ValidatingSegment = new SegmentedProgressBar.Segment() { Proportion = 1.0f, Text = "Validate", Color = Color.LightGreen, Progress = 0.0f };
+                MainProgressBar.Segments.Add(ValidatingSegment);
+            }
+            else
+            {
+                ValidatingSegment = null;
+            }
+
+            if (InstallAutomatically)
+            {
+                InstallingSegment = new SegmentedProgressBar.Segment() { Proportion = 0.5f, Text = "Install", Color = Color.LightGreen, Progress = 0.0f };
+                MainProgressBar.Segments.Add(InstallingSegment);
+            }
+            else
+            {
+                InstallingSegment = null;
+            }
+        }
+
+        /// <summary>
         /// </summary>
         public void RefreshState()
         {
@@ -97,12 +197,201 @@ namespace BuildSync.Client.Controls
 
             blockStatusPanel.State = State;
 
+            UpdateProgressSegments();
+
             ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(State.ActiveManifestId);
+
+            Color ErrorColor = Color.FromArgb(255, 238, 114, 76); // Yellow
+            Color InProgressColor = Color.FromArgb(255, 103, 182, 234); // Blue
+            Color FinishedColor = Color.FromArgb(255, 128, 216, 127); // Green
+
+            // Update allocation progress.
+            if (AllocatingSegment != null)
+            {
+                switch (Downloader.State)
+                {
+                    case ManifestDownloadProgressState.DiskError:
+                    case ManifestDownloadProgressState.InitializeFailed:
+                        {
+                            AllocatingSegment.Progress = 1.0f;
+                            AllocatingSegment.Color = ErrorColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.RetrievingManifest:
+                    case ManifestDownloadProgressState.Initializing:
+                        {
+                            AllocatingSegment.Progress = Downloader.InitializeProgress;
+                            AllocatingSegment.Color = InProgressColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.DeltaCopying:
+                    case ManifestDownloadProgressState.Downloading:
+                    case ManifestDownloadProgressState.Complete:
+                    case ManifestDownloadProgressState.Validating:
+                    case ManifestDownloadProgressState.Installing:
+                    case ManifestDownloadProgressState.ValidationFailed:
+                    case ManifestDownloadProgressState.InstallFailed:
+                        {
+                            AllocatingSegment.Progress = 1.0f;
+                            AllocatingSegment.Color = FinishedColor;
+                            break;
+                        }
+                }
+            }
+
+            // Update copying progress.
+            if (CopyingSegment != null)
+            {
+                switch (Downloader.State)
+                {
+                    case ManifestDownloadProgressState.RetrievingManifest:
+                    case ManifestDownloadProgressState.Initializing:
+                    case ManifestDownloadProgressState.DiskError:
+                    case ManifestDownloadProgressState.InitializeFailed:
+                        {
+                            CopyingSegment.Progress = 0.0f;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.DeltaCopying:
+                        {
+                            CopyingSegment.Progress = Downloader.DeltaCopyProgress;
+                            CopyingSegment.Color = InProgressColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Downloading:
+                    case ManifestDownloadProgressState.Complete:
+                    case ManifestDownloadProgressState.Validating:
+                    case ManifestDownloadProgressState.Installing:
+                    case ManifestDownloadProgressState.ValidationFailed:
+                    case ManifestDownloadProgressState.InstallFailed:
+                        {
+                            CopyingSegment.Progress = 1.0f;
+                            CopyingSegment.Color = FinishedColor;
+                            break;
+                        }
+                }
+            }
+
+            // Update downloading progress.
+            if (DowloadingSegment != null)
+            {
+                switch (Downloader.State)
+                {
+                    case ManifestDownloadProgressState.RetrievingManifest:
+                    case ManifestDownloadProgressState.Initializing:
+                    case ManifestDownloadProgressState.InitializeFailed:
+                    case ManifestDownloadProgressState.DeltaCopying:
+                        {
+                            DowloadingSegment.Progress = 0.0f;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.DiskError:
+                        {
+                            DowloadingSegment.Progress = Downloader.Progress;
+                            DowloadingSegment.Color = ErrorColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Downloading:
+                        {
+                            DowloadingSegment.Progress = Downloader.Progress;
+                            DowloadingSegment.Color = InProgressColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Complete:
+                    case ManifestDownloadProgressState.Validating:
+                    case ManifestDownloadProgressState.Installing:
+                    case ManifestDownloadProgressState.ValidationFailed:
+                    case ManifestDownloadProgressState.InstallFailed:
+                        {
+                            DowloadingSegment.Progress = 1.0f;
+                            DowloadingSegment.Color = FinishedColor;
+                            break;
+                        }
+                }
+            }
+
+            // Update validating progress.
+            if (ValidatingSegment != null)
+            {
+                switch (Downloader.State)
+                {
+                    case ManifestDownloadProgressState.RetrievingManifest:
+                    case ManifestDownloadProgressState.Initializing:
+                    case ManifestDownloadProgressState.DiskError:
+                    case ManifestDownloadProgressState.InitializeFailed:
+                    case ManifestDownloadProgressState.DeltaCopying:
+                    case ManifestDownloadProgressState.Downloading:
+                        {
+                            ValidatingSegment.Progress = 0.0f;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.ValidationFailed:
+                        {
+                            ValidatingSegment.Progress = 1.0f;
+                            ValidatingSegment.Color = ErrorColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Validating:
+                        {
+                            ValidatingSegment.Progress = Downloader.ValidateProgress;
+                            ValidatingSegment.Color = InProgressColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Complete:
+                    case ManifestDownloadProgressState.Installing:
+                    case ManifestDownloadProgressState.InstallFailed:
+                        {
+                            ValidatingSegment.Progress = 1.0f;
+                            ValidatingSegment.Color = FinishedColor;
+                            break;
+                        }
+                }
+            }
+
+            // Update installing progress.
+            if (InstallingSegment != null)
+            {
+                switch (Downloader.State)
+                {
+                    case ManifestDownloadProgressState.RetrievingManifest:
+                    case ManifestDownloadProgressState.Initializing:
+                    case ManifestDownloadProgressState.DiskError:
+                    case ManifestDownloadProgressState.InitializeFailed:
+                    case ManifestDownloadProgressState.DeltaCopying:
+                    case ManifestDownloadProgressState.Downloading:
+                    case ManifestDownloadProgressState.ValidationFailed:
+                    case ManifestDownloadProgressState.Validating:
+                        {
+                            InstallingSegment.Progress = 0.0f;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.InstallFailed:
+                        {
+                            InstallingSegment.Progress = 1.0f;
+                            InstallingSegment.Color = ErrorColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Installing:
+                        {
+                            InstallingSegment.Progress = 0.5f; // Calculate based on previous runs.
+                            InstallingSegment.Color = InProgressColor;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Complete:
+                        {
+                            InstallingSegment.Progress = 1.0f;
+                            InstallingSegment.Color = FinishedColor;
+                            break;
+                        }
+                }
+            }
+
+            // Update status.
+            string Status = "";
+            string BuildInfo = "Unknown";
+            StateColoring StatusColor = StateColoring.Info;
             if (Downloader != null)
             {
-                string UpRate = StringUtils.FormatAsTransferRate(Downloader.BandwidthStats.RateOut);
-                string DownRate = StringUtils.FormatAsTransferRate(Downloader.BandwidthStats.RateIn);
-
                 if (Downloader.Paused)
                 {
                     switch (Downloader.State)
@@ -110,22 +399,30 @@ namespace BuildSync.Client.Controls
                         case ManifestDownloadProgressState.DiskError:
                         case ManifestDownloadProgressState.InitializeFailed:
                         {
-                            SetStatus("Disk Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Resume, UpRate, DownRate);
+                            Status = "Disk Error";         
+                            StatusColor = StateColoring.Error;
+                            BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         case ManifestDownloadProgressState.ValidationFailed:
                         {
-                            SetStatus("Validation Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Resume, UpRate, DownRate);
+                            Status = "Validation Error";         
+                            StatusColor = StateColoring.Error;
+                            BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         case ManifestDownloadProgressState.InstallFailed:
                         {
-                            SetStatus("Install Error", StateColoring.Error, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Resume, UpRate, DownRate);
+                            Status = "Install Error";         
+                            StatusColor = StateColoring.Error;
+                            BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         default:
                         {
-                            SetStatus("-", StateColoring.Info, Downloader.Manifest == null ? "-" : Downloader.Manifest.VirtualPath, Downloader.Progress * 100, true, LaunchOption.Resume, UpRate, DownRate);
+                            Status = "-";         
+                            StatusColor = StateColoring.Info;
+                            BuildInfo = Downloader.Manifest == null ? "-" : Downloader.Manifest.VirtualPath;
                             break;
                         }
                     }
@@ -136,7 +433,9 @@ namespace BuildSync.Client.Controls
                     {
                         case ManifestDownloadProgressState.Complete:
                         {
-                            SetStatus("Complete", StateColoring.Success, Downloader.Manifest.VirtualPath, 100, true, LaunchOption.Launch, UpRate, DownRate);
+                            Status = "Complete";         
+                            StatusColor = StateColoring.Success;
+                            BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         case ManifestDownloadProgressState.Initializing:
@@ -147,9 +446,9 @@ namespace BuildSync.Client.Controls
                                 SecondsToInitialize = 0;
                             }
 
-                            string Status = string.Format("Allocating Disk Space - {0}", StringUtils.FormatAsDuration((long) SecondsToInitialize));
-
-                            SetStatus(Status, StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.InitializeProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                            Status = string.Format("{0}", StringUtils.FormatAsDuration((long) SecondsToInitialize));         
+                            StatusColor = StateColoring.Info;
+                            BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         case ManifestDownloadProgressState.DeltaCopying:
@@ -160,9 +459,9 @@ namespace BuildSync.Client.Controls
                                 SecondsToInitialize = 0;
                             }
 
-                            string Status = string.Format("Copying existing blocks - {0}", StringUtils.FormatAsDuration((long)SecondsToInitialize));
-
-                            SetStatus(Status, StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.DeltaCopyProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                            Status = string.Format("{0}", StringUtils.FormatAsDuration((long)SecondsToInitialize));                
+                            StatusColor = StateColoring.Info;
+                            BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         case ManifestDownloadProgressState.Validating:
@@ -173,14 +472,16 @@ namespace BuildSync.Client.Controls
                                 SecondsToValidate = 0;
                             }
 
-                            string Status = string.Format("Validating - {0}", StringUtils.FormatAsDuration(SecondsToValidate));
-
-                            SetStatus(Status, StateColoring.Warning, Downloader.Manifest.VirtualPath, Downloader.ValidateProgress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                            Status = string.Format("{0}", StringUtils.FormatAsDuration(SecondsToValidate));                                
+                            StatusColor = StateColoring.Info;
+                            BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         case ManifestDownloadProgressState.Installing:
                         {
-                            SetStatus("Installing", StateColoring.Info, Downloader.Manifest.VirtualPath, 0, false, LaunchOption.Pause, UpRate, DownRate);
+                            Status = "Installing";
+                            StatusColor = StateColoring.Info;
+                            BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         case ManifestDownloadProgressState.Downloading:
@@ -191,8 +492,6 @@ namespace BuildSync.Client.Controls
                                 SecondsToDownload = 0;
                             }
 
-                            string Status = "";
-                            StateColoring StatusColor = StateColoring.Info;
                             if (Downloader.BandwidthStats.RateIn == 0)
                             {
                                 if (Program.NetClient.IsConnected)
@@ -207,16 +506,16 @@ namespace BuildSync.Client.Controls
                             }
                             else
                             {
-                                Status = string.Format("Downloading - {0}", StringUtils.FormatAsDuration(SecondsToDownload));
+                                Status = string.Format("{0}", StringUtils.FormatAsDuration(SecondsToDownload));
                             }
 
-                            SetStatus(Status, StatusColor, Downloader.Manifest.VirtualPath, Downloader.Progress * 100, true, LaunchOption.Pause, UpRate, DownRate);
+                            BuildInfo = Downloader.Manifest.VirtualPath;
+
                             break;
                         }
                         case ManifestDownloadProgressState.RetrievingManifest:
                         {
-                            string Status = "";
-                            StateColoring StatusColor = StateColoring.Info;
+                            BuildInfo = "Locating";
                             if (Program.NetClient.IsConnected)
                             {
                                 Status = "Locating Blocks";
@@ -226,8 +525,6 @@ namespace BuildSync.Client.Controls
                                 Status = "No Connection";
                                 StatusColor = StateColoring.Error;
                             }
-
-                            SetStatus(Status, StatusColor, "Locating", 0, false, LaunchOption.Pause, UpRate, DownRate);
                             break;
                         }
                     }
@@ -235,9 +532,6 @@ namespace BuildSync.Client.Controls
             }
             else
             {
-                string Status = "";
-                StateColoring StatusColor = StateColoring.Info;
-
                 if (Program.NetClient.IsConnected)
                 {
                     Status = "Waiting for available download";
@@ -247,13 +541,117 @@ namespace BuildSync.Client.Controls
                     Status = "No Connection";
                     StatusColor = StateColoring.Error;
                 }
-
-                SetStatus(Status, StatusColor, "Unknown", 0, false, State.Paused ? LaunchOption.Resume : LaunchOption.Pause, "0 kb/s", "0 kb/s");
             }
 
+            // Apply status.
+            SetStatus(Status, StatusColor, BuildInfo);
+
+            // Update play icons.
+            LaunchOption LaunchType = State.Paused ? LaunchOption.Resume : LaunchOption.Pause;
+            if (Downloader != null)
+            {
+                switch (Downloader.State)
+                {
+                    case ManifestDownloadProgressState.DiskError:
+                    case ManifestDownloadProgressState.InitializeFailed:
+                    case ManifestDownloadProgressState.ValidationFailed:
+                    case ManifestDownloadProgressState.InstallFailed:
+                        {
+                            LaunchType = LaunchOption.Resume;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Complete:
+                        {
+                            LaunchType = LaunchOption.Launch;
+                            break;
+                        }
+                    case ManifestDownloadProgressState.Initializing:
+                    case ManifestDownloadProgressState.DeltaCopying:
+                    case ManifestDownloadProgressState.Validating:
+                    case ManifestDownloadProgressState.Installing:
+                    case ManifestDownloadProgressState.Downloading:
+                    case ManifestDownloadProgressState.RetrievingManifest:
+                    default:
+                        {
+                            LaunchType = LaunchOption.Pause;
+                            break;
+                        }
+                }
+            }
+
+            int ImageIndex = 0;
+            if      (LaunchType == LaunchOption.Launch) ImageIndex = 0;
+            else if (LaunchType == LaunchOption.Resume) ImageIndex = 3;
+            else if (LaunchType == LaunchOption.Pause)  ImageIndex = 4;
+
+            if (PlayButton.ImageIndex != ImageIndex)
+            {
+                PlayButton.ImageIndex = ImageIndex;
+            }
+
+            // Update download rate.
+            string UpRate = StringUtils.FormatAsTransferRate(Downloader == null ? 0 : Downloader.BandwidthStats.RateOut);
+            string DownRate = StringUtils.FormatAsTransferRate(Downloader == null ? 0 : Downloader.BandwidthStats.RateIn);
+
+            if (DownloadSpeedLabel.Text != DownRate)
+            {
+                DownloadSpeedLabel.Text = DownRate;
+            }
+            if (UploadSpeedLabel.Text != UpRate)
+            {
+                UploadSpeedLabel.Text = UpRate;
+            }
+
+            // Only allow changing settings when connected to server.
             if (SettingsButton.Enabled != Program.NetClient.IsConnected)
             {
                 SettingsButton.Enabled = Program.NetClient.IsConnected;
+            }
+        }
+
+
+        /// <summary>
+        /// </summary>
+        /// <param name="State"></param>
+        /// <param name="Build"></param>
+        /// <param name="Progress"></param>
+        private void SetStatus(string State, StateColoring Coloring, string Build)
+        {
+            if (EtaLabel.Text != State)
+            {
+                EtaLabel.Text = State;
+            }
+
+            if (BuildLabel.Text != Build)
+            {
+                BuildLabel.Text = Build;
+            }
+
+            Color TargetColor = Color.Black;
+            if (Coloring == StateColoring.Error)
+            {
+                TargetColor = Color.Red;
+                //ProgressBar.SetState(2);
+            }
+            else if (Coloring == StateColoring.Info)
+            {
+                TargetColor = Color.Black;
+                //ProgressBar.SetState(1);
+            }
+            else if (Coloring == StateColoring.Warning)
+            {
+                TargetColor = Color.Orange;
+                //ProgressBar.SetState(3);
+            }
+            else if (Coloring == StateColoring.Success)
+            {
+                TargetColor = Color.Green;
+                //ProgressBar.SetState(1);
+            }
+
+            if (EtaLabel.ForeColor != TargetColor)
+            {
+                EtaLabel.ForeColor = TargetColor;
             }
         }
 
@@ -343,103 +741,6 @@ namespace BuildSync.Client.Controls
             else
             {
                 State.Paused = !State.Paused;
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="State"></param>
-        /// <param name="Build"></param>
-        /// <param name="Progress"></param>
-        private void SetStatus(string State, StateColoring Coloring, string Build, float Progress, bool ContinuousWork, LaunchOption LaunchType, string UpRate, string DownRate)
-        {
-            if (EtaLabel.Text != State)
-            {
-                EtaLabel.Text = State;
-            }
-
-            if (BuildLabel.Text != Build)
-            {
-                BuildLabel.Text = Build;
-            }
-
-            Color TargetColor = Color.Black;
-            if (Coloring == StateColoring.Error)
-            {
-                TargetColor = Color.Red;
-                ProgressBar.SetState(2);
-            }
-            else if (Coloring == StateColoring.Info)
-            {
-                TargetColor = Color.Black;
-                ProgressBar.SetState(1);
-            }
-            else if (Coloring == StateColoring.Warning)
-            {
-                TargetColor = Color.Orange;
-                ProgressBar.SetState(3);
-            }
-            else if (Coloring == StateColoring.Success)
-            {
-                TargetColor = Color.Green;
-                ProgressBar.SetState(1);
-            }
-
-            if (EtaLabel.ForeColor != TargetColor)
-            {
-                EtaLabel.ForeColor = TargetColor;
-            }
-
-            if (!ContinuousWork)
-            {
-                if (ProgressBar.Style != ProgressBarStyle.Marquee)
-                {
-                    ProgressBar.Style = ProgressBarStyle.Marquee;
-                    ProgressBar.Value = 0;
-                    ProgressBar.Refresh();
-                }
-            }
-            else
-            {
-                if (ProgressBar.Style != ProgressBarStyle.Continuous)
-                {
-                    ProgressBar.Style = ProgressBarStyle.Continuous;
-                }
-
-                if (ProgressBar.Value != (int) Progress)
-                {
-                    ProgressBar.Value = Math.Max(0, Math.Min(100, (int) Progress));
-                    ProgressBar.Refresh();
-                }
-            }
-
-            int ImageIndex = 0;
-            if (LaunchType == LaunchOption.Launch)
-            {
-                ImageIndex = 0;
-            }
-            else if (LaunchType == LaunchOption.Resume)
-            {
-                ImageIndex = 3;
-            }
-            else if (LaunchType == LaunchOption.Pause)
-            {
-                ImageIndex = 4;
-            }
-
-            if (PlayButton.ImageIndex != ImageIndex)
-            {
-                PlayButton.ImageIndex = ImageIndex;
-            }
-
-            if (DownloadSpeedLabel.Text != DownRate)
-            {
-                DownloadSpeedLabel.Text = DownRate;
-            }
-
-            if (UploadSpeedLabel.Text != UpRate)
-            {
-                UploadSpeedLabel.Text = UpRate;
             }
         }
 
