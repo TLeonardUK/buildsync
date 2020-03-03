@@ -486,7 +486,7 @@ namespace BuildSync.Client.Forms
                 }
                 else if (Node.IsGroup)
                 {
-                    deleteMenuItem.Enabled = (Node.Name != "All Users");
+                    deleteMenuItem.Enabled = (Node.Name != "All Users") && hasFullPermission;
                     addMenuItem.Enabled = hasFullPermission;
                 }
             }

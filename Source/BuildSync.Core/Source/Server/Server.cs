@@ -617,7 +617,7 @@ namespace BuildSync.Core.Server
 
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
 
-                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, "") ||
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyUsers, "") &&
                     !UserManager.HasAnyPermission(State.Username, UserPermissionType.AddUsersToGroup))
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to get usernames without permission.", State.Username);
