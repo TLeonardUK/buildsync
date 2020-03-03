@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.IO;
 using System.Windows.Forms;
 using BuildSync.Client.Commands;
@@ -371,6 +372,24 @@ namespace BuildSync.Client
                 {
                     return;
                 }
+
+                SetConsoleCtrlHandler(
+                    CtrlType =>
+                    {
+                        if (CtrlType == CtrlTypes.CTRL_C_EVENT ||
+                            CtrlType == CtrlTypes.CTRL_BREAK_EVENT ||
+                            CtrlType == CtrlTypes.CTRL_CLOSE_EVENT ||
+                            CtrlType == CtrlTypes.CTRL_LOGOFF_EVENT ||
+                            CtrlType == CtrlTypes.CTRL_SHUTDOWN_EVENT)
+                        {
+                            Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved close event from console.");
+                            Application.Exit();
+                            return true;
+                        }
+
+                        return false;
+                    }, true
+                );
 
                 using (new SingleGlobalInstance(100))
                 {
@@ -761,5 +780,34 @@ namespace BuildSync.Client
                 }
             }
         }
+
+        #region Unmanaged Functions
+
+        /// <summary>
+        /// </summary>
+        public enum CtrlTypes
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT,
+            CTRL_CLOSE_EVENT,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="CtrlType"></param>
+        /// <returns></returns>
+        public delegate bool HandlerRoutine(CtrlTypes CtrlType);
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Handler"></param>
+        /// <param name="Add"></param>
+        /// <returns></returns>
+        [DllImport("Kernel32")]
+        public static extern bool SetConsoleCtrlHandler(HandlerRoutine Handler, bool Add);
+
+        #endregion
     }
 }
