@@ -419,6 +419,17 @@ namespace BuildSync.Core.Utils
                 BaseNode.Children.Add(Child);
                 NewChildren.Add(Child);
             }
+            /*
+             * 
+            foreach (VirtualFileSystemNode Child in ChildrenToRemove)
+            {
+                Console.WriteLine("PreSort: Remove: {0}", Child.Path);
+            }
+
+            foreach (VirtualFileSystemNode Child in NewChildren)
+            {
+                Console.WriteLine("PreSort: Add: {0}", Child.Path);
+            }*/
 
             // Sort all children by create time.
             BaseNode.Children.Sort((Item1, Item2) => -Item1.CreateTime.CompareTo(Item2.CreateTime));
@@ -426,11 +437,13 @@ namespace BuildSync.Core.Utils
             // Fire events.
             foreach (VirtualFileSystemNode Child in ChildrenToRemove)
             {
+                //Console.WriteLine("PostSort: Remove: {0}", Child.Path);
                 OnNodeRemoved?.Invoke(this, Child);
             }
 
             foreach (VirtualFileSystemNode Child in NewChildren)
             {
+                //Console.WriteLine("PostSort: Add: {0}", Child.Path);
                 OnNodeAdded?.Invoke(this, Child);
             }
         }

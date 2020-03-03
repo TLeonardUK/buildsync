@@ -1022,13 +1022,13 @@ namespace BuildSync.Core.Server
                             new NetMessage_GetBuildsResponse.BuildInfo
                             {
                                 Guid = Guid.Empty,
-                                CreateTime = DateTime.UtcNow,
+                                CreateTime = new DateTime(i), // We do this just to keep everything sorted correctly by date time.
                                 VirtualPath = Children[i],
                                 AvailablePeers = 0,
                                 LastSeenOnPeer = DateTime.UtcNow,
                                 TotalSize = 0
                             }
-                        ); ;
+                        ); 
                     }
                 }
             }

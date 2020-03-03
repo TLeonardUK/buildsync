@@ -1701,11 +1701,11 @@ namespace BuildSync.Core.Client
                     }
 
                     // Find all peers that have this block.
-                    Peer LeastLoadedPeer = null;
+                    List<Peer> LeastLoadedPeers = new List<Peer>();
                     long LeastLoadedPeerAvailableBandwidth = 0;
                     for (int j = 0; j < Peers.Count; j++)
                     {
-                        Peer Peer = Peers[(j + PeerBlockRequestShuffleIndex) % Peers.Count];
+                        Peer Peer = Peers[j];
                         if (!Peer.Connection.IsReadyForData)
                         {
                             continue;
@@ -1719,21 +1719,27 @@ namespace BuildSync.Core.Client
                         long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
                         long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
 
-                        if ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && (LeastLoadedPeer == null || Peer.ActiveBlockDownloadSize < LeastLoadedPeerAvailableBandwidth))
+                        if ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && (LeastLoadedPeers.Count == 0 || Peer.ActiveBlockDownloadSize <= LeastLoadedPeerAvailableBandwidth))
                         {
-                            LeastLoadedPeer = Peer;
-                            LeastLoadedPeerAvailableBandwidth = Peer.ActiveBlockDownloadSize;
+                            if (LeastLoadedPeers.Count == 0 || Peer.ActiveBlockDownloadSize < LeastLoadedPeerAvailableBandwidth)
+                            {
+                                LeastLoadedPeers.Clear();
+                                LeastLoadedPeerAvailableBandwidth = Peer.ActiveBlockDownloadSize;
+                            }
+
+                            LeastLoadedPeers.Add(Peer);
                         }
                     }
 
-                    PeerBlockRequestShuffleIndex++;
-                    if (PeerBlockRequestShuffleIndex > Peers.Count)
+                    if (LeastLoadedPeers.Count > 0)
                     {
-                        PeerBlockRequestShuffleIndex = 0;
-                    }
+                        Peer LeastLoadedPeer = LeastLoadedPeers[PeerBlockRequestShuffleIndex % LeastLoadedPeers.Count];
+                        PeerBlockRequestShuffleIndex++;
+                        if (PeerBlockRequestShuffleIndex > Peers.Count)
+                        {
+                            PeerBlockRequestShuffleIndex = 0;
+                        }
 
-                    if (LeastLoadedPeer != null)
-                    {
                         NetMessage_GetBlock Msg = new NetMessage_GetBlock();
                         Msg.ManifestId = Item.ManifestId;
                         Msg.BlockIndex = Item.BlockIndex;

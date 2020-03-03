@@ -237,6 +237,10 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
+        public bool AutoFixValidationErrors { get; set; } = true;
+
+        /// <summary>
+        /// </summary>
         private int Internal_StateDirtyCount;
 
         public int StateDirtyCount
@@ -305,6 +309,36 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         private ulong TimeSinceLastPruneRequest = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool StateWaitingForFinalize = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private List<int> ValidateFailedBlocks = new List<int>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        Dictionary<BuildManifestFileInfo, string> DeltaCopyFilesToCopy = new Dictionary<BuildManifestFileInfo, string>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool InitializeFailed = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool InstallFailed = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private bool DeltaCopyFailed = false;
 
         /// <summary>
         /// </summary>
@@ -797,10 +831,22 @@ namespace BuildSync.Core.Downloads
                 // Create all the files in the directory.
                 case ManifestDownloadProgressState.Initializing:
                 {
-                    if (State.InitializeTask == null)
+                    if (StateWaitingForFinalize)
+                    {
+                        if (InitializeFailed)
+                        {
+                            ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
+                        }
+                        else
+                        {
+                            ChangeState(State, ManifestDownloadProgressState.DeltaCopying);
+                        }
+                    }
+                    else if (State.InitializeTask == null)
                     {
                         if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
                         {
+                            InitializeFailed = false;
                             State.InitializeTask = Task.Run(
                                 () =>
                                 {
@@ -817,19 +863,16 @@ namespace BuildSync.Core.Downloads
                                                 return !State.Paused;
                                             }
                                         );
-                                        if (!State.Paused)
-                                        {
-                                            ChangeState(State, ManifestDownloadProgressState.DeltaCopying);
-                                        }
                                     }
                                     catch (Exception Ex)
                                     {
-                                        ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
                                         Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to intialize directory with error: {0}", Ex.Message);
+                                        InitializeFailed = true;
                                     }
                                     finally
                                     {
-                                        State.InitializeTask = null;
+                                        State.InitializeTask = null; 
+                                        StateWaitingForFinalize = true;
                                     }
                                 }
                             );
@@ -855,7 +898,53 @@ namespace BuildSync.Core.Downloads
                 // Finding any manifests with files containing the same checksum. If found, copy over and mark blocks as available.
                 case ManifestDownloadProgressState.DeltaCopying:
                 {
-                    if (State.DeltaCopyTask == null)
+                    if (StateWaitingForFinalize)
+                    {
+                        if (!DeltaCopyFailed)
+                        {
+                            // All blocks that purely contain these files should be marked as downloaded.
+                            long TotalBytesSaved = 0;
+
+                            foreach (var Pair in DeltaCopyFilesToCopy)
+                            {
+                                BuildManifestFileInfo DstInfo = Pair.Key;
+                                for (int i = DstInfo.FirstBlockIndex; i <= DstInfo.LastBlockIndex; i++)
+                                {
+                                    BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
+                                    if (State.Manifest.GetBlockInfo(i, ref BlockInfo))
+                                    {
+                                        bool AllSubBlocksAreThisFile = true;
+                                        foreach (BuildManifestSubBlockInfo SubBlockInfo in BlockInfo.SubBlocks)
+                                        {
+                                            if (SubBlockInfo.File != DstInfo)
+                                            {
+                                                AllSubBlocksAreThisFile = false;
+                                                break;
+                                            }
+                                        }
+
+                                        if (AllSubBlocksAreThisFile)
+                                        {
+                                            State.BlockStates.Set(i, true);
+                                            TotalBytesSaved += BlockInfo.TotalSize;
+                                        }
+                                    }
+                                }
+                            }
+                                            
+                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Delta copying saved downloading {0}.", StringUtils.FormatAsSize(TotalBytesSaved));
+                                            
+                            StateDirtyCount++;
+
+                            // Start downloading.
+                            ChangeState(State, ManifestDownloadProgressState.Downloading);
+                        }
+                        else
+                        {                                
+                            ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
+                        }
+                    }
+                    else if (State.DeltaCopyTask == null)
                     {
                         if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
                         {
@@ -877,7 +966,7 @@ namespace BuildSync.Core.Downloads
                                 }
                             }
 
-                            Dictionary<BuildManifestFileInfo, string> FilesToCopy = new Dictionary<BuildManifestFileInfo, string>();
+                            DeltaCopyFilesToCopy = new Dictionary<BuildManifestFileInfo, string>();
                             long TotalSize = 0;
                             
                             foreach (BuildManifestFileInfo File in State.Manifest.Files)
@@ -888,23 +977,25 @@ namespace BuildSync.Core.Downloads
                                     {
                                         if (System.IO.File.Exists(ExistingFiles[File.Checksum]))
                                         {
-                                            FilesToCopy.Add(File, ExistingFiles[File.Checksum]);
+                                            DeltaCopyFilesToCopy.Add(File, ExistingFiles[File.Checksum]);
                                             TotalSize += File.Size;
                                         }
                                     }
                                 }
                             }
                             
-                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Found {0} pre-existing files.", FilesToCopy.Count);
+                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Found {0} pre-existing files.", DeltaCopyFilesToCopy.Count);
 
                             State.DeltaCopyTask = Task.Run(
                                 () =>
                                 {
+                                    DeltaCopyFailed = false;
+
                                     try
                                     {
                                         // TODO: Make progress of this more granular.
                                         long BytesCopied = 0;
-                                        foreach (var Pair in FilesToCopy)
+                                        foreach (var Pair in DeltaCopyFilesToCopy)
                                         {
                                             if (State.Paused)
                                             {
@@ -925,57 +1016,18 @@ namespace BuildSync.Core.Downloads
                                             State.DeltaCopyRateStats.In(BytesCopied - State.InitializeRateStats.TotalIn);
                                             State.DeltaCopyBytesRemaining = TotalSize - BytesCopied;
                                         }
-                                        
-                                        if (!State.Paused)
-                                        {
-                                            // All blocks that purely contain these files should be marked as downloaded.
-                                            long TotalBytesSaved = 0;
-
-                                            foreach (var Pair in FilesToCopy)
-                                            {
-                                                BuildManifestFileInfo DstInfo = Pair.Key;
-                                                for (int i = DstInfo.FirstBlockIndex; i <= DstInfo.LastBlockIndex; i++)
-                                                {
-                                                    BuildManifestBlockInfo BlockInfo = new BuildManifestBlockInfo();
-                                                    if (State.Manifest.GetBlockInfo(i, ref BlockInfo))
-                                                    {
-                                                        bool AllSubBlocksAreThisFile = true;
-                                                        foreach (BuildManifestSubBlockInfo SubBlockInfo in BlockInfo.SubBlocks)
-                                                        {
-                                                            if (SubBlockInfo.File != DstInfo)
-                                                            {
-                                                                AllSubBlocksAreThisFile = false;
-                                                                break;
-                                                            }
-                                                        }
-
-                                                        if (AllSubBlocksAreThisFile)
-                                                        {
-                                                            State.BlockStates.Set(i, true);
-                                                            TotalBytesSaved += BlockInfo.TotalSize;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            
-                                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Delta copying saved downloading {0}.", StringUtils.FormatAsSize(TotalSize));
-                                            
-                                            StateDirtyCount++;
-
-                                            // Start downloading.
-                                            ChangeState(State, ManifestDownloadProgressState.Downloading);
-                                        }
 
                                         State.DeltaCopyRateStats.Reset();
                                     }
                                     catch (Exception Ex)
                                     {
-                                        ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
+                                        DeltaCopyFailed = true;
                                         Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to delta copy with error: {0}", Ex.Message);
                                     }
                                     finally
                                     {
                                         State.DeltaCopyTask = null;
+                                        StateWaitingForFinalize = true;
                                     }
                                 }
                             );
@@ -993,7 +1045,18 @@ namespace BuildSync.Core.Downloads
                 // Installing all launch modes on device.
                 case ManifestDownloadProgressState.Installing:
                 {
-                    if (State.InstallTask == null)
+                    if (StateWaitingForFinalize)
+                    {
+                        if (InstallFailed)
+                        {
+                            ChangeState(State, ManifestDownloadProgressState.InstallFailed, true);
+                        }
+                        else
+                        {
+                            ChangeState(State, ManifestDownloadProgressState.Complete);
+                        }
+                    }
+                    else if (State.InstallTask == null)
                     {
                         State.InstallTask = Task.Run(
                             () =>
@@ -1002,16 +1065,15 @@ namespace BuildSync.Core.Downloads
                                 {
                                     Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", State.InstallDeviceName, State.InstallLocation, State.LocalFolder);
                                     PerformInstallation(State);
-                                    ChangeState(State, ManifestDownloadProgressState.Complete);
                                 }
                                 catch (Exception Ex)
                                 {
-                                    ChangeState(State, ManifestDownloadProgressState.InstallFailed, true);
                                     Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to install with error: {0}", Ex.Message);
                                 }
                                 finally
                                 {
                                     State.InstallTask = null;
+                                    StateWaitingForFinalize = true;
                                 }
                             }
                         );
@@ -1039,7 +1101,7 @@ namespace BuildSync.Core.Downloads
                     if (State.BlockStates.AreAllSet(true))
                     {
 #if CONSTANT_REDOWNLOAD
-                            State.BlockStates.SetAll(false);
+                        State.BlockStates.SetAll(false);
 #else
                         if (SkipValidation)
                         {
@@ -1086,7 +1148,40 @@ namespace BuildSync.Core.Downloads
                 // Check all the file checksums match, if any fail, requeue all their blocks.
                 case ManifestDownloadProgressState.Validating:
                 {
-                    if (State.ValidationTask == null)
+                    if (StateWaitingForFinalize)
+                    {
+                        if (ValidateFailedBlocks.Count == 0)
+                        {
+                            if (State.InstallOnComplete)
+                            {
+                                ChangeState(State, ManifestDownloadProgressState.Installing);
+                            }
+                            else
+                            {
+                                ChangeState(State, ManifestDownloadProgressState.Complete);
+                            }
+
+                            StoreFileCompletedStates(State);
+                        }
+                        else
+                        {
+                            foreach (int Block in ValidateFailedBlocks)
+                            {
+                                MarkBlockAsUnavailable(State.ManifestId, Block);
+                                //MarkFileAsUnavailable(State.ManifestId, File);
+                            }
+
+                            if (AutoFixValidationErrors)
+                            {
+                                ChangeState(State, ManifestDownloadProgressState.Downloading);
+                            }
+                            else
+                            {
+                                ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
+                            }
+                        }
+                    }
+                    else if (State.ValidationTask == null)
                     {
                         // Close all async io streams to the download we are working on.
                         if (IOQueue.CloseAllStreamsInDirectory(State.LocalFolder))
@@ -1094,11 +1189,13 @@ namespace BuildSync.Core.Downloads
                             State.ValidationTask = Task.Run(
                                 () =>
                                 {
+                                    ValidateFailedBlocks.Clear();
+
                                     try
                                     {
                                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
                                         State.ValidateRateStats.Reset();
-                                        List<int> FailedBlocks = State.Manifest.Validate(
+                                        ValidateFailedBlocks = State.Manifest.Validate(
                                             State.LocalFolder, State.ValidateRateStats, IOQueue, (BytesRead, TotalBytes, ManifestId, BlockIndex) =>
                                             {
                                                 State.ValidateProgress = BytesRead / (float) TotalBytes;
@@ -1108,41 +1205,20 @@ namespace BuildSync.Core.Downloads
                                                 return !State.Paused;
                                             }
                                         );
-                                        if (!State.Paused)
-                                        {
-                                            if (FailedBlocks.Count == 0)
-                                            {
-                                                if (State.InstallOnComplete)
-                                                {
-                                                    ChangeState(State, ManifestDownloadProgressState.Installing);
-                                                }
-                                                else
-                                                {
-                                                    ChangeState(State, ManifestDownloadProgressState.Complete);
-                                                }
-
-                                                StoreFileCompletedStates(State);
-                                            }
-                                            else
-                                            {
-                                                foreach (int Block in FailedBlocks)
-                                                {
-                                                    MarkBlockAsUnavailable(State.ManifestId, Block);
-                                                    //MarkFileAsUnavailable(State.ManifestId, File);
-                                                }
-
-                                                ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
-                                            }
-                                        }
                                     }
                                     catch (Exception Ex)
                                     {
-                                        ChangeState(State, ManifestDownloadProgressState.ValidationFailed, true);
                                         Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to validate directory with error: {0}", Ex.Message);
+
+                                        for (int i = 0; i < State.Manifest.BlockCount; i++)
+                                        {
+                                            ValidateFailedBlocks.Add(i);
+                                        }
                                     }
                                     finally
                                     {
                                         State.ValidationTask = null;
+                                        StateWaitingForFinalize = true;
                                     }
                                 }
                             );
@@ -1237,6 +1313,7 @@ namespace BuildSync.Core.Downloads
         {
             State.State = NewState;
             State.DiskError = false;
+            StateWaitingForFinalize = false;
             StateDirtyCount++;
 
             if (IsError)

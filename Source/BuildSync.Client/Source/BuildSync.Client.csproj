@@ -563,6 +563,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.refresh1.png" />
     <None Include="Resources\appbar.star.png" />
     <None Include="Resources\appbar.folder.star.png" />
     <None Include="Resources\appbar.folder.people.png" />

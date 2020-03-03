@@ -60,6 +60,7 @@ namespace BuildSync.Client.Controls.Settings
             skipInitialization.Checked = Program.Settings.SkipDiskAllocation;
             showInternalDownloadsCheckBox.Checked = Program.Settings.ShowInternalDownloads;
             logLevelComboBox.SelectedIndex = (int)Program.Settings.LoggingLevel;
+            autoFixValidationErrorsCheckBox.Checked = Program.Settings.AutoFixValidationErrors;
             SkipValidity = false;
             
             UpdateValidityState();
@@ -90,6 +91,7 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.SkipDiskAllocation = skipInitialization.Checked;
             Program.Settings.ShowInternalDownloads = showInternalDownloadsCheckBox.Checked;
             Program.Settings.LoggingLevel = (LogLevel)logLevelComboBox.SelectedIndex;
+            Program.Settings.AutoFixValidationErrors = autoFixValidationErrorsCheckBox.Checked;
 
             Logger.MaximumVerbosity = Program.Settings.LoggingLevel;
         }

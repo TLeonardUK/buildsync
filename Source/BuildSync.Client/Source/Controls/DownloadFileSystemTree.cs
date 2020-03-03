@@ -91,6 +91,11 @@ namespace BuildSync.Client.Controls
         private bool NodeSelectedAutomatically = false;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private List<string> RequestedBuildPaths = new List<string>();
+
+        /// <summary>
         /// </summary>
         public Guid SelectedManifestId
         {
@@ -358,6 +363,13 @@ namespace BuildSync.Client.Controls
         /// <param name="Builds"></param>
         private void OnBuildInfoRecieved(string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds)
         {
+            if (!RequestedBuildPaths.Contains(RootPath))
+            {
+                return;
+            }
+
+            RequestedBuildPaths.Remove(RootPath);
+
             List<VirtualFileSystemInsertChild> NewChildren = new List<VirtualFileSystemInsertChild>();
             foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
             {
@@ -397,6 +409,19 @@ namespace BuildSync.Client.Controls
                 Program.NetClient.OnBuildsRecieved += OnBuildInfoRecieved;
             }
 
+            SetupFileSystem();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void SetupFileSystem()
+        {
+            RequestedBuildPaths.Clear();
+
+            Model.Nodes.Clear();
+
+            BuildFileSystem = new VirtualFileSystem();
             BuildFileSystem.ChildrenRefreshInterval = 5 * 1000;
             BuildFileSystem.AutoRefreshChildren = false;
 
@@ -404,15 +429,16 @@ namespace BuildSync.Client.Controls
             {
                 if (Program.NetClient != null)
                 {
+                    RequestedBuildPaths.Add(Path);
                     Program.NetClient.RequestBuilds(Path);
                 }
             };
 
             BuildFileSystem.OnNodeAdded += (FileSystem, Node) =>
             {
-                Invoke(
-                    (MethodInvoker) (() =>
-                    {
+                //Invoke(
+                //    (MethodInvoker) (() =>
+                //    {
                         // Ignore internal parts of the heirarchy.
                         if (Node.Path.Contains("$") && !ShowInternal)
                         {
@@ -509,7 +535,7 @@ namespace BuildSync.Client.Controls
                         for (int i = 0; i < NodeCollection.Count; i++)
                         {
                             DownloadFileSystemTreeNode SubNode = NodeCollection[i] as DownloadFileSystemTreeNode;
-                            if (SubNode != null && SubNode.CreateTime < TrNode.CreateTime)
+                            if (SubNode != null && (SubNode.CreateTime.Ticks - TrNode.CreateTime.Ticks) < -10000000) // At least a second off.
                             {
                                 NodeCollection.Insert(i, TrNode);
                                 Inserted = true;
@@ -562,15 +588,15 @@ namespace BuildSync.Client.Controls
                         SelectNextPath();
 
                         OnDateUpdated?.Invoke(this, null);
-                    })
-                );
+                //    })
+                //);
             };
 
             BuildFileSystem.OnNodeRemoved += (FileSystem, Node) =>
             {
-                Invoke(
-                    (MethodInvoker) (() =>
-                    {
+                //Invoke(
+                //    (MethodInvoker) (() =>
+                //    {
                         // Ignore internal parts of the heirarchy.
                         if (Node.Path.Contains("$") && !ShowInternal)
                         {
@@ -582,8 +608,8 @@ namespace BuildSync.Client.Controls
                         {
                             ModelNode.Parent.Nodes.Remove(ModelNode);
                         }
-                    })
-                );
+                //    })
+                //);
             };
 
             BuildFileSystem.Init();
@@ -646,6 +672,19 @@ namespace BuildSync.Client.Controls
             {
                 SelectedPathRaw = pathTextBox.Text;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RefreshClicked(object sender, EventArgs e)
+        {
+            string OldPath = SelectedPathRaw;
+            SetupFileSystem();
+//            SelectedPathRaw = OldPath;
+            pathTextBox.Text = OldPath;
         }
     }
 }

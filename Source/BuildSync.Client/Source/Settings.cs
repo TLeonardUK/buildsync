@@ -272,8 +272,12 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        public bool ShowInternalDownloads { get; set; } = false;
+        public bool AutoFixValidationErrors { get; set; } = true;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool ShowInternalDownloads { get; set; } = false;
 
         /// <summary>
         /// 
