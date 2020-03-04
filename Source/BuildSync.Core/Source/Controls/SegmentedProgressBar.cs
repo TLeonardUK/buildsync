@@ -66,7 +66,27 @@ namespace BuildSync.Core.Controls
             /// <summary>
             /// 
             /// </summary>
-            public float LerpedProgress = 0.0f;
+            internal float LerpedProgress = 0.0f;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            internal Color CachedColor = Color.White;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            internal Color CachedLightColor = Color.White;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            internal Color CachedDarkColor = Color.White;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            internal LinearGradientBrush CachedFillBrush = null;
         }
 
         /// <summary>
@@ -94,14 +114,18 @@ namespace BuildSync.Core.Controls
         /// <param name="height"></param>
         private void DrawSegment(Graphics graphics, Segment segment, float x, float y, float width, float height)
         {
-            Color LightColor = Color.FromArgb(255, Math.Min(255, (int)(segment.Color.R * 1.1f)), Math.Min(255, (int)(segment.Color.G * 1.1f)), Math.Min(255, (int)(segment.Color.B * 1.1f)));
-            Color DarkColor = Color.FromArgb(255, (int)(segment.Color.R * 0.98f), (int)(segment.Color.G * 0.98f), (int)(segment.Color.B * 0.98f));
-            LinearGradientBrush FillBrush = new LinearGradientBrush(new PointF(x, y), new PointF(x, y + height), LightColor, DarkColor);
+            if (segment.Color != segment.CachedColor)
+            {
+                segment.CachedLightColor = Color.FromArgb(255, Math.Min(255, (int)(segment.Color.R * 1.1f)), Math.Min(255, (int)(segment.Color.G * 1.1f)), Math.Min(255, (int)(segment.Color.B * 1.1f)));
+                segment.CachedDarkColor = Color.FromArgb(255, (int)(segment.Color.R * 0.98f), (int)(segment.Color.G * 0.98f), (int)(segment.Color.B * 0.98f));
+                segment.CachedFillBrush = new LinearGradientBrush(new PointF(x, y), new PointF(x, y + height), segment.CachedLightColor, segment.CachedDarkColor);
+                segment.CachedColor = segment.Color;
+            }
 
             segment.LerpedProgress = (segment.Progress * 0.5f) + (segment.LerpedProgress * 0.5f);
 
             graphics.FillRectangle(SystemBrushes.Control, x, y, width, height);
-            graphics.FillRectangle(FillBrush, x, y, width * segment.LerpedProgress, height);
+            graphics.FillRectangle(segment.CachedFillBrush, x, y, width * segment.LerpedProgress, height);
             graphics.DrawRectangle(SystemPens.ActiveBorder, x, y, width, height);
 
             SizeF TextSize = graphics.MeasureString(segment.Text, SystemFonts.DefaultFont);
