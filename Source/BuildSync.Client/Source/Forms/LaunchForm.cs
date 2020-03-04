@@ -151,7 +151,6 @@ namespace BuildSync.Client.Forms
                 return;
             }
 
-
             // Have we got a stored value for this variable?
             StoredLaunchSettings StoredSettings = null;
             foreach (StoredLaunchSettings OldSettings in Program.Settings.LaunchSettings)
@@ -174,7 +173,7 @@ namespace BuildSync.Client.Forms
                     }
                 }
 
-                if (Var.ConditionResult)
+                if (Var.ConditionResult && !Var.Internal)
                 {
                     switch (Var.DataType)
                     {
@@ -239,12 +238,6 @@ namespace BuildSync.Client.Forms
                 IsScript = true;
             }
 
-
-            // DEBUG DEBUG DEBUG
-            //ConfigFilePath = @"F:\buildsync\Docs\Example Scripts\UE4 Binaries.buildsync.cs";
-            //IsScript = true;
-            // DEBUG DEBUG DEBUG
-
             if (!File.Exists(ConfigFilePath))
             {
                 MessageBox.Show("Build has no configured launch settings. Ensure a buildsync.json or buildsync.cs file is added to all builds.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -285,9 +278,32 @@ namespace BuildSync.Client.Forms
                 // Add various internal variables to pass in bits of info.
                 foreach (BuildLaunchMode Mode in Modes)
                 {
-                    Mode.AddStringVariable("INSTALL_DEVICE_NAME", DownloadState.InstallDeviceName);
                     Mode.AddStringVariable("INSTALL_LOCATION", DownloadState.InstallLocation);
                     Mode.AddStringVariable("BUILD_DIR", Downloader.LocalFolder);
+
+                    // We show this internal var to the end user.
+                    BuildLaunchVariable DeviceVar = Mode.AddStringVariable("INSTALL_DEVICE_NAME", DownloadState.InstallDeviceName);
+                    DeviceVar.Internal = (DownloadState.InstallDeviceName.Length == 0);
+                    DeviceVar.FriendlyName = "Target Device";
+                    DeviceVar.FriendlyDescription = "Device to install and launch on.";
+                    DeviceVar.FriendlyCategory = "Launch Device";
+                    DeviceVar.Options = new List<string>();
+                    DeviceVar.Value = "";
+
+                    string[] Options = DownloadState.InstallDeviceName.Split(',');
+                    foreach (string Option in Options)
+                    {
+                        string Trimmed = Option.Trim();
+                        if (Trimmed.Length > 0)
+                        {
+                            DeviceVar.Options.Add(Trimmed);
+
+                            if (DeviceVar.Value.Length == 0)
+                            {
+                                DeviceVar.Value = Trimmed;
+                            }
+                        }
+                    }
                 }
             }
             catch (InvalidOperationException Ex)
@@ -302,7 +318,7 @@ namespace BuildSync.Client.Forms
                 MessageBox.Show("None of the launch modes are usable.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
             }
-            else if (Modes.Count == 1 && Modes[0].Variables.Count == 0)
+            else if (Modes.Count == 1 && Modes[0].GetNonInternalVariableCount() == 0 && DownloadState.InstallDeviceName == "") 
             {
                 // Instant launch, nothing for us to select really.
                 Launch(Modes[0]);

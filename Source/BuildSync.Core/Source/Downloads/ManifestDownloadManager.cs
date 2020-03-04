@@ -10,7 +10,7 @@
   including commercial applications, and to alter it and redistribute it
   freely, subject to the following restrictions:
 
-  1. The origin of this software must not be misrepresented; you must not
+  1. The origin of this sofPtware must not be misrepresented; you must not
      claim that you wrote the original software. If you use this software
      in a product, an acknowledgment in the product documentation would be
      appreciated but is not required.
@@ -693,7 +693,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         /// <param name="State"></param>
-        private void PerformInstallation(ManifestDownloadState State)
+        private void PerformInstallation(ManifestDownloadState State, string DeviceName)
         {
             string ConfigFilePath = Path.Combine(State.LocalFolder, "buildsync.json");
             bool IsScript = false;
@@ -737,7 +737,7 @@ namespace BuildSync.Core.Downloads
                 // Add various internal variables to pass in bits of info.
                 foreach (BuildLaunchMode Mode in Modes)
                 {
-                    Mode.AddStringVariable("INSTALL_DEVICE_NAME", State.InstallDeviceName);
+                    Mode.AddStringVariable("INSTALL_DEVICE_NAME", DeviceName);
                     Mode.AddStringVariable("INSTALL_LOCATION", State.InstallLocation);
                     Mode.AddStringVariable("BUILD_DIR", State.LocalFolder);
                 }
@@ -1106,8 +1106,16 @@ namespace BuildSync.Core.Downloads
                             {
                                 try
                                 {
-                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", State.InstallDeviceName, State.InstallLocation, State.LocalFolder);
-                                    PerformInstallation(State);
+                                    string[] Devices = State.InstallDeviceName.Split(',');
+                                    foreach (string Device in Devices)
+                                    {
+                                        string Trimmed = Device.Trim();
+                                        if (Trimmed.Length > 0)
+                                        {
+                                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", Trimmed, State.InstallLocation, State.LocalFolder);
+                                            PerformInstallation(State, Trimmed);
+                                        }
+                                    }
                                 }
                                 catch (Exception Ex)
                                 {

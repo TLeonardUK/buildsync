@@ -388,6 +388,24 @@ namespace BuildSync.Core.Manifests
             return "";
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public int GetNonInternalVariableCount()
+        {
+            int Count = 0;
+            foreach (BuildLaunchVariable Var in Variables)
+            {
+                if (Var.Internal)
+                {
+                    Count++;
+                }
+            }
+            return Count;
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -403,8 +421,17 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
-        public void AddStringVariable(string Name, string Value)
+        public BuildLaunchVariable AddStringVariable(string Name, string Value)
         {
+            foreach (BuildLaunchVariable Var in Variables)
+            {
+                if (Var.Name == Name)
+                {
+                    Var.Value = Value;
+                    return Var;
+                }
+            }
+
             BuildLaunchVariable Variable = new BuildLaunchVariable();
             Variable.Condition = "true";
             Variable.ConditionResult = true;
@@ -413,6 +440,8 @@ namespace BuildSync.Core.Manifests
             Variable.Value = Value;
             Variable.Internal = true;
             Variables.Add(Variable);
+
+            return Variable;
         }
 
         /// <summary>
