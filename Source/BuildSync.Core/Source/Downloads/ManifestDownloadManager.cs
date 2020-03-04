@@ -1038,6 +1038,12 @@ namespace BuildSync.Core.Downloads
                                             long FileLength = (new FileInfo(Dst)).Length;
                                             long BytesCopiedStart = BytesCopied;
 
+                                            string Dir = Path.GetDirectoryName(Dst);
+                                            if (!Directory.Exists(Dir))
+                                            {
+                                                Directory.CreateDirectory(Dir);
+                                            }
+
                                             FileCopyEx.Copy(Src, Dst, true, true, (o, pce) =>
                                             {
                                                 BytesCopied = BytesCopiedStart + (long)(FileLength * (pce.ProgressPercentage / 100.0f));
