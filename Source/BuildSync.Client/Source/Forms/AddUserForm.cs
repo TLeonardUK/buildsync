@@ -20,8 +20,10 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using BuildSync.Core.Users;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Forms
 {
@@ -35,9 +37,28 @@ namespace BuildSync.Client.Forms
         public string Username = "";
 
         /// <summary>
+        /// 
         /// </summary>
-        public AddUserForm()
+        public List<string> PotentialUsers = new List<string>();
+
+        /// <summary>
+        /// </summary>
+        public AddUserForm(List<User> AllUsers)
         {
+            foreach (User user in AllUsers)
+            {
+                PotentialUsers.Add(user.Username);
+            }
+
+            List<string> DomainUsers = DomainUtils.GetDomainUsers();
+            foreach (string user in DomainUsers)
+            {
+                if (!PotentialUsers.Contains(user))
+                {
+                    PotentialUsers.Add(user);
+                }
+            }
+
             InitializeComponent();
         }
 
@@ -68,6 +89,15 @@ namespace BuildSync.Client.Forms
         {
             addGroupButton.Enabled = (nameTextBox.Text.Trim().Length > 0);
             Username = nameTextBox.Text;
+
+            potentialListView.Items.Clear();
+            foreach (string potential in PotentialUsers)
+            {
+                if (potential.ToLower().Contains(Username.ToLower()) || Username.Length == 0)
+                {
+                    potentialListView.Items.Add(potential, 0);
+                }
+            }
         }
 
         /// <summary>
@@ -78,6 +108,35 @@ namespace BuildSync.Client.Forms
         private void NameTextChanged(object sender, EventArgs e)
         {
             UpdateState();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnClickUser(object sender, EventArgs e)
+        {
+            /*if (potentialListView.SelectedItems.Count > 0)
+            {
+                nameTextBox.Text = potentialListView.SelectedItems[0].Text;
+            }*/
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnDoubleClickUser(object sender, EventArgs e)
+        {
+            if (potentialListView.SelectedItems.Count > 0)
+            {
+                nameTextBox.Text = potentialListView.SelectedItems[0].Text;
+
+                DialogResult = DialogResult.OK;
+                Close();
+            }
         }
     }
 }

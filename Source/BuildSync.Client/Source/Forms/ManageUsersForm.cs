@@ -66,6 +66,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
+        private List<User> AllUsers = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public ManageUsersForm()
         {
             InitializeComponent();
@@ -374,6 +379,7 @@ namespace BuildSync.Client.Forms
         /// <param name="Users"></param>
         private void UserListRecieved(List<User> Users, List<UserGroup> UserGroups)
         {
+            AllUsers = Users;
             RefreshUsers(Users, UserGroups);
         }
 
@@ -441,7 +447,7 @@ namespace BuildSync.Client.Forms
             // Add user.
             else if (Node.IsUser || Node.IsUserFolder)
             {
-                AddUserForm form = new AddUserForm();
+                AddUserForm form = new AddUserForm(AllUsers);
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
                     Program.NetClient.AddUserToUserGroup(Node.Group.Name, form.Username);

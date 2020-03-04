@@ -107,5 +107,18 @@ namespace BuildSync.Client.Forms
                 Buffer = "";
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnClearClicked(object sender, EventArgs e)
+        {
+            lock (BufferLock)
+            {
+                logTextBox.Clear();
+            }
+        }
     }
 }

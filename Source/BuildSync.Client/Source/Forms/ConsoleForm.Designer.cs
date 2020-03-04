@@ -32,10 +32,14 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConsoleForm));
             this.logTextBox = new System.Windows.Forms.TextBox();
             this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.mainContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.clearToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mainContextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // logTextBox
             // 
+            this.logTextBox.ContextMenuStrip = this.mainContextMenuStrip;
             this.logTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.logTextBox.Font = new System.Drawing.Font("Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.logTextBox.Location = new System.Drawing.Point(0, 0);
@@ -51,6 +55,22 @@
             // UpdateTimer
             // 
             this.UpdateTimer.Tick += new System.EventHandler(this.TimerTick);
+            // 
+            // mainContextMenuStrip
+            // 
+            this.mainContextMenuStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
+            this.mainContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.clearToolStripMenuItem});
+            this.mainContextMenuStrip.Name = "mainContextMenuStrip";
+            this.mainContextMenuStrip.Size = new System.Drawing.Size(110, 34);
+            // 
+            // clearToolStripMenuItem
+            // 
+            this.clearToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar1;
+            this.clearToolStripMenuItem.Name = "clearToolStripMenuItem";
+            this.clearToolStripMenuItem.Size = new System.Drawing.Size(109, 30);
+            this.clearToolStripMenuItem.Text = "Clear";
+            this.clearToolStripMenuItem.Click += new System.EventHandler(this.OnClearClicked);
             // 
             // ConsoleForm
             // 
@@ -69,6 +89,7 @@
             this.Text = "Console Window";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OnStartClosing);
             this.Shown += new System.EventHandler(this.OnShown);
+            this.mainContextMenuStrip.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -78,5 +99,7 @@
 
         private System.Windows.Forms.TextBox logTextBox;
         private System.Windows.Forms.Timer UpdateTimer;
+        private System.Windows.Forms.ContextMenuStrip mainContextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem clearToolStripMenuItem;
     }
 }

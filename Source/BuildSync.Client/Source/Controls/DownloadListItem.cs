@@ -579,6 +579,11 @@ namespace BuildSync.Client.Controls
                 }
             }
 
+            if (Downloader.Paused)
+            {
+                LaunchType = LaunchOption.Resume;
+            }
+
             int ImageIndex = 0;
             if      (LaunchType == LaunchOption.Launch) ImageIndex = 0;
             else if (LaunchType == LaunchOption.Resume) ImageIndex = 3;
