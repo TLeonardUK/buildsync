@@ -426,15 +426,15 @@ namespace BuildSync.Core.Networking
 
         /// <summary>
         /// </summary>
-        public static RateTracker GlobalBandwidthStats = new RateTracker(100);
+        public static RateTracker GlobalBandwidthStats = new RateTracker(200);
 
         /// <summary>
         /// </summary>
-        public static RateTracker GlobalPacketStats = new RateTracker(100);
+        public static RateTracker GlobalPacketStats = new RateTracker(200);
 
         /// <summary>
         /// </summary>
-        public RateTracker BandwidthStats = new RateTracker(100);
+        public RateTracker BandwidthStats = new RateTracker(200);
 
         /// <summary>
         /// </summary>

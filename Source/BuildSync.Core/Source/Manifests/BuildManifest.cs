@@ -122,6 +122,10 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
+        public uint[] SparseBlockChecksums;
+
+        /// <summary>
+        /// </summary>
         public long BlockCount;
 
         /// <summary>
@@ -214,6 +218,7 @@ namespace BuildSync.Core.Manifests
             Manifest.VirtualPath = VirtualPath;
             Manifest.BlockCount = BlockIndex;
             Manifest.BlockChecksums = new uint[Manifest.BlockCount];
+            Manifest.SparseBlockChecksums = new uint[Manifest.BlockCount];
 
             List<Task> ChecksumTasks = new List<Task>();
             int FileCounter = 0;
@@ -298,6 +303,7 @@ namespace BuildSync.Core.Manifests
                                 Manifest.GetBlockData(CalculateBlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
 
                                 Manifest.BlockChecksums[CalculateBlockIndex] = Crc32.Compute(Buffer, (int) BufferLength);
+                                Manifest.SparseBlockChecksums[CalculateBlockIndex] = Crc32.ComputeSparse(Buffer, (int)BufferLength);
 
                                 if (Callback != null)
                                 {

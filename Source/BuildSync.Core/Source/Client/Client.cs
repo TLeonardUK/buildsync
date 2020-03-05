@@ -24,6 +24,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
+using System.Diagnostics;
+using System.Threading;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Licensing;
 using BuildSync.Core.Manifests;
@@ -79,6 +81,38 @@ namespace BuildSync.Core.Client
     /// <summary>
     /// </summary>
     public delegate void ManifestDeleteResultRecievedHandler(Guid ManifestId);
+
+    /// <summary>
+    /// </summary>
+    public class Statistic_CpuUsage : Statistic
+    {
+        public Statistic_CpuUsage()
+        {
+            Name = @"Process\CPU Usage";
+            MaxLabel = "100";
+            MaxValue = 100;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = false;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public class Statistic_MemoryUsage : Statistic
+    {
+        public Statistic_MemoryUsage()
+        {
+            Name = @"Process\Memory Usage";
+            MaxLabel = "128 mb";
+            MaxValue = 128 * 1024 * 1024;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsSize = true;
+        }
+    }
 
     /// <summary>
     /// </summary>
@@ -522,6 +556,21 @@ namespace BuildSync.Core.Client
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        private PerformanceCounter ProcessCpuCounter;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private PerformanceCounter ProcessMemoryCounter;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ulong PerfCounterTimer = 0;
+
+        /// <summary>
         /// </summary>
         public Client()
         {
@@ -547,6 +596,9 @@ namespace BuildSync.Core.Client
             MemoryPool.PreallocateBuffers((int) BuildManifest.BlockSize, 128);
             MemoryPool.PreallocateBuffers(Crc32.BufferSize, 16);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
+
+            ProcessCpuCounter = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName, true);
+            ProcessMemoryCounter = new PerformanceCounter("Process", "Working Set", Process.GetCurrentProcess().ProcessName, true);
         }
 
         /// <summary>
@@ -846,7 +898,15 @@ namespace BuildSync.Core.Client
 
                 Statistic.Get<Statistic_ActiveBlockRequests>().AddSample(ActivePeerRequests);
                 Statistic.Get<Statistic_PendingBlockRequests>().AddSample(PendingBlockRequests);
-                
+
+                // Querying perf counter is super expensive, don't do it often.
+                if (TimeUtils.Ticks - PerfCounterTimer > 1000)
+                {
+                    Statistic.Get<Statistic_CpuUsage>().AddSample(ProcessCpuCounter.NextValue() / Environment.ProcessorCount);
+                    Statistic.Get<Statistic_MemoryUsage>().AddSample(ProcessMemoryCounter.NextValue());
+                    PerfCounterTimer = TimeUtils.Ticks;
+                }
+
                 BlockRequestFailureRate = 0;
                 BlockListUpdateRate = 0;
             }
@@ -1405,7 +1465,7 @@ namespace BuildSync.Core.Client
                     {
                         Msg.Cleanup();
 
-                        //Console.WriteLine("[Finished] BlockIndex={0} Manifest={1}", Msg.BlockIndex, Msg.ManifestId.ToString());
+                        Console.WriteLine("[Finished] BlockIndex={0} Manifest={1} bSuccess={2} From={3}", Msg.BlockIndex, Msg.ManifestId.ToString(), bSuccess, HostnameCache.GetHostname(Connection.Address.ToString()));
 
                         lock (DeferredActions)
                         {

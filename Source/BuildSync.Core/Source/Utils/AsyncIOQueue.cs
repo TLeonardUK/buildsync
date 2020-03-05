@@ -232,10 +232,11 @@ namespace BuildSync.Core.Utils
         {
             Read,
             Write,
-            DeleteDir
+            DeleteDir,
+            CloseStreamsInDir
         }
 
-        public static RateTracker GlobalBandwidthStats = new RateTracker(100);
+        public static RateTracker GlobalBandwidthStats = new RateTracker(200);
         public static RollingAverage InLatency = new RollingAverage(25);
 
         public static RollingAverage OutLatency = new RollingAverage(25);
@@ -292,36 +293,17 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// </summary>
         /// <param name="Folder"></param>
-        public bool CloseAllStreamsInDirectory(string Folder)
+        public void CloseAllStreamsInDirectory(string Folder)
         {
-            bool AllClosed = true;
+            AutoResetEvent Event = new AutoResetEvent(false);
 
-            lock (ActiveStreams)
-            {
-                for (int i = 0; i < ActiveStreams.Count; i++)
-                {
-                    ActiveStream Stm = ActiveStreams[i];
-                    if (Stm.Path.StartsWith(Folder))
-                    {
-                        if (Stm.ActiveOperations == 0)
-                        {
-                            Logger.Log(LogLevel.Info, LogCategory.IO, "Force closing stream for async queue: {0}", Stm.Path);
+            Interlocked.Increment(ref TaskQueueCount);
+            TaskQueue.Enqueue(new Task { Type = TaskType.CloseStreamsInDir, Path = Folder, Offset = 0, Size = 0, Data = null, DataOffset = 0, Callback = (bool bSuccess) => {
+                Event.Set();
+            }, QueueTime = TimeUtils.Ticks });
+            WakeThread();
 
-                            Stm.Stream.Close();
-
-                            ActiveStreams.RemoveAt(i);
-                            ActiveStreamsByPath.Remove(Stm.Path);
-                            i--;
-                        }
-                        else
-                        {
-                            AllClosed = false;
-                        }
-                    }
-                }
-            }
-
-            return AllClosed;
+            Event.WaitOne();
         }
 
         /// <summary>
@@ -397,6 +379,34 @@ namespace BuildSync.Core.Utils
                         ActiveStreams.RemoveAt(i);
                         ActiveStreamsByPath.Remove(Stm.Path);
                         i--;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void CloseStreamsWithStall(string Dir)
+        {
+            lock (ActiveStreams)
+            {
+                for (int i = 0; i < ActiveStreams.Count; i++)
+                {
+                    ActiveStream Stm = ActiveStreams[i];
+                    if (Stm.Path.StartsWith(Dir))
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.IO, "Stalling while draining queue while closing directory: '{0}'", Dir);
+
+                        // This is not ideal, we should remove this if practical, it wastes processing time.
+                        while (Stm.ActiveOperations > 0)
+                        {
+                            Thread.Sleep(0);
+                        }
+
+                        Stm.Stream.Close();
+                        ActiveStreams.Remove(Stm);
+                        ActiveStreamsByPath.Remove(Stm.Path);
                     }
                 }
             }
@@ -669,7 +679,7 @@ namespace BuildSync.Core.Utils
             {
                 try
                 {
-                    CloseAllStreamsInDirectory(Work.Path);
+                    CloseStreamsWithStall(Work.Path);
 
                     FileUtils.DeleteDirectory(Work.Path);
 
@@ -678,6 +688,19 @@ namespace BuildSync.Core.Utils
                 catch (Exception Ex)
                 {
                     Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to delete directory {0} with error: {1}", Work.Path, Ex.Message);
+                    Work.Callback?.Invoke(false);
+                }
+            }
+            else if (Work.Type == TaskType.CloseStreamsInDir)
+            {
+                try
+                {
+                    CloseStreamsWithStall(Work.Path);
+                    Work.Callback?.Invoke(true);
+                }
+                catch (Exception Ex)
+                {
+                    Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to close streams in directory {0} with error: {1}", Work.Path, Ex.Message);
                     Work.Callback?.Invoke(false);
                 }
             }

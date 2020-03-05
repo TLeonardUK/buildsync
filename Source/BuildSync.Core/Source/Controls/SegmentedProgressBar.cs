@@ -33,6 +33,8 @@ using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Controls
 {
+    // TODO: Make this dirtyable, so we don't refresh unneccessarily.
+
     /// <summary>
     /// 
     /// </summary>
@@ -86,6 +88,11 @@ namespace BuildSync.Core.Controls
             /// <summary>
             /// 
             /// </summary>
+            internal Font CachedFont = SystemFonts.DefaultFont;
+
+            /// <summary>
+            /// 
+            /// </summary>
             internal LinearGradientBrush CachedFillBrush = null;
         }
 
@@ -120,6 +127,7 @@ namespace BuildSync.Core.Controls
                 segment.CachedDarkColor = Color.FromArgb(255, (int)(segment.Color.R * 0.98f), (int)(segment.Color.G * 0.98f), (int)(segment.Color.B * 0.98f));
                 segment.CachedFillBrush = new LinearGradientBrush(new PointF(x, y), new PointF(x, y + height), segment.CachedLightColor, segment.CachedDarkColor);
                 segment.CachedColor = segment.Color;
+                segment.CachedFont = SystemFonts.DefaultFont;
             }
 
             segment.LerpedProgress = (segment.Progress * 0.5f) + (segment.LerpedProgress * 0.5f);
@@ -128,8 +136,8 @@ namespace BuildSync.Core.Controls
             graphics.FillRectangle(segment.CachedFillBrush, x, y, width * segment.LerpedProgress, height);
             graphics.DrawRectangle(SystemPens.ActiveBorder, x, y, width, height);
 
-            SizeF TextSize = graphics.MeasureString(segment.Text, SystemFonts.DefaultFont);
-            graphics.DrawString(segment.Text, SystemFonts.DefaultFont, SystemBrushes.GrayText, x + (width * 0.5f) - (TextSize.Width * 0.5f), y + (height * 0.5f) - (TextSize.Height * 0.5f));
+            SizeF TextSize = graphics.MeasureString(segment.Text, segment.CachedFont);
+            graphics.DrawString(segment.Text, segment.CachedFont, SystemBrushes.GrayText, x + (width * 0.5f) - (TextSize.Width * 0.5f), y + (height * 0.5f) - (TextSize.Height * 0.5f));
         }
 
         /// <summary>

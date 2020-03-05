@@ -90,6 +90,26 @@ namespace BuildSync.Core.Utils
             return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, Length);
         }
 
+        public static uint ComputeSparse(byte[] buffer)
+        {
+            return ComputeSparse(buffer, buffer.Length);
+        }
+
+        public static uint ComputeSparse(byte[] buffer, int Length)
+        {
+            return ComputeSparse(DefaultSeed, buffer, Length);
+        }
+
+        public static uint ComputeSparse(uint seed, byte[] buffer, int Length)
+        {
+            return ComputeSparse(DefaultPolynomial, seed, buffer, Length);
+        }
+
+        public static uint ComputeSparse(uint polynomial, uint seed, byte[] buffer, int Length)
+        {
+            return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, Length, Length / 20);
+        }
+
         /// <summary>
         /// </summary>
         /// <param name="Algo"></param>
@@ -142,14 +162,13 @@ namespace BuildSync.Core.Utils
             return hashBuffer;
         }
 
-        private static uint CalculateHash(uint[] table, uint seed, IList<byte> buffer, int start, int size)
+        private static uint CalculateHash(uint[] table, uint seed, IList<byte> buffer, int start, int size, int step = 1)
         {
             uint hash = seed;
-            for (int i = start; i < start + size; i++)
+            for (int i = start; i < start + size; i += step)
             {
                 hash = (hash >> 8) ^ table[buffer[i] ^ (hash & 0xff)];
             }
-
             return hash;
         }
 

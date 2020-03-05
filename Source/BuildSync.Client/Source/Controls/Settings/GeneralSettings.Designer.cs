@@ -152,6 +152,7 @@
 			this.autoFixValidationErrorsCheckBox.TabIndex = 42;
 			this.autoFixValidationErrorsCheckBox.Text = "Automatically fix validation errors?";
 			this.autoFixValidationErrorsCheckBox.UseVisualStyleBackColor = true;
+			this.autoFixValidationErrorsCheckBox.CheckedChanged += new System.EventHandler(this.StateChanged);
 			// 
 			// GeneralSettings
 			// 

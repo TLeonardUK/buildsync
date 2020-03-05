@@ -198,7 +198,7 @@ namespace BuildSync.Core.Utils
         {
             // Calculate bandwidth.
             ulong Elapsed = TimeUtils.Ticks - BandwidthTimeStart;
-            if (Elapsed > 250)
+            if (Elapsed >= 1000)
             {
                 if (BandwidthTimeStart == 0)
                 {

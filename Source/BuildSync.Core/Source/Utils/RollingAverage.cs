@@ -31,15 +31,26 @@ namespace BuildSync.Core.Utils
     public class RollingAverage
     {
         private readonly int MaxSamples;
+        private readonly int MaxStdDevSamples;
         private readonly List<double> Values = new List<double>();
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="SampleCount"></param>
-        public RollingAverage(int SampleCount)
+        public RollingAverage(int SampleCount, int StdDevSamples = 0)
         {
             MaxSamples = SampleCount;
+
+            // We only generate stddev from most recent values, so if values change dramatically in a short period we filter old values out.
+            if (StdDevSamples == 0)
+            {
+                MaxStdDevSamples = SampleCount;
+            }
+            else
+            {
+                MaxStdDevSamples = StdDevSamples;
+            }
         }
 
         /// <summary>
@@ -67,8 +78,8 @@ namespace BuildSync.Core.Utils
             double Result = 0;
             lock (Values)
             {
-                double StdDeviation = GetStandardDeviation();
-                double Mean = GetMean();
+                double StdDeviation = GetStandardDeviation() / 2;
+                double Mean = GetStdDevMean();
                 double Total = 0;
                 int Samples = 0;
                 for (int i = 0; i < Values.Count; i++)
@@ -94,15 +105,21 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <returns></returns>
-        public double GetMean()
+        public double GetStdDevMean()
         {
+            int Count = Math.Min(Values.Count, MaxStdDevSamples);
+            if (Count == 0)
+            {
+                return 0.0;
+            }
+
             double Total = 0.0f;
-            for (int i = 0; i < Values.Count; i++)
+            for (int i = Values.Count - Count; i < Values.Count; i++)
             {
                 Total += Values[i];
             }
 
-            return Total / Values.Count;
+            return Total / Count;
         }
 
         /// <summary>
@@ -112,22 +129,35 @@ namespace BuildSync.Core.Utils
         /// <returns></returns>
         public double GetStandardDeviation(bool as_sample = false)
         {
+            int Count = Math.Min(Values.Count, MaxStdDevSamples);
+            if (Count == 0)
+            {
+                return 0.0;
+            }
+
+            double Sum = 0.0;
+            for (int i = Values.Count - Count; i < Values.Count; i++)
+            {
+                Sum += Values[i];
+            }
+
             // Get the mean.
-            double mean = Values.Sum() / Values.Count();
+            double mean = Sum / Count;
 
             // Get the sum of the squares of the differences
             // between the values and the mean.
-            IEnumerable<double> squares_query =
-                from double value in Values
-                select (value - mean) * (value - mean);
-            double sum_of_squares = squares_query.Sum();
+            double sum_of_squares = 0.0f;
+            for (int i = Values.Count - Count; i < Values.Count; i++)
+            {
+                sum_of_squares += (Values[i] - mean) * (Values[i] - mean);
+            }
 
             if (as_sample)
             {
-                return Math.Sqrt(sum_of_squares / (Values.Count() - 1));
+                return Math.Sqrt(sum_of_squares / (Count - 1));
             }
 
-            return Math.Sqrt(sum_of_squares / Values.Count());
+            return Math.Sqrt(sum_of_squares / Count);
         }
     }
 }

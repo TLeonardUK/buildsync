@@ -82,17 +82,17 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         [NonSerialized]
-        public RateTracker BandwidthStats = new RateTracker(1000);
+        public RateTracker BandwidthStats = new RateTracker(200);
 
         /// <summary>
         /// </summary>
         [NonSerialized]
-        public RateTracker InitializeRateStats = new RateTracker(1000);
+        public RateTracker InitializeRateStats = new RateTracker(200);
 
         /// <summary>
         /// </summary>
         [NonSerialized]
-        public RateTracker DeltaCopyRateStats = new RateTracker(1000);
+        public RateTracker DeltaCopyRateStats = new RateTracker(200);
 
         /// <summary>
         /// </summary>
@@ -123,7 +123,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         [NonSerialized]
-        public RateTracker ValidateRateStats = new RateTracker(1000);
+        public RateTracker ValidateRateStats = new RateTracker(200);
 
         /// <summary>
         /// </summary>
