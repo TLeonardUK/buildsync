@@ -107,7 +107,7 @@ namespace BuildSync.Core.Utils
 
         public static uint ComputeSparse(uint polynomial, uint seed, byte[] buffer, int Length)
         {
-            return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, Length, Length / 20);
+            return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, Length, Length / 100);
         }
 
         /// <summary>
