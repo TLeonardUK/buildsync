@@ -50,9 +50,9 @@ namespace BuildSync.Core.Utils
             string domainName = Environment.UserDomainName;
             try
             {
-                domainName = Domain.GetComputerDomain().Name;
+                /*domainName = */Domain.GetComputerDomain();
             }
-            catch (ActiveDirectoryObjectNotFoundException ex)
+            catch (Exception ex)
             {
                 // We are not part of a domain :|
                 isInDomain = false;
@@ -60,14 +60,14 @@ namespace BuildSync.Core.Utils
 
             if (isInDomain)
             {
-                using (var context = new PrincipalContext(ContextType.Domain, Environment.UserDomainName))
+                using (var context = new PrincipalContext(ContextType.Domain, domainName))
                 {
                     using (var searcher = new PrincipalSearcher(new UserPrincipal(context)))
                     {
                         foreach (var result in searcher.FindAll())
                         {
                             DirectoryEntry de = result.GetUnderlyingObject() as DirectoryEntry;
-                            Result.Add(de.Properties["samAccountName"].Value.ToString());
+                            Result.Add(domainName + @"\" + de.Properties["samAccountName"].Value.ToString());
                         }
                     }
                 }

@@ -59,6 +59,8 @@ namespace BuildSync.Client.Forms
                 }
             }
 
+            PotentialUsers.Sort();
+
             InitializeComponent();
         }
 
