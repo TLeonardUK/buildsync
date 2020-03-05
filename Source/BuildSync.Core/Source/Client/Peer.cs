@@ -309,6 +309,8 @@ namespace BuildSync.Core.Client
 
                             Download.Recieved = true;
                             ActiveBlockDownloads[i] = Download;
+
+                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Pruned active download as it timed out: manifest={0} block={1}", Download.ManifestId.ToString(), Download.BlockIndex);
                         }
 
                         ActiveBlockDownloads.RemoveAt(i);

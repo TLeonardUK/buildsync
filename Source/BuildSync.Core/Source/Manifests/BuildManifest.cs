@@ -117,6 +117,11 @@ namespace BuildSync.Core.Manifests
         public static long BlockSize = 1 * 1024 * 1024;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public static long MaxSubBlockCount = long.MaxValue;
+
+        /// <summary>
         /// </summary>
         public uint[] BlockChecksums;
 
@@ -193,13 +198,16 @@ namespace BuildSync.Core.Manifests
                 long BytesRemaining = (Info.Length % BlockSize) == 0 ? 0 : BlockSize - Info.Length % BlockSize;
                 BlockIndex += BlockCount;
 
+                long SubBlockCount = BlockCount;
+
                 // Try and fit some smaller files into the remaining block space.
-                for (int i = 0; i < RemainingFiles.Count && BytesRemaining > 0; i++)
+                for (int i = 0; i < RemainingFiles.Count && BytesRemaining > 0 && SubBlockCount < MaxSubBlockCount; i++)
                 {
                     FileInfo PotentialFile = RemainingFiles[i];
                     if (PotentialFile.Length <= BytesRemaining)
                     {
                         BytesRemaining -= PotentialFile.Length;
+                        SubBlockCount++;
 
                         //Console.WriteLine("\tSubblock[{0}] {1}", BlockIndex, PotentialFile.Name);
 
@@ -706,7 +714,7 @@ namespace BuildSync.Core.Manifests
 
                 // Fill remaining space with blocks.
                 Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BuildManifest.BlockSize);
-                while (BytesRemaining > 0 && fi < Files.Count)
+                while (BytesRemaining > 0 && fi < Files.Count && BlockInfo[LastBlockIndex].SubBlocks.Count < BuildManifest.MaxSubBlockCount)
                 {
                     BuildManifestFileInfo NextInfo = Files[fi];
                     if (NextInfo.Size > BytesRemaining)

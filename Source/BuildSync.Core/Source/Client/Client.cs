@@ -1465,7 +1465,7 @@ namespace BuildSync.Core.Client
                     {
                         Msg.Cleanup();
 
-                        Console.WriteLine("[Finished] BlockIndex={0} Manifest={1} bSuccess={2} From={3}", Msg.BlockIndex, Msg.ManifestId.ToString(), bSuccess, HostnameCache.GetHostname(Connection.Address.ToString()));
+                        //Console.WriteLine("[Finished] BlockIndex={0} Manifest={1} bSuccess={2} From={3}", Msg.BlockIndex, Msg.ManifestId.ToString(), bSuccess, HostnameCache.GetHostname(Connection.Address.ToString()));
 
                         lock (DeferredActions)
                         {
@@ -1475,7 +1475,7 @@ namespace BuildSync.Core.Client
                                     // Mark block as complete.
                                     if (bSuccess)
                                     {
-                                        ManifestDownloadManager.MarkBlockAsComplete(Msg.ManifestId, Msg.BlockIndex);
+                                        ManifestDownloadManager.MarkBlockAsComplete(Msg.ManifestId, Msg.BlockIndex, true);
                                     }
 
                                     // Remove active download marker for this block.

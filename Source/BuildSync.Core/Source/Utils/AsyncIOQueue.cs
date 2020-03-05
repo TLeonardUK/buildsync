@@ -236,7 +236,7 @@ namespace BuildSync.Core.Utils
             CloseStreamsInDir
         }
 
-        public static RateTracker GlobalBandwidthStats = new RateTracker(200);
+        public static RateTracker GlobalBandwidthStats = new RateTracker(30);
         public static RollingAverage InLatency = new RollingAverage(25);
 
         public static RollingAverage OutLatency = new RollingAverage(25);
@@ -248,12 +248,12 @@ namespace BuildSync.Core.Utils
         private static long GlobalQueuedOut;
 
         private const int MaxStreamAge = 10 * 1000;
-        private const int MaxStreams = 8;
+        private const int MaxStreams = 128;
 
         private const int StreamBufferSize = 64 * 1024; // StreamMaxConcurrentOps * AverageStreamOpSizeHeuristic;
 
         //private const int StreamMaxConcurrentOps = 20;
-        private const int StreamMaxConcurrentOps = 8;
+        private const int StreamMaxConcurrentOps = 16;
 
         private readonly List<ActiveStream> ActiveStreams = new List<ActiveStream>();
         private readonly Dictionary<string, ActiveStream> ActiveStreamsByPath = new Dictionary<string, ActiveStream>();
@@ -467,7 +467,7 @@ namespace BuildSync.Core.Utils
 
                     if (OldestStream == null)
                     {
-                        Thread.Sleep(1);
+                        Thread.Sleep(0);
                     }
                     else
                     {
@@ -665,6 +665,8 @@ namespace BuildSync.Core.Utils
             {
                 Interlocked.Increment(ref Stm.ActiveOperations);
 
+                Logger.Log(LogLevel.Info, LogCategory.IO, "Reading: offset={0} length={1} path={2}", Work.Offset, Work.Size, Work.Path);
+
 #if EMULATE_IO
                 GlobalBandwidthStats.Out(Work.Size);
 
@@ -754,6 +756,11 @@ namespace BuildSync.Core.Utils
 
                 watch.Stop();
                 TaskProcessTime.Add(watch.ElapsedMilliseconds);
+
+                if (watch.ElapsedMilliseconds > 1000)
+                {
+                    Console.WriteLine("Took {0}ms to run: {1}", watch.ElapsedMilliseconds, NewTask.Type.ToString());
+                }
             }
         }
 

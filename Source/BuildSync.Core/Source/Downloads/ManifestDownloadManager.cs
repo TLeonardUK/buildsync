@@ -20,6 +20,7 @@
 */
 
 //#define CHECKSUM_EACH_BLOCK
+#define SPARSE_CHECKSUM_EACH_BLOCK
 //#define CONSTANT_REDOWNLOAD
 //#define LARGE_DOWNLOAD_QUEUE
 
@@ -509,13 +510,13 @@ namespace BuildSync.Core.Downloads
             State.ManifestId = Manifest.Guid;
             State.Priority = 2;
             State.Manifest = Manifest;
-            State.State = Available ? ManifestDownloadProgressState.Complete : ManifestDownloadProgressState.Validating;
+            State.State = ManifestDownloadProgressState.Complete;
             State.LocalFolder = Path.Combine(StorageRootPath, State.ManifestId.ToString());
             State.LastActive = DateTime.Now;
 
             // We have everything.
             State.BlockStates.Resize((int) Manifest.BlockCount);
-            State.BlockStates.SetAll(true);
+            State.BlockStates.SetAll(Available);
 
             StoreFileCompletedStates(State);
 
@@ -1596,6 +1597,11 @@ namespace BuildSync.Core.Downloads
 
             byte[] DataBuffer = Data.Data;
 
+            if (BlockInfo.SubBlocks.Count > 50)
+            {
+                Console.WriteLine("Requesting: {0} subblocks", BlockInfo.SubBlocks.Count);
+            }
+
             for (int i = 0; i < BlockInfo.SubBlocks.Count; i++)
             {
                 BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
@@ -1633,23 +1639,27 @@ namespace BuildSync.Core.Downloads
                         {
                             // Checksum block to make sure nobody has balls it up.
 #if CHECKSUM_EACH_BLOCK
-                        if (State.Manifest.BlockChecksums != null)
-                        {
-                            if (Crc32.Compute(DataBuffer, (int)BlockInfo.TotalSize) != State.Manifest.BlockChecksums[BlockIndex])
+                            if (State.Manifest.BlockChecksums != null)
                             {
-                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum, failed to get block data.", BlockIndex, ManifestId.ToString());
-                                WriteState.WasSuccess = false;
+                                uint Checksum = Crc32.Compute(DataBuffer, (int)BlockInfo.TotalSize);
+                                uint ExpectedChecksum = State.Manifest.BlockChecksums[BlockIndex];
+                                if (Checksum != ExpectedChecksum)
+                                {
+                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to get block data.", BlockIndex, ManifestId.ToString(), Checksum, ExpectedChecksum);
+                                    WriteState.WasSuccess = false;
+                                }
                             }
-                        }
-#else
-                        if (State.Manifest.SparseBlockChecksums != null)
-                        {
-                            if (Crc32.ComputeSparse(DataBuffer, (int)BlockInfo.TotalSize) != State.Manifest.SparseBlockChecksums[BlockIndex])
+#elif SPARSE_CHECKSUM_EACH_BLOCK
+                            if (State.Manifest.SparseBlockChecksums != null)
                             {
-                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum, failed to get block data.", BlockIndex, ManifestId.ToString());
-                                WriteState.WasSuccess = false;
+                                uint Checksum = Crc32.ComputeSparse(DataBuffer, (int)BlockInfo.TotalSize);
+                                uint ExpectedChecksum = State.Manifest.SparseBlockChecksums[BlockIndex];
+                                if (Checksum != ExpectedChecksum)
+                                {
+                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to get block data.", BlockIndex, ManifestId.ToString(), Checksum, ExpectedChecksum);
+                                    WriteState.WasSuccess = false;
+                                }
                             }
-                        }
 #endif
 
                             RecordBlockChange(ManifestId, BlockIndex, ManifestBlockChangeType.Upload);
@@ -1712,7 +1722,7 @@ namespace BuildSync.Core.Downloads
                 uint Checksum = Crc32.Compute(Data.Data, (int)Data.Length);
                 if (Checksum != State.Manifest.BlockChecksums[BlockIndex])
                 {
-                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "FAILED: Block index {0} in manifest {1} failed checksum, failed to set block data, wanted checksum {2} got {3}.", BlockIndex, ManifestId.ToString(), State.Manifest.BlockChecksums[BlockIndex], Checksum);
+                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "FAILED: Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to set block data.", BlockIndex, ManifestId.ToString(), State.Manifest.BlockChecksums[BlockIndex], Checksum);
                     WriteState.WasSuccess = false;
                     Callback?.Invoke(WriteState.WasSuccess);
                     return false;
@@ -1722,13 +1732,13 @@ namespace BuildSync.Core.Downloads
                     Logger.Log(LogLevel.Info, LogCategory.Manifest, "SUCCESS: Block index {0} in manifest {1}", BlockIndex, ManifestId.ToString());
                 }
             }
-#else
+#elif SPARSE_CHECKSUM_EACH_BLOCK
             if (State.Manifest.SparseBlockChecksums != null)
             {
                 uint Checksum = Crc32.ComputeSparse(Data.Data, (int)Data.Length);
                 if (Checksum != State.Manifest.SparseBlockChecksums[BlockIndex])
                 {
-                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum, failed to set block data, wanted checksum {2} got {3}.", BlockIndex, ManifestId.ToString(), State.Manifest.SparseBlockChecksums[BlockIndex], Checksum);
+                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to set block data.", BlockIndex, ManifestId.ToString(), State.Manifest.SparseBlockChecksums[BlockIndex], Checksum);
                     WriteState.WasSuccess = false;
                     Callback?.Invoke(WriteState.WasSuccess);
                     return false;
@@ -1768,12 +1778,18 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         /// <param name="ManifestId"></param>
-        public void MarkBlockAsComplete(Guid ManifestId, int BlockIndex)
+        public void MarkBlockAsComplete(Guid ManifestId, int BlockIndex, bool OnlyIfDownloading = false)
         {
             ManifestDownloadState State = GetDownload(ManifestId);
             if (State == null)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block from manifest we do not have.");
+                return;
+            }
+
+            if (State.State != ManifestDownloadProgressState.Downloading && OnlyIfDownloading)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Attempting to mark manifest block as complete, but manifest is not in a download state.");
                 return;
             }
 
