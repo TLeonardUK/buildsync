@@ -71,6 +71,89 @@ namespace BuildSync.Core.Downloads
     }
 
     /// <summary>
+    /// 
+    /// </summary>
+    [Serializable]
+    public class DownloadStateDurationValue
+    { 
+        public ManifestDownloadProgressState State { get; set; }
+        public ulong Elapsed { get; set; }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [Serializable]
+    public class DownloadStateDuration
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public long TotalSize { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<DownloadStateDurationValue> Values { get; set; } = new List<DownloadStateDurationValue>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <returns></returns>
+        public ulong GetDuration(ManifestDownloadProgressState State)
+        {
+            foreach (DownloadStateDurationValue val in Values)
+            {
+                if (val.State == State)
+                {
+                    return val.Elapsed;
+                }
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <returns></returns>
+        public bool HasDuration(ManifestDownloadProgressState State)
+        {
+            foreach (DownloadStateDurationValue val in Values)
+            {
+                if (val.State == State)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <returns></returns>
+        public void SetDuration(ManifestDownloadProgressState State, ulong NewValue)
+        {
+            foreach (DownloadStateDurationValue val in Values)
+            {
+                if (val.State == State)
+                {
+                    val.Elapsed = NewValue;
+                    return;
+                }
+            }
+
+            DownloadStateDurationValue New = new DownloadStateDurationValue();
+            New.State = State;
+            New.Elapsed = NewValue;
+            Values.Add(New);
+        }
+    }
+
+    /// <summary>
     /// </summary>
     [Serializable]
     public class DownloadState
@@ -138,6 +221,21 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         public string VirtualPath { get; set; } = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<DownloadStateDuration> DurationHistory { get; set; } = new List<DownloadStateDuration>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DownloadStateDuration PendingDurationHistory { get; set; } = null;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ulong PendingDurationTimer = 0;
 
         /// <summary>
         /// </summary>

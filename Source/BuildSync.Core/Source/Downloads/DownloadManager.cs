@@ -442,6 +442,42 @@ namespace BuildSync.Core.Downloads
                     }
 
                     State.PreviousDownloaderState = Downloader.State;
+
+                    // Store the amount of time the download is in each state to make
+                    // time estimates a bit better.
+                    if (Downloader.State != ManifestDownloadProgressState.Complete && !State.Paused && Downloader.Manifest != null && bHasConnection)
+                    {
+                        if (State.PendingDurationHistory == null)
+                        {
+                            State.PendingDurationHistory = new DownloadStateDuration();
+                            State.PendingDurationHistory.TotalSize = Downloader.Manifest.GetTotalSize();
+                        }
+
+                        ulong CurrentTime = TimeUtils.Ticks;
+                        if (State.PendingDurationTimer > 0)
+                        {
+                            ulong Elapsed = TimeUtils.Ticks - State.PendingDurationTimer;
+                            ulong StartTime = State.PendingDurationHistory.GetDuration(Downloader.State);
+                            ulong NewTime = StartTime + Elapsed;
+                            State.PendingDurationHistory.SetDuration(Downloader.State, NewTime);
+                            //Console.WriteLine("State:{0} Time:{1}", Downloader.State.ToString(), StringUtils.FormatAsDuration((long)State.PendingDurationHistory.StateDurations[Downloader.State] / 1000));
+                        }
+                        State.PendingDurationTimer = CurrentTime;
+                    }
+                    else if (Downloader.State == ManifestDownloadProgressState.Complete)
+                    {
+                        if (State.PendingDurationHistory != null)
+                        {
+                            State.DurationHistory.Add(State.PendingDurationHistory);
+                            State.PendingDurationHistory = null;
+
+                            // Only keep a few history entries.
+                            while (State.DurationHistory.Count > 15)
+                            {
+                                State.DurationHistory.RemoveAt(0);
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -468,6 +504,158 @@ namespace BuildSync.Core.Downloads
                     Downloader.LastActive = DateTime.Now;
                 }
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <param name="TotalDownloadSize"></param>
+        /// <param name="CurrentProgress"></param>
+        public long GetEstimatedTimeRemainingForState(DownloadState State, ManifestDownloadProgressState ProgressState)
+        {
+            double DurationSum = 0;
+            int SumCount = 0;
+            long TotalSize = 0;
+
+            double RawEstimateSeconds = 0.0f;
+            double RawProgress = 0.0f;
+
+            double CurrentStateDuration = 0.0f;
+
+            if (State.PendingDurationHistory != null)
+            {
+                CurrentStateDuration = State.PendingDurationHistory.GetDuration(ProgressState);
+            }
+
+            ManifestDownloadState Downloader = ManifestDownloader.GetDownload(State.ActiveManifestId);
+            if (Downloader != null && Downloader.Manifest != null)
+            {
+                TotalSize = Downloader.Manifest.GetTotalSize();
+
+                // Calculate raw estimate based on speeds and data remaining.
+                switch (Downloader.State)
+                {
+                    case ManifestDownloadProgressState.Initializing:
+                    {
+                        RawEstimateSeconds = Downloader.InitializeBytesRemaining / (double)Downloader.InitializeRateStats.RateIn;
+                        RawProgress = Downloader.InitializeProgress;
+                        if (Downloader.InitializeRateStats.RateIn == 0)
+                        {
+                            RawEstimateSeconds = 0;
+                        }
+                        break;
+                    }
+                    case ManifestDownloadProgressState.DeltaCopying:
+                    {
+                        RawEstimateSeconds = Downloader.DeltaCopyBytesRemaining / (double)Downloader.DeltaCopyRateStats.RateIn;
+                        RawProgress = Downloader.DeltaCopyProgress;
+                        if (Downloader.DeltaCopyRateStats.RateIn == 0)
+                        {
+                            RawEstimateSeconds = 0;
+                        }
+                        break;
+                    }
+                    case ManifestDownloadProgressState.Validating:
+                    {
+                        RawEstimateSeconds = Downloader.ValidateBytesRemaining / (double)Downloader.ValidateRateStats.RateOut;
+                        RawProgress = Downloader.ValidateProgress;
+                        if (Downloader.ValidateRateStats.RateOut == 0)
+                        {
+                            RawEstimateSeconds = 0;
+                        }
+                        break;
+                    }
+                    case ManifestDownloadProgressState.Downloading:
+                    {
+                        RawEstimateSeconds = Downloader.BytesRemaining / (double)Downloader.BandwidthStats.RateIn;
+                        RawProgress = Downloader.Progress;
+                        if (Downloader.BandwidthStats.RateIn == 0)
+                        {
+                            RawEstimateSeconds = 0;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Calculate average historic duration adjusted to the difference in download size.
+            foreach (DownloadStateDuration Duration in State.DurationHistory)
+            {
+                if (Duration.HasDuration(ProgressState))
+                {
+                    ulong Unadjusted = Duration.GetDuration(ProgressState);
+                    float Adjustment = TotalSize == 0 ? 1.0f : (float)Duration.TotalSize / (float)TotalSize;
+                    ulong AdjustedDuration = (ulong)(Unadjusted * Adjustment);
+
+                    DurationSum += AdjustedDuration;
+                    SumCount++;
+                }
+            }
+
+            if (SumCount != 0)
+            {
+                double Historic = Math.Max(0, (DurationSum / SumCount) - CurrentStateDuration) / 1000.0f;// ((DurationSum / SumCount) * (1.0f - RawProgress)) / 1000.0f;
+                double Combined = (Historic * 0.75f) + (RawEstimateSeconds * 0.25f);
+
+                return (long)Combined;
+
+            }
+            else
+            {
+                return (long)RawEstimateSeconds;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <param name="TotalDownloadSize"></param>
+        /// <param name="CurrentProgress"></param>
+        public long GetEstimatedTimeRemaining(DownloadState State)
+        {
+            ulong SumCount = 0;
+            ulong SumValue = 0;
+            long TotalSize = 0;
+
+            ManifestDownloadState Downloader = ManifestDownloader.GetDownload(State.ActiveManifestId);
+            if (Downloader != null && Downloader.Manifest != null)
+            {
+                TotalSize = Downloader.Manifest.GetTotalSize();
+            }
+
+            foreach (DownloadStateDuration Duration in State.DurationHistory)
+            {
+                if (Duration.Values.Count > 0)
+                {
+                    ulong Unadjusted = 0;
+
+                    foreach (DownloadStateDurationValue Value in Duration.Values)
+                    {
+                        Unadjusted += Value.Elapsed;
+                    }
+
+                    float Adjustment = TotalSize == 0 ? 1.0f : (float)Duration.TotalSize / (float)TotalSize;
+                    ulong AdjustedDuration = (ulong)(Unadjusted * Adjustment);
+
+                    SumValue += AdjustedDuration;
+                    SumCount++;
+                }
+            }
+
+            ulong AverageDuration = SumCount == 0 ? 0 : (SumValue / SumCount);
+            ulong CurrentElapsed = 0;
+
+            if (State.PendingDurationHistory != null)
+            {
+                foreach (DownloadStateDurationValue Value in State.PendingDurationHistory.Values)
+                {
+                    CurrentElapsed += Value.Elapsed;
+                }
+            }
+
+            return (Math.Max(0, (long)AverageDuration - (long)CurrentElapsed) / 1000);
         }
 
         /// <summary>

@@ -1049,14 +1049,14 @@ namespace BuildSync.Core.Downloads
                                                 BytesCopied = BytesCopiedStart + (long)(FileLength * (pce.ProgressPercentage / 100.0f));
 
                                                 State.DeltaCopyProgress = BytesCopied / (float)TotalSize;
-                                                State.DeltaCopyRateStats.In(BytesCopied - State.InitializeRateStats.TotalIn);
+                                                State.DeltaCopyRateStats.In(BytesCopied - State.DeltaCopyRateStats.TotalIn);
                                                 State.DeltaCopyBytesRemaining = TotalSize - BytesCopied;
                                             });
 
                                             BytesCopied = BytesCopiedStart + FileLength;
 
                                             State.DeltaCopyProgress = BytesCopied / (float)TotalSize;
-                                            State.DeltaCopyRateStats.In(BytesCopied - State.InitializeRateStats.TotalIn);
+                                            State.DeltaCopyRateStats.In(BytesCopied - State.DeltaCopyRateStats.TotalIn);
                                             State.DeltaCopyBytesRemaining = TotalSize - BytesCopied;
                                         }
 

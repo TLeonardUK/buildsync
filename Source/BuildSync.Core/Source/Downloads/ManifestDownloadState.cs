@@ -82,7 +82,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         [NonSerialized]
-        public RateTracker BandwidthStats = new RateTracker(100);
+        public RateTracker BandwidthStats = new RateTracker(1000);
 
         /// <summary>
         /// </summary>

@@ -206,7 +206,7 @@ namespace BuildSync.Client.Controls
             Color FinishedColor = Color.FromArgb(255, 128, 216, 127); // Green
 
             // Update allocation progress.
-            if (AllocatingSegment != null)
+            if (AllocatingSegment != null && Downloader != null)
             {
                 switch (Downloader.State)
                 {
@@ -240,7 +240,7 @@ namespace BuildSync.Client.Controls
             }
 
             // Update copying progress.
-            if (CopyingSegment != null)
+            if (CopyingSegment != null && Downloader != null)
             {
                 switch (Downloader.State)
                 {
@@ -273,7 +273,7 @@ namespace BuildSync.Client.Controls
             }
 
             // Update downloading progress.
-            if (DowloadingSegment != null)
+            if (DowloadingSegment != null && Downloader != null)
             {
                 switch (Downloader.State)
                 {
@@ -311,7 +311,7 @@ namespace BuildSync.Client.Controls
             }
 
             // Update validating progress.
-            if (ValidatingSegment != null)
+            if (ValidatingSegment != null && Downloader != null)
             {
                 switch (Downloader.State)
                 {
@@ -349,7 +349,7 @@ namespace BuildSync.Client.Controls
             }
 
             // Update installing progress.
-            if (InstallingSegment != null)
+            if (InstallingSegment != null && Downloader != null)
             {
                 switch (Downloader.State)
                 {
@@ -439,59 +439,26 @@ namespace BuildSync.Client.Controls
                             break;
                         }
                         case ManifestDownloadProgressState.Initializing:
-                        {
-                            double SecondsToInitialize = Downloader.InitializeBytesRemaining / (double) Downloader.InitializeRateStats.RateIn;
-                            if (Downloader.InitializeRateStats.RateIn == 0)
-                            {
-                                SecondsToInitialize = 0;
-                            }
-
-                            Status = string.Format("{0}", StringUtils.FormatAsDuration((long) SecondsToInitialize));         
-                            StatusColor = StateColoring.Info;
-                            BuildInfo = Downloader.Manifest.VirtualPath;
-                            break;
-                        }
                         case ManifestDownloadProgressState.DeltaCopying:
-                        {
-                            double SecondsToInitialize = Downloader.DeltaCopyBytesRemaining / (double)Downloader.DeltaCopyRateStats.RateIn;
-                            if (Downloader.DeltaCopyRateStats.RateIn == 0)
-                            {
-                                SecondsToInitialize = 0;
-                            }
-
-                            Status = string.Format("{0}", StringUtils.FormatAsDuration((long)SecondsToInitialize));                
-                            StatusColor = StateColoring.Info;
-                            BuildInfo = Downloader.Manifest.VirtualPath;
-                            break;
-                        }
                         case ManifestDownloadProgressState.Validating:
-                        {
-                            long SecondsToValidate = (long) (Downloader.ValidateBytesRemaining / (double) Downloader.ValidateRateStats.RateOut);
-                            if (Downloader.ValidateRateStats.RateOut == 0)
-                            {
-                                SecondsToValidate = 0;
-                            }
-
-                            Status = string.Format("{0}", StringUtils.FormatAsDuration(SecondsToValidate));                                
-                            StatusColor = StateColoring.Info;
-                            BuildInfo = Downloader.Manifest.VirtualPath;
-                            break;
-                        }
                         case ManifestDownloadProgressState.Installing:
                         {
-                            Status = "Installing";
+                            long TimeRemaining = Program.DownloadManager.GetEstimatedTimeRemainingForState(State, Downloader.State);
+                            if (State.DurationHistory.Count > 0)
+                            {
+                                long TotalTimeRemaining = Program.DownloadManager.GetEstimatedTimeRemaining(State);
+                                Status = string.Format("S {0}   T {1}", StringUtils.FormatAsDuration(TimeRemaining), StringUtils.FormatAsDuration(TotalTimeRemaining));
+                            }
+                            else
+                            {
+                                Status = string.Format("S {0}", StringUtils.FormatAsDuration(TimeRemaining));
+                            }                            
                             StatusColor = StateColoring.Info;
                             BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
                         }
                         case ManifestDownloadProgressState.Downloading:
                         {
-                            long SecondsToDownload = (long) (Downloader.BytesRemaining / (double) Downloader.BandwidthStats.RateIn);
-                            if (Downloader.BandwidthStats.RateIn == 0)
-                            {
-                                SecondsToDownload = 0;
-                            }
-
                             if (Downloader.BandwidthStats.RateIn == 0)
                             {
                                 if (Program.NetClient.IsConnected)
@@ -506,11 +473,19 @@ namespace BuildSync.Client.Controls
                             }
                             else
                             {
-                                Status = string.Format("{0}", StringUtils.FormatAsDuration(SecondsToDownload));
+                                long TimeRemaining = Program.DownloadManager.GetEstimatedTimeRemainingForState(State, Downloader.State);
+                                if (State.DurationHistory.Count > 0)
+                                {
+                                    long TotalTimeRemaining = Program.DownloadManager.GetEstimatedTimeRemaining(State);
+                                    Status = string.Format("S {0}   T {1}", StringUtils.FormatAsDuration(TimeRemaining), StringUtils.FormatAsDuration(TotalTimeRemaining));
+                                }
+                                else
+                                {
+                                    Status = string.Format("S {0}", StringUtils.FormatAsDuration(TimeRemaining));
+                                }
                             }
 
                             BuildInfo = Downloader.Manifest.VirtualPath;
-
                             break;
                         }
                         case ManifestDownloadProgressState.RetrievingManifest:
@@ -579,7 +554,7 @@ namespace BuildSync.Client.Controls
                 }
             }
 
-            if (Downloader.Paused)
+            if (Downloader != null && Downloader.Paused)
             {
                 LaunchType = LaunchOption.Resume;
             }
