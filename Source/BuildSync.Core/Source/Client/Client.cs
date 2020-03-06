@@ -597,8 +597,15 @@ namespace BuildSync.Core.Client
             MemoryPool.PreallocateBuffers(Crc32.BufferSize, 16);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
 
-            ProcessCpuCounter = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName, true);
-            ProcessMemoryCounter = new PerformanceCounter("Process", "Working Set", Process.GetCurrentProcess().ProcessName, true);
+            try
+            {
+                ProcessCpuCounter = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName, true);
+                ProcessMemoryCounter = new PerformanceCounter("Process", "Working Set", Process.GetCurrentProcess().ProcessName, true);
+            }
+            catch (Exception Ex)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to load performance counters for process: {0}", Process.GetCurrentProcess().ProcessName);
+            }
         }
 
         /// <summary>
@@ -902,8 +909,14 @@ namespace BuildSync.Core.Client
                 // Querying perf counter is super expensive, don't do it often.
                 if (TimeUtils.Ticks - PerfCounterTimer > 1000)
                 {
-                    Statistic.Get<Statistic_CpuUsage>().AddSample(ProcessCpuCounter.NextValue() / Environment.ProcessorCount);
-                    Statistic.Get<Statistic_MemoryUsage>().AddSample(ProcessMemoryCounter.NextValue());
+                    if (ProcessCpuCounter != null)
+                    {
+                        Statistic.Get<Statistic_CpuUsage>().AddSample(ProcessCpuCounter.NextValue() / Environment.ProcessorCount);
+                    }
+                    if (ProcessMemoryCounter != null)
+                    {
+                        Statistic.Get<Statistic_MemoryUsage>().AddSample(ProcessMemoryCounter.NextValue());
+                    }
                     PerfCounterTimer = TimeUtils.Ticks;
                 }
 

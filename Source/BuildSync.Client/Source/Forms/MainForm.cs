@@ -104,6 +104,11 @@ namespace BuildSync.Client.Forms
         private bool IsResizing = false;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private bool HasPolled = false;
+
+        /// <summary>
         /// </summary>
         private readonly DeserializeDockContent DeserializedDockContent;
 
@@ -236,6 +241,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void FormLoaded(object sender, EventArgs e)
         {
+            Logger.Log(LogLevel.Info, LogCategory.Main, "MainForm: Setting up docking themes");
             DockPanel.Theme = new VS2015LightTheme();
 
 #if !SHIPPING
@@ -249,6 +255,7 @@ namespace BuildSync.Client.Forms
                 viewLicenseMenuToolstrip.Visible = false;   
             }
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "MainForm: Restoring layout");
             if (!RestoreLayout())
             {
                 MainDownloadList.Show(DockPanel, DockState.Document);
@@ -258,6 +265,8 @@ namespace BuildSync.Client.Forms
                 MainDownloadList.Activate();
             }
 
+
+            Logger.Log(LogLevel.Info, LogCategory.Main, "MainForm: Hooking download events");
             Program.DownloadManager.OnDownloadFinished += (DownloadState State) => 
             {
                 if (!State.VirtualPath.StartsWith("$")) // Ignore internal downloads.
@@ -931,9 +940,15 @@ namespace BuildSync.Client.Forms
         {
             //if (IsResizing)
             //{
-                //ResumeLayout(true);
-                //SuspendLayout();
+            //ResumeLayout(true);
+            //SuspendLayout();
             //}
+
+            if (!HasPolled)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "MainForm: Running first poll");
+                HasPolled = true;
+            }
 
             Program.OnPoll();
         }

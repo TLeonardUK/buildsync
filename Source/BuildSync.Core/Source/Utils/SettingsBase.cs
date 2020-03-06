@@ -51,6 +51,7 @@ namespace BuildSync.Core.Utils
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                 };
 
+                Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Load: Reading: {0}", FullFilePath);
                 string Text = File.ReadAllText(FullFilePath);
                 SaveItem = (T) JsonSerializer.Deserialize(Text, typeof(T), Options);
                 if (SaveItem != null)
@@ -96,6 +97,7 @@ namespace BuildSync.Core.Utils
             try
             {
                 string DirPath = Path.GetDirectoryName(FullFilePath);
+                Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Creating directory: {0}", DirPath);
                 if (!Directory.Exists(DirPath))
                 {
                     Directory.CreateDirectory(DirPath);
@@ -103,6 +105,7 @@ namespace BuildSync.Core.Utils
 
                 if (File.Exists(FullFilePath))
                 {
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Copying backup: {0}", FullFilePath);
                     File.Copy(FullFilePath, FullFilePath + ".backup", true);
                 }
 
@@ -114,6 +117,7 @@ namespace BuildSync.Core.Utils
                         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                     };
 
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Serializing output: {0}", FullFilePath);
                     string Data = JsonSerializer.Serialize(this, GetType(), Options);
                     TextWriter.Write(Data);
                     Result = true;

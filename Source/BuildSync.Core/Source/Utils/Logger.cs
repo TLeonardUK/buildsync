@@ -179,6 +179,7 @@ namespace BuildSync.Core.Utils
             if (Writer != null)
             {
                 Writer.WriteLine(Message);
+                Writer.Flush();
             }
         }
 
@@ -258,6 +259,13 @@ namespace BuildSync.Core.Utils
                 MaximumVerbosity = LogLevel.Display;
             }
 
+            if (AppVersion.Trace)
+            {
+                //WindowUtils.AllocConsole();
+            }
+
+            AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+
             RegisterSink(new ConsoleLogSink());
             RegisterSink(new FileLogSink(Path.Combine(LoggingFolder, "program.log")));
 
@@ -273,6 +281,17 @@ namespace BuildSync.Core.Utils
                     Sinks.Clear();
                 }
             };
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+        {
+            Exception e = (Exception)args.ExceptionObject;
+            Log(LogLevel.Error, LogCategory.Main, "Unhandled exception occured\n" + e.Message + "\n\n" + e.StackTrace);
         }
 
         /// <summary>

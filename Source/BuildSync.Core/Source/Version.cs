@@ -30,7 +30,7 @@ namespace BuildSync.Core
     public class AppVersion
     {
         // AUTO GENERATION
-        public static int BuildVersion = 533;
+        public static int BuildVersion = 546;
         public static int MajorVersion = 1;
         public static int MinorVersion = 0;
         public static int PatchVersion = 0;
@@ -45,5 +45,10 @@ namespace BuildSync.Core
         ///     Determines if all licensing ui/limits are removed.
         /// </summary>
         public static bool NonLicensed = true;
+
+        /// <summary>
+        ///     Determines if error tracing / console display is shown.
+        /// </summary>
+        public static bool Trace = false;
     }
 }

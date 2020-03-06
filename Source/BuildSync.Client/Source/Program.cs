@@ -158,6 +158,8 @@ namespace BuildSync.Client
             // Server settings.
             if (NetClient != null)
             {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply client settings");
+
                 if (NetClient.ServerHostname != Settings.ServerHostname ||
                     NetClient.ServerPort != Settings.ServerPort ||
                     NetClient.PeerListenPortRangeMin != Settings.ClientPortRangeMin ||
@@ -176,6 +178,8 @@ namespace BuildSync.Client
             // Storage settings.
             if (Settings.StoragePath != CurrentStoragePath)
             {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply storage path change");
+
                 MoveStorageDirectoryForm Dialog = new MoveStorageDirectoryForm(CurrentStoragePath, Settings.StoragePath);
                 if (Dialog.ShowDialog() != DialogResult.OK)
                 {
@@ -191,12 +195,15 @@ namespace BuildSync.Client
 
             if (ManifestDownloadManager != null && Settings.StorageMaxSize != ManifestDownloadManager.StorageMaxSize)
             {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply manifest download manager settings");
+
                 ManifestDownloadManager.StorageMaxSize = Settings.StorageMaxSize;
 
                 SaveSettings();
             }
 
             // Add SCM Providers.
+            Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply SCM Providers");
             foreach (ScmWorkspaceSettings ScmSettings in Settings.ScmWorkspaces)
             {
                 // Check if a provider already exists for this.
@@ -262,6 +269,7 @@ namespace BuildSync.Client
             }
 
             // Bandwidth settings.
+            Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply general settings");
             NetConnection.GlobalBandwidthThrottleIn.MaxRate = Settings.BandwidthMaxDown;
             NetConnection.GlobalBandwidthThrottleOut.MaxRate = Settings.BandwidthMaxUp;
 
@@ -271,8 +279,13 @@ namespace BuildSync.Client
             ManifestDownloadManager.AutoFixValidationErrors = Settings.AutoFixValidationErrors;
 
             // General settings.
-            ProcessUtils.SetLaunchOnStartup("Build Sync - Client", Settings.RunOnStartup);
             Logger.MaximumVerbosity = Program.Settings.LoggingLevel;
+
+            // Launch settings.
+            Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply launch on startup options");
+            ProcessUtils.SetLaunchOnStartup("Build Sync - Client", Settings.RunOnStartup);
+
+            Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Finished");
         }
 
         /// <summary>
@@ -493,13 +506,16 @@ namespace BuildSync.Client
             ManifestDownloadManager = new ManifestDownloadManager();
             DownloadManager = new DownloadManager();
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Initializing settings");
             InitSettings();
 
             NetClient = new Core.Client.Client();
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up network client");
             BuildRegistry = new BuildManifestRegistry();
             BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), int.MaxValue, true);
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up network client");
             NetClient.Start(
                 Settings.ServerHostname,
                 Settings.ServerPort,
@@ -510,6 +526,8 @@ namespace BuildSync.Client
             );
 
             // Setup the virtual file system we will store our available builds in.
+            Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up build file system");
+
             BuildFileSystem = new VirtualFileSystem();
             NetClient.OnPermissionsUpdated += () =>
             {
@@ -544,6 +562,8 @@ namespace BuildSync.Client
             BuildFileSystem.Init();
 
             // Setup download managers for the manifest and app level.
+            Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up manifest download manager");
+
             ManifestDownloadManager.Start(
                 Path.Combine(Settings.StoragePath, "Builds"),
                 Settings.StorageMaxSize,
@@ -552,12 +572,16 @@ namespace BuildSync.Client
                 IOQueue
             );
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up download manager");
+
             DownloadManager.Start(
                 ManifestDownloadManager,
                 Settings.DownloadStates,
                 BuildFileSystem,
                 ScmManager
             );
+
+            Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up update download");
 
             // Ensure we are downloading the latest update.
             string UpdateDownloadName = "$ Buildsync Update $";
@@ -578,6 +602,8 @@ namespace BuildSync.Client
 
             // Make sure we have to get the latest manifest id before updating.
             InternalUpdateDownload.ActiveManifestId = Guid.Empty;
+
+            Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Complete");
         }
 
         /// <summary>
@@ -713,9 +739,11 @@ namespace BuildSync.Client
         {
             string AppDir = AppDataDir;
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Loading Settings");
             SettingsPath = Path.Combine(AppDir, "Config.json");
             SettingsBase.Load(SettingsPath, out Settings);
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Creating storage directory");
             if (Settings.StoragePath.Length == 0)
             {
                 Settings.StoragePath = Path.Combine(AppDir, "Storage");
@@ -727,6 +755,7 @@ namespace BuildSync.Client
 
             CurrentStoragePath = Settings.StoragePath;
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Initializing statistic states");
             if (Settings.ActiveStatistics.Count > 0)
             {
                 lock (Statistic.Instances)
@@ -738,8 +767,10 @@ namespace BuildSync.Client
                 }
             }
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Saving new settings");
             Settings.Save(SettingsPath);
 
+            Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Applying settings");
             ApplySettings();
         }
 

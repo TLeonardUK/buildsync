@@ -209,6 +209,14 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        /// <returns></returns>
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool AllocConsole();
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="lpClassName"></param>
         /// <param name="lpWindowName"></param>
         /// <returns></returns>
