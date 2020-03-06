@@ -50,7 +50,13 @@ namespace BuildSync.Core.Utils
             string domainName = Environment.UserDomainName;
             try
             {
-                /*domainName = */Domain.GetComputerDomain();
+                string localStr = ".local";
+
+                domainName = Domain.GetComputerDomain().Name;
+                if (domainName.EndsWith(localStr))
+                {
+                    domainName = domainName.Substring(0, domainName.Length - localStr.Length);
+                }
             }
             catch (Exception ex)
             {
@@ -60,29 +66,41 @@ namespace BuildSync.Core.Utils
 
             if (isInDomain)
             {
-                using (var context = new PrincipalContext(ContextType.Domain, domainName))
+                try
                 {
-                    using (var searcher = new PrincipalSearcher(new UserPrincipal(context)))
+                    using (var context = new PrincipalContext(ContextType.Domain, domainName))
                     {
-                        foreach (var result in searcher.FindAll())
+                        using (var searcher = new PrincipalSearcher(new UserPrincipal(context)))
                         {
-                            DirectoryEntry de = result.GetUnderlyingObject() as DirectoryEntry;
-                            Result.Add(domainName + @"\" + de.Properties["samAccountName"].Value.ToString());
+                            foreach (var result in searcher.FindAll())
+                            {
+                                DirectoryEntry de = result.GetUnderlyingObject() as DirectoryEntry;
+                                string Name = domainName.ToUpper() + @"\" + de.Properties["samAccountName"].Value.ToString().ToLower();
+                                if (!Result.Contains(Name))
+                                {
+                                    Result.Add(Name);
+                                }
+                            }
                         }
                     }
                 }
-            }
-            else
-            {
-                var path = string.Format("WinNT://{0},computer", domainName);
-
-                using (var computerEntry = new DirectoryEntry(path))
+                catch (Exception Ex)
                 {
-                    foreach (DirectoryEntry childEntry in computerEntry.Children)
+                    isInDomain = false;
+                }
+            }
+
+            var path = string.Format("WinNT://{0},computer", Environment.MachineName);
+            using (var computerEntry = new DirectoryEntry(path))
+            {
+                foreach (DirectoryEntry childEntry in computerEntry.Children)
+                {
+                    if (childEntry.SchemaClassName == "User")
                     {
-                        if (childEntry.SchemaClassName == "User")
+                        string Name = domainName.ToUpper() + @"\" + childEntry.Name.ToLower();
+                        if (!Result.Contains(Name))
                         {
-                            Result.Add(domainName + @"\" + childEntry.Name);
+                            Result.Add(Name);
                         }
                     }
                 }

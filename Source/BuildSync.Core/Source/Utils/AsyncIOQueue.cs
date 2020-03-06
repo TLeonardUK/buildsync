@@ -665,7 +665,7 @@ namespace BuildSync.Core.Utils
             {
                 Interlocked.Increment(ref Stm.ActiveOperations);
 
-                Logger.Log(LogLevel.Info, LogCategory.IO, "Reading: offset={0} length={1} path={2}", Work.Offset, Work.Size, Work.Path);
+                //Logger.Log(LogLevel.Info, LogCategory.IO, "Reading: offset={0} length={1} path={2}", Work.Offset, Work.Size, Work.Path);
 
 #if EMULATE_IO
                 GlobalBandwidthStats.Out(Work.Size);
