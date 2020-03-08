@@ -202,7 +202,12 @@
     <Compile Include="Controls\SegmentedProgressBar.Designer.cs">
       <DependentUpon>SegmentedProgressBar.cs</DependentUpon>
     </Compile>
+    <Compile Include="Networking\Messages\NetMessage_DeleteTag.cs" />
+    <Compile Include="Networking\Messages\NetMessage_CreateTag.cs" />
+    <Compile Include="Networking\Messages\NetMessage_AddTagToManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteUserGroup.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetTags.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetTagsResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_RemoveUserToUserGroup.cs" />
     <Compile Include="Networking\Messages\NetMessage_RemoveUserGroupPermission.cs" />
     <Compile Include="Networking\Messages\NetMessage_AddUserGroupPermission.cs" />
@@ -210,6 +215,7 @@
     <Compile Include="Networking\Messages\NetMessage_ChooseDeletionCandidate.cs" />
     <Compile Include="Networking\Messages\NetMessage_ChooseDeletionCandidateResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_CreateUserGroup.cs" />
+    <Compile Include="Networking\Messages\NetMessage_RemoveTagFromManifest.cs" />
     <Compile Include="Networking\NetDiscoveryServer.cs" />
     <Compile Include="Server\Server.cs" />
     <Compile Include="Controls\Graph\GraphAxis.cs" />

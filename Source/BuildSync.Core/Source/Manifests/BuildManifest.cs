@@ -110,6 +110,68 @@ namespace BuildSync.Core.Manifests
     /// <summary>
     /// </summary>
     [Serializable]
+    public class BuildManifestTag
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public Guid Id { get; set; } = Guid.Empty;
+
+        /// <summary>
+        /// </summary>
+        public string Name { get; set; } = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serializer"></param>
+        public void Serialize(Networking.NetMessageSerializer serializer)
+        {
+            {
+                string Value = Name;
+                serializer.Serialize(ref Value);
+                Name = Value;
+            }
+            {
+                Guid Value = Id;
+                serializer.Serialize(ref Value);
+                Id = Value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    [Serializable]
+    public class BuildManifestMetadata
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<Guid> TagIds = new List<Guid>();
+
+        /// <summary>
+        /// </summary>
+        /// <param name="FilePath"></param>
+        /// <returns></returns>
+        public static BuildManifestMetadata ReadFromFile(string FilePath)
+        {
+            return FileUtils.ReadFromBinaryFile<BuildManifestMetadata>(FilePath);            
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="FilePath"></param>
+        /// <returns></returns>
+        public void WriteToFile(string FilePath)
+        {
+            FileUtils.WriteToBinaryFile(FilePath, this);
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    [Serializable]
     public class BuildManifest
     {
         /// <summary>
@@ -163,6 +225,11 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         [NonSerialized]
         private long TotalSize = -1;
+
+        /// <summary>
+        /// </summary>
+        [NonSerialized] // Serialized seperately, not as part of the manifest as its unique to each computer that deals with the manifest.
+        internal BuildManifestMetadata Metadata = new BuildManifestMetadata();
 
         /// <summary>
         /// </summary>

@@ -72,6 +72,10 @@ namespace BuildSync.Core.Client
 
     /// <summary>
     /// </summary>
+    public delegate void TagListRecievedHandler(List<BuildManifestTag> Tag);
+
+    /// <summary>
+    /// </summary>
     public delegate void LicenseInfoRecievedHandler(License LicenseInfo);
 
     /// <summary>
@@ -460,6 +464,10 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         public event UserListRecievedHandler OnUserListRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event TagListRecievedHandler OnTagListRecieved;
 
         /// <summary>
         /// </summary>
@@ -1068,6 +1076,98 @@ namespace BuildSync.Core.Client
             return true;
         }
 
+        public bool RequestTagList()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request tags, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetTags Msg = new NetMessage_GetTags();
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        /// <param name="TagId"></param>
+        public bool AddTagToManifest(Guid ManifestId, Guid TagId)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to add tag to manifest, no connection to server?");
+                return false;
+            }
+
+            NetMessage_AddTagToManifest Msg = new NetMessage_AddTagToManifest();
+            Msg.ManifestId = ManifestId;
+            Msg.TagId = TagId;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        /// <param name="TagId"></param>
+        public bool RemoveTagFromManifest(Guid ManifestId, Guid TagId)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to remove tag to manifest, no connection to server?");
+                return false;
+            }
+
+            NetMessage_RemoveTagFromManifest Msg = new NetMessage_RemoveTagFromManifest();
+            Msg.ManifestId = ManifestId;
+            Msg.TagId = TagId;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool DeleteTag(Guid TagId)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete tag, no connection to server?");
+                return false;
+            }
+
+            NetMessage_DeleteTag Msg = new NetMessage_DeleteTag();
+            Msg.TagId = TagId;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool CreateTag(string Name)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create tag, no connection to server?");
+                return false;
+            }
+
+            NetMessage_CreateTag Msg = new NetMessage_CreateTag();
+            Msg.Name = Name;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
         /// <summary>
         /// </summary>
         public void RestartConnections()
@@ -1514,6 +1614,16 @@ namespace BuildSync.Core.Client
                 Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved users list with {0} users.", Msg.Users.Count);
 
                 OnUserListRecieved?.Invoke(Msg.Users, Msg.UserGroups);
+            }
+
+            // Recieved tag list.
+            else if (BaseMessage is NetMessage_GetTagsResponse)
+            {
+                NetMessage_GetTagsResponse Msg = BaseMessage as NetMessage_GetTagsResponse;
+
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved tag list with {0} tags.", Msg.Tags.Count);
+
+                OnTagListRecieved?.Invoke(Msg.Tags);
             }
 
             // Receive license info,

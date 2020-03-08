@@ -20,7 +20,10 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
+using BuildSync.Core.Utils;
+using BuildSync.Core.Manifests;
 using BuildSync.Core.Users;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -31,6 +34,11 @@ namespace BuildSync.Client.Forms
     public partial class ManageBuildsForm : DockContent
     {
         /// <summary>
+        /// 
+        /// </summary>
+        private List<BuildManifestTag> Tags = new List<BuildManifestTag>();
+
+        /// <summary>
         /// </summary>
         public ManageBuildsForm()
         {
@@ -39,6 +47,122 @@ namespace BuildSync.Client.Forms
             downloadFileSystemTree.CanSelectBuildContainers = false;
 
             ValidateState();
+
+            Program.NetClient.OnTagListRecieved += TagsRecieved;
+        }
+
+        /// <summary>
+        /// /
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FormShown(object sender, EventArgs e)
+        {
+            Program.NetClient.RequestTagList();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ContextMenuOpening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Program.NetClient.RequestTagList();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Users"></param>
+        private void TagsRecieved(List<BuildManifestTag> InTags)
+        {
+            Tags = InTags;
+
+            // Add new tags.
+            foreach (BuildManifestTag Tag in InTags)
+            {
+                bool Found = false;
+                foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
+                {
+                    if ((Item.Tag as BuildManifestTag).Id == Tag.Id)
+                    {
+                        Found = true;
+                        break;
+                    }
+                }
+
+                if (!Found)
+                {
+                    ToolStripMenuItem TagItem = new ToolStripMenuItem();
+                    TagItem.Text = Tag.Name;
+                    TagItem.Tag = Tag;
+                    TagItem.ImageScaling = ToolStripItemImageScaling.None;
+                    TagItem.Click += TagItemClicked;
+                    addTagToolStripMenuItem.DropDownItems.Add(TagItem);
+
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "Added tag menu: {0}", Tag.Name);
+                }
+            }
+
+            // Remove old tags.
+            List<ToolStripMenuItem> RemovedItems = new List<ToolStripMenuItem>();
+            foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
+            {
+                bool Found = false;
+
+                foreach (BuildManifestTag Tag in InTags)
+                {
+                    if ((Item.Tag as BuildManifestTag).Id == Tag.Id)
+                    {
+                        Found = true;
+                        break;
+                    }
+                }
+
+                if (!Found)
+                {
+                    RemovedItems.Add(Item);
+                }
+            }
+
+            foreach (ToolStripMenuItem Item in RemovedItems)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Removing tag menu: {0}", Item.Text);
+                addTagToolStripMenuItem.DropDownItems.Remove(Item);
+            }
+
+            ValidateState();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void TagItemClicked(object sender, EventArgs e)
+        {
+            ToolStripMenuItem TagItem = sender as ToolStripMenuItem;
+            if (TagItem == null)
+            {
+                return;
+            }
+
+            Guid ManifestId = downloadFileSystemTree.SelectedManifestId;
+            if (ManifestId == Guid.Empty)
+            {
+                return;
+            }
+
+            BuildManifestTag Tag = TagItem.Tag as BuildManifestTag;
+
+            if (!TagItem.Checked)
+            {
+                Program.NetClient.AddTagToManifest(ManifestId, Tag.Id);
+            }
+            else
+            {
+                Program.NetClient.RemoveTagFromManifest(ManifestId, Tag.Id);
+            }
         }
 
         /// <summary>
@@ -80,6 +204,7 @@ namespace BuildSync.Client.Forms
             {
                 if (!Program.NetClient.DeleteManifest(downloadFileSystemTree.SelectedManifestId))
                 {
+                    /// ???
                 }
             }
         }
@@ -101,11 +226,33 @@ namespace BuildSync.Client.Forms
         private void ValidateState()
         {
             bool CanManage = Program.NetClient.Permissions.HasPermission(UserPermissionType.Write, "", false, true);
+            bool CanTag = Program.NetClient.Permissions.HasPermission(UserPermissionType.TagBuilds, "", false, true);
 
             deleteToolStripMenuItem.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
             addDownloadToolStripMenuItem1.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId == Guid.Empty);
-            addTagToolStripMenuItem.Enabled = false;// CanManage && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
+            addTagToolStripMenuItem.Enabled = CanTag && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
             downloadToolStripMenuItem.Enabled = (downloadFileSystemTree.SelectedManifestId != Guid.Empty || downloadFileSystemTree.IsSelectedBuildContainer);
+
+            List<BuildManifestTag> Tags = downloadFileSystemTree.SelectedManifestTags;
+            if (Tags != null)
+            {
+                foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
+                {
+                    BuildManifestTag MenuTag = (Item.Tag as BuildManifestTag);
+
+                    bool Found = false;
+                    foreach (BuildManifestTag BuildTag in Tags)
+                    {
+                        if (MenuTag.Id == BuildTag.Id)
+                        {
+                            Found = true;
+                            break;
+                        }
+                    }
+
+                    Item.Checked = Found;
+                }
+            }
         }
 
         /// <summary>

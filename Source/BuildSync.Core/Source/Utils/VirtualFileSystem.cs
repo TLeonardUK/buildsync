@@ -110,6 +110,11 @@ namespace BuildSync.Core.Utils
 
     /// <summary>
     /// </summary>
+    /// <param name="Connection"></param>
+    public delegate void VirtualFileSystemNodeUpdatedHandler(VirtualFileSystem FileSystem, VirtualFileSystemNode Node);
+
+    /// <summary>
+    /// </summary>
     public struct VirtualFileSystemInsertChild
     {
         public string VirtualPath;
@@ -136,6 +141,10 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// </summary>
         public VirtualFileSystemNodeRemovedHandler OnNodeRemoved;
+
+        /// <summary>
+        /// </summary>
+        public VirtualFileSystemNodeUpdatedHandler OnNodeUpdated;
 
         /// <summary>
         /// </summary>
@@ -392,6 +401,9 @@ namespace BuildSync.Core.Utils
                         // Update metadata while we are here in case it changed.
                         Child.Metadata = NewChild.Metadata;
                         Child.CreateTime = NewChild.CreateTime;
+
+                        OnNodeUpdated?.Invoke(this, Child);
+
                         Exists = true;
                         break;
                     }

@@ -280,6 +280,12 @@
     <Compile Include="Forms\AddUserForm.Designer.cs">
       <DependentUpon>AddUserForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\AddTagForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AddTagForm.Designer.cs">
+      <DependentUpon>AddTagForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\AddUserGroupForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -339,6 +345,12 @@
     </Compile>
     <Compile Include="Forms\ManageServerForm.Designer.cs">
       <DependentUpon>ManageServerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ManageTagsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ManageTagsForm.Designer.cs">
+      <DependentUpon>ManageTagsForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\ManageUsersForm.cs">
       <SubType>Form</SubType>
@@ -432,6 +444,9 @@
     <EmbeddedResource Include="Forms\AddUserForm.resx">
       <DependentUpon>AddUserForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\AddTagForm.resx">
+      <DependentUpon>AddTagForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\AddUserGroupForm.resx">
       <DependentUpon>AddUserGroupForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -461,6 +476,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ManageServerForm.resx">
       <DependentUpon>ManageServerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ManageTagsForm.resx">
+      <DependentUpon>ManageTagsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ManageUsersForm.resx">
       <DependentUpon>ManageUsersForm.cs</DependentUpon>

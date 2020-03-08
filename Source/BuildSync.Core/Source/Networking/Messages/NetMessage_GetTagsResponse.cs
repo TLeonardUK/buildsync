@@ -1,4 +1,4 @@
-/*
+﻿/*
   buildsync
   Copyright (C) 2020 Tim Leonard <me@timleonard.uk>
 
@@ -19,36 +19,44 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-using BuildSync.Core.Utils;
+using System.Collections.Generic;
+using BuildSync.Core.Manifests;
+using BuildSync.Core.Users;
 
-namespace BuildSync.Core
+namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    ///     Version and flavour of the application.
-    ///     Parts of this class are auto-generated so care should be taken when modifying it.
     /// </summary>
-    public class AppVersion
+    public class NetMessage_GetTagsResponse : NetMessage
     {
-        // AUTO GENERATION
-        public static int BuildVersion = 547;
-        public static int MajorVersion = 1;
-        public static int MinorVersion = 0;
-        public static int PatchVersion = 0;
-
-        public static int ProtocolVersion = 5;
-        // END AUTO GENERATION
-
-        public static string VersionString = MajorVersion + "." + MinorVersion + "." + PatchVersion + "." + BuildVersion;
-        public static int VersionNumber = StringUtils.ConvertSemanticVerisonNumber(VersionString);
+        /// <summary>
+        /// 
+        /// </summary>
+        public override bool HasLargePayload => true;
 
         /// <summary>
-        ///     Determines if all licensing ui/limits are removed.
         /// </summary>
-        public static bool NonLicensed = true;
+        public List<BuildManifestTag> Tags = new List<BuildManifestTag>();
 
         /// <summary>
-        ///     Determines if error tracing / console display is shown.
+        ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
-        public static bool Trace = false;
+        /// <param name="serializer">Serializer to read/write payload to.</param>
+        protected override void SerializePayload(NetMessageSerializer serializer)
+        {
+            // Serialize users.
+            int Count = Tags.Count;
+            serializer.Serialize(ref Count);
+
+            for (int i = 0; i < Count; i++)
+            {
+                if (serializer.IsLoading)
+                {
+                    Tags.Add(new BuildManifestTag());
+                }
+
+                Tags[i].Serialize(serializer);
+            }
+        }
     }
 }

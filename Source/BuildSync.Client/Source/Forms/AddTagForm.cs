@@ -20,67 +20,64 @@
 */
 
 using System;
-using System.Collections.Generic;
+using System.Windows.Forms;
 using BuildSync.Core.Users;
-using BuildSync.Core.Utils;
-using BuildSync.Core.Manifests;
 
-namespace BuildSync.Server
+namespace BuildSync.Client.Forms
 {
     /// <summary>
-    /// 
     /// </summary>
-    [Serializable]
-    public class Settings : SettingsBase
+    public partial class AddTagForm : Form
     {
         /// <summary>
         /// 
         /// </summary>
-        public Dictionary<string, DateTime> ManifestLastSeenTimes { get; set; } = new Dictionary<string, DateTime>();
+        public string TagName = "";
+
+        /// <summary>
+        /// </summary>
+        public AddTagForm()
+        {
+            InitializeComponent();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OkClicked(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnShown(object sender, EventArgs e)
+        {
+            nameTextBox.Text = TagName;
+
+            UpdateState();
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdateState()
+        {
+            addGroupButton.Enabled = (nameTextBox.Text.Trim().Length > 0);
+            TagName = nameTextBox.Text;
+        }
 
         /// <summary>
         /// 
         /// </summary>
-        public long MaxBandwidth { get; set; } = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int MaximumManifests { get; set; } = 500;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int MaximumManifestUnseenDays { get; set; } = 14;
-        
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool RunOnStartup { get; set; } = true;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int ServerPort { get; set; } = 12341;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string StoragePath { get; set; } = "";
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<User> Users { get; set; } = new List<User>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<UserGroup> UserGroups { get; set; } = new List<UserGroup>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public List<BuildManifestTag> Tags { get; set; } = new List<BuildManifestTag>();
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void NameTextChanged(object sender, EventArgs e)
+        {
+            UpdateState();
+        }
     }
 }

@@ -52,6 +52,12 @@ namespace BuildSync.Core.Users
         [Description("Add Users To Group")]
         AddUsersToGroup,
 
+        [Description("Tag Builds")]
+        TagBuilds,
+
+        [Description("Modify Tags")]
+        ModifyTags,
+
         [Description("Unknown")]
         Unknown
     }

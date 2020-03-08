@@ -27,6 +27,9 @@ using BuildSync.Core.Utils;
 
 namespace BuildSync.Core.Manifests
 {
+    /// </summary>
+    public delegate void TagsUpdatedEventHandler();
+
     /// <summary>
     /// </summary>
     public class BuildManifestRegistry
@@ -43,12 +46,44 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public List<BuildManifest> Manifests = new List<BuildManifest>();
 
+        /// <summary>
+        /// </summary>
+        public List<BuildManifestTag> Tags = new List<BuildManifestTag>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         private int MaximumManifests;
+
+        /// <summary>
+        /// 
+        /// </summary>
         private string RootPath;
 
         /// <summary>
         /// </summary>
         public Dictionary<string, DateTime> ManifestLastSeenTimes { get; set; } = new Dictionary<string, DateTime>();
+
+        /// <summary>
+        /// </summary>
+        public event TagsUpdatedEventHandler TagsUpdated;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public BuildManifestRegistry(List<BuildManifestTag> InTags = null)
+        {
+            if (InTags != null)
+            {
+                Tags = InTags;
+            }
+
+            if (Tags.Count == 0)
+            {
+                Tags.Add(new BuildManifestTag() { Id = Guid.NewGuid(), Name = "Broken" });
+                Tags.Add(new BuildManifestTag() { Id = Guid.NewGuid(), Name = "Important" });
+            }
+        }
 
         /// <summary>
         /// </summary>
@@ -158,16 +193,33 @@ namespace BuildSync.Core.Manifests
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading manifest: {0}", FilePath);
 
+#if false
                 try
                 {
+#endif
                     BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath, CacheDownloadInfo);
+
+                    string MetaFile = FilePath + ".metadata";
+                    if (File.Exists(MetaFile))
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading manifest metadata: {0}", MetaFile);
+                        Manifest.Metadata = BuildManifestMetadata.ReadFromFile(MetaFile);
+                    }
+
+                    if (Manifest.Metadata == null)
+                    {
+                        Manifest.Metadata = new BuildManifestMetadata();
+                    }
+
                     AddManifest(Manifest);
-                }
+#if false
+            }
                 catch (Exception ex)
                 {
                     Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read manifest '{0}', due to error {1}", FilePath, ex.Message);
                 //    File.Delete(FilePath);
                 }
+#endif
             }
 
             watch.Stop();
@@ -275,6 +327,139 @@ namespace BuildSync.Core.Manifests
 
             Manifest.WriteToFile(FilePath);
             AddManifest(Manifest);
+
+            StoreMetadata(Manifest);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void StoreMetadata(BuildManifest Manifest)
+        {
+            string MetaFile = Path.Combine(RootPath, Manifest.Guid + ".manifest") + ".metadata";
+
+            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Storing manifest metadata: {0}", MetaFile);
+
+            if (Manifest.Metadata != null)
+            {
+                Manifest.Metadata.WriteToFile(MetaFile);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="TagId"></param>
+        public BuildManifestTag GetTagById(Guid TagId)
+        {
+            foreach (BuildManifestTag tag in Tags)
+            {
+                if (tag.Id == TagId)
+                {
+                    return tag;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Manifest"></param>
+        /// <param name="Tag"></param>
+        public void TagManifest(Guid ManifestId, Guid TagId)
+        {
+            BuildManifest Manifest = GetManifestById(ManifestId);
+            if (Manifest == null)
+            {
+                return;
+            }
+
+            BuildManifestTag Tag = GetTagById(TagId);
+            if (Tag == null)
+            {
+                return;
+            }
+
+            if (!Manifest.Metadata.TagIds.Contains(TagId))
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Tagging manifest {0} with {1}", ManifestId.ToString(), Tag.Name);
+
+                Manifest.Metadata.TagIds.Add(TagId);
+                StoreMetadata(Manifest);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Manifest"></param>
+        /// <param name="Tag"></param>
+        public void UntagManifest(Guid ManifestId, Guid TagId)
+        {
+            BuildManifest Manifest = GetManifestById(ManifestId);
+            if (Manifest == null)
+            {
+                return;
+            }
+
+            BuildManifestTag Tag = GetTagById(TagId);
+            if (Tag == null)
+            {
+                return;
+            }
+
+            if (Manifest.Metadata.TagIds.Contains(TagId))
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Unagging manifest {0} with {1}", ManifestId.ToString(), Tag.Name);
+
+                Manifest.Metadata.TagIds.Remove(TagId);
+                StoreMetadata(Manifest);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="TagId"></param>
+        public void DeleteTag(Guid TagId)
+        {
+            BuildManifestTag Tag = GetTagById(TagId);
+            if (Tag == null)
+            {
+                return;
+            }
+
+            Tags.Remove(Tag);
+
+            // Remove tags from all manifests.
+            foreach (BuildManifest Manifest in Manifests)
+            {
+                if (Manifest.Metadata != null && Manifest.Metadata.TagIds.Contains(TagId))
+                {
+                    Manifest.Metadata.TagIds.Remove(TagId);
+                    StoreMetadata(Manifest);
+                }
+            }
+
+            TagsUpdated?.Invoke();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Name"></param>
+        public Guid CreateTag(string Name)
+        {
+            BuildManifestTag Tag = new BuildManifestTag();
+            Tag.Id = Guid.NewGuid();
+            Tag.Name = Name;
+
+            Tags.Add(Tag);
+
+            TagsUpdated?.Invoke();
+
+            return Tag.Id;
         }
 
         /// <summary>
@@ -293,6 +478,13 @@ namespace BuildSync.Core.Manifests
             try
             {
                 File.Delete(FilePath);
+
+                string MetaFile = FilePath + ".metadata";
+                if (File.Exists(MetaFile))
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Unregistering manifest metadata: {0}", MetaFile);
+                    File.Delete(MetaFile);
+                }
             }
             catch (Exception Ex)
             {

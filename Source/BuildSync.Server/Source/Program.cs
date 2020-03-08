@@ -223,9 +223,14 @@ namespace BuildSync.Server
         {
             InitSettings();
 
-            BuildRegistry = new BuildManifestRegistry();
+            BuildRegistry = new BuildManifestRegistry(Settings.Tags);
             BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests, false);
             BuildRegistry.ManifestLastSeenTimes = new Dictionary<string, DateTime>(Settings.ManifestLastSeenTimes);
+            BuildRegistry.TagsUpdated += () =>
+            {
+                Settings.Tags = BuildRegistry.Tags;
+                SaveSettings();
+            };
 
             LicenseMgr = new LicenseManager();
             LicenseMgr.Start(Path.Combine(AppDataDir, "License.dat"));

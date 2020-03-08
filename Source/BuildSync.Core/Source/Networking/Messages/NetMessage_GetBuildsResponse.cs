@@ -20,6 +20,7 @@
 */
 
 using System;
+using BuildSync.Core.Manifests;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -65,6 +66,11 @@ namespace BuildSync.Core.Networking.Messages
             ///     Last time a copy of this build was seen available.
             /// </summary>
             public DateTime LastSeenOnPeer;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            public BuildManifestTag[] Tags;
         }
 
         /// <summary>
@@ -80,7 +86,7 @@ namespace BuildSync.Core.Networking.Messages
         /// <summary>
         ///     If true the old format message without availability information will be sent.
         /// </summary>
-        public bool SendLegacyVersion = false;
+        public int Version = AppVersion.VersionNumber;
 
         /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
@@ -100,11 +106,35 @@ namespace BuildSync.Core.Networking.Messages
                 serializer.Serialize(ref Builds[i].Guid);
                 serializer.Serialize(ref Builds[i].CreateTime);
 
-                if (!SendLegacyVersion)
+                if (Version > 100000397)
                 {
                     serializer.Serialize(ref Builds[i].TotalSize);
                     serializer.Serialize(ref Builds[i].AvailablePeers);
                     serializer.Serialize(ref Builds[i].LastSeenOnPeer);
+                }
+                if (Version > 100000546)
+                {
+                    if (Builds[i].Tags == null)
+                    {
+                        Builds[i].Tags = new BuildManifestTag[0];
+                    }
+
+                    int TagCount = Builds[i].Tags.Length;
+                    serializer.Serialize(ref TagCount);
+
+                    if (serializer.IsLoading)
+                    {
+                        Builds[i].Tags = new BuildManifestTag[TagCount];
+                    }
+
+                    for (int j = 0; j < TagCount; j++)
+                    {
+                        if (serializer.IsLoading)
+                        {
+                            Builds[i].Tags[j] = new BuildManifestTag();
+                        }
+                        Builds[i].Tags[j].Serialize(serializer);
+                    }
                 }
             }
         }

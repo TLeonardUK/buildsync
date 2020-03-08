@@ -27,6 +27,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Manifests;
 using Aga.Controls.Tree;
 using Aga.Controls.Tree.NodeControls;
 using BuildSync.Client.Properties;
@@ -112,6 +113,32 @@ namespace BuildSync.Client.Controls
                 }
 
                 return Guid.Empty;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<BuildManifestTag> SelectedManifestTags
+        {
+            get
+            {
+                TreeNodeAdv SelectedNode = MainTreeView.SelectedNode;
+                if (SelectedNode != null)
+                {
+                    DownloadFileSystemTreeNode Metadata = SelectedNode.Tag as DownloadFileSystemTreeNode;
+                    if (Metadata != null)
+                    {
+                        VirtualFileSystemNode Node = BuildFileSystem.GetNodeByPath(Metadata.FullPath);
+                        if (Node != null && Node.Metadata != null)
+                        {
+                            NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Node.Metadata;
+                            return new List<BuildManifestTag>(BuildInfo.Tags);
+                        }
+                    }
+                }
+
+                return null;
             }
         }
 
@@ -268,7 +295,7 @@ namespace BuildSync.Client.Controls
                 
             TreeColumn TagsColumn = new TreeColumn();
             TagsColumn.Header = "Tags";
-            TagsColumn.Width = 100;
+            TagsColumn.Width = 200;
             MainTreeView.Columns.Add(TagsColumn);
 
                 NodeTextBox TagControl = new NodeTextBox();
@@ -363,10 +390,10 @@ namespace BuildSync.Client.Controls
         /// <param name="Builds"></param>
         private void OnBuildInfoRecieved(string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds)
         {
-            if (!RequestedBuildPaths.Contains(RootPath))
-            {
-                return;
-            }
+            //if (!RequestedBuildPaths.Contains(RootPath))
+            //{
+            //    return;
+            //}
 
             RequestedBuildPaths.Remove(RootPath);
 
@@ -415,6 +442,118 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="TrNode"></param>
+        /// <param name="Node"></param>
+        private void UpdateNode(DownloadFileSystemTreeNode TrNode, VirtualFileSystemNode Node)
+        {
+            TrNode.IsBuildContainer = false;
+            TrNode.FullPath = Node.Path;
+            TrNode.Name = Node.Name;
+            TrNode.Icon = Resources.appbar_box;
+            TrNode.AvailabilityIcon = null;
+
+            if (Node.Metadata != null)
+            {
+                NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Node.Metadata;
+
+                TrNode.IsBuild = BuildInfo.Guid != Guid.Empty;
+                TrNode.ManifestId = BuildInfo.Guid;
+                TrNode.CreateTime = Node.CreateTime;
+                TrNode.SizeFormatted = StringUtils.FormatAsSize((long)BuildInfo.TotalSize);
+                TrNode.CreateTimeFormatted = BuildInfo.CreateTime.ToString("dd/MM/yyyy HH:mm");
+
+                // 9        = very high
+                // 7,8      = high
+                // 4,5,6,   = medium
+                // 2,3      = low
+                // 1        = very low
+                // 0        = not
+
+                TrNode.Availability = BuildInfo.AvailablePeers + " peers have entire build";
+                if (BuildInfo.AvailablePeers >= 9)
+                {
+                    TrNode.AvailabilityIcon = Resources.appbar_connection_quality_veryhigh;
+                }
+                else if (BuildInfo.AvailablePeers >= 7)
+                {
+                    TrNode.AvailabilityIcon = Resources.appbar_connection_quality_high;
+                }
+                else if (BuildInfo.AvailablePeers >= 3)
+                {
+                    TrNode.AvailabilityIcon = Resources.appbar_connection_quality_medium;
+                }
+                else if (BuildInfo.AvailablePeers >= 2)
+                {
+                    TrNode.AvailabilityIcon = Resources.appbar_connection_quality_low;
+                }
+                else if (BuildInfo.AvailablePeers >= 1)
+                {
+                    TrNode.AvailabilityIcon = Resources.appbar_connection_quality_verylow;
+                }
+                else
+                {
+                    TrNode.AvailabilityIcon = Resources.appbar_close;
+                    TrNode.Availability = "Last available " + BuildInfo.LastSeenOnPeer.ToString("dd/MM/yyyy HH:mm");
+                }
+
+                if (BuildInfo.Tags != null)
+                {
+                    TrNode.TagsFormatted = "";
+                    foreach (BuildManifestTag Tag in BuildInfo.Tags)
+                    {
+                        if (TrNode.TagsFormatted.Length > 0)
+                        {
+                            TrNode.TagsFormatted += ", ";
+                        }
+                        TrNode.TagsFormatted += Tag.Name;
+                    }
+                }
+                else
+                {
+                    TrNode.TagsFormatted = "";
+                }
+            }
+            else
+            {
+                TrNode.IsBuild = false;
+                TrNode.IsBuildContainer = false;
+                TrNode.ManifestId = Guid.Empty;
+                TrNode.CreateTime = DateTime.UtcNow;
+            }
+
+            if (!TrNode.IsBuild)
+            {
+                TrNode.SizeFormatted = "";
+                TrNode.Availability = "";
+                TrNode.CreateTimeFormatted = "";
+                TrNode.AvailabilityIcon = null;
+                TrNode.TagsFormatted = "";
+            }
+
+            if (TrNode.IsBuild)
+            {
+                TrNode.Icon = Resources.appbar_box;
+            }
+            else
+            {
+                TrNode.Icon = Resources.appbar_folder_open;
+            }
+
+            // If its a build, the folder parent becomes a "container".
+            if (TrNode.IsBuild && TrNode.Parent != null)
+            {
+                DownloadFileSystemTreeNode ParentNode = TrNode.Parent as DownloadFileSystemTreeNode;
+                if (ParentNode != null)
+                {
+                    ParentNode.IsBuildContainer = true;
+                    ParentNode.Icon = Resources.appbar_database;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         private void SetupFileSystem()
         {
             RequestedBuildPaths.Clear();
@@ -434,162 +573,80 @@ namespace BuildSync.Client.Controls
                 }
             };
 
+            BuildFileSystem.OnNodeUpdated += (FileSystem, Node) =>
+            {
+                Node ModelNode = GetNodeByPath(Node.Path);
+                if (ModelNode != null)
+                {
+                    UpdateNode(ModelNode as DownloadFileSystemTreeNode, Node);
+                }
+
+                MainTreeView.Refresh();
+            };
+
             BuildFileSystem.OnNodeAdded += (FileSystem, Node) =>
             {
-                //Invoke(
-                //    (MethodInvoker) (() =>
-                //    {
-                        // Ignore internal parts of the heirarchy.
-                        if (Node.Path.Contains("$") && !ShowInternal)
-                        {
-                            return;
-                        }
+                // Ignore internal parts of the heirarchy.
+                if (Node.Path.Contains("$") && !ShowInternal)
+                {
+                    return;
+                }
 
-                        Collection<Node> NodeCollection = Model.Root.Nodes;
-                        if (Node.Parent != null && Node.Parent.Name != "")
-                        {
-                            NodeCollection = GetNodeByPath(Node.Parent.Path).Nodes;
-                        }
+                Collection<Node> NodeCollection = Model.Root.Nodes;
+                if (Node.Parent != null && Node.Parent.Name != "")
+                {
+                    NodeCollection = GetNodeByPath(Node.Parent.Path).Nodes;
+                }
 
-                        DownloadFileSystemTreeNode TrNode = new DownloadFileSystemTreeNode();
-                        TrNode.IsBuildContainer = false;
-                        TrNode.FullPath = Node.Path;
-                        TrNode.Name = Node.Name;
-                        TrNode.Icon = Resources.appbar_box;
-                        TrNode.AvailabilityIcon = null;
+                DownloadFileSystemTreeNode TrNode = new DownloadFileSystemTreeNode();
+                UpdateNode(TrNode, Node);
 
-                        if (Node.Metadata != null)
-                        {
-                            NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Node.Metadata;
+                // Insert based on create time.
+                bool Inserted = false;
+                for (int i = 0; i < NodeCollection.Count; i++)
+                {
+                    DownloadFileSystemTreeNode SubNode = NodeCollection[i] as DownloadFileSystemTreeNode;
+                    if (SubNode != null && (SubNode.CreateTime.Ticks - TrNode.CreateTime.Ticks) < -10000000) // At least a second off.
+                    {
+                        NodeCollection.Insert(i, TrNode);
+                        Inserted = true;
+                        break;
+                    }
+                }
 
-                            TrNode.IsBuild = BuildInfo.Guid != Guid.Empty;
-                            TrNode.ManifestId = BuildInfo.Guid;
-                            TrNode.CreateTime = Node.CreateTime;
-                            TrNode.SizeFormatted = StringUtils.FormatAsSize((long)BuildInfo.TotalSize);
-                            TrNode.CreateTimeFormatted = BuildInfo.CreateTime.ToString("dd/MM/yyyy HH:mm");
+                if (!Inserted)
+                {
+                    NodeCollection.Add(TrNode);
+                }
 
-                            // 9        = very high
-                            // 7,8      = high
-                            // 4,5,6,   = medium
-                            // 2,3      = low
-                            // 1        = very low
-                            // 0        = not
+                // If parent node is expanded, then request all children of this node.
+                TreeNodeAdv ParentViewNode = null;
+                if (TrNode.Parent != null)
+                {
+                    DownloadFileSystemTreeNode ParentNode = TrNode.Parent as DownloadFileSystemTreeNode;
+                    if (ParentNode != null)
+                    {
+                        ParentViewNode = GetViewNodeByPath(ParentNode.FullPath);
+                    }
+                    else
+                    {
+                        ParentViewNode = MainTreeView.Root;
+                    }
+                }
 
-                            TrNode.Availability = BuildInfo.AvailablePeers + " peers have entire build";
-                            if (BuildInfo.AvailablePeers >= 9)
-                            {
-                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_veryhigh;
-                            }
-                            else if (BuildInfo.AvailablePeers >= 7)
-                            {
-                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_high;
-                            }
-                            else if (BuildInfo.AvailablePeers >= 3)
-                            {
-                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_medium;
-                            }
-                            else if (BuildInfo.AvailablePeers >= 2)
-                            {
-                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_low;
-                            }
-                            else if (BuildInfo.AvailablePeers >= 1)
-                            {
-                                TrNode.AvailabilityIcon = Resources.appbar_connection_quality_verylow;
-                            }
-                            else
-                            {
-                                TrNode.AvailabilityIcon = Resources.appbar_close;
-                                TrNode.Availability = "Last available " + BuildInfo.LastSeenOnPeer.ToString("dd/MM/yyyy HH:mm");
-                            }
-                            
-                            TrNode.TagsFormatted = "";
-                        }
-                        else
-                        {
-                            TrNode.IsBuild = false;
-                            TrNode.IsBuildContainer = false;
-                            TrNode.ManifestId = Guid.Empty;
-                            TrNode.CreateTime = DateTime.UtcNow;
-                        }
+                if (ParentViewNode == null || ParentViewNode.IsExpanded)
+                {
+                    if (!TrNode.IsBuild)
+                    {
+                        BuildFileSystem.GetChildrenNames(Node.Path);
+                    }
+                }
 
-                        if (!TrNode.IsBuild)
-                        {
-                            TrNode.SizeFormatted = "";
-                            TrNode.Availability = "";
-                            TrNode.CreateTimeFormatted = "";
-                            TrNode.AvailabilityIcon = null;
-                            TrNode.TagsFormatted = "";
-                        }
+                MainTreeView.FullUpdate();
 
-                        if (TrNode.IsBuild)
-                        {
-                            TrNode.Icon = Resources.appbar_box;
-                        }
-                        else
-                        {
-                            TrNode.Icon = Resources.appbar_folder_open;
-                        }
+                SelectNextPath();
 
-                        // Insert based on create time.
-                        bool Inserted = false;
-                        for (int i = 0; i < NodeCollection.Count; i++)
-                        {
-                            DownloadFileSystemTreeNode SubNode = NodeCollection[i] as DownloadFileSystemTreeNode;
-                            if (SubNode != null && (SubNode.CreateTime.Ticks - TrNode.CreateTime.Ticks) < -10000000) // At least a second off.
-                            {
-                                NodeCollection.Insert(i, TrNode);
-                                Inserted = true;
-                                break;
-                            }
-                        }
-
-                        if (!Inserted)
-                        {
-                            NodeCollection.Add(TrNode);
-                        }
-
-                        // If its a build, the folder parent becomes a "container".
-                        if (TrNode.IsBuild && TrNode.Parent != null)
-                        {
-                            DownloadFileSystemTreeNode ParentNode = TrNode.Parent as DownloadFileSystemTreeNode;
-                            if (ParentNode != null)
-                            {
-                                ParentNode.IsBuildContainer = true;
-                                ParentNode.Icon = Resources.appbar_database;
-                            }
-
-                        }
-
-                        // If parent node is expanded, then request all children of this node.
-                        TreeNodeAdv ParentViewNode = null;
-                        if (TrNode.Parent != null)
-                        {
-                            DownloadFileSystemTreeNode ParentNode = TrNode.Parent as DownloadFileSystemTreeNode;
-                            if (ParentNode != null)
-                            {
-                                ParentViewNode = GetViewNodeByPath(ParentNode.FullPath);
-                            }
-                            else
-                            {
-                                ParentViewNode = MainTreeView.Root;
-                            }
-                        }
-
-                        if (ParentViewNode == null || ParentViewNode.IsExpanded)
-                        {
-                            if (!TrNode.IsBuild)
-                            {
-                                BuildFileSystem.GetChildrenNames(Node.Path);
-                            }
-                        }
-
-                        MainTreeView.FullUpdate();
-
-                        SelectNextPath();
-
-                        OnDateUpdated?.Invoke(this, null);
-                //    })
-                //);
+                OnDateUpdated?.Invoke(this, null);
             };
 
             BuildFileSystem.OnNodeRemoved += (FileSystem, Node) =>

@@ -646,6 +646,131 @@ namespace BuildSync.Core.Server
             }
 
             // ------------------------------------------------------------------------------
+            // Client requested list of tags
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_GetTags)
+            {
+                NetMessage_GetTags Msg = BaseMessage as NetMessage_GetTags;
+
+                NetMessage_GetTagsResponse ResponseMsg = new NetMessage_GetTagsResponse();
+                ResponseMsg.Tags = new List<BuildManifestTag>(ManifestRegistry.Tags);
+
+                Connection.Send(ResponseMsg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Add a tag to a manifest.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_AddTagToManifest)
+            {
+                NetMessage_AddTagToManifest Msg = BaseMessage as NetMessage_AddTagToManifest;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                BuildManifest Manifest = ManifestRegistry.GetManifestById(Msg.ManifestId);
+                if (Manifest == null)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to tag an unknown build '{1}'.", State.Username, Msg.ManifestId.ToString());
+                    return;
+                }
+
+                BuildManifestTag Tag = ManifestRegistry.GetTagById(Msg.TagId);
+                if (Tag == null)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to tag an unknown tag '{1}'.", State.Username, Msg.TagId.ToString());
+                    return;
+                }
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.TagBuilds, Manifest.VirtualPath))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to tag builds without permission.", State.Username);
+                    return;
+                }
+
+                ManifestRegistry.TagManifest(Msg.ManifestId, Msg.TagId);
+
+                SendBuildsUpdate(Connection, VirtualFileSystem.GetParentPath(Manifest.VirtualPath));
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tagged build '{1}' with tag '{2}'.", State.Username, Manifest.VirtualPath, Tag.Name);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Remove a tag to a manifest.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RemoveTagFromManifest)
+            {
+                NetMessage_RemoveTagFromManifest Msg = BaseMessage as NetMessage_RemoveTagFromManifest;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                BuildManifest Manifest = ManifestRegistry.GetManifestById(Msg.ManifestId);
+                if (Manifest == null)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to untag an unknown build '{1}'.", State.Username, Msg.ManifestId.ToString());
+                    return;
+                }
+
+                BuildManifestTag Tag = ManifestRegistry.GetTagById(Msg.TagId);
+                if (Tag == null)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to untag an unknown tag '{1}'.", State.Username, Msg.TagId.ToString());
+                    return;
+                }
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.TagBuilds, Manifest.VirtualPath))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to untag builds without permission.", State.Username);
+                    return;
+                }
+
+                ManifestRegistry.UntagManifest(Msg.ManifestId, Msg.TagId);
+
+                SendBuildsUpdate(Connection, VirtualFileSystem.GetParentPath(Manifest.VirtualPath));
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' untagged build '{1}' with tag '{2}'.", State.Username, Manifest.VirtualPath, Tag.Name);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Creates a tag
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_CreateTag)
+            {
+                NetMessage_CreateTag Msg = BaseMessage as NetMessage_CreateTag;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyTags, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to add tag without permission.", State.Username);
+                    return;
+                }
+
+                ManifestRegistry.CreateTag(Msg.Name);
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' created tag '{1}'.", State.Username, Msg.Name);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Deletes a tag
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_DeleteTag)
+            {
+                NetMessage_DeleteTag Msg = BaseMessage as NetMessage_DeleteTag;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyTags, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to delete tag without permission.", State.Username);
+                    return;
+                }
+
+                ManifestRegistry.DeleteTag(Msg.TagId);
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' deleted tag '{1}'.", State.Username, Msg.TagId.ToString());
+            }
+
+            // ------------------------------------------------------------------------------
             // Client requested to create a usergroup.
             // ------------------------------------------------------------------------------
             else if (BaseMessage is NetMessage_CreateUserGroup)
@@ -1026,7 +1151,8 @@ namespace BuildSync.Core.Server
                                 VirtualPath = Children[i],
                                 AvailablePeers = 0,
                                 LastSeenOnPeer = DateTime.UtcNow,
-                                TotalSize = 0
+                                TotalSize = 0,
+                                Tags = new BuildManifestTag[0]
                             }
                         ); 
                     }
@@ -1041,6 +1167,19 @@ namespace BuildSync.Core.Server
                     BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
                     if (Manifest != null)
                     {
+                        List<BuildManifestTag> Tags = new List<BuildManifestTag>();
+                        if (Manifest.Metadata != null)
+                        {
+                            for (int j = 0; j < Manifest.Metadata.TagIds.Count; j++)
+                            {
+                                BuildManifestTag Tag = ManifestRegistry.GetTagById(Manifest.Metadata.TagIds[j]);
+                                if (Tag != null)
+                                {
+                                    Tags.Add(Tag);
+                                }
+                            }
+                        }
+
                         Result.Add(
                             new NetMessage_GetBuildsResponse.BuildInfo
                             {
@@ -1049,7 +1188,8 @@ namespace BuildSync.Core.Server
                                 VirtualPath = Children[i],
                                 AvailablePeers = (ulong)GetPeerCountForManifest(Manifest.Guid),
                                 LastSeenOnPeer = ManifestRegistry.GetLastSeenTime(Manifest.Guid),
-                                TotalSize = (ulong)Manifest.GetTotalSize()
+                                TotalSize = (ulong)Manifest.GetTotalSize(),
+                                Tags = Tags.ToArray()
                             }
                         );
 
@@ -1059,13 +1199,7 @@ namespace BuildSync.Core.Server
             }
 
             ResponseMsg.Builds = Result.ToArray();
-
-            // If build is old enough, send simplified response.
-            if (State.VersionNumeric <= 100000397)
-            {
-                ResponseMsg.SendLegacyVersion = true;
-            }
-
+            ResponseMsg.Version = State.VersionNumeric;
             Connection.Send(ResponseMsg);
         }
     }

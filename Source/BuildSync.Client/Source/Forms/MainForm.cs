@@ -84,6 +84,10 @@ namespace BuildSync.Client.Forms
 
         /// <summary>
         /// </summary>
+        private readonly ManageTagsForm ManageTagsForm;
+
+        /// <summary>
+        /// </summary>
         private DownloadListItem ContextMenuDownloadItem;
 
         /// <summary>
@@ -125,6 +129,7 @@ namespace BuildSync.Client.Forms
             MainDownloadList = new DownloadList();
             StatsForm = new StatisticsForm();
             ManageBuildsForm = new ManageBuildsForm();
+            ManageTagsForm = new ManageTagsForm();
             ManageUsersForm = new ManageUsersForm();
             ManageServerForm = new ManageServerForm();
             ConsoleOutputForm = new ConsoleForm();
@@ -153,6 +158,11 @@ namespace BuildSync.Client.Forms
             if (persistString == typeof(ManageBuildsForm).ToString())
             {
                 return ManageBuildsForm;
+            }
+
+            if (persistString == typeof(ManageTagsForm).ToString())
+            {
+                return ManageTagsForm;
             }
 
             if (persistString == typeof(ManageUsersForm).ToString())
@@ -518,6 +528,16 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ManageTagsClicked(object sender, EventArgs e)
+        {
+            ShowContent(ManageTagsForm, DockState.Document);
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -868,6 +888,17 @@ namespace BuildSync.Client.Forms
                 {
                     serverManagerToolStripMenuItem.Enabled = false;
                     serverManagerToolStripMenuItem.Text = "Server Manager (Permission Required)";
+                }
+            }
+
+            tagManagerToolStripMenuItem.Text = "Tag Manager";
+            tagManagerToolStripMenuItem.Enabled = Connected;
+            if (Connected)
+            {
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyTags, ""))
+                {
+                    tagManagerToolStripMenuItem.Enabled = false;
+                    tagManagerToolStripMenuItem.Text = "Tag Manager (Permission Required)";
                 }
             }
 

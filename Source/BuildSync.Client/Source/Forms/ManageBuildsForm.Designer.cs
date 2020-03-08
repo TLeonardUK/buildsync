@@ -33,15 +33,11 @@
             this.ButtonImageList = new System.Windows.Forms.ImageList(this.components);
             this.UpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.downloadListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.addDownloadToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.addTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.customTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.brokenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.milestoneToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.downloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
             this.downloadListContextMenu.SuspendLayout();
@@ -72,16 +68,7 @@
             this.deleteToolStripMenuItem});
             this.downloadListContextMenu.Name = "downloadListContextMenu";
             this.downloadListContextMenu.Size = new System.Drawing.Size(189, 158);
-            // 
-            // toolStripSeparator6
-            // 
-            this.toolStripSeparator6.Name = "toolStripSeparator6";
-            this.toolStripSeparator6.Size = new System.Drawing.Size(185, 6);
-            // 
-            // toolStripSeparator9
-            // 
-            this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(185, 6);
+            this.downloadListContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuOpening);
             // 
             // addDownloadToolStripMenuItem1
             // 
@@ -93,38 +80,15 @@
             // 
             // addTagToolStripMenuItem
             // 
-            this.addTagToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.customTagToolStripMenuItem,
-            this.toolStripSeparator1,
-            this.brokenToolStripMenuItem,
-            this.milestoneToolStripMenuItem});
             this.addTagToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_tag;
             this.addTagToolStripMenuItem.Name = "addTagToolStripMenuItem";
             this.addTagToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.addTagToolStripMenuItem.Text = "Add Tag ...";
+            this.addTagToolStripMenuItem.Text = "Toggle Tag ...";
             // 
-            // customTagToolStripMenuItem
+            // toolStripSeparator6
             // 
-            this.customTagToolStripMenuItem.Name = "customTagToolStripMenuItem";
-            this.customTagToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
-            this.customTagToolStripMenuItem.Text = "Custom Tag";
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(134, 6);
-            // 
-            // brokenToolStripMenuItem
-            // 
-            this.brokenToolStripMenuItem.Name = "brokenToolStripMenuItem";
-            this.brokenToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
-            this.brokenToolStripMenuItem.Text = "Broken";
-            // 
-            // milestoneToolStripMenuItem
-            // 
-            this.milestoneToolStripMenuItem.Name = "milestoneToolStripMenuItem";
-            this.milestoneToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
-            this.milestoneToolStripMenuItem.Text = "Milestone";
+            this.toolStripSeparator6.Name = "toolStripSeparator6";
+            this.toolStripSeparator6.Size = new System.Drawing.Size(185, 6);
             // 
             // downloadToolStripMenuItem
             // 
@@ -133,6 +97,11 @@
             this.downloadToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
             this.downloadToolStripMenuItem.Text = "Download ...";
             this.downloadToolStripMenuItem.Click += new System.EventHandler(this.DownloadClicked);
+            // 
+            // toolStripSeparator9
+            // 
+            this.toolStripSeparator9.Name = "toolStripSeparator9";
+            this.toolStripSeparator9.Size = new System.Drawing.Size(185, 6);
             // 
             // deleteToolStripMenuItem
             // 
@@ -174,6 +143,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Build Explorer";
+            this.Shown += new System.EventHandler(this.FormShown);
             this.downloadListContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -187,13 +157,9 @@
         private System.Windows.Forms.ContextMenuStrip downloadListContextMenu;
         private System.Windows.Forms.ToolStripMenuItem addDownloadToolStripMenuItem1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
-        private System.Windows.Forms.ToolStripMenuItem addTagToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem customTagToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripMenuItem brokenToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem milestoneToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
         private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem downloadToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addTagToolStripMenuItem;
     }
 }
