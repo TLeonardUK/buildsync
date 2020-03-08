@@ -20,10 +20,12 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Forms;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Manifests;
 
 namespace BuildSync.Client.Forms
 {
@@ -34,6 +36,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// </summary>
         public DownloadState EditState;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<BuildManifestTag> Tags;
 
         /// <summary>
         /// 
@@ -51,6 +58,15 @@ namespace BuildSync.Client.Forms
             InitializeComponent();
 
             DialogResult = DialogResult.Abort;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnClosed(object sender, FormClosedEventArgs e)
+        {
         }
 
         /// <summary>
@@ -72,6 +88,8 @@ namespace BuildSync.Client.Forms
                 EditState.SelectionFilter = (BuildSelectionFilter) selectionFilterComboBox.SelectedIndex;
                 EditState.SelectionFilterFilePath = scmFileTextBox.Text;
                 EditState.ScmWorkspaceLocation = workspaceComboBox.Text;
+                EditState.IncludeTags = includeTextBox.TagIds;
+                EditState.ExcludeTags = excludeTextBox.TagIds;
             }
             else
             {
@@ -86,7 +104,9 @@ namespace BuildSync.Client.Forms
                     autoUpdateCheckBox.Checked,
                     autoInstallCheckBox.Checked,
                     deviceTextBox.Text,
-                    installLocationTextBox.Text
+                    installLocationTextBox.Text,
+                    includeTextBox.TagIds,
+                    excludeTextBox.TagIds
                 );
             }
 
@@ -147,8 +167,8 @@ namespace BuildSync.Client.Forms
                 nameTextBox.Text = EditState.Name;
                 priorityComboBox.SelectedIndex = EditState.Priority;
                 scmFileTextBox.Text = EditState.SelectionFilterFilePath;
-                selectionRuleComboBox.SelectedIndex = (int) EditState.SelectionRule;
-                selectionFilterComboBox.SelectedIndex = (int) EditState.SelectionFilter;
+                selectionRuleComboBox.SelectedIndex = (int)EditState.SelectionRule;
+                selectionFilterComboBox.SelectedIndex = (int)EditState.SelectionFilter;
 
                 if (workspaceComboBox.Items.Count > 0)
                 {
@@ -172,7 +192,14 @@ namespace BuildSync.Client.Forms
                 downloadFileSystemTree.SelectedPath = EditState.VirtualPath;
                 addDownloadButton.Text = "Save Changes";
 
+                includeTextBox.TagIds = EditState.IncludeTags;
+                excludeTextBox.TagIds = EditState.ExcludeTags;
+
                 downloadFileSystemTree.UpdatePathText(EditState.VirtualPath);
+            }
+            else
+            {
+                excludeTextBox.AddTagByName("Broken");
             }
 
             if (workspaceComboBox.Items.Count == 0)

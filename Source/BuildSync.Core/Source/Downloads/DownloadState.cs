@@ -225,6 +225,16 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
+        public List<Guid> ExcludeTags { get; set; } = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<Guid> IncludeTags { get; set; } = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
         public List<DownloadStateDuration> DurationHistory { get; set; } = new List<DownloadStateDuration>();
 
         /// <summary>

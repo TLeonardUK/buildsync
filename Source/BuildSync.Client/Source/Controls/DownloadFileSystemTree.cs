@@ -446,7 +446,6 @@ namespace BuildSync.Client.Controls
         /// <param name="Node"></param>
         private void UpdateNode(DownloadFileSystemTreeNode TrNode, VirtualFileSystemNode Node)
         {
-            TrNode.IsBuildContainer = false;
             TrNode.FullPath = Node.Path;
             TrNode.Name = Node.Name;
             TrNode.Icon = Resources.appbar_box;
@@ -516,7 +515,6 @@ namespace BuildSync.Client.Controls
             else
             {
                 TrNode.IsBuild = false;
-                TrNode.IsBuildContainer = false;
                 TrNode.ManifestId = Guid.Empty;
                 TrNode.CreateTime = DateTime.UtcNow;
             }
@@ -534,6 +532,10 @@ namespace BuildSync.Client.Controls
             {
                 TrNode.Icon = Resources.appbar_box;
             }
+            else if (TrNode.IsBuildContainer)
+            {
+                TrNode.Icon = Resources.appbar_database;
+            }
             else
             {
                 TrNode.Icon = Resources.appbar_folder_open;
@@ -545,6 +547,7 @@ namespace BuildSync.Client.Controls
                 DownloadFileSystemTreeNode ParentNode = TrNode.Parent as DownloadFileSystemTreeNode;
                 if (ParentNode != null)
                 {
+                    Console.WriteLine("IS! Build Container: {0}", ParentNode.Name);
                     ParentNode.IsBuildContainer = true;
                     ParentNode.Icon = Resources.appbar_database;
                 }
@@ -599,14 +602,22 @@ namespace BuildSync.Client.Controls
                 }
 
                 DownloadFileSystemTreeNode TrNode = new DownloadFileSystemTreeNode();
-                UpdateNode(TrNode, Node);
+                TrNode.IsBuildContainer = false;
+                Console.WriteLine("NOT# Build Container: {0}", Node.Name);
+
+                DateTime SortTime = DateTime.UtcNow;
+                if (Node.Metadata != null)
+                {
+                    NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Node.Metadata;
+                    SortTime = Node.CreateTime;
+                }
 
                 // Insert based on create time.
                 bool Inserted = false;
                 for (int i = 0; i < NodeCollection.Count; i++)
                 {
                     DownloadFileSystemTreeNode SubNode = NodeCollection[i] as DownloadFileSystemTreeNode;
-                    if (SubNode != null && (SubNode.CreateTime.Ticks - TrNode.CreateTime.Ticks) < -10000000) // At least a second off.
+                    if (SubNode != null && (SubNode.CreateTime.Ticks - SortTime.Ticks) < -10000000) // At least a second off.
                     {
                         NodeCollection.Insert(i, TrNode);
                         Inserted = true;
@@ -618,6 +629,8 @@ namespace BuildSync.Client.Controls
                 {
                     NodeCollection.Add(TrNode);
                 }
+
+                UpdateNode(TrNode, Node);
 
                 // If parent node is expanded, then request all children of this node.
                 TreeNodeAdv ParentViewNode = null;
@@ -651,22 +664,17 @@ namespace BuildSync.Client.Controls
 
             BuildFileSystem.OnNodeRemoved += (FileSystem, Node) =>
             {
-                //Invoke(
-                //    (MethodInvoker) (() =>
-                //    {
-                        // Ignore internal parts of the heirarchy.
-                        if (Node.Path.Contains("$") && !ShowInternal)
-                        {
-                            return;
-                        }
+                // Ignore internal parts of the heirarchy.
+                if (Node.Path.Contains("$") && !ShowInternal)
+                {
+                    return;
+                }
 
-                        Node ModelNode = GetNodeByPath(Node.Path);
-                        if (ModelNode != null && ModelNode.Parent != null)
-                        {
-                            ModelNode.Parent.Nodes.Remove(ModelNode);
-                        }
-                //    })
-                //);
+                Node ModelNode = GetNodeByPath(Node.Path);
+                if (ModelNode != null && ModelNode.Parent != null)
+                {
+                    ModelNode.Parent.Nodes.Remove(ModelNode);
+                }
             };
 
             BuildFileSystem.Init();

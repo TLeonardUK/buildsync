@@ -81,7 +81,6 @@ namespace BuildSync.Core.Manifests
             if (Tags.Count == 0)
             {
                 Tags.Add(new BuildManifestTag() { Id = Guid.NewGuid(), Name = "Broken" });
-                Tags.Add(new BuildManifestTag() { Id = Guid.NewGuid(), Name = "Important" });
             }
         }
 

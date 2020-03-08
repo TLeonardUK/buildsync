@@ -25,6 +25,8 @@ using System.Diagnostics;
 using System.IO;
 using BuildSync.Core.Scm;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Manifests;
+using BuildSync.Core.Networking.Messages;
 
 namespace BuildSync.Core.Downloads
 {
@@ -90,7 +92,7 @@ namespace BuildSync.Core.Downloads
         /// <param name="VirtualPath"></param>
         /// <param name="Priority"></param>
         /// <param name="KeepUpToDate"></param>
-        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, BuildSelectionRule Rule, BuildSelectionFilter Filter, string SelectionFilterFilePath, string ScmWorkspaceLocation, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName, string InstallLocation)
+        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, BuildSelectionRule Rule, BuildSelectionFilter Filter, string SelectionFilterFilePath, string ScmWorkspaceLocation, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName, string InstallLocation, List<Guid> IncludeTags, List<Guid> ExcludeTags)
         {
             DownloadState State = new DownloadState();
             State.Id = Guid.NewGuid();
@@ -105,6 +107,8 @@ namespace BuildSync.Core.Downloads
             State.SelectionFilter = Filter;
             State.SelectionFilterFilePath = SelectionFilterFilePath;
             State.ScmWorkspaceLocation = ScmWorkspaceLocation;
+            State.IncludeTags = IncludeTags;
+            State.ExcludeTags = ExcludeTags;
 
             StateCollection.States.Add(State);
             AreStatesDirty = true;
@@ -117,6 +121,54 @@ namespace BuildSync.Core.Downloads
         public void ForceRefresh()
         {
             BuildFileSystem.ForceRefresh();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Info"></param>
+        /// <param name="Ids"></param>
+        /// <returns></returns>
+        private bool BuildHasAllTags(NetMessage_GetBuildsResponse.BuildInfo Info, List<Guid> Ids)
+        {
+            foreach (Guid Id in Ids)
+            {
+                bool Found = false;
+
+                foreach (BuildManifestTag Tag in Info.Tags)
+                {
+                    if (Tag.Id == Id)
+                    {
+                        Found = true;
+                        break;
+                    }
+                }
+
+                if (!Found)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Info"></param>
+        /// <param name="Ids"></param>
+        /// <returns></returns>
+        private bool BuildHasAnyTags(NetMessage_GetBuildsResponse.BuildInfo Info, List<Guid> Ids)
+        {
+            foreach (BuildManifestTag Tag in Info.Tags)
+            {
+                if (Ids.Contains(Tag.Id))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>
@@ -137,7 +189,8 @@ namespace BuildSync.Core.Downloads
             // Node is a build in and of itself, use its id.
             if (Node.Metadata != null)
             {
-                Guid ManifestId = (Guid) Node.Metadata;
+                NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Node.Metadata;
+                Guid ManifestId = (Guid)BuildInfo.Guid;
                 if (ManifestId != Guid.Empty)
                 {
                     return ManifestId;
@@ -152,10 +205,41 @@ namespace BuildSync.Core.Downloads
             {
                 if (Child.Metadata != null)
                 {
-                    Guid ManifestId = (Guid) Child.Metadata;
+                    NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Child.Metadata;
+                    Guid ManifestId = (Guid)BuildInfo.Guid;
                     if (ManifestId != Guid.Empty)
                     {
                         BuildChildren.Add(Child);
+                    }
+                }
+            }
+
+            // Remove all children without included tags.
+            for (int i = 0; i < BuildChildren.Count; i++)
+            {
+                VirtualFileSystemNode Child = BuildChildren[i];
+                if (Child.Metadata != null)
+                {
+                    NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Child.Metadata;
+                    if (!BuildHasAllTags(BuildInfo, State.IncludeTags))
+                    {
+                        BuildChildren.RemoveAt(i);
+                        i--;
+                    }
+                }
+            }
+
+            // Remove all children with any tags..
+            for (int i = 0; i < BuildChildren.Count; i++)
+            {
+                VirtualFileSystemNode Child = BuildChildren[i];
+                if (Child.Metadata != null)
+                {
+                    NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Child.Metadata;
+                    if (BuildHasAnyTags(BuildInfo, State.ExcludeTags))
+                    {
+                        BuildChildren.RemoveAt(i);
+                        i--;
                     }
                 }
             }
@@ -306,7 +390,8 @@ namespace BuildSync.Core.Downloads
 
             if (SelectedChild != null)
             {
-                return (Guid) SelectedChild.Metadata;
+                NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)SelectedChild.Metadata;
+                return BuildInfo.Guid;
             }
 
             return Guid.Empty;
@@ -326,7 +411,8 @@ namespace BuildSync.Core.Downloads
             // Node is a build in and of itself, use its id.
             if (Node.Metadata != null)
             {
-                Guid ManifestId = (Guid) Node.Metadata;
+                NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Node.Metadata;
+                Guid ManifestId = BuildInfo.Guid;
                 if (ManifestId != Guid.Empty)
                 {
                     return ManifestId;
@@ -340,7 +426,8 @@ namespace BuildSync.Core.Downloads
             {
                 if (Child.Metadata != null)
                 {
-                    Guid ManifestId = (Guid) Child.Metadata;
+                    NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Child.Metadata;
+                    Guid ManifestId = BuildInfo.Guid;
                     if (ManifestId != Guid.Empty)
                     {
                         if (NewestChild == null || NewestChild.CreateTime < Child.CreateTime)
@@ -353,7 +440,8 @@ namespace BuildSync.Core.Downloads
 
             if (NewestChild != null)
             {
-                return (Guid) NewestChild.Metadata;
+                NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)NewestChild.Metadata;
+                return BuildInfo.Guid;
             }
 
             return Guid.Empty;
