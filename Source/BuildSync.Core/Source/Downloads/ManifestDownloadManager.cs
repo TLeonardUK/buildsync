@@ -1597,11 +1597,6 @@ namespace BuildSync.Core.Downloads
 
             byte[] DataBuffer = Data.Data;
 
-            if (BlockInfo.SubBlocks.Count > 50)
-            {
-                Console.WriteLine("Requesting: {0} subblocks", BlockInfo.SubBlocks.Count);
-            }
-
             for (int i = 0; i < BlockInfo.SubBlocks.Count; i++)
             {
                 BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
@@ -1658,6 +1653,10 @@ namespace BuildSync.Core.Downloads
                                 {
                                     Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to get block data.", BlockIndex, ManifestId.ToString(), Checksum, ExpectedChecksum);
                                     WriteState.WasSuccess = false;
+                                }
+                                else
+                                {
+                                //    Logger.Log(LogLevel.Info, LogCategory.Manifest, "GOOD READ: {0} in manifest {1}", BlockIndex, ManifestId.ToString());
                                 }
                             }
 #endif
@@ -1742,6 +1741,10 @@ namespace BuildSync.Core.Downloads
                     WriteState.WasSuccess = false;
                     Callback?.Invoke(WriteState.WasSuccess);
                     return false;
+                }
+                else
+                {
+                //    Logger.Log(LogLevel.Info, LogCategory.Manifest, "GOOD WRITE: {0} in manifest {1}", BlockIndex, ManifestId.ToString());
                 }
             }
 #endif

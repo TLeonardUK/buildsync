@@ -547,7 +547,6 @@ namespace BuildSync.Client.Controls
                 DownloadFileSystemTreeNode ParentNode = TrNode.Parent as DownloadFileSystemTreeNode;
                 if (ParentNode != null)
                 {
-                    Console.WriteLine("IS! Build Container: {0}", ParentNode.Name);
                     ParentNode.IsBuildContainer = true;
                     ParentNode.Icon = Resources.appbar_database;
                 }
@@ -603,7 +602,6 @@ namespace BuildSync.Client.Controls
 
                 DownloadFileSystemTreeNode TrNode = new DownloadFileSystemTreeNode();
                 TrNode.IsBuildContainer = false;
-                Console.WriteLine("NOT# Build Container: {0}", Node.Name);
 
                 DateTime SortTime = DateTime.UtcNow;
                 if (Node.Metadata != null)
