@@ -324,6 +324,11 @@ namespace BuildSync.Core.Manifests
 
             Logger.Log(LogLevel.Info, LogCategory.Manifest, "Registering manifest: {0}", FilePath);
 
+            if (Manifest.Metadata == null)
+            {
+                Manifest.Metadata = new BuildManifestMetadata();
+            }
+
             Manifest.WriteToFile(FilePath);
             AddManifest(Manifest);
 
@@ -380,7 +385,7 @@ namespace BuildSync.Core.Manifests
                 return;
             }
 
-            if (!Manifest.Metadata.TagIds.Contains(TagId))
+            if (Manifest.Metadata != null && !Manifest.Metadata.TagIds.Contains(TagId))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Tagging manifest {0} with {1}", ManifestId.ToString(), Tag.Name);
 
@@ -408,7 +413,7 @@ namespace BuildSync.Core.Manifests
                 return;
             }
 
-            if (Manifest.Metadata.TagIds.Contains(TagId))
+            if (Manifest.Metadata != null && Manifest.Metadata.TagIds.Contains(TagId))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Unagging manifest {0} with {1}", ManifestId.ToString(), Tag.Name);
 

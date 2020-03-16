@@ -69,6 +69,7 @@ namespace BuildSync.Core.Downloads
     public class ManifestDownloadQueue
     {
         public int HighestPriority;
+        public int SortOrder;
         public Guid ManifestId;
         public List<ManifestDownloadRequiredBlock> ToDownloadBlocks;
     }
@@ -1935,10 +1936,12 @@ namespace BuildSync.Core.Downloads
                 return;
             }
 
+            Random Randomiser = new Random(Environment.TickCount);
+
             // Update split index periodically.
             if (SplitIndex == -1 || TimeUtils.Ticks - SplitIndexLastUpdatedTimer > SplitIndexUpdateInterval)
             {
-                SplitIndex = new Random(Environment.TickCount).Next();
+                SplitIndex = Randomiser.Next();
                 SplitIndexLastUpdatedTimer = TimeUtils.Ticks;
             }
 
@@ -1971,6 +1974,7 @@ namespace BuildSync.Core.Downloads
                     }
 
                     DownloadQueue.HighestPriority = State.Priority;
+                    DownloadQueue.SortOrder = (State.Priority * 1000) + (Randomiser.Next() % 100);
                     DownloadQueue.ManifestId = State.ManifestId;
                     ManifestQueues.Add(DownloadQueue);
 
@@ -2037,7 +2041,7 @@ namespace BuildSync.Core.Downloads
             }
 
             // Sort by priority.
-            ManifestQueues.Sort((Item1, Item2) => -Item1.HighestPriority.CompareTo(Item2.HighestPriority));
+            ManifestQueues.Sort((Item1, Item2) => -Item1.SortOrder.CompareTo(Item2.SortOrder));
 
             // Now to generate the actual download priority queue.
             // To do this we go through each manifest in priority order. The higher the priority the more blocks they get to add to the queue.

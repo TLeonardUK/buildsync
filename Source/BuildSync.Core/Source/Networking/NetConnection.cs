@@ -520,7 +520,7 @@ namespace BuildSync.Core.Networking
             {
                 lock (Clients)
                 {
-                    return Clients;
+                    return new List<NetConnection>(Clients);
                 }
             }
         }
@@ -1047,6 +1047,9 @@ namespace BuildSync.Core.Networking
                 {
                     MessageQueueEntry Data;
                     SendQueue.TryDequeue(out Data);
+
+                    Data.Callback?.Invoke(false);
+
                     ReleaseMessageBuffer(Data.Data, "EndSendThread", "Send", true);
                 }
             }
