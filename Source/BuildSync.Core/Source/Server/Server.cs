@@ -51,6 +51,7 @@ namespace BuildSync.Core.Server
         {
             public Guid Id;
             public DateTime LastSeen;
+            public DateTime CreateTime;
             public int NumberOfPeersWithFullBuild;
         }
 
@@ -999,6 +1000,8 @@ namespace BuildSync.Core.Server
                 State.DiskUsage = Msg.DiskUsage;
                 State.Version = Msg.Version;
                 State.VersionNumeric = StringUtils.ConvertSemanticVerisonNumber(State.Version);
+
+                Connection.MessageVersion = State.VersionNumeric;
             }
 
             // ------------------------------------------------------------------------------
@@ -1033,30 +1036,49 @@ namespace BuildSync.Core.Server
                 List<ManifestDeletionCandidate> Candidates = new List<ManifestDeletionCandidate>();
                 foreach (Guid Id in Msg.CandidateManifestIds)
                 {
+                    BuildManifest Manifest = ManifestRegistry.GetManifestById(Id);
+
                     ManifestDeletionCandidate Candidate;
                     Candidate.Id = Id;
-                    Candidate.LastSeen = ManifestRegistry.GetLastSeenTime(Id);
+                    Candidate.LastSeen = ManifestRegistry.GetLastSeenTime(Id); // This is always going to basically be this timestamp ... how is this helpful? 
+                    Candidate.CreateTime = Manifest != null ? Manifest.CreateTime : DateTime.UtcNow;
                     Candidate.NumberOfPeersWithFullBuild = Math.Max(0, GetPeerCountForManifest(Id) - 1); // Don't take our peer into account.
                     Candidates.Add(Candidate);
                 }
 
                 if (Candidates.Count > 0)
                 {
-                    Candidates.Sort((Item1, Item2) => {
+                    switch (Msg.Heuristic)
+                    {
+                        case ManifestStorageHeuristic.Oldest:
+                            {
+                                Candidates.Sort((Item1, Item2) =>
+                                {
+                                    return -Item1.CreateTime.CompareTo(Item2.CreateTime);
+                                });
 
-                        // Our aim is to maintain highest availability of all builds, to do that:
-                        //      Compare first by number of peers, the ones with the most are the lowest priority.
-                        //      If same number of peers, prioritize deletion of ones seen most recently.
-                        if (Item1.NumberOfPeersWithFullBuild == Item2.NumberOfPeersWithFullBuild)
-                        {
-                            return -Item1.LastSeen.CompareTo(Item2.LastSeen);
-                        }
-                        else
-                        {
-                            return -Item1.NumberOfPeersWithFullBuild.CompareTo(Item2.NumberOfPeersWithFullBuild);
-                        }
+                                break;
+                            }
+                        case ManifestStorageHeuristic.LeastAvailable:
+                            {
+                                Candidates.Sort((Item1, Item2) =>
+                                {
+                                    // Our aim is to maintain highest availability of all builds, to do that:
+                                    //      Compare first by number of peers, the ones with the most are the lowest priority.
+                                    //      If same number of peers, prioritize deletion of ones seen most recently.
+                                    if (Item1.NumberOfPeersWithFullBuild == Item2.NumberOfPeersWithFullBuild)
+                                    {
+                                        return -Item1.LastSeen.CompareTo(Item2.LastSeen);
+                                    }
+                                    else
+                                    {
+                                        return -Item1.NumberOfPeersWithFullBuild.CompareTo(Item2.NumberOfPeersWithFullBuild);
+                                    }
+                                });
 
-                    });
+                                break;
+                            }
+                    }
 
                     Logger.Log(LogLevel.Info, LogCategory.Main, "User '{0}' asked us to select manifest to delete, priority order:", State.Username);
                     foreach (ManifestDeletionCandidate Candidate in Candidates)
@@ -1199,7 +1221,6 @@ namespace BuildSync.Core.Server
             }
 
             ResponseMsg.Builds = Result.ToArray();
-            ResponseMsg.Version = State.VersionNumeric;
             Connection.Send(ResponseMsg);
         }
     }

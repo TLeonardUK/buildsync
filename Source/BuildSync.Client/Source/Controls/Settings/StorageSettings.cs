@@ -21,8 +21,13 @@
 
 using System;
 using System.IO;
+using System.ComponentModel;
+using System.Collections.Generic;
+using System.Windows.Forms;
 using BuildSync.Client.Properties;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using BuildSync.Core.Downloads;
+using BuildSync.Core.Utils;
 
 namespace BuildSync.Client.Controls.Settings
 {
@@ -46,9 +51,15 @@ namespace BuildSync.Client.Controls.Settings
         {
             InitializeComponent();
 
+            foreach (Enum val in Enum.GetValues(typeof(ManifestStorageHeuristic)))
+            {
+                HeuristicComboBox.Items.Add(val.GetAttributeOfType<DescriptionAttribute>().Description);
+            }
+
             SkipValidity = true;
             StoragePathTextBox.Text = Program.Settings.StoragePath;
             StorageMaxSizeTextBox.Value = Program.Settings.StorageMaxSize / 1024 / 1024 / 1024;
+            HeuristicComboBox.SelectedIndex = (int)Program.Settings.StorageHeuristic;
             SkipValidity = false;
 
             UpdateValidityState();
@@ -96,6 +107,7 @@ namespace BuildSync.Client.Controls.Settings
 
             Program.Settings.StoragePath = StoragePathTextBox.Text;
             Program.Settings.StorageMaxSize = (long) StorageMaxSizeTextBox.Value * 1024 * 1024 * 1024;
+            Program.Settings.StorageHeuristic = (ManifestStorageHeuristic)HeuristicComboBox.SelectedIndex;
 
             if (Directory.Exists(Program.Settings.StoragePath))
             {

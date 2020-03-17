@@ -183,6 +183,11 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
+        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.LeastAvailable;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public long BandwidthMaxUp { get; set; } = 0;
 
         /// <summary>

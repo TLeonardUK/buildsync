@@ -1027,7 +1027,7 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// 
         /// </summary>
-        public bool RequestChooseDeletionCandidate(List<Guid> Candidates)
+        public bool RequestChooseDeletionCandidate(List<Guid> Candidates, ManifestStorageHeuristic Heuristic)
         {
             if (!Connection.IsReadyForData)
             {
@@ -1037,6 +1037,7 @@ namespace BuildSync.Core.Client
 
             NetMessage_ChooseDeletionCandidate Msg = new NetMessage_ChooseDeletionCandidate();
             Msg.CandidateManifestIds = Candidates;
+            Msg.Heuristic = Heuristic;
             Connection.Send(Msg);
 
             return true;
@@ -1223,7 +1224,7 @@ namespace BuildSync.Core.Client
             ManifestRegistry = BuildManifest;
             ManifestDownloadManager = DownloadManager;
             ManifestDownloadManager.OnManifestRequested += Id => { RequestManifest(Id); };
-            ManifestDownloadManager.OnRequestChooseDeletionCandidate += Candidates => { RequestChooseDeletionCandidate(Candidates); };
+            ManifestDownloadManager.OnRequestChooseDeletionCandidate += (Candidates, Heuristic) => { RequestChooseDeletionCandidate(Candidates, Heuristic); };
 
             Started = true;
         }

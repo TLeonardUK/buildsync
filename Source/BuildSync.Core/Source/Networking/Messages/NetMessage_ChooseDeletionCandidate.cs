@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BuildSync.Core.Downloads;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -18,6 +19,11 @@ namespace BuildSync.Core.Networking.Messages
         ///     in clients priority order.
         /// </summary>
         public List<Guid> CandidateManifestIds = new List<Guid>();
+
+        /// <summary>
+        ///     Which heuristic to use for selecting deletion candidate.
+        /// </summary>
+        public ManifestStorageHeuristic Heuristic = ManifestStorageHeuristic.LeastAvailable;
 
         /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
@@ -38,6 +44,11 @@ namespace BuildSync.Core.Networking.Messages
                 Guid Id = CandidateManifestIds[i];
                 serializer.Serialize(ref Id);
                 CandidateManifestIds[i] = Id;
+            }
+
+            if (serializer.Version > 100000560)
+            {
+                serializer.SerializeEnum<ManifestStorageHeuristic>(ref Heuristic);
             }
         }
     }

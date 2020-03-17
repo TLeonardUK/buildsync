@@ -35,20 +35,24 @@ namespace BuildSync.Core.Networking
 
         public bool IsLoading => Reader != null;
 
+        public int Version = AppVersion.VersionNumber;
+
         /// <summary>
         /// </summary>
         /// <param name="Reader"></param>
-        public NetMessageSerializer(BinaryReader InReader)
+        public NetMessageSerializer(BinaryReader InReader, int InVersion)
         {
             Reader = InReader;
+            Version = InVersion;
         }
 
         /// <summary>
         /// </summary>
         /// <param name="Writer"></param>
-        public NetMessageSerializer(BinaryWriter InWriter)
+        public NetMessageSerializer(BinaryWriter InWriter, int InVersion)
         {
             Writer = InWriter;
+            Version = InVersion;
         }
 
         /// <summary>

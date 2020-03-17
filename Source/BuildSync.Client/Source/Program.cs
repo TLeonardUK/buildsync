@@ -193,11 +193,12 @@ namespace BuildSync.Client
                 SaveSettings();
             }
 
-            if (ManifestDownloadManager != null && Settings.StorageMaxSize != ManifestDownloadManager.StorageMaxSize)
+            if (ManifestDownloadManager != null && (Settings.StorageMaxSize != ManifestDownloadManager.StorageMaxSize || Settings.StorageHeuristic != ManifestDownloadManager.StorageHeuristic))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply manifest download manager settings");
 
                 ManifestDownloadManager.StorageMaxSize = Settings.StorageMaxSize;
+                ManifestDownloadManager.StorageHeuristic = Settings.StorageHeuristic;
 
                 SaveSettings();
             }

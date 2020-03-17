@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
@@ -52,6 +53,17 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         public string Path { get; set; } = "";
+    }
+
+    /// <summary>
+    /// </summary>
+    public enum ManifestStorageHeuristic
+    {
+        [Description("Least Available")]
+        LeastAvailable,
+
+        [Description("Oldest")]
+        Oldest
     }
 
     /// <summary>

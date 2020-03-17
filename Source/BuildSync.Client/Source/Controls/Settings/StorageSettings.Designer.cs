@@ -35,15 +35,19 @@
             this.label2 = new System.Windows.Forms.Label();
             this.StorageMaxSizeIcon = new System.Windows.Forms.PictureBox();
             this.StoragePathIcon = new System.Windows.Forms.PictureBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.HeuristicComboBox = new System.Windows.Forms.ComboBox();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeTextBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.StoragePathIcon)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // savePathBrowseButton
             // 
             this.savePathBrowseButton.Location = new System.Drawing.Point(403, 36);
-            this.savePathBrowseButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.savePathBrowseButton.Margin = new System.Windows.Forms.Padding(2);
             this.savePathBrowseButton.Name = "savePathBrowseButton";
             this.savePathBrowseButton.Size = new System.Drawing.Size(93, 27);
             this.savePathBrowseButton.TabIndex = 16;
@@ -54,7 +58,7 @@
             // StoragePathTextBox
             // 
             this.StoragePathTextBox.Location = new System.Drawing.Point(54, 42);
-            this.StoragePathTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.StoragePathTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.StoragePathTextBox.Name = "StoragePathTextBox";
             this.StoragePathTextBox.ReadOnly = true;
             this.StoragePathTextBox.Size = new System.Drawing.Size(338, 20);
@@ -74,7 +78,7 @@
             // StorageMaxSizeTextBox
             // 
             this.StorageMaxSizeTextBox.Location = new System.Drawing.Point(54, 107);
-            this.StorageMaxSizeTextBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.StorageMaxSizeTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.StorageMaxSizeTextBox.Maximum = new decimal(new int[] {
             100000000,
             0,
@@ -109,7 +113,7 @@
             // 
             this.StorageMaxSizeIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
             this.StorageMaxSizeIcon.Location = new System.Drawing.Point(14, 99);
-            this.StorageMaxSizeIcon.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.StorageMaxSizeIcon.Margin = new System.Windows.Forms.Padding(2);
             this.StorageMaxSizeIcon.Name = "StorageMaxSizeIcon";
             this.StorageMaxSizeIcon.Size = new System.Drawing.Size(32, 31);
             this.StorageMaxSizeIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -120,16 +124,48 @@
             // 
             this.StoragePathIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
             this.StoragePathIcon.Location = new System.Drawing.Point(14, 34);
-            this.StoragePathIcon.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.StoragePathIcon.Margin = new System.Windows.Forms.Padding(2);
             this.StoragePathIcon.Name = "StoragePathIcon";
             this.StoragePathIcon.Size = new System.Drawing.Size(32, 31);
             this.StoragePathIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.StoragePathIcon.TabIndex = 17;
             this.StoragePathIcon.TabStop = false;
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(13, 145);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(243, 13);
+            this.label3.TabIndex = 43;
+            this.label3.Text = "What build to delete to make space for new builds";
+            // 
+            // HeuristicComboBox
+            // 
+            this.HeuristicComboBox.FormattingEnabled = true;
+            this.HeuristicComboBox.Location = new System.Drawing.Point(54, 169);
+            this.HeuristicComboBox.Name = "HeuristicComboBox";
+            this.HeuristicComboBox.Size = new System.Drawing.Size(337, 21);
+            this.HeuristicComboBox.TabIndex = 42;
+            this.HeuristicComboBox.SelectedIndexChanged += new System.EventHandler(this.StateChanged);
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
+            this.pictureBox1.Location = new System.Drawing.Point(14, 163);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(32, 31);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 44;
+            this.pictureBox1.TabStop = false;
+            // 
             // StorageSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.HeuristicComboBox);
             this.Controls.Add(this.StorageMaxSizeTextBox);
             this.Controls.Add(this.StorageMaxSizeIcon);
             this.Controls.Add(this.label2);
@@ -137,12 +173,13 @@
             this.Controls.Add(this.savePathBrowseButton);
             this.Controls.Add(this.StoragePathTextBox);
             this.Controls.Add(this.label1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "StorageSettings";
-            this.Size = new System.Drawing.Size(519, 138);
+            this.Size = new System.Drawing.Size(519, 208);
             ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeTextBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeIcon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.StoragePathIcon)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -157,5 +194,8 @@
         private System.Windows.Forms.NumericUpDown StorageMaxSizeTextBox;
         private System.Windows.Forms.PictureBox StorageMaxSizeIcon;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.ComboBox HeuristicComboBox;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }

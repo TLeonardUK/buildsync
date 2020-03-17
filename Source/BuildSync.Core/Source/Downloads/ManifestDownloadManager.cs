@@ -52,7 +52,7 @@ namespace BuildSync.Core.Downloads
 
     /// <summary>
     /// </summary>
-    public delegate void RequestChooseDeletionCandidateHandler(List<Guid> Candidates);
+    public delegate void RequestChooseDeletionCandidateHandler(List<Guid> Candidates, ManifestStorageHeuristic Heuristic);
 
     /// <summary>
     /// </summary>
@@ -171,6 +171,10 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         public long StorageMaxSize { get; set; }
+
+        /// <summary>
+        /// </summary>
+        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.LeastAvailable;
 
         /// <summary>
         /// </summary>
@@ -1446,7 +1450,7 @@ namespace BuildSync.Core.Downloads
                             DeletionCandidatesIds.Add(State.ManifestId);
                         }
 
-                        OnRequestChooseDeletionCandidate?.Invoke(DeletionCandidatesIds);
+                        OnRequestChooseDeletionCandidate?.Invoke(DeletionCandidatesIds, StorageHeuristic);
 
                         TimeSinceLastPruneRequest = TimeUtils.Ticks;
                     }

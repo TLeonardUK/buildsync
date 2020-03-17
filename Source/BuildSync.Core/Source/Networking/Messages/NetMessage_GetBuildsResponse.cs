@@ -84,11 +84,6 @@ namespace BuildSync.Core.Networking.Messages
         public string RootPath = "";
 
         /// <summary>
-        ///     If true the old format message without availability information will be sent.
-        /// </summary>
-        public int Version = AppVersion.VersionNumber;
-
-        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
@@ -106,13 +101,13 @@ namespace BuildSync.Core.Networking.Messages
                 serializer.Serialize(ref Builds[i].Guid);
                 serializer.Serialize(ref Builds[i].CreateTime);
 
-                if (Version > 100000397)
+                if (serializer.Version > 100000397)
                 {
                     serializer.Serialize(ref Builds[i].TotalSize);
                     serializer.Serialize(ref Builds[i].AvailablePeers);
                     serializer.Serialize(ref Builds[i].LastSeenOnPeer);
                 }
-                if (Version > 100000546)
+                if (serializer.Version > 100000546)
                 {
                     if (Builds[i].Tags == null)
                     {

@@ -74,7 +74,7 @@ namespace BuildSync.Core.Networking
         /// <param name="Buffer"></param>
         /// <param name="WasMemoryAvailable"></param>
         /// <returns></returns>
-        public static NetMessage FromByteArray(byte[] Buffer, out bool WasMemoryAvailable)
+        public static NetMessage FromByteArray(byte[] Buffer, out bool WasMemoryAvailable, int Version)
         {
             WasMemoryAvailable = true;
 
@@ -116,7 +116,7 @@ namespace BuildSync.Core.Networking
                         //Stopwatch stop = new Stopwatch();
                         //stop.Start();
 
-                        NetMessageSerializer Serializer = new NetMessageSerializer(dataReader);
+                        NetMessageSerializer Serializer = new NetMessageSerializer(dataReader, Version);
                         Msg.SerializePayload(Serializer);
 
                         if (Serializer.FailedOutOfMemory)
@@ -188,7 +188,7 @@ namespace BuildSync.Core.Networking
         /// </summary>
         /// <param name="Output"></param>
         /// <returns></returns>
-        public int ToByteArray(ref byte[] Output)
+        public int ToByteArray(ref byte[] Output, int Version)
         {
             ExpandableMemoryStream dataStream = new ExpandableMemoryStream(Output);
             //MemoryStream dataStream = new MemoryStream(Output);
@@ -197,7 +197,7 @@ namespace BuildSync.Core.Networking
             dataStream.Seek(HeaderSize, SeekOrigin.Begin);
 
             long PayloadStart = dataStream.Position;
-            SerializePayload(new NetMessageSerializer(dataWriter));
+            SerializePayload(new NetMessageSerializer(dataWriter, Version));
             Id = GetType().Name.GetStableHashCode();
             PayloadSize = (int) (dataStream.Position - PayloadStart);
 

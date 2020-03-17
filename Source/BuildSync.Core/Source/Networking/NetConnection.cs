@@ -333,6 +333,8 @@ namespace BuildSync.Core.Networking
 
         public static int ProcessFailuresDueToMemory;
 
+        public int MessageVersion = AppVersion.VersionNumber;
+
         public struct MessageQueueEntry
         {
             public byte[] Data;
@@ -1157,7 +1159,7 @@ namespace BuildSync.Core.Networking
                 }
 
                 byte[] Serialized = AllocMessageBuffer("SendMessage", "Send", true, !Message.HasLargePayload);
-                int BufferLength = Message.ToByteArray(ref Serialized);
+                int BufferLength = Message.ToByteArray(ref Serialized, MessageVersion);
 
                 //Logger.Log(LogLevel.Info, LogCategory.Transport, "Sending message of type {0}", Message.GetType().Name);
 
@@ -1627,7 +1629,7 @@ namespace BuildSync.Core.Networking
         private bool ProcessMessage(byte[] Buffer, int Size = 0)
         {
             bool WasMemoryAvailable = false;
-            NetMessage Message = NetMessage.FromByteArray(Buffer, out WasMemoryAvailable);
+            NetMessage Message = NetMessage.FromByteArray(Buffer, out WasMemoryAvailable, MessageVersion);
 
             // If no memory allocation was available for deserialize message then requeue.
             if (!WasMemoryAvailable)
