@@ -14,6 +14,8 @@ The tool works similarly to peer-to-peer torrenting, with each peer both downloa
 
 It also supports scriptable support for installation and user-defined parametric launching of builds. This allows things like automatically installing console packages to devkits, or giving the user different options for launching a build - to different levels, in windowed mode, etc.
 
+It uses delta-encoding and compression to reduce the bandwidth transfered.
+
 ## Building
 The source code comes as a visual studio 2019 solution. A few additional extensions are required to fully build install and help files.
 
