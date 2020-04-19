@@ -62,6 +62,7 @@ namespace BuildSync.Core.Utils
                             IPHostEntry HostEntry = Dns.EndGetHostEntry(DnsResult);
                             lock (Resolved)
                             {
+                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Resolved '{0}' to '{1}'", Addr, HostEntry.HostName);
                                 Resolved[Addr] = HostEntry.HostName;
                             }
                         }

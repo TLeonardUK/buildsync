@@ -25,6 +25,7 @@ using System.Windows.Forms;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Users;
+using BuildSync.Core.Tags;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
@@ -36,7 +37,7 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        private List<BuildManifestTag> Tags = new List<BuildManifestTag>();
+        private List<Tag> Tags = new List<Tag>();
 
         /// <summary>
         /// </summary>
@@ -74,17 +75,17 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// </summary>
         /// <param name="Users"></param>
-        private void TagsRecieved(List<BuildManifestTag> InTags)
+        private void TagsRecieved(List<Tag> InTags)
         {
             Tags = InTags;
 
             // Add new tags.
-            foreach (BuildManifestTag Tag in InTags)
+            foreach (Tag Tag in InTags)
             {
                 bool Found = false;
                 foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
                 {
-                    if ((Item.Tag as BuildManifestTag).Id == Tag.Id)
+                    if ((Item.Tag as Tag).Id == Tag.Id)
                     {
                         Found = true;
                         break;
@@ -110,9 +111,9 @@ namespace BuildSync.Client.Forms
             {
                 bool Found = false;
 
-                foreach (BuildManifestTag Tag in InTags)
+                foreach (Tag Tag in InTags)
                 {
-                    if ((Item.Tag as BuildManifestTag).Id == Tag.Id)
+                    if ((Item.Tag as Tag).Id == Tag.Id)
                     {
                         Found = true;
                         break;
@@ -153,7 +154,7 @@ namespace BuildSync.Client.Forms
                 return;
             }
 
-            BuildManifestTag Tag = TagItem.Tag as BuildManifestTag;
+            Tag Tag = TagItem.Tag as Tag;
 
             if (!TagItem.Checked)
             {
@@ -233,15 +234,15 @@ namespace BuildSync.Client.Forms
             addTagToolStripMenuItem.Enabled = CanTag && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
             downloadToolStripMenuItem.Enabled = (downloadFileSystemTree.SelectedManifestId != Guid.Empty || downloadFileSystemTree.IsSelectedBuildContainer);
 
-            List<BuildManifestTag> Tags = downloadFileSystemTree.SelectedManifestTags;
+            List<Tag> Tags = downloadFileSystemTree.SelectedManifestTags;
             if (Tags != null)
             {
                 foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
                 {
-                    BuildManifestTag MenuTag = (Item.Tag as BuildManifestTag);
+                    Tag MenuTag = (Item.Tag as Tag);
 
                     bool Found = false;
-                    foreach (BuildManifestTag BuildTag in Tags)
+                    foreach (Tag BuildTag in Tags)
                     {
                         if (MenuTag.Id == BuildTag.Id)
                         {

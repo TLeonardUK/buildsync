@@ -110,39 +110,6 @@ namespace BuildSync.Core.Manifests
     /// <summary>
     /// </summary>
     [Serializable]
-    public class BuildManifestTag
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        public Guid Id { get; set; } = Guid.Empty;
-
-        /// <summary>
-        /// </summary>
-        public string Name { get; set; } = "";
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="serializer"></param>
-        public void Serialize(Networking.NetMessageSerializer serializer)
-        {
-            {
-                string Value = Name;
-                serializer.Serialize(ref Value);
-                Name = Value;
-            }
-            {
-                Guid Value = Id;
-                serializer.Serialize(ref Value);
-                Id = Value;
-            }
-        }
-    }
-
-    /// <summary>
-    /// </summary>
-    [Serializable]
     public class BuildManifestMetadata
     {
         /// <summary>

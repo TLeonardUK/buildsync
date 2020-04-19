@@ -25,9 +25,9 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public class RateTracker
     {
-        private RollingAverage AverageRecieved = new RollingAverage(10);
+        private RollingAverageOverTime AverageRecieved = new RollingAverageOverTime(5000);
+        private RollingAverageOverTime AverageSent = new RollingAverageOverTime(5000);
 
-        private RollingAverage AverageSent = new RollingAverage(10);
         private double BandwidthRecieved;
 
         private double BandwidthSent;
@@ -136,10 +136,10 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// </summary>
         /// <param name="MaxSamples"></param>
-        public RateTracker(int MaxSamples)
+        public RateTracker(int MaxTimespan)
         {
-            AverageSent = new RollingAverage(MaxSamples);
-            AverageRecieved = new RollingAverage(MaxSamples);
+            AverageSent = new RollingAverageOverTime(MaxTimespan);
+            AverageRecieved = new RollingAverageOverTime(MaxTimespan);
         }
 
         /// <summary>
@@ -187,8 +187,8 @@ namespace BuildSync.Core.Utils
                 PeakBandwidthSent = 0;
                 PeakBandwidthRecieved = 0;
 
-                AverageSent = new RollingAverage(10);
-                AverageRecieved = new RollingAverage(10);
+                AverageSent.Reset();
+                AverageRecieved.Reset();
             }
         }
 

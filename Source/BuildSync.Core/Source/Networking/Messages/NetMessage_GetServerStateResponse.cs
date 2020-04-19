@@ -19,6 +19,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
 using System.Collections.Generic;
 
 namespace BuildSync.Core.Networking.Messages
@@ -40,6 +41,7 @@ namespace BuildSync.Core.Networking.Messages
             public long TotalUploaded;
             public long UploadRate;
             public string Version;
+            public List<Guid> TagIds = new List<Guid>();
         }
 
         /// <summary>
@@ -81,6 +83,21 @@ namespace BuildSync.Core.Networking.Messages
                 serializer.Serialize(ref ClientStates[i].ConnectedPeerCount);
                 serializer.Serialize(ref ClientStates[i].DiskUsage);
                 serializer.Serialize(ref ClientStates[i].Version);
+
+                int TagCount = ClientStates[i].TagIds.Count;
+                serializer.Serialize(ref TagCount);
+
+                for (int j = 0; j < TagCount; j++)
+                {
+                    if (serializer.IsLoading)
+                    {
+                        ClientStates[i].TagIds.Add(new Guid());
+                    }
+                    
+                    Guid id = ClientStates[i].TagIds[j];
+                    serializer.Serialize(ref id);
+                    ClientStates[i].TagIds[j] = id;
+                }
             }
         }
     }

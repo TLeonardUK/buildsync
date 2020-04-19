@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ServerSettings));
             this.ServerHostnameTextBox = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.savePathBrowseButton = new System.Windows.Forms.Button();
@@ -40,12 +41,16 @@
             this.label3 = new System.Windows.Forms.Label();
             this.PeerPortRangeEndBox = new System.Windows.Forms.NumericUpDown();
             this.label6 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.tagsTextBox = new BuildSync.Client.Controls.TagTextBox();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.ServerPortTextBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ServerPortIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ServerHostnameIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.PeerPortRangeStartBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.PeerPortRangeIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.PeerPortRangeEndBox)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // ServerHostnameTextBox
@@ -213,9 +218,41 @@
             this.label6.TabIndex = 33;
             this.label6.Text = "to";
             // 
+            // label5
+            // 
+            this.label5.Location = new System.Drawing.Point(13, 201);
+            this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(483, 17);
+            this.label5.TabIndex = 34;
+            this.label5.Text = "Client tags to determine how data is routed on the network\r\n";
+            // 
+            // tagsTextBox
+            // 
+            this.tagsTextBox.Location = new System.Drawing.Point(54, 227);
+            this.tagsTextBox.Name = "tagsTextBox";
+            this.tagsTextBox.Size = new System.Drawing.Size(337, 21);
+            this.tagsTextBox.TabIndex = 35;
+            this.tagsTextBox.TagIds = ((System.Collections.Generic.List<System.Guid>)(resources.GetObject("tagsTextBox.TagIds")));
+            this.tagsTextBox.OnTagsChanged += new System.EventHandler(this.StateChanged);
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
+            this.pictureBox1.Location = new System.Drawing.Point(14, 220);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(32, 31);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 36;
+            this.pictureBox1.TabStop = false;
+            // 
             // ServerSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.Controls.Add(this.pictureBox1);
+            this.Controls.Add(this.tagsTextBox);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.PeerPortRangeEndBox);
             this.Controls.Add(this.PeerPortRangeStartBox);
@@ -230,13 +267,14 @@
             this.Controls.Add(this.label1);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "ServerSettings";
-            this.Size = new System.Drawing.Size(519, 203);
+            this.Size = new System.Drawing.Size(519, 258);
             ((System.ComponentModel.ISupportInitialize)(this.ServerPortTextBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ServerPortIcon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ServerHostnameIcon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.PeerPortRangeStartBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.PeerPortRangeIcon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.PeerPortRangeEndBox)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -256,5 +294,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.NumericUpDown PeerPortRangeEndBox;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label5;
+        private TagTextBox tagsTextBox;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }

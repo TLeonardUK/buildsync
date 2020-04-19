@@ -48,7 +48,7 @@ namespace BuildSync.Core.Client
     {
         /// <summary>
         /// </summary>
-        public const int BlockDownloadTimeout = 30 * 1000;
+        public const int BlockDownloadTimeout = 60 * 1000;
 
         /// <summary>
         /// </summary>

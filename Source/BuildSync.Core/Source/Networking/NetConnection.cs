@@ -32,6 +32,7 @@ using System.Net.Sockets;
 using System.Threading;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Routes;
 
 namespace BuildSync.Core.Networking
 {
@@ -335,6 +336,25 @@ namespace BuildSync.Core.Networking
 
         public int MessageVersion = AppVersion.VersionNumber;
 
+        private RoutePair RouteInternal = new RoutePair { SourceTagId = Guid.Empty, DestinationTagId = Guid.Empty };
+
+        public RoutePair Route
+        {
+            get
+            {
+                return RouteInternal;
+            }
+            set
+            {
+                if (!value.Equals(RouteInternal))
+                {
+                    RouteInternal = value;
+                    LocalRouteBandwidthThrottleInSerialIndex = -1;
+                    LocalRouteBandwidthThrottleOutSerialIndex = -1;
+                }
+            }
+        } 
+
         public struct MessageQueueEntry
         {
             public byte[] Data;
@@ -420,6 +440,23 @@ namespace BuildSync.Core.Networking
 
         /// <summary>
         /// </summary>
+        private static Dictionary<RoutePair, BandwidthThrottler> BandwidthRouteThrottleIn = new Dictionary<RoutePair, BandwidthThrottler>();
+
+        /// <summary>
+        /// </summary>
+        private static Dictionary<RoutePair, BandwidthThrottler> BandwidthRouteThrottleOut = new Dictionary<RoutePair, BandwidthThrottler>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static int BandwidthLimitsSerialIndex = 0;
+
+        /// <summary>
+        /// </summary>
+        private static List<RoutePair> BandwidthLimitsShadowCopy = new List<RoutePair>();
+
+        /// <summary>
+        /// </summary>
         public static BandwidthThrottler GlobalBandwidthThrottleIn = new BandwidthThrottler();
 
         /// <summary>
@@ -427,16 +464,37 @@ namespace BuildSync.Core.Networking
         public static BandwidthThrottler GlobalBandwidthThrottleOut = new BandwidthThrottler();
 
         /// <summary>
+        /// 
         /// </summary>
-        public static RateTracker GlobalBandwidthStats = new RateTracker(30);
+        public static bool CompressDataDuringTransfer = false;
 
         /// <summary>
         /// </summary>
-        public static RateTracker GlobalPacketStats = new RateTracker(30);
+        public static RateTracker GlobalBandwidthStats = new RateTracker(10000);
 
         /// <summary>
         /// </summary>
-        public RateTracker BandwidthStats = new RateTracker(30);
+        public static RateTracker GlobalPacketStats = new RateTracker(10000);
+
+        /// <summary>
+        /// </summary>
+        private BandwidthThrottler LocalRouteBandwidthThrottleIn = null;
+
+        /// <summary>
+        /// </summary>
+        private int LocalRouteBandwidthThrottleInSerialIndex = 0;
+
+        /// <summary>
+        /// </summary>
+        private BandwidthThrottler LocalRouteBandwidthThrottleOut = null;
+
+        /// <summary>
+        /// </summary>
+        private int LocalRouteBandwidthThrottleOutSerialIndex = 0;
+
+        /// <summary>
+        /// </summary>
+        public RateTracker BandwidthStats = new RateTracker(10000);
 
         /// <summary>
         /// </summary>
@@ -461,6 +519,10 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// </summary>
         public IPEndPoint ListenAddress;
+
+        /// <summary>
+        /// </summary>
+        public IPEndPoint LocalAddress;
 
         /// <summary>
         /// </summary>
@@ -515,6 +577,11 @@ namespace BuildSync.Core.Networking
         public bool IsListening { get; private set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public static List<Guid> LocalTagIds { get; set; } = new List<Guid>();
+
+        /// <summary>
         /// </summary>
         public List<NetConnection> AllClients
         {
@@ -532,6 +599,120 @@ namespace BuildSync.Core.Networking
         public int SendQueueSize => (int) SendQueueBytes;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public static void SetBandwidthLimitRoutes(List<RoutePair> Routes)
+        {
+            if (!BandwidthLimitsShadowCopy.IsEqual(Routes))
+            {
+                lock (BandwidthRouteThrottleIn)
+                {
+                    lock (BandwidthRouteThrottleOut)
+                    {
+                        List<RoutePair> Added = Routes.GetAdded(BandwidthLimitsShadowCopy);
+                        foreach (RoutePair Pair in Added)
+                        {
+                            BandwidthRouteThrottleIn.Add(Pair, new BandwidthThrottler());
+                            BandwidthRouteThrottleOut.Add(Pair, new BandwidthThrottler());
+                        }
+
+                        List<RoutePair> Removed = Routes.GetRemoved(BandwidthLimitsShadowCopy);
+                        foreach (RoutePair Pair in Removed)
+                        {
+                            BandwidthRouteThrottleIn.Remove(Pair);
+                            BandwidthRouteThrottleOut.Remove(Pair);
+                        }
+                    }
+                }
+
+                BandwidthLimitsSerialIndex++;
+                BandwidthLimitsShadowCopy = new List<RoutePair>(Routes);
+            }
+
+            foreach (RoutePair pair in Routes)
+            {
+                // Only limit in rate, out rate is limited implicitly.
+                BandwidthRouteThrottleIn[pair].MaxRate = pair.Bandwidth;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Route"></param>
+        public static BandwidthThrottler GetRouteThrottlerIn(RoutePair Route)
+        {
+            lock (BandwidthRouteThrottleIn)
+            {
+                if (BandwidthRouteThrottleIn.ContainsKey(Route))
+                {
+                    return BandwidthRouteThrottleIn[Route];
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Route"></param>
+        public static BandwidthThrottler GetRouteThrottlerOut(RoutePair Route)
+        {
+            lock (BandwidthRouteThrottleOut)
+            {
+                if (BandwidthRouteThrottleOut.ContainsKey(Route))
+                {
+                    return BandwidthRouteThrottleOut[Route];
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Byts"></param>
+        /// <returns></returns>
+        public int ThrottleIn(int Bytes)
+        {
+            if (LocalRouteBandwidthThrottleInSerialIndex != BandwidthLimitsSerialIndex)
+            {
+                LocalRouteBandwidthThrottleIn = GetRouteThrottlerIn(Route);
+                LocalRouteBandwidthThrottleInSerialIndex = BandwidthLimitsSerialIndex;
+            }
+
+            Bytes = GlobalBandwidthThrottleIn.Throttle(Bytes);
+            if (LocalRouteBandwidthThrottleIn != null)
+            {
+                Bytes = LocalRouteBandwidthThrottleIn.Throttle(Bytes);
+            }
+
+            return Bytes;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Byts"></param>
+        /// <returns></returns>
+        public int ThrottleOut(int Bytes)
+        {
+            if (LocalRouteBandwidthThrottleOutSerialIndex != BandwidthLimitsSerialIndex)
+            {
+                LocalRouteBandwidthThrottleOut = GetRouteThrottlerOut(Route);
+                LocalRouteBandwidthThrottleOutSerialIndex = BandwidthLimitsSerialIndex;
+            }
+
+            Bytes = GlobalBandwidthThrottleOut.Throttle(Bytes);
+            if (LocalRouteBandwidthThrottleOut != null)
+            {
+                Bytes = LocalRouteBandwidthThrottleOut.Throttle(Bytes);
+            }
+
+            return Bytes;
+        }
+
+        /// <summary>
         /// </summary>
         public NetConnection()
         {
@@ -542,7 +723,7 @@ namespace BuildSync.Core.Networking
         public NetConnection(Socket InSocket, NetConnection InParent)
         {
             Socket = InSocket;
-            Address = (IPEndPoint) Socket.RemoteEndPoint;
+            Address = (IPEndPoint)Socket.RemoteEndPoint;
             ParentConnection = InParent;
         }
 
@@ -587,10 +768,16 @@ namespace BuildSync.Core.Networking
                 MessageQueueEntry Data;
                 if (ProcessBufferQueue.TryTake(out Data, 1000))
                 {
-                    if (ProcessMessage(Data.Data, Data.BufferSize))
+                    if (ProcessMessage(ref Data.Data, Data.BufferSize))
                     {
                         try
                         {
+                            /*NetMessage TmpMsg = new NetMessage();
+                            TmpMsg.ReadHeader(Data.Data);
+
+                            Console.WriteLine("Requeuing: {0}", TmpMsg.Index);
+                            */
+
                             ProcessBufferQueue.Add(Data);
                         }
                         catch (InvalidOperationException)
@@ -638,6 +825,21 @@ namespace BuildSync.Core.Networking
 
             GlobalBandwidthThrottleIn.WakeAll();
             GlobalBandwidthThrottleOut.WakeAll();
+
+            lock (BandwidthRouteThrottleIn)
+            {
+                lock (BandwidthRouteThrottleOut)
+                {
+                    foreach (var Pair in BandwidthRouteThrottleIn)
+                    {
+                        Pair.Value.WakeAll();
+                    }
+                    foreach (var Pair in BandwidthRouteThrottleOut)
+                    {
+                        Pair.Value.WakeAll();
+                    }
+                }
+            }
 
             // Block while any outstanding async calls are waiting to finish.
             for (int i = 0; i < OutstandingAsyncCalls.Length; i++)
@@ -894,6 +1096,8 @@ namespace BuildSync.Core.Networking
                         {
                             Socket.EndConnect(Result);
 
+                            LocalAddress = Socket.LocalEndPoint as IPEndPoint;
+
                             Logger.Log(LogLevel.Info, LogCategory.Transport, "Connected to {0}", Socket.RemoteEndPoint.ToString());
 
                             lock (EventQueue)
@@ -907,6 +1111,7 @@ namespace BuildSync.Core.Networking
                             // Send handshake.
                             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
                             HandshakeMsg.Version = AppVersion.ProtocolVersion;
+                            HandshakeMsg.TagIds = LocalTagIds;
                             Send(HandshakeMsg);
                         }
                         catch (Exception ex)
@@ -1098,7 +1303,45 @@ namespace BuildSync.Core.Networking
 
                 GlobalPacketStats.Out(1);
 
-                bool bSuccess = SendBlock(SendData.Data, 0, SendData.BufferSize);
+                // Compress if required.
+                bool bSuccess = false;
+                int WriteLength = SendData.BufferSize;
+
+                NetMessage.SetCompressedFlag(SendData.Data, -1, false);
+
+                if (CompressDataDuringTransfer && SendData.BufferSize > NetMessage.MinSizeToCompress)
+                {
+                    // We only compress the payload, we want the header uncompressed.
+                    long CompressedLength = 0;
+                    /*Console.WriteLine("> Pre Compress: {0},{1},{2},{3},{4},{5},{6},{7},{8}",
+                        SendData.Data[NetMessage.HeaderSize + 0],
+                        SendData.Data[NetMessage.HeaderSize + 1],
+                        SendData.Data[NetMessage.HeaderSize + 2],
+                        SendData.Data[NetMessage.HeaderSize + 3],
+                        SendData.Data[NetMessage.HeaderSize + 4],
+                        SendData.Data[NetMessage.HeaderSize + 5],
+                        SendData.Data[NetMessage.HeaderSize + 6],
+                        SendData.Data[NetMessage.HeaderSize + 7],
+                        SendData.Data[NetMessage.HeaderSize + 8]);
+                    */
+                    if (FileUtils.CompressInPlace(SendData.Data, NetMessage.HeaderSize, SendData.BufferSize - NetMessage.HeaderSize, out CompressedLength))
+                    {
+                        WriteLength = NetMessage.HeaderSize + (int)CompressedLength;
+                    //    Console.WriteLine("> Compress: {0} -> {1}", SendData.BufferSize - NetMessage.HeaderSize, CompressedLength);
+                        NetMessage.SetCompressedFlag(SendData.Data, (int)CompressedLength, true);
+                    }
+                }
+                
+                /*
+                if (WriteLength > 16)
+                {
+                    NetMessage TmpMsg = new NetMessage();
+                    TmpMsg.ReadHeader(SendData.Data);
+                    Console.WriteLine("> Post Compress [index={0} length={1} compressed={2}]: {3},{4},{5}", TmpMsg.Index, WriteLength, TmpMsg.Compressed, SendData.Data[NetMessage.HeaderSize + 0], SendData.Data[NetMessage.HeaderSize + 1], SendData.Data[NetMessage.HeaderSize + 2]);
+                }
+                */
+ 
+                bSuccess = SendBlock(SendData.Data, 0, WriteLength);
 
                 SendData.Callback?.Invoke(bSuccess);
             }
@@ -1169,7 +1412,7 @@ namespace BuildSync.Core.Networking
                 int Latency = FakeLatencyBase + FakeLatencyRandom.Next(0, FakeLatencyJitter);
                 SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength, SendTimeFakeLatency = TimeUtils.Ticks + (ulong)Latency, Callback = Callback });
 #else
-                SendQueue.Enqueue(new MessageQueueEntry {Data = Serialized, BufferSize = BufferLength, Callback = Callback });
+                SendQueue.Enqueue(new MessageQueueEntry { Data = Serialized, BufferSize = BufferLength, Callback = Callback });
 #endif
 
                 Interlocked.Add(ref SendQueueBytes, BufferLength);
@@ -1194,7 +1437,7 @@ namespace BuildSync.Core.Networking
                 while (TotalBytesSent < Length)
                 {
                     int BytesLeft = Length - TotalBytesSent;
-                    int BytesToSend = GlobalBandwidthThrottleOut.Throttle(BytesLeft);
+                    int BytesToSend = ThrottleOut(BytesLeft);
 
                     int BytesSent = Socket.Send(Block, Offset + TotalBytesSent, BytesToSend, SocketFlags.None);
                     BandwidthStats.Out(BytesSent);
@@ -1226,6 +1469,7 @@ namespace BuildSync.Core.Networking
             // Send handshake to client.
             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
             HandshakeMsg.Version = AppVersion.ProtocolVersion;
+            HandshakeMsg.TagIds = LocalTagIds;
             Send(HandshakeMsg);
 
             // Start recieving from client
@@ -1249,7 +1493,7 @@ namespace BuildSync.Core.Networking
             {
                 RecordBeginAsyncCall(AsyncCallType.Recieve);
 
-                int BytesToRecv = GlobalBandwidthThrottleIn.Throttle(Size);
+                int BytesToRecv = ThrottleIn(Size);
 
                 Socket.BeginReceive(
                     MessageBuffer, Offset, BytesToRecv, SocketFlags.None, Result =>
@@ -1260,7 +1504,7 @@ namespace BuildSync.Core.Networking
                             int BytesRecieved = Socket.EndReceive(Result);
                             if (BytesRecieved == 0)
                             {
-                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved header of 0 bytes from {0}, graceful disconnect assumed.", Address.ToString());
+                                Logger.Log(LogLevel.Verbose, LogCategory.Transport, "Recieved header of 0 bytes from {0}, graceful disconnect assumed.", Address.ToString());
                                 ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.0BytesRecieved", "Recieve", false);
                                 ShouldDisconnect = true;
                             }
@@ -1363,7 +1607,7 @@ namespace BuildSync.Core.Networking
             {
                 RecordBeginAsyncCall(AsyncCallType.Recieve);
 
-                int BytesToRecv = GlobalBandwidthThrottleIn.Throttle(Size);
+                int BytesToRecv = ThrottleIn(Size);
 
                 Socket.BeginReceive(
                     MessageBuffer, NetMessage.HeaderSize + Offset, BytesToRecv, SocketFlags.None, Result =>
@@ -1373,7 +1617,7 @@ namespace BuildSync.Core.Networking
                             int BytesRecieved = Socket.EndReceive(Result);
                             if (BytesRecieved == 0)
                             {
-                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Recieved payload of 0 bytes from {0}, graceful disconnect assumed.", Address.ToString());
+                                Logger.Log(LogLevel.Verbose, LogCategory.Transport, "Recieved payload of 0 bytes from {0}, graceful disconnect assumed.", Address.ToString());
                                 ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.0BytesRecieved", "Recieve", false);
                                 QueueDisconnect();
                             }
@@ -1387,6 +1631,26 @@ namespace BuildSync.Core.Networking
                                     BeginRecievingPayloadWithOffset(MessageBuffer, Offset + BytesRecieved, Size - BytesRecieved);
                                     return;
                                 }
+
+                                // DEBUG DEBUG DEBUG
+                                /*NetMessage TmpMsg = new NetMessage();
+                                TmpMsg.ReadHeader(MessageBuffer);
+
+                                if (TmpMsg.PayloadSize > 16)
+                                {
+                                    Console.WriteLine("> Recieve [index={0}]: {0},{1},{2},{3},{4},{5},{6},{7},{8}",
+                                        MessageHeaderTempStorage.Index,
+                                        MessageBuffer[NetMessage.HeaderSize + 0],
+                                        MessageBuffer[NetMessage.HeaderSize + 1],
+                                        MessageBuffer[NetMessage.HeaderSize + 2],
+                                        MessageBuffer[NetMessage.HeaderSize + 3],
+                                        MessageBuffer[NetMessage.HeaderSize + 4],
+                                        MessageBuffer[NetMessage.HeaderSize + 5],
+                                        MessageBuffer[NetMessage.HeaderSize + 6],
+                                        MessageBuffer[NetMessage.HeaderSize + 7],
+                                        MessageBuffer[NetMessage.HeaderSize + 8]);
+                                }*/
+                                // DEBUG DEBUG DEBUG
 
                                 ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size });
 
@@ -1625,9 +1889,49 @@ namespace BuildSync.Core.Networking
         }
 
         /// <summary>
-        /// </summary>
-        private bool ProcessMessage(byte[] Buffer, int Size = 0)
+        /// </summary> 
+        private bool ProcessMessage(ref byte[] Buffer, int Size = 0)
         {
+            NetMessage TmpMsg = new NetMessage();
+            TmpMsg.ReadHeader(Buffer);
+
+            // Decompress if required.
+            if (TmpMsg.Compressed)
+            {
+                long UncompressedLength = 0;
+
+                /*Console.WriteLine("> Pre Decompress [index={0}]:: {0},{1},{2},{3},{4},{5},{6},{7},{8}",
+                    TmpMsg.Index,
+                    Buffer[NetMessage.HeaderSize + 0],
+                    Buffer[NetMessage.HeaderSize + 1],
+                    Buffer[NetMessage.HeaderSize + 2],
+                    Buffer[NetMessage.HeaderSize + 3],
+                    Buffer[NetMessage.HeaderSize + 4],
+                    Buffer[NetMessage.HeaderSize + 5],
+                    Buffer[NetMessage.HeaderSize + 6],
+                    Buffer[NetMessage.HeaderSize + 7],
+                    Buffer[NetMessage.HeaderSize + 8]);*/
+
+                // If the result of decompression is going to be larger than our buffer, upgrade it's size to a large one.
+                long ResultSize = FileUtils.GetDecompressedLength(Buffer, NetMessage.HeaderSize, Size - NetMessage.HeaderSize);
+                if (ResultSize > Buffer.Length)
+                {
+                    byte[] OldBuffer = Buffer;
+                    Buffer = AllocMessageBuffer("ProcessMessage.UpgradeBufferForDecompress", "Recieve", false, false);
+                    Array.Copy(OldBuffer, 0, Buffer, 0, Size);
+                    ReleaseMessageBuffer(OldBuffer, "ProcessMessage.UpgradeBufferForDecompress", "Recieve", false); 
+                }
+
+                FileUtils.DecompressInPlace(Buffer, NetMessage.HeaderSize, Size - NetMessage.HeaderSize, out UncompressedLength);
+                //Console.WriteLine("> Dompress: {0} -> {1}", Size - NetMessage.HeaderSize, UncompressedLength);
+                //Console.WriteLine("> Post Decompress [index={0}]: {1},{2},{3}", TmpMsg.Index, Buffer[NetMessage.HeaderSize + 0], Buffer[NetMessage.HeaderSize + 1], Buffer[NetMessage.HeaderSize + 2]);
+
+                NetMessage.SetCompressedFlag(Buffer, (int)UncompressedLength, false);
+
+                Size = (int)UncompressedLength + NetMessage.HeaderSize;
+            }
+
+            // Parse message.
             bool WasMemoryAvailable = false;
             NetMessage Message = NetMessage.FromByteArray(Buffer, out WasMemoryAvailable, MessageVersion);
 

@@ -56,6 +56,14 @@ namespace BuildSync.Core.Utils
         /// <summary>
         /// 
         /// </summary>
+        public void Reset()
+        {
+            Values.Clear();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Value"></param>
         public void Add(double Value)
         {

@@ -54,8 +54,8 @@ namespace BuildSync.Core.Networking
     /// </summary>
     public class NetDiscoveryClient
     {
-        public const int ProbePort = 9101;
-        public const int ResponsePort = 9100;
+        public const int ProbePort = 9102;
+        public const int ResponsePort = 9103;
 
         private UdpClient Client;
 

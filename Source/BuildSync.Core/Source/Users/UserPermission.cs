@@ -58,6 +58,9 @@ namespace BuildSync.Core.Users
         [Description("Modify Tags")]
         ModifyTags,
 
+        [Description("Modify Routes")]
+        ModifyRoutes,
+
         [Description("Unknown")]
         Unknown
     }

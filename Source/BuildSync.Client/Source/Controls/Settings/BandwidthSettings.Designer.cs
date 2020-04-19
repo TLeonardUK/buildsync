@@ -43,6 +43,7 @@
             this.label5 = new System.Windows.Forms.Label();
             this.BandwidthTimespanEndHourBox = new System.Windows.Forms.NumericUpDown();
             this.label6 = new System.Windows.Forms.Label();
+            this.compressDataCheckBox = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.MaxUploadBandwidthBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDownloadBandwidthBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDownloadBandwidthIcon)).BeginInit();
@@ -57,7 +58,7 @@
             // MaxUploadBandwidthBox
             // 
             this.MaxUploadBandwidthBox.Location = new System.Drawing.Point(54, 42);
-            this.MaxUploadBandwidthBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.MaxUploadBandwidthBox.Margin = new System.Windows.Forms.Padding(2);
             this.MaxUploadBandwidthBox.Maximum = new decimal(new int[] {
             1073741824,
             0,
@@ -81,7 +82,7 @@
             // MaxDownloadBandwidthBox
             // 
             this.MaxDownloadBandwidthBox.Location = new System.Drawing.Point(54, 104);
-            this.MaxDownloadBandwidthBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.MaxDownloadBandwidthBox.Margin = new System.Windows.Forms.Padding(2);
             this.MaxDownloadBandwidthBox.Maximum = new decimal(new int[] {
             1073741824,
             0,
@@ -106,7 +107,7 @@
             // 
             this.MaxDownloadBandwidthIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
             this.MaxDownloadBandwidthIcon.Location = new System.Drawing.Point(14, 96);
-            this.MaxDownloadBandwidthIcon.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.MaxDownloadBandwidthIcon.Margin = new System.Windows.Forms.Padding(2);
             this.MaxDownloadBandwidthIcon.Name = "MaxDownloadBandwidthIcon";
             this.MaxDownloadBandwidthIcon.Size = new System.Drawing.Size(32, 31);
             this.MaxDownloadBandwidthIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -117,7 +118,7 @@
             // 
             this.MaxUploadBandwidthIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
             this.MaxUploadBandwidthIcon.Location = new System.Drawing.Point(14, 34);
-            this.MaxUploadBandwidthIcon.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.MaxUploadBandwidthIcon.Margin = new System.Windows.Forms.Padding(2);
             this.MaxUploadBandwidthIcon.Name = "MaxUploadBandwidthIcon";
             this.MaxUploadBandwidthIcon.Size = new System.Drawing.Size(32, 31);
             this.MaxUploadBandwidthIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -127,7 +128,7 @@
             // BandwidthTimespanStartHourBox
             // 
             this.BandwidthTimespanStartHourBox.Location = new System.Drawing.Point(54, 166);
-            this.BandwidthTimespanStartHourBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.BandwidthTimespanStartHourBox.Margin = new System.Windows.Forms.Padding(2);
             this.BandwidthTimespanStartHourBox.Maximum = new decimal(new int[] {
             23,
             0,
@@ -142,7 +143,7 @@
             // 
             this.BandwidthTimespanIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
             this.BandwidthTimespanIcon.Location = new System.Drawing.Point(14, 159);
-            this.BandwidthTimespanIcon.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.BandwidthTimespanIcon.Margin = new System.Windows.Forms.Padding(2);
             this.BandwidthTimespanIcon.Name = "BandwidthTimespanIcon";
             this.BandwidthTimespanIcon.Size = new System.Drawing.Size(32, 31);
             this.BandwidthTimespanIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -172,7 +173,7 @@
             // BandwidthTimespanStartMinBox
             // 
             this.BandwidthTimespanStartMinBox.Location = new System.Drawing.Point(105, 166);
-            this.BandwidthTimespanStartMinBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.BandwidthTimespanStartMinBox.Margin = new System.Windows.Forms.Padding(2);
             this.BandwidthTimespanStartMinBox.Maximum = new decimal(new int[] {
             59,
             0,
@@ -186,7 +187,7 @@
             // BandwidthTimespanEndMinBox
             // 
             this.BandwidthTimespanEndMinBox.Location = new System.Drawing.Point(263, 166);
-            this.BandwidthTimespanEndMinBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.BandwidthTimespanEndMinBox.Margin = new System.Windows.Forms.Padding(2);
             this.BandwidthTimespanEndMinBox.Maximum = new decimal(new int[] {
             59,
             0,
@@ -210,7 +211,7 @@
             // BandwidthTimespanEndHourBox
             // 
             this.BandwidthTimespanEndHourBox.Location = new System.Drawing.Point(212, 166);
-            this.BandwidthTimespanEndHourBox.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.BandwidthTimespanEndHourBox.Margin = new System.Windows.Forms.Padding(2);
             this.BandwidthTimespanEndHourBox.Maximum = new decimal(new int[] {
             23,
             0,
@@ -231,9 +232,23 @@
             this.label6.TabIndex = 32;
             this.label6.Text = "to";
             // 
+            // compressDataCheckBox
+            // 
+            this.compressDataCheckBox.AutoSize = true;
+            this.compressDataCheckBox.Location = new System.Drawing.Point(14, 218);
+            this.compressDataCheckBox.Margin = new System.Windows.Forms.Padding(2);
+            this.compressDataCheckBox.Name = "compressDataCheckBox";
+            this.compressDataCheckBox.Size = new System.Drawing.Size(429, 17);
+            this.compressDataCheckBox.TabIndex = 43;
+            this.compressDataCheckBox.Text = "Compress data during transfer (lowers bandwidth usage, but causes high cpu usage)" +
+    "?";
+            this.compressDataCheckBox.UseVisualStyleBackColor = true;
+            this.compressDataCheckBox.CheckedChanged += new System.EventHandler(this.StateChanged);
+            // 
             // BandwidthSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.Controls.Add(this.compressDataCheckBox);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.BandwidthTimespanEndMinBox);
             this.Controls.Add(this.label5);
@@ -249,9 +264,9 @@
             this.Controls.Add(this.MaxUploadBandwidthBox);
             this.Controls.Add(this.MaxUploadBandwidthIcon);
             this.Controls.Add(this.label2);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "BandwidthSettings";
-            this.Size = new System.Drawing.Size(519, 205);
+            this.Size = new System.Drawing.Size(519, 248);
             ((System.ComponentModel.ISupportInitialize)(this.MaxUploadBandwidthBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDownloadBandwidthBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDownloadBandwidthIcon)).EndInit();
@@ -283,5 +298,6 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.NumericUpDown BandwidthTimespanEndHourBox;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.CheckBox compressDataCheckBox;
     }
 }

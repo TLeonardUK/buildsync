@@ -24,6 +24,8 @@ using System.Collections.Generic;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
+using BuildSync.Core.Tags;
+using BuildSync.Core.Routes;
 
 namespace BuildSync.Server
 {
@@ -33,6 +35,11 @@ namespace BuildSync.Server
     [Serializable]
     public class Settings : SettingsBase
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        public int LastUpgradeVersion = 0;
+
         /// <summary>
         ///     Dictionary of manifest-id's and the last date and time a client with a full copy of it was connected.
         /// </summary>
@@ -61,7 +68,7 @@ namespace BuildSync.Server
         /// <summary>
         ///     Port the server will listen on for client connections.
         /// </summary>
-        public int ServerPort { get; set; } = 12341;
+        public int ServerPort { get; set; } = 12340;
 
         /// <summary>
         ///     Path on the local device that manifests and configuration data will be stored.
@@ -81,6 +88,11 @@ namespace BuildSync.Server
         /// <summary>
         ///     List of all build tags that have been registered on the server.
         /// </summary>
-        public List<BuildManifestTag> Tags { get; set; } = new List<BuildManifestTag>();
+        public List<Tag> Tags { get; set; } = new List<Tag>();
+
+        /// <summary>
+        ///     List of all build routes that have been registered on the server.
+        /// </summary>
+        public List<Route> Routes { get; set; } = new List<Route>();
     }
 }

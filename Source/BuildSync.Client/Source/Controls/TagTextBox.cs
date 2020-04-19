@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Tags;
 
 namespace BuildSync.Client.Controls
 {
@@ -41,7 +42,7 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
-        private List<BuildManifestTag> BuildTags = new List<BuildManifestTag>();
+        private List<Tag> BuildTags = new List<Tag>();
 
         /// <summary>
         /// 
@@ -52,6 +53,18 @@ namespace BuildSync.Client.Controls
         /// 
         /// </summary>
         private List<string> AddTagNames = new List<string>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [Browsable(true)]
+        public event EventHandler OnTagsChanged;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [Browsable(true)]
+        public bool MultipleTags = true;
 
         /// <summary>
         /// 
@@ -112,18 +125,18 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// </summary>
         /// <param name="Users"></param>
-        private void TagsRecieved(List<BuildManifestTag> InTags)
+        private void TagsRecieved(List<Tag> InTags)
         {
             BuildTags = InTags;
             GotTags = true;
 
             // Add new tags.
-            foreach (BuildManifestTag Tag in InTags)
+            foreach (Tag Tag in InTags)
             {
                 bool Found = false;
                 foreach (ToolStripMenuItem Item in TagContextMenuStrip.Items)
                 {
-                    if ((Item.Tag as BuildManifestTag).Id == Tag.Id)
+                    if ((Item.Tag as Tag).Id == Tag.Id)
                     {
                         Found = true;
                         break;
@@ -149,9 +162,9 @@ namespace BuildSync.Client.Controls
             {
                 bool Found = false;
 
-                foreach (BuildManifestTag Tag in InTags)
+                foreach (Tag Tag in InTags)
                 {
-                    if ((Item.Tag as BuildManifestTag).Id == Tag.Id)
+                    if ((Item.Tag as Tag).Id == Tag.Id)
                     {
                         Found = true;
                         break;
@@ -170,6 +183,28 @@ namespace BuildSync.Client.Controls
                 TagContextMenuStrip.Items.Remove(Item);
             }
 
+            // Remove tags that are no longer valid.
+            for (int i = 0; i < TagIdsInternal.Count; i++)
+            {
+                Guid id = TagIdsInternal[i];
+                bool exists = false;
+
+                foreach (Tag tag in InTags)
+                {
+                    if (tag.Id == id)
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    TagIdsInternal.RemoveAt(i);
+                    i--;
+                }
+            }
+
             UpdateState();
         }
 
@@ -186,15 +221,21 @@ namespace BuildSync.Client.Controls
                 return;
             }
 
-            Guid TagId = (TagItem.Tag as BuildManifestTag).Id;
+            Guid TagId = (TagItem.Tag as Tag).Id;
             if (TagIdsInternal.Contains(TagId))
             {
                 TagIdsInternal.Remove(TagId);
             }
             else
             {
+                if (!MultipleTags)
+                {
+                    TagIdsInternal.Clear();
+                }
                 TagIdsInternal.Add(TagId);
             }
+
+            OnTagsChanged?.Invoke(this, new EventArgs());
 
             UpdateState();
         }
@@ -209,11 +250,13 @@ namespace BuildSync.Client.Controls
             {
                 foreach (string name in AddTagNames)
                 {
-                    foreach (BuildManifestTag Tag in BuildTags)
+                    foreach (Tag Tag in BuildTags)
                     {
                         if (Tag.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                         {
                             TagIdsInternal.Add(Tag.Id);
+
+                            OnTagsChanged?.Invoke(this, new EventArgs());
                             break;
                         }
                     }
@@ -224,7 +267,7 @@ namespace BuildSync.Client.Controls
 
             // Update the text.
             string Result = "";
-            foreach (BuildManifestTag Tag in BuildTags)
+            foreach (Tag Tag in BuildTags)
             {
                 if (TagIdsInternal.Contains(Tag.Id))
                 {
@@ -257,7 +300,7 @@ namespace BuildSync.Client.Controls
         {
             foreach (ToolStripMenuItem Item in TagContextMenuStrip.Items)
             {
-                BuildManifestTag MenuTag = (Item.Tag as BuildManifestTag);
+                Tag MenuTag = (Item.Tag as Tag);
                 Item.Checked = TagIdsInternal.Contains(MenuTag.Id);
             }
         }

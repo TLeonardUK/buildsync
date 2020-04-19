@@ -33,6 +33,8 @@ using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Tags;
+using BuildSync.Core.Routes;
 
 namespace BuildSync.Core.Client
 {
@@ -72,7 +74,11 @@ namespace BuildSync.Core.Client
 
     /// <summary>
     /// </summary>
-    public delegate void TagListRecievedHandler(List<BuildManifestTag> Tag);
+    public delegate void TagListRecievedHandler(List<Tag> Tag);
+
+    /// <summary>
+    /// </summary>
+    public delegate void RouteListRecievedHandler(List<Route> Routes);
 
     /// <summary>
     /// </summary>
@@ -85,6 +91,12 @@ namespace BuildSync.Core.Client
     /// <summary>
     /// </summary>
     public delegate void ManifestDeleteResultRecievedHandler(Guid ManifestId);
+
+    /// <summary>
+    /// </summary>
+    /// <param name="Connection"></param>
+    /// <param name="Message"></param>
+    public delegate void ClientTagsUpdatedByServerHandler();
 
     /// <summary>
     /// </summary>
@@ -275,7 +287,7 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
-        public const int TargetMillisecondsOfDataInFlight = 200;
+        public const int TargetMillisecondsOfDataInFlight = 500;
 
         /// <summary>
         /// </summary>
@@ -403,6 +415,14 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
+        private TagRegistry TagRegistry;
+
+        /// <summary>
+        /// </summary>
+        private RouteRegistry RouteRegistry;
+
+        /// <summary>
+        /// </summary>
         private int PeerBlockRequestShuffleIndex;
 
         /// <summary>
@@ -424,6 +444,27 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         private bool Started;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private List<Guid> TagIdsInternal = new List<Guid>();
+
+        /// <summary>
+        ///     List of all client tags id's for the client.
+        /// </summary>
+        public List<Guid> TagIds 
+        {
+            get
+            {
+                return TagIdsInternal;
+            }
+            set
+            {
+                TagIdsInternal = value;
+                NetConnection.LocalTagIds = TagIdsInternal;
+            }
+        }
 
         /// <summary>
         /// </summary>
@@ -468,6 +509,14 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         public event TagListRecievedHandler OnTagListRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event RouteListRecievedHandler OnRouteListRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event ClientTagsUpdatedByServerHandler OnClientTagsUpdatedByServer;
 
         /// <summary>
         /// </summary>
@@ -579,6 +628,11 @@ namespace BuildSync.Core.Client
         private ulong PerfCounterTimer = 0;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private List<RoutePair> BandwidthLimitRoutes = new List<RoutePair>();
+
+        /// <summary>
         /// </summary>
         public Client()
         {
@@ -598,6 +652,8 @@ namespace BuildSync.Core.Client
                     DisableReconnect = true;
                 }
             };
+
+            NetConnection.LocalTagIds = TagIds;
 
             ListenConnection.OnClientConnect += PeerConnected;
 
@@ -782,7 +838,7 @@ namespace BuildSync.Core.Client
             if (Started)
             {
                 // Reconnect?
-                if (!Connection.IsConnected && !Connection.IsConnecting && !InternalConnectionsDisabled && !DisableReconnect)
+                if (!Connection.IsConnected && !Connection.IsConnecting && !InternalConnectionsDisabled && !DisableReconnect && ServerHostname.Length > 0)
                 {
                     ulong ElapsedTime = TimeUtils.Ticks - LastConnectionAttempt;
                     if (ElapsedTime > ConnectionAttemptInterval)
@@ -872,6 +928,7 @@ namespace BuildSync.Core.Client
                 }
             }
 
+            EnforceBandwidthLimits();
             UpdateBlockDownloads();
             UpdatePeerRequests();
 
@@ -931,6 +988,66 @@ namespace BuildSync.Core.Client
                 BlockRequestFailureRate = 0;
                 BlockListUpdateRate = 0;
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void EnforceBandwidthLimits()
+        {
+            lock (Peers)
+            {
+                foreach (Peer peer in Peers)
+                {
+                    // We only enforce limits on locally initiated connections, remote peers will do vis-versa.
+                    if (!peer.RemoteInitiated && peer.Connection.IsReadyForData)
+                    {
+                        long MostRestrictiveBandwidthLimit = 0;
+                        RoutePair MostRestrictiveRoute = new RoutePair { SourceTagId = Guid.Empty, DestinationTagId = Guid.Empty };
+
+                        foreach (Guid SourceTag in TagIds)
+                        {
+                            foreach (Guid DestinationTag in peer.Connection.Handshake.TagIds)
+                            {
+                                RoutePair TargetRoute = new RoutePair { SourceTagId = SourceTag, DestinationTagId = DestinationTag };
+
+                                long BandwidthLimit = GetBandwidthLimitForRoute(TargetRoute);
+                                if ((BandwidthLimit != 0 && BandwidthLimit < MostRestrictiveBandwidthLimit) ||
+                                    (MostRestrictiveRoute.DestinationTagId == Guid.Empty))
+                                {
+                                    MostRestrictiveBandwidthLimit = BandwidthLimit;
+                                    MostRestrictiveRoute = TargetRoute;
+                                }
+                            }
+                        }
+
+                        // Mark this connection as going through the most restrictive route.
+                        peer.Connection.Route = MostRestrictiveRoute;
+                    }
+                }
+            }
+
+            // Set global limits for each routes.
+            NetConnection.SetBandwidthLimitRoutes(BandwidthLimitRoutes);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="TargetRoute"></param>
+        /// <returns></returns>
+        private long GetBandwidthLimitForRoute(RoutePair TargetRoute)
+        {
+            foreach (RoutePair Limit in BandwidthLimitRoutes)
+            {
+                if (Limit.SourceTagId == TargetRoute.SourceTagId &&
+                    Limit.DestinationTagId == TargetRoute.DestinationTagId)
+                {
+                    return Limit.Bandwidth;
+                }
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -1077,6 +1194,10 @@ namespace BuildSync.Core.Client
             return true;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public bool RequestTagList()
         {
             if (!Connection.IsReadyForData)
@@ -1086,6 +1207,63 @@ namespace BuildSync.Core.Client
             }
 
             NetMessage_GetTags Msg = new NetMessage_GetTags();
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public bool RequestRouteList()
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request routes, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetRoutes Msg = new NetMessage_GetRoutes();
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool DeleteRoute(Guid RouteId)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete route, no connection to server?");
+                return false;
+            }
+
+            NetMessage_DeleteRoute Msg = new NetMessage_DeleteRoute();
+            Msg.RouteId = RouteId;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool CreateRoute(Guid SourceTagId, Guid DestinationTagId, bool Blacklisted, long BandwidthLimit)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create route, no connection to server?");
+                return false;
+            }
+
+            NetMessage_CreateRoute Msg = new NetMessage_CreateRoute();
+            Msg.SourceTagId = SourceTagId;
+            Msg.DestinationTagId = DestinationTagId;
+            Msg.Blacklisted = Blacklisted;
+            Msg.BandwidthLimit = BandwidthLimit;
             Connection.Send(Msg);
 
             return true;
@@ -1127,6 +1305,48 @@ namespace BuildSync.Core.Client
 
             NetMessage_RemoveTagFromManifest Msg = new NetMessage_RemoveTagFromManifest();
             Msg.ManifestId = ManifestId;
+            Msg.TagId = TagId;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        /// <param name="TagId"></param>
+        public bool AddTagToClient(string Address, Guid TagId)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to add tag to client, no connection to server?");
+                return false;
+            }
+
+            NetMessage_AddTagToClient Msg = new NetMessage_AddTagToClient();
+            Msg.ClientAddress = Address;
+            Msg.TagId = TagId;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        /// <param name="TagId"></param>
+        public bool RemoveTagFromClient(string Address, Guid TagId)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to remove tag from client, no connection to server?");
+                return false;
+            }
+
+            NetMessage_RemoveTagFromClient Msg = new NetMessage_RemoveTagFromClient();
+            Msg.ClientAddress = Address;
             Msg.TagId = TagId;
             Connection.Send(Msg);
 
@@ -1215,7 +1435,7 @@ namespace BuildSync.Core.Client
         /// </summary>
         /// <param name="Hostname"></param>
         /// <param name="Port"></param>
-        public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, BuildManifestRegistry BuildManifest, ManifestDownloadManager DownloadManager)
+        public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, BuildManifestRegistry BuildManifest, ManifestDownloadManager DownloadManager, TagRegistry InTagRegistry, RouteRegistry InRouteRegistry)
         {
             ServerHostname = Hostname;
             ServerPort = Port;
@@ -1225,6 +1445,8 @@ namespace BuildSync.Core.Client
             ManifestDownloadManager = DownloadManager;
             ManifestDownloadManager.OnManifestRequested += Id => { RequestManifest(Id); };
             ManifestDownloadManager.OnRequestChooseDeletionCandidate += (Candidates, Heuristic) => { RequestChooseDeletionCandidate(Candidates, Heuristic); };
+            TagRegistry = InTagRegistry;
+            RouteRegistry = InRouteRegistry;
 
             Started = true;
         }
@@ -1624,7 +1846,21 @@ namespace BuildSync.Core.Client
 
                 Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved tag list with {0} tags.", Msg.Tags.Count);
 
+                TagRegistry.Tags = Msg.Tags;
+
                 OnTagListRecieved?.Invoke(Msg.Tags);
+            }
+
+            // Recieved route list.
+            else if (BaseMessage is NetMessage_GetRoutesResponse)
+            {
+                NetMessage_GetRoutesResponse Msg = BaseMessage as NetMessage_GetRoutesResponse;
+
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved route list with {0} tags.", Msg.Routes.Count);
+
+                RouteRegistry.Routes = Msg.Routes;
+
+                OnRouteListRecieved?.Invoke(Msg.Routes);
             }
 
             // Receive license info,
@@ -1650,10 +1886,65 @@ namespace BuildSync.Core.Client
             {
                 NetMessage_EnforceBandwidthLimit Msg = BaseMessage as NetMessage_EnforceBandwidthLimit;
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Server has enforced bandwidth limit of: {0}", StringUtils.FormatAsTransferRate(Msg.BandwidthLimit));
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Server has enforced bandwidth limit of: {0} (and limits on {1} routes)", StringUtils.FormatAsTransferRate(Msg.BandwidthLimitGlobal), Msg.BandwidthLimitRoutes.Count);
 
                 // Only limit in rate, out rate is limited implicitly.
-                NetConnection.GlobalBandwidthThrottleIn.GlobalMaxRate = Msg.BandwidthLimit;
+                NetConnection.GlobalBandwidthThrottleIn.GlobalMaxRate = Msg.BandwidthLimitGlobal;
+                BandwidthLimitRoutes = Msg.BandwidthLimitRoutes;
+            }
+            // ------------------------------------------------------------------------------
+            // Add a tag to a client
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_AddTagToClient)
+            {
+                NetMessage_AddTagToClient Msg = BaseMessage as NetMessage_AddTagToClient;
+
+                Tag Tag = TagRegistry.GetTagById(Msg.TagId);
+                if (Tag == null)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "Server tried to untag an unknown tag '{1}'.", Msg.TagId.ToString());
+                    return;
+                }
+
+                if (Connection != this.Connection)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "Non-server user attempted to add a tag to us.");
+                    return;
+                }
+
+                if (!TagIds.Contains(Tag.Id))
+                {
+                    TagIds.Add(Tag.Id);
+                    OnClientTagsUpdatedByServer?.Invoke();
+                }
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Server tagged client '{0}' with tag '{1}'.", Msg.ClientAddress.ToString(), Msg.TagId.ToString());
+            }
+
+            // ------------------------------------------------------------------------------
+            // Remove a tag to a client.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RemoveTagFromClient)
+            {
+                NetMessage_RemoveTagFromClient Msg = BaseMessage as NetMessage_RemoveTagFromClient;
+
+                Tag Tag = TagRegistry.GetTagById(Msg.TagId);
+                if (Tag == null)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "Server tried to untag an unknown tag '{1}'.", Msg.TagId.ToString());
+                    return;
+                }
+
+                if (Connection != this.Connection)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "Non-server user attempted to remove one of our tags.");
+                    return;
+                }
+
+                TagIds.Remove(Tag.Id);
+                OnClientTagsUpdatedByServer?.Invoke();
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Server untagged client '{0}' with tag '{1}'.", Msg.ClientAddress.ToString(), Msg.TagId.ToString());
             }
         }
 
@@ -1807,7 +2098,11 @@ namespace BuildSync.Core.Client
 
             NetMessage_ConnectionInfo Msg = new NetMessage_ConnectionInfo();
             Msg.Username = Environment.UserDomainName + "\\" + Environment.UserName;
-            Msg.PeerConnectionAddress = ListenConnection.ListenAddress;
+
+            // We do this to ensure the local-ip connected to is the same one as we connect to the server on. 
+            // This ensures we get the ip is routed through the correct network interfaces in the cases of using VPN's etc.
+            Msg.PeerConnectionAddress = new IPEndPoint(Connection.LocalAddress.Address, ListenConnection.ListenAddress.Port);
+
             Connection.Send(Msg);
         }
 
@@ -1933,9 +2228,6 @@ namespace BuildSync.Core.Client
                         Item.Size = BlockInfo.TotalSize;
 
                         LeastLoadedPeer.AddActiveBlockDownload(Item);
-
-                        long MaxBandwidth = LeastLoadedPeer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
-                        long BandwidthAvailable = LeastLoadedPeer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
                     }
                 }
 

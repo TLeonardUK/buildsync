@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Tags;
 
 namespace BuildSync.Core.Manifests
 {
@@ -48,7 +49,7 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
-        public List<BuildManifestTag> Tags = new List<BuildManifestTag>();
+        public TagRegistry TagRegistry = null;
 
         /// <summary>
         /// 
@@ -65,23 +66,23 @@ namespace BuildSync.Core.Manifests
         public Dictionary<string, DateTime> ManifestLastSeenTimes { get; set; } = new Dictionary<string, DateTime>();
 
         /// <summary>
-        /// </summary>
-        public event TagsUpdatedEventHandler TagsUpdated;
-
-        /// <summary>
         /// 
         /// </summary>
-        public BuildManifestRegistry(List<BuildManifestTag> InTags = null)
+        public BuildManifestRegistry(TagRegistry InTagRegistry)
         {
-            if (InTags != null)
+            TagRegistry = InTagRegistry;
+            TagRegistry.TagDeleted += (Guid TagId) =>
             {
-                Tags = InTags;
-            }
-
-            if (Tags.Count == 0)
-            {
-                Tags.Add(new BuildManifestTag() { Id = Guid.NewGuid(), Name = "Broken" });
-            }
+                // Remove tags from all manifests.
+                foreach (BuildManifest Manifest in Manifests)
+                {
+                    if (Manifest.Metadata != null && Manifest.Metadata.TagIds.Contains(TagId))
+                    {
+                        Manifest.Metadata.TagIds.Remove(TagId);
+                        StoreMetadata(Manifest);
+                    }
+                }
+            };
         }
 
         /// <summary>
@@ -353,22 +354,6 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="TagId"></param>
-        public BuildManifestTag GetTagById(Guid TagId)
-        {
-            foreach (BuildManifestTag tag in Tags)
-            {
-                if (tag.Id == TagId)
-                {
-                    return tag;
-                }
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Tag"></param>
         public void TagManifest(Guid ManifestId, Guid TagId)
@@ -379,7 +364,7 @@ namespace BuildSync.Core.Manifests
                 return;
             }
 
-            BuildManifestTag Tag = GetTagById(TagId);
+            Tag Tag = TagRegistry.GetTagById(TagId);
             if (Tag == null)
             {
                 return;
@@ -407,7 +392,7 @@ namespace BuildSync.Core.Manifests
                 return;
             }
 
-            BuildManifestTag Tag = GetTagById(TagId);
+            Tag Tag = TagRegistry.GetTagById(TagId);
             if (Tag == null)
             {
                 return;
@@ -420,50 +405,6 @@ namespace BuildSync.Core.Manifests
                 Manifest.Metadata.TagIds.Remove(TagId);
                 StoreMetadata(Manifest);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="TagId"></param>
-        public void DeleteTag(Guid TagId)
-        {
-            BuildManifestTag Tag = GetTagById(TagId);
-            if (Tag == null)
-            {
-                return;
-            }
-
-            Tags.Remove(Tag);
-
-            // Remove tags from all manifests.
-            foreach (BuildManifest Manifest in Manifests)
-            {
-                if (Manifest.Metadata != null && Manifest.Metadata.TagIds.Contains(TagId))
-                {
-                    Manifest.Metadata.TagIds.Remove(TagId);
-                    StoreMetadata(Manifest);
-                }
-            }
-
-            TagsUpdated?.Invoke();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Name"></param>
-        public Guid CreateTag(string Name)
-        {
-            BuildManifestTag Tag = new BuildManifestTag();
-            Tag.Id = Guid.NewGuid();
-            Tag.Name = Name;
-
-            Tags.Add(Tag);
-
-            TagsUpdated?.Invoke();
-
-            return Tag.Id;
         }
 
         /// <summary>

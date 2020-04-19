@@ -163,12 +163,17 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        public string ServerHostname { get; set; } = "localhost";
+        public int LastUpgradeVersion = 0;
 
         /// <summary>
         /// 
         /// </summary>
-        public int ServerPort { get; set; } = 12341;
+        public string ServerHostname { get; set; } = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int ServerPort { get; set; } = 12340;
 
         /// <summary>
         /// 
@@ -178,7 +183,7 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        public long StorageMaxSize { get; set; } = 1024L * 1024L * 1024L * 1024L;
+        public long StorageMaxSize { get; set; } = 512L * 1024L * 1024L * 1024L;
 
         /// <summary>
         /// 
@@ -224,6 +229,11 @@ namespace BuildSync.Client
         /// 
         /// </summary>
         public int ClientPortRangeMax { get; set; } = 12352;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool CompressDataDuringTransfer { get; set; } = false;
 
         /// <summary>
         /// 
@@ -318,6 +328,11 @@ namespace BuildSync.Client
         /// 
         /// </summary>
         public ManifestDownloadStateCollection ManifestDownloadStates { get; set; } = new ManifestDownloadStateCollection();
+
+        /// <summary>
+        ///     List of all client tags id's for the client.
+        /// </summary>
+        public List<Guid> TagIds { get; set; } = new List<Guid>();
 
         /// <summary>
         /// </summary>

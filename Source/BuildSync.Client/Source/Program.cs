@@ -37,6 +37,8 @@ using BuildSync.Core.Scm;
 using BuildSync.Core.Scm.Git;
 using BuildSync.Core.Scm.Perforce;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Tags;
+using BuildSync.Core.Routes;
 using CommandLine;
 
 namespace BuildSync.Client
@@ -62,6 +64,14 @@ namespace BuildSync.Client
         /// <summary>
         /// </summary>
         public static BuildManifestRegistry BuildRegistry;
+
+        /// <summary>
+        /// </summary>
+        public static TagRegistry TagRegistry;
+
+        /// <summary>
+        /// </summary>
+        public static RouteRegistry RouteRegistry;
 
         /// <summary>
         /// </summary>
@@ -163,12 +173,14 @@ namespace BuildSync.Client
                 if (NetClient.ServerHostname != Settings.ServerHostname ||
                     NetClient.ServerPort != Settings.ServerPort ||
                     NetClient.PeerListenPortRangeMin != Settings.ClientPortRangeMin ||
-                    NetClient.PeerListenPortRangeMax != Settings.ClientPortRangeMax)
+                    NetClient.PeerListenPortRangeMax != Settings.ClientPortRangeMax ||
+                    !NetClient.TagIds.IsEqual(Settings.TagIds))
                 {
                     NetClient.ServerHostname = Settings.ServerHostname;
                     NetClient.ServerPort = Settings.ServerPort;
                     NetClient.PeerListenPortRangeMin = Settings.ClientPortRangeMin;
                     NetClient.PeerListenPortRangeMax = Settings.ClientPortRangeMax;
+                    NetClient.TagIds = new List<Guid>(Settings.TagIds);
 
                     NetClient.RestartConnections();
                     SaveSettings();
@@ -273,6 +285,7 @@ namespace BuildSync.Client
             Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply general settings");
             NetConnection.GlobalBandwidthThrottleIn.MaxRate = Settings.BandwidthMaxDown;
             NetConnection.GlobalBandwidthThrottleOut.MaxRate = Settings.BandwidthMaxUp;
+            NetConnection.CompressDataDuringTransfer = Settings.CompressDataDuringTransfer;
 
             // General settings.
             ManifestDownloadManager.SkipValidation = Settings.SkipValidation;
@@ -512,8 +525,11 @@ namespace BuildSync.Client
 
             NetClient = new Core.Client.Client();
 
+            TagRegistry = new TagRegistry();
+            RouteRegistry = new RouteRegistry(null, TagRegistry);
+
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up network client");
-            BuildRegistry = new BuildManifestRegistry();
+            BuildRegistry = new BuildManifestRegistry(TagRegistry);
             BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), int.MaxValue, true);
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up network client");
@@ -523,13 +539,23 @@ namespace BuildSync.Client
                 Settings.ClientPortRangeMin,
                 Settings.ClientPortRangeMax,
                 BuildRegistry,
-                ManifestDownloadManager
+                ManifestDownloadManager,
+                TagRegistry,
+                RouteRegistry
             );
+            NetClient.TagIds = new List<Guid>(Settings.TagIds);
 
             // Setup the virtual file system we will store our available builds in.
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up build file system");
 
             BuildFileSystem = new VirtualFileSystem();
+            NetClient.OnClientTagsUpdatedByServer += () =>
+            {
+                Settings.TagIds = NetClient.TagIds;
+
+                NetClient.RestartConnections();
+                SaveSettings();
+            };
             NetClient.OnPermissionsUpdated += () =>
             {
                 BuildFileSystem.ForceRefresh();
@@ -768,11 +794,34 @@ namespace BuildSync.Client
                 }
             }
 
+            if (Settings.LastUpgradeVersion < AppVersion.VersionNumber)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Upgrading settings.");
+                UpgradeSettings();
+            }
+
             Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Saving new settings");
             Settings.Save(SettingsPath);
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Applying settings");
             ApplySettings();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static void UpgradeSettings()
+        {
+            if (Settings.LastUpgradeVersion == 0)
+            {
+                // Server port was modified on this version due to protocal differences. 
+                if (Settings.ServerPort == 12341)
+                {
+                    Settings.ServerPort = 12340;
+                }
+            }
+
+            Settings.LastUpgradeVersion = AppVersion.VersionNumber;
         }
 
         /// <summary>

@@ -373,6 +373,16 @@ namespace BuildSync.Client.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap appbar_network_home {
+            get {
+                object obj = ResourceManager.GetObject("appbar.network.home", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap appbar_network_server_connecting {
             get {
                 object obj = ResourceManager.GetObject("appbar.network.server.connecting", resourceCulture);
@@ -476,6 +486,16 @@ namespace BuildSync.Client.Properties {
         internal static System.Drawing.Bitmap appbar_timer {
             get {
                 object obj = ResourceManager.GetObject("appbar.timer", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_transit_connection {
+            get {
+                object obj = ResourceManager.GetObject("appbar.transit.connection", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

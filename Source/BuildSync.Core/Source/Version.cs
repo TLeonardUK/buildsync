@@ -30,12 +30,12 @@ namespace BuildSync.Core
     public class AppVersion
     {
         // AUTO GENERATION
-        public static int BuildVersion = 561;
+        public static int BuildVersion = 578;
         public static int MajorVersion = 1;
         public static int MinorVersion = 0;
         public static int PatchVersion = 0;
 
-        public static int ProtocolVersion = 5;
+        public static int ProtocolVersion = 6;
         // END AUTO GENERATION
 
         public static string VersionString = MajorVersion + "." + MinorVersion + "." + PatchVersion + "." + BuildVersion;

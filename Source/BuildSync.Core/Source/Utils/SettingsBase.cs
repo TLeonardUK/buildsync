@@ -97,31 +97,35 @@ namespace BuildSync.Core.Utils
             try
             {
                 string DirPath = Path.GetDirectoryName(FullFilePath);
-                Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Creating directory: {0}", DirPath);
+                //Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Creating directory: {0}", DirPath);
                 if (!Directory.Exists(DirPath))
                 {
                     Directory.CreateDirectory(DirPath);
                 }
 
-                if (File.Exists(FullFilePath))
+                if (File.Exists(FullFilePath) && new FileInfo(FullFilePath).Length > 0)
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Copying backup: {0}", FullFilePath);
+                    //Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Copying backup: {0}", FullFilePath);
                     File.Copy(FullFilePath, FullFilePath + ".backup", true);
                 }
 
-                using (TextWriter TextWriter = new StreamWriter(FullFilePath))
+                JsonSerializerOptions Options = new JsonSerializerOptions
                 {
-                    JsonSerializerOptions Options = new JsonSerializerOptions
-                    {
-                        WriteIndented = true,
-                        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                    };
+                    WriteIndented = true,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                };
 
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Serializing output: {0}", FullFilePath);
-                    string Data = JsonSerializer.Serialize(this, GetType(), Options);
+                //Logger.Log(LogLevel.Info, LogCategory.Main, "SettingsBase.Save: Serializing output: {0}", FullFilePath);
+                string Data = JsonSerializer.Serialize(this, GetType(), Options);
+
+                using (TextWriter TextWriter = new StreamWriter(FullFilePath + ".tmp"))
+                {
                     TextWriter.Write(Data);
                     Result = true;
                 }
+
+                File.Copy(FullFilePath + ".tmp", FullFilePath, true);
+                File.Delete(FullFilePath + ".tmp");
             }
             catch (Exception Ex)
             {

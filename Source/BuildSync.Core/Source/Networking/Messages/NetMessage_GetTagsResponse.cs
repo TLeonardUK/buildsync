@@ -22,6 +22,7 @@
 using System.Collections.Generic;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Users;
+using BuildSync.Core.Tags;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -36,7 +37,7 @@ namespace BuildSync.Core.Networking.Messages
 
         /// <summary>
         /// </summary>
-        public List<BuildManifestTag> Tags = new List<BuildManifestTag>();
+        public List<Tag> Tags = new List<Tag>();
 
         /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
@@ -52,7 +53,7 @@ namespace BuildSync.Core.Networking.Messages
             {
                 if (serializer.IsLoading)
                 {
-                    Tags.Add(new BuildManifestTag());
+                    Tags.Add(new Tag());
                 }
 
                 Tags[i].Serialize(serializer);

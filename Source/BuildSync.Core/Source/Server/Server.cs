@@ -29,6 +29,8 @@ using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Tags;
+using BuildSync.Core.Routes;
 
 namespace BuildSync.Core.Server
 {
@@ -77,6 +79,14 @@ namespace BuildSync.Core.Server
 
         /// <summary>
         /// </summary>
+        private TagRegistry TagRegistry;
+
+        /// <summary>
+        /// </summary>
+        private RouteRegistry RouteRegistry;
+
+        /// <summary>
+        /// </summary>
         private readonly NetConnection ListenConnection = new NetConnection();
 
         /// <summary>
@@ -106,7 +116,22 @@ namespace BuildSync.Core.Server
         /// <summary>
         /// 
         /// </summary>
-        Dictionary<Guid, ServerClientManifestInfo> ClientManifestInfo = new Dictionary<Guid, ServerClientManifestInfo>();
+        private Dictionary<Guid, ServerClientManifestInfo> ClientManifestInfo = new Dictionary<Guid, ServerClientManifestInfo>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private List<NetConnection> ActiveBandwidthLimitsSentToClients = new List<NetConnection>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private List<RoutePair> ActiveBandwidthLimits = new List<RoutePair>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private long ActiveGlobalBandwidthLimit = 0;
 
         /// <summary>
         /// </summary>
@@ -183,32 +208,10 @@ namespace BuildSync.Core.Server
                     // Send user update of all peers that may have data they are after.
                     if (State.RelevantPeerAddressesNeedUpdate)
                     {
-                        List<IPEndPoint> NewPeers = GetRelevantPeerAddressesForBlockState(Clients, Connection);
+                        List<NetConnection> NewPeers = GetRelevantPeerForBlockState(Clients, Connection);
 
                         // If the new list is different than the old one send it.
-                        bool IsDifferent = NewPeers.Count != State.RelevantPeerAddresses.Count;
-                        if (!IsDifferent)
-                        {
-                            foreach (IPEndPoint Address in NewPeers)
-                            {
-                                bool Exists = false;
-
-                                foreach (IPEndPoint PrevAddress in State.RelevantPeerAddresses)
-                                {
-                                    if (PrevAddress.Equals(Address))
-                                    {
-                                        Exists = true;
-                                        break;
-                                    }
-                                }
-
-                                if (!Exists)
-                                {
-                                    IsDifferent = true;
-                                    break;
-                                }
-                            }
-                        }
+                        bool IsDifferent = NewPeers.IsEqual(State.RelevantPeers);
 
                         Logger.Log(LogLevel.Verbose, LogCategory.Peers, "----- Peer Relevant Addresses -----");
                         Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer: {0}", State.PeerConnectionAddress == null ? "Unknown" : State.PeerConnectionAddress.ToString());
@@ -216,7 +219,7 @@ namespace BuildSync.Core.Server
                         {
                             for (int i = 0; i < NewPeers.Count; i++)
                             {
-                                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "[{0}] {1}", i, NewPeers[i].ToString());
+                                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "[{0}] {1}", i, (NewPeers[i].Metadata as ServerConnectedClient).PeerConnectionAddress.ToString());
                             }
                         }
                         else
@@ -228,45 +231,154 @@ namespace BuildSync.Core.Server
                         if (IsDifferent)
                         {
                             NetMessage_RelevantPeerListUpdate Msg = new NetMessage_RelevantPeerListUpdate();
-                            Msg.PeerAddresses = NewPeers;
+                            Msg.PeerAddresses = new List<IPEndPoint>();
+                            foreach (NetConnection Address in NewPeers)
+                            {
+                                Msg.PeerAddresses.Add((Address.Metadata as ServerConnectedClient).PeerConnectionAddress);
+                            }
                             Connection.Send(Msg);
                         }
 
-                        State.RelevantPeerAddresses = NewPeers;
+                        State.RelevantPeers = NewPeers;
                         State.RelevantPeerAddressesNeedUpdate = false;
                     }
                 }
             }
 
-            // Limit bandwidth between clients if required.
-            long PerClientBandwidthLimit = ActivelyDownloadingClients.Count > 0 ? BandwidthLimit / ActivelyDownloadingClients.Count : 0;
+            EnforceBandwidthRestrictions(ActivelyDownloadingClients);
+
+            ListenConnection.Poll();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void EnforceBandwidthRestrictions(List<NetConnection> ActivelyDownloadingClients)
+        {
+            // Build list of all routes that are currently active.
+            Dictionary<RoutePair, List<NetConnection>> ActiveRouteDestinations = new Dictionary<RoutePair, List<NetConnection>>();
+
             foreach (NetConnection Connection in ActivelyDownloadingClients)
             {
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
-                if (State.BandwidthLimit != PerClientBandwidthLimit)
+                foreach (Guid SourceTag in Connection.Handshake.TagIds)
                 {
-                    NetMessage_EnforceBandwidthLimit Msg = new NetMessage_EnforceBandwidthLimit();
-                    Msg.BandwidthLimit = PerClientBandwidthLimit;
-                    Connection.Send(Msg);
+                    foreach (NetConnection RelevantPeer in State.RelevantPeers)
+                    {
+                        foreach (Guid DestinationTag in RelevantPeer.Handshake.TagIds)
+                        {
+                            RoutePair Pair = new RoutePair { SourceTagId = SourceTag, DestinationTagId = DestinationTag };
 
-                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Limiting peer {0} to {1}", Connection.Address.Address.ToString(), StringUtils.FormatAsTransferRate(PerClientBandwidthLimit));
+                            if (!ActiveRouteDestinations.ContainsKey(Pair))
+                            {
+                                ActiveRouteDestinations.Add(Pair, new List<NetConnection>());
+                            }
 
-                    State.BandwidthLimit = PerClientBandwidthLimit;
+                            if (!ActiveRouteDestinations[Pair].Contains(Connection))
+                            {
+                                ActiveRouteDestinations[Pair].Add(Connection);
+                            }
+                        }
+                    }
                 }
             }
 
-            ListenConnection.Poll();
+            // Calculate bandwidth limits per route.
+            List<RoutePair> BandwidthLimits = new List<RoutePair>();
+            foreach (var Pair in ActiveRouteDestinations)
+            {
+                // Try and find bandwidth restrictions for this route.
+                Route route = RouteRegistry.GetRoute(Pair.Key.SourceTagId, Pair.Key.DestinationTagId);
+                if (route != null && route.BandwidthLimit > 0)
+                {
+                    RoutePair NewPair = Pair.Key;
+                    NewPair.Bandwidth = route.BandwidthLimit / Pair.Value.Count;
+
+                    BandwidthLimits.Add(NewPair);
+                }
+            }
+
+            // If bandwidth limits have changed, enforce them.
+            bool ShouldSendUpdate = (BandwidthLimits.Count != ActiveBandwidthLimits.Count);
+            if (!ShouldSendUpdate)
+            {
+                // Check each individual one.
+                foreach (RoutePair Pair in BandwidthLimits)
+                {
+                    if (!ActiveBandwidthLimits.Contains(Pair))
+                    {
+                        ShouldSendUpdate = true;
+                        break;
+                    }
+                }
+            }
+
+            // If there are new actively downloaded clients, enforce them again.
+            if (!ShouldSendUpdate)
+            {
+                if (ActiveBandwidthLimitsSentToClients.Count != ActivelyDownloadingClients.Count)
+                {
+                    ShouldSendUpdate = true;
+                }
+                else
+                {
+                    foreach (NetConnection Connection in ActivelyDownloadingClients)
+                    {
+                        if (!ActiveBandwidthLimitsSentToClients.Contains(Connection))
+                        {
+                            ShouldSendUpdate = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            long GlobalLimit = ActivelyDownloadingClients.Count == 0 ? 0 : BandwidthLimit / ActivelyDownloadingClients.Count;
+            if (GlobalLimit != ActiveGlobalBandwidthLimit)
+            {
+                ShouldSendUpdate = true;
+            }
+
+            if (ShouldSendUpdate)
+            {
+                foreach (NetConnection Connection in ActivelyDownloadingClients)
+                {
+                    ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                    NetMessage_EnforceBandwidthLimit Msg = new NetMessage_EnforceBandwidthLimit();
+                    Msg.BandwidthLimitGlobal = GlobalLimit;
+                    Msg.BandwidthLimitRoutes = BandwidthLimits;
+                    Connection.Send(Msg);
+                }
+
+                Logger.Log(LogLevel.Info, LogCategory.Peers, "Globally limited bandwidth to {0}",
+                    StringUtils.FormatAsTransferRate(GlobalLimit));
+
+                foreach (RoutePair Pair in BandwidthLimits)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Peers, "Limiting route {0} -> {1} to {2} per peer",
+                        TagRegistry.GetTagById(Pair.SourceTagId).Name,
+                        TagRegistry.GetTagById(Pair.DestinationTagId).Name,
+                        StringUtils.FormatAsTransferRate(Pair.Bandwidth));
+                }
+
+                ActiveBandwidthLimitsSentToClients = ActivelyDownloadingClients;
+                ActiveBandwidthLimits = BandwidthLimits;
+                ActiveGlobalBandwidthLimit = GlobalLimit;
+            }
         }
 
         /// <summary>
         /// </summary>
         /// <param name="Hostname"></param>
         /// <param name="Port"></param>
-        public void Start(int Port, BuildManifestRegistry BuildManifest, UserManager InUserManager, LicenseManager InLicenseManager)
+        public void Start(int Port, BuildManifestRegistry BuildManifest, UserManager InUserManager, LicenseManager InLicenseManager, TagRegistry InTagRegistry, RouteRegistry InRouteRegistry)
         {
             ServerPort = Port;
             Started = true;
             ManifestRegistry = BuildManifest;
+            TagRegistry = InTagRegistry;
+            RouteRegistry = InRouteRegistry;
 
             LicenseManager = InLicenseManager;
 
@@ -311,15 +423,19 @@ namespace BuildSync.Core.Server
         /// <param name="Clients"></param>
         /// <param name="ForClient"></param>
         /// <returns></returns>
-        private List<IPEndPoint> GetRelevantPeerAddressesForBlockState(List<NetConnection> Clients, NetConnection ForClient)
+        private List<NetConnection> GetRelevantPeerForBlockState(List<NetConnection> Clients, NetConnection ForClient)
         {
-            List<IPEndPoint> Result = new List<IPEndPoint>();
+            List<NetConnection> Result = new List<NetConnection>();
 
             ServerConnectedClient ForServerConnectedClient = ForClient.Metadata as ServerConnectedClient;
             if (ForServerConnectedClient.BlockState == null)
             {
                 return Result;
             }
+
+            List<Guid> Whitelist = new List<Guid>();
+            List<Guid> Blacklist = new List<Guid>();
+            RouteRegistry.GetDestinationTags(ForClient.Handshake.TagIds, ref Whitelist, ref Blacklist);
 
             foreach (NetConnection Connection in Clients)
             {
@@ -344,9 +460,35 @@ namespace BuildSync.Core.Server
                     continue;
                 }
 
+                if (RouteRegistry.Routes.Count > 0)
+                {
+                    bool Whitelisted = false;
+                    bool Blacklisted = false;
+                    foreach (Guid tag in Connection.Handshake.TagIds)
+                    {
+                        if (Whitelist.Contains(tag))
+                        {
+                            Whitelisted = true;
+                        }
+                        if (Blacklist.Contains(tag))
+                        {
+                            Blacklisted = true;
+                        }
+                    }
+
+                    if (!Whitelisted)
+                    {
+                        continue;
+                    }
+                    if (Blacklisted)
+                    {
+                        continue;
+                    }
+                }
+
                 if (ServerConnectedClient.BlockState.HasAnyBlocksNeeded(ForServerConnectedClient.BlockState))
                 {
-                    Result.Add(ServerConnectedClient.PeerConnectionAddress);
+                    Result.Add(Connection);
                 }
             }
 
@@ -647,6 +789,83 @@ namespace BuildSync.Core.Server
             }
 
             // ------------------------------------------------------------------------------
+            // Client requested list of routes
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_GetRoutes)
+            {
+                NetMessage_GetRoutes Msg = BaseMessage as NetMessage_GetRoutes;
+
+                NetMessage_GetRoutesResponse ResponseMsg = new NetMessage_GetRoutesResponse();
+                ResponseMsg.Routes = new List<Route>(RouteRegistry.Routes);
+
+                Connection.Send(ResponseMsg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Creates a route
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_CreateRoute)
+            {
+                NetMessage_CreateRoute Msg = BaseMessage as NetMessage_CreateRoute;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyRoutes, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to add route without permission.", State.Username);
+                    return;
+                }
+
+                RouteRegistry.CreateRoute(Msg.SourceTagId, Msg.DestinationTagId, Msg.Blacklisted, Msg.BandwidthLimit);
+
+                // Dirty all relevant peer connections.
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        Sub.RelevantPeerAddressesNeedUpdate = true;
+                    }
+                }
+                ActiveBandwidthLimitsSentToClients.Clear();
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' created route.", State.Username);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Deletes a route
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_DeleteRoute)
+            {
+                NetMessage_DeleteRoute Msg = BaseMessage as NetMessage_DeleteRoute;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyRoutes, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to delete route without permission.", State.Username);
+                    return;
+                }
+
+                RouteRegistry.DeleteRoute(Msg.RouteId);
+
+                // Dirty all relevant peer connections.
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        Sub.RelevantPeerAddressesNeedUpdate = true;
+                    }
+                }
+                ActiveBandwidthLimitsSentToClients.Clear();
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' deleted route '{1}'.", State.Username, Msg.RouteId.ToString());
+            }
+
+            // ------------------------------------------------------------------------------
             // Client requested list of tags
             // ------------------------------------------------------------------------------
             else if (BaseMessage is NetMessage_GetTags)
@@ -654,7 +873,7 @@ namespace BuildSync.Core.Server
                 NetMessage_GetTags Msg = BaseMessage as NetMessage_GetTags;
 
                 NetMessage_GetTagsResponse ResponseMsg = new NetMessage_GetTagsResponse();
-                ResponseMsg.Tags = new List<BuildManifestTag>(ManifestRegistry.Tags);
+                ResponseMsg.Tags = new List<Tag>(TagRegistry.Tags);
 
                 Connection.Send(ResponseMsg);
             }
@@ -675,7 +894,7 @@ namespace BuildSync.Core.Server
                     return;
                 }
 
-                BuildManifestTag Tag = ManifestRegistry.GetTagById(Msg.TagId);
+                Tag Tag = TagRegistry.GetTagById(Msg.TagId);
                 if (Tag == null)
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to tag an unknown tag '{1}'.", State.Username, Msg.TagId.ToString());
@@ -711,7 +930,7 @@ namespace BuildSync.Core.Server
                     return;
                 }
 
-                BuildManifestTag Tag = ManifestRegistry.GetTagById(Msg.TagId);
+                Tag Tag = TagRegistry.GetTagById(Msg.TagId);
                 if (Tag == null)
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to untag an unknown tag '{1}'.", State.Username, Msg.TagId.ToString());
@@ -746,7 +965,7 @@ namespace BuildSync.Core.Server
                     return;
                 }
 
-                ManifestRegistry.CreateTag(Msg.Name);
+                TagRegistry.CreateTag(Msg.Name);
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' created tag '{1}'.", State.Username, Msg.Name);
             }
@@ -766,7 +985,7 @@ namespace BuildSync.Core.Server
                     return;
                 }
 
-                ManifestRegistry.DeleteTag(Msg.TagId);
+                TagRegistry.DeleteTag(Msg.TagId);
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' deleted tag '{1}'.", State.Username, Msg.TagId.ToString());
             }
@@ -974,6 +1193,7 @@ namespace BuildSync.Core.Server
                             NewState.ConnectedPeerCount = Sub.ConnectedPeerCount;
                             NewState.DiskUsage = Sub.DiskUsage;
                             NewState.Version = Sub.Version;
+                            NewState.TagIds = ClientConnection.Handshake.TagIds;
 
                             ResponseMsg.ClientStates.Add(NewState);
                         }
@@ -1054,7 +1274,7 @@ namespace BuildSync.Core.Server
                             {
                                 Candidates.Sort((Item1, Item2) =>
                                 {
-                                    return -Item1.CreateTime.CompareTo(Item2.CreateTime);
+                                    return Item1.CreateTime.CompareTo(Item2.CreateTime);
                                 });
 
                                 break;
@@ -1080,10 +1300,10 @@ namespace BuildSync.Core.Server
                             }
                     }
 
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "User '{0}' asked us to select manifest to delete, priority order:", State.Username);
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "User '{0}' asked us to select manifest to delete (using heuristic {1}), priority order:", State.Username, Msg.Heuristic.ToString());
                     foreach (ManifestDeletionCandidate Candidate in Candidates)
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.Main, "\tManifest Id={0} PeersWithFullBuild={1} LastSeen={2}", Candidate.Id, Candidate.NumberOfPeersWithFullBuild, Candidate.LastSeen.ToString());
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "\tManifest Id={0} PeersWithFullBuild={1} LastSeen={2} CreateTime={3}", Candidate.Id, Candidate.NumberOfPeersWithFullBuild, Candidate.LastSeen.ToString(), Candidate.CreateTime.ToString());
                     }
 
                     Guid ChosenCandidate = Candidates[0].Id;
@@ -1092,6 +1312,84 @@ namespace BuildSync.Core.Server
                     Response.ManifestId = ChosenCandidate;
                     Connection.Send(Response);
                 }
+            }
+
+            // ------------------------------------------------------------------------------
+            // Add a tag to a client
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_AddTagToClient)
+            {
+                NetMessage_AddTagToClient Msg = BaseMessage as NetMessage_AddTagToClient;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                Tag Tag = TagRegistry.GetTagById(Msg.TagId);
+                if (Tag == null)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to untag an unknown tag '{1}'.", State.Username, Msg.TagId.ToString());
+                    return;
+                }
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyServer, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to tag client without permission.", State.Username);
+                    return;
+                }
+
+                // Forward to client to untag themselves.
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        if (Sub.PeerConnectionAddress.Address.ToString() == Msg.ClientAddress)
+                        {
+                            ClientConnection.Send(Msg);
+                        }
+                    }
+                }
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tagged client '{1}' with tag '{2}'.", State.Username, Msg.ClientAddress.ToString(), Msg.TagId.ToString());
+            }
+
+            // ------------------------------------------------------------------------------
+            // Remove a tag to a manifest.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RemoveTagFromClient)
+            {
+                NetMessage_RemoveTagFromClient Msg = BaseMessage as NetMessage_RemoveTagFromClient;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                Tag Tag = TagRegistry.GetTagById(Msg.TagId);
+                if (Tag == null)
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to untag an unknown tag '{1}'.", State.Username, Msg.TagId.ToString());
+                    return;
+                }
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyServer, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to untag client without permission.", State.Username);
+                    return;
+                }
+
+                // Forward to client to untag themselves.
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        if (Sub.PeerConnectionAddress.Address.ToString() == Msg.ClientAddress)
+                        {
+                            ClientConnection.Send(Msg);
+                        }
+                    }
+                }
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' untagged client '{1}' with tag '{2}'.", State.Username, Msg.ClientAddress.ToString(), Msg.TagId.ToString());
             }
         }
 
@@ -1174,7 +1472,7 @@ namespace BuildSync.Core.Server
                                 AvailablePeers = 0,
                                 LastSeenOnPeer = DateTime.UtcNow,
                                 TotalSize = 0,
-                                Tags = new BuildManifestTag[0]
+                                Tags = new Tag[0]
                             }
                         ); 
                     }
@@ -1189,12 +1487,12 @@ namespace BuildSync.Core.Server
                     BuildManifest Manifest = ManifestRegistry.GetManifestByPath(Children[i]);
                     if (Manifest != null)
                     {
-                        List<BuildManifestTag> Tags = new List<BuildManifestTag>();
+                        List<Tag> Tags = new List<Tag>();
                         if (Manifest.Metadata != null)
                         {
                             for (int j = 0; j < Manifest.Metadata.TagIds.Count; j++)
                             {
-                                BuildManifestTag Tag = ManifestRegistry.GetTagById(Manifest.Metadata.TagIds[j]);
+                                Tag Tag = TagRegistry.GetTagById(Manifest.Metadata.TagIds[j]);
                                 if (Tag != null)
                                 {
                                     Tags.Add(Tag);

@@ -71,6 +71,7 @@ namespace BuildSync.Core.Downloads
         public int HighestPriority;
         public int SortOrder;
         public Guid ManifestId;
+        public bool InUse;
         public List<ManifestDownloadRequiredBlock> ToDownloadBlocks;
     }
 
@@ -1953,6 +1954,7 @@ namespace BuildSync.Core.Downloads
             foreach (ManifestDownloadQueue Queue in ManifestQueues)
             {
                 Queue.ToDownloadBlocks.Clear();
+                Queue.InUse = false;
             }
 
             foreach (ManifestDownloadState State in StateCollection.States)
@@ -1980,7 +1982,7 @@ namespace BuildSync.Core.Downloads
                     DownloadQueue.HighestPriority = State.Priority;
                     DownloadQueue.SortOrder = (State.Priority * 1000) + (Randomiser.Next() % 100);
                     DownloadQueue.ManifestId = State.ManifestId;
-                    ManifestQueues.Add(DownloadQueue);
+                    DownloadQueue.InUse = true;
 
                     int BlockCount = 0;
 
@@ -2041,6 +2043,16 @@ namespace BuildSync.Core.Downloads
                             }
                         }
                     }
+                }
+            }
+
+            // Remove unused queues.
+            for (int i = 0; i < ManifestQueues.Count; i++)
+            {
+                if (!ManifestQueues[i].InUse || ManifestQueues[i].ToDownloadBlocks.Count == 0)
+                {
+                    ManifestQueues.RemoveAt(i);
+                    i--;
                 }
             }
 

@@ -19,6 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
+using System.Collections.Generic;
+
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
@@ -31,12 +34,33 @@ namespace BuildSync.Core.Networking.Messages
         public int Version = AppVersion.ProtocolVersion;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public List<Guid> TagIds = new List<Guid>();
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Version);
+
+            // Serialize users.
+            int Count = TagIds.Count;
+            serializer.Serialize(ref Count);
+
+            for (int i = 0; i < Count; i++)
+            {
+                if (serializer.IsLoading)
+                {
+                    TagIds.Add(new Guid());
+                }
+
+                Guid value = TagIds[i];
+                serializer.Serialize(ref value);
+                TagIds[i] = value;
+            }
         }
     }
 }

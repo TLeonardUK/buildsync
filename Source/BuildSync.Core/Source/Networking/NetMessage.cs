@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Threading;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -35,7 +36,12 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        public const int HeaderSize = 8;
+        public const int HeaderSize = 17;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public const int MinSizeToCompress = 512;
 
         /// <summary>
         /// 
@@ -50,12 +56,32 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
+        public int Index;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int ReplyToIndex;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public int Id;
 
         /// <summary>
         /// 
         /// </summary>
         public int PayloadSize;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool Compressed;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static int IndexCounter = 0;
 
         /// <summary>
         ///     Gets or sets if the reciver handles calling the Cleanup function at an appropriate time. If false
@@ -179,8 +205,11 @@ namespace BuildSync.Core.Networking
         /// <param name="Buffer"></param>
         public void ReadHeader(byte[] Buffer)
         {
-            Id = BitConverter.ToInt32(Buffer, 0);
-            PayloadSize = BitConverter.ToInt32(Buffer, 4);
+            Index = BitConverter.ToInt32(Buffer, 0);
+            ReplyToIndex = BitConverter.ToInt32(Buffer, 4);
+            Id = BitConverter.ToInt32(Buffer, 8);
+            PayloadSize = BitConverter.ToInt32(Buffer, 12);
+            Compressed = BitConverter.ToBoolean(Buffer, 16);
         }
 
         /// <summary>
@@ -198,8 +227,11 @@ namespace BuildSync.Core.Networking
 
             long PayloadStart = dataStream.Position;
             SerializePayload(new NetMessageSerializer(dataWriter, Version));
+            Index = Interlocked.Increment(ref IndexCounter);
+            ReplyToIndex = 0;
             Id = GetType().Name.GetStableHashCode();
             PayloadSize = (int) (dataStream.Position - PayloadStart);
+            Compressed = false;
 
             dataStream.Seek(0, SeekOrigin.Begin);
             WriteHeader(dataWriter);
@@ -234,8 +266,33 @@ namespace BuildSync.Core.Networking
         /// <param name="writer"></param>
         private void WriteHeader(BinaryWriter writer)
         {
+            writer.Write(Index);
+            writer.Write(ReplyToIndex);
             writer.Write(Id);
             writer.Write(PayloadSize);
+            writer.Write(Compressed);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="writer"></param>
+        public static void SetCompressedFlag(byte[] Data, int PayloadLength, bool InCompressed)
+        {
+            if (PayloadLength >= 0)
+            {
+                Array.Copy(BitConverter.GetBytes(PayloadLength), 0, Data, 12, 4);
+            }
+            Data[16] = (byte)(InCompressed ? 1 : 0);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="writer"></param>
+        public static bool GetCompressedFlag(byte[] Data)
+        {
+            return Data[16] != 0;
         }
     }
 }

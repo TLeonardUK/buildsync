@@ -26,6 +26,7 @@ using System.Windows.Forms;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
+using BuildSync.Core.Tags;
 
 namespace BuildSync.Client.Forms
 {
@@ -40,7 +41,7 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        public List<BuildManifestTag> Tags;
+        public List<Tag> Tags;
 
         /// <summary>
         /// 

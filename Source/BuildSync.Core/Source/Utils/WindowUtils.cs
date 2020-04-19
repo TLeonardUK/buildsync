@@ -133,7 +133,11 @@ namespace BuildSync.Core.Utils
         /// <returns></returns>
         public static IPAddress GetLocalIPAddress()
         {
-            foreach (NetworkInterface item in NetworkInterface.GetAllNetworkInterfaces())
+            // TODO: Need to change this so users can select interface.
+
+            NetworkInterface[] Interfaces = NetworkInterface.GetAllNetworkInterfaces();
+
+            foreach (NetworkInterface item in Interfaces)
             {
                 if (item.OperationalStatus == OperationalStatus.Up)
                 {

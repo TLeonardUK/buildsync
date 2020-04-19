@@ -47,11 +47,13 @@
             this.scmSettingsPanel = new System.Windows.Forms.Panel();
             this.workspaceComboBox = new System.Windows.Forms.ComboBox();
             this.buildSelectionRulePanel = new System.Windows.Forms.Panel();
-            this.TagContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.includeTextBox = new BuildSync.Client.Controls.TagTextBox();
+            this.excludeTextBox = new BuildSync.Client.Controls.TagTextBox();
             this.label14 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.selectionFilterComboBox = new System.Windows.Forms.ComboBox();
             this.label11 = new System.Windows.Forms.Label();
+            this.TagContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.scmFilePanel = new System.Windows.Forms.Panel();
             this.scmFileTextBox = new System.Windows.Forms.TextBox();
@@ -64,8 +66,6 @@
             this.label6 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
-            this.excludeTextBox = new BuildSync.Client.Controls.TagTextBox();
-            this.includeTextBox = new BuildSync.Client.Controls.TagTextBox();
             this.scmSettingsPanel.SuspendLayout();
             this.buildSelectionRulePanel.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
@@ -284,10 +284,21 @@
             this.buildSelectionRulePanel.TabIndex = 28;
             this.buildSelectionRulePanel.Visible = false;
             // 
-            // TagContextMenuStrip
+            // includeTextBox
             // 
-            this.TagContextMenuStrip.Name = "TagContextMenuStrip";
-            this.TagContextMenuStrip.Size = new System.Drawing.Size(61, 4);
+            this.includeTextBox.Location = new System.Drawing.Point(0, 146);
+            this.includeTextBox.Name = "includeTextBox";
+            this.includeTextBox.Size = new System.Drawing.Size(338, 21);
+            this.includeTextBox.TabIndex = 30;
+            this.includeTextBox.TagIds = ((System.Collections.Generic.List<System.Guid>)(resources.GetObject("includeTextBox.TagIds")));
+            // 
+            // excludeTextBox
+            // 
+            this.excludeTextBox.Location = new System.Drawing.Point(0, 102);
+            this.excludeTextBox.Name = "excludeTextBox";
+            this.excludeTextBox.Size = new System.Drawing.Size(338, 21);
+            this.excludeTextBox.TabIndex = 29;
+            this.excludeTextBox.TagIds = ((System.Collections.Generic.List<System.Guid>)(resources.GetObject("excludeTextBox.TagIds")));
             // 
             // label14
             // 
@@ -335,6 +346,11 @@
             this.label11.Size = new System.Drawing.Size(97, 13);
             this.label11.TabIndex = 24;
             this.label11.Text = "Build selection filter";
+            // 
+            // TagContextMenuStrip
+            // 
+            this.TagContextMenuStrip.Name = "TagContextMenuStrip";
+            this.TagContextMenuStrip.Size = new System.Drawing.Size(61, 4);
             // 
             // flowLayoutPanel1
             // 
@@ -408,7 +424,7 @@
             this.installLocationTextBox.Name = "installLocationTextBox";
             this.installLocationTextBox.Size = new System.Drawing.Size(338, 20);
             this.installLocationTextBox.TabIndex = 32;
-            this.installLocationTextBox.Text = "buildsync";
+            this.installLocationTextBox.Text = "workspace0";
             this.installLocationTextBox.TextChanged += new System.EventHandler(this.DataStateChanged);
             // 
             // splitContainer1
@@ -503,22 +519,6 @@
             this.downloadFileSystemTree.TabIndex = 13;
             this.downloadFileSystemTree.OnDateUpdated += new System.EventHandler(this.DataStateChanged);
             this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
-            // 
-            // excludeTextBox
-            // 
-            this.excludeTextBox.Location = new System.Drawing.Point(0, 102);
-            this.excludeTextBox.Name = "excludeTextBox";
-            this.excludeTextBox.Size = new System.Drawing.Size(338, 21);
-            this.excludeTextBox.TabIndex = 29;
-            this.excludeTextBox.TagIds = ((System.Collections.Generic.List<System.Guid>)(resources.GetObject("excludeTextBox.TagIds")));
-            // 
-            // includeTextBox
-            // 
-            this.includeTextBox.Location = new System.Drawing.Point(0, 146);
-            this.includeTextBox.Name = "includeTextBox";
-            this.includeTextBox.Size = new System.Drawing.Size(338, 21);
-            this.includeTextBox.TabIndex = 30;
-            this.includeTextBox.TagIds = ((System.Collections.Generic.List<System.Guid>)(resources.GetObject("includeTextBox.TagIds")));
             // 
             // AddDownloadForm
             // 

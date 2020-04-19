@@ -33,6 +33,8 @@ using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Tags;
+using BuildSync.Core.Routes;
 using BuildSync.Server.Commands;
 using CommandLine;
 
@@ -43,6 +45,14 @@ namespace BuildSync.Server
     /// </summary>
     public static class Program
     {
+        /// <summary>
+        /// </summary>
+        private static TagRegistry TagRegistry;
+
+        /// <summary>
+        /// </summary>
+        private static RouteRegistry RouteRegistry;
+
         /// <summary>
         /// </summary>
         public static BuildManifestRegistry BuildRegistry;
@@ -223,14 +233,23 @@ namespace BuildSync.Server
         {
             InitSettings();
 
-            BuildRegistry = new BuildManifestRegistry(Settings.Tags);
-            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests, false);
-            BuildRegistry.ManifestLastSeenTimes = new Dictionary<string, DateTime>(Settings.ManifestLastSeenTimes);
-            BuildRegistry.TagsUpdated += () =>
+            TagRegistry = new TagRegistry(Settings.Tags);
+            TagRegistry.TagsUpdated += () =>
             {
-                Settings.Tags = BuildRegistry.Tags;
+                Settings.Tags = TagRegistry.Tags;
                 SaveSettings();
             };
+
+            RouteRegistry = new RouteRegistry(Settings.Routes, TagRegistry);
+            RouteRegistry.RoutesUpdated += () =>
+            {
+                Settings.Routes = RouteRegistry.Routes;
+                SaveSettings();
+            };
+
+            BuildRegistry = new BuildManifestRegistry(TagRegistry);
+            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests, false);
+            BuildRegistry.ManifestLastSeenTimes = new Dictionary<string, DateTime>(Settings.ManifestLastSeenTimes);
 
             LicenseMgr = new LicenseManager();
             LicenseMgr.Start(Path.Combine(AppDataDir, "License.dat"));
@@ -253,7 +272,7 @@ namespace BuildSync.Server
             };
 
             NetServer = new Core.Server.Server();
-            NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager, LicenseMgr);
+            NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager, LicenseMgr, TagRegistry, RouteRegistry);
             NetServer.BandwidthLimit = Settings.MaxBandwidth;
         }
 
@@ -299,9 +318,32 @@ namespace BuildSync.Server
                 }
             }
 
+            if (Settings.LastUpgradeVersion < AppVersion.VersionNumber)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Upgrading settings.");
+                UpgradeSettings();
+            }
+
             Settings.Save(SettingsPath);
 
             ApplySettings();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private static void UpgradeSettings()
+        {
+            if (Settings.LastUpgradeVersion == 0)
+            {
+                // Server port was modified on this version due to protocal differences. 
+                if (Settings.ServerPort == 12341)
+                {
+                    Settings.ServerPort = 12340;
+                }
+            }
+
+            Settings.LastUpgradeVersion = AppVersion.VersionNumber;
         }
 
         /// <summary>

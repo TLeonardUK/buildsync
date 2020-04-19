@@ -21,11 +21,13 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using BuildSync.Core.Controls.Graph;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Tags;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
@@ -35,6 +37,16 @@ namespace BuildSync.Client.Forms
     public partial class ManageServerForm : DockContent
     {
         /// <summary>
+        /// 
+        /// </summary>
+        private List<Tag> Tags = new List<Tag>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private NetMessage_GetServerStateResponse.ClientState SelectedClient;
+
+        /// <summary>
         /// </summary>
         private readonly ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
 
@@ -43,6 +55,7 @@ namespace BuildSync.Client.Forms
         private readonly IComparer[] ColumnSorterComparers =
         {
             new CaseInsensitiveComparer(), // Hostname
+            new CaseInsensitiveComparer(), // Tags
             new TransferRateStringComparer(), // Download Speed
             new TransferRateStringComparer(), // Upload Speed
             new FileSizeStringComparer(), // Total Downloaded
@@ -61,6 +74,8 @@ namespace BuildSync.Client.Forms
             WindowUtils.EnableDoubleBuffering(MainListView);
 
             MainListView.ListViewItemSorter = ColumnSorter;
+
+            Program.NetClient.OnTagListRecieved += TagsRecieved;
         }
 
         /// <summary>
@@ -111,6 +126,130 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ContextMenuOpening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (MainListView.SelectedItems.Count > 0)
+            {
+                SelectedClient = MainListView.SelectedItems[0].Tag as NetMessage_GetServerStateResponse.ClientState;
+            }
+            Program.NetClient.RequestTagList();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Users"></param>
+        private void TagsRecieved(List<Tag> InTags)
+        {
+            Tags = InTags;
+
+            // Add new tags.
+            foreach (Tag Tag in InTags)
+            {
+                bool Found = false;
+                foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
+                {
+                    if ((Item.Tag as Tag).Id == Tag.Id)
+                    {
+                        Found = true;
+                        break;
+                    }
+                }
+
+                if (!Found)
+                {
+                    ToolStripMenuItem TagItem = new ToolStripMenuItem();
+                    TagItem.Text = Tag.Name;
+                    TagItem.Tag = Tag;
+                    TagItem.ImageScaling = ToolStripItemImageScaling.None;
+                    TagItem.Click += TagItemClicked;
+                    addTagToolStripMenuItem.DropDownItems.Add(TagItem);
+
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "Added tag menu: {0}", Tag.Name);
+                }
+            }
+
+            // Remove old tags.
+            List<ToolStripMenuItem> RemovedItems = new List<ToolStripMenuItem>();
+            foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
+            {
+                bool Found = false;
+
+                foreach (Tag Tag in InTags)
+                {
+                    if ((Item.Tag as Tag).Id == Tag.Id)
+                    {
+                        Found = true;
+                        break;
+                    }
+                }
+
+                if (!Found)
+                {
+                    RemovedItems.Add(Item);
+                }
+            }
+
+            foreach (ToolStripMenuItem Item in RemovedItems)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Removing tag menu: {0}", Item.Text);
+                addTagToolStripMenuItem.DropDownItems.Remove(Item);
+            }
+
+            ValidateState();
+        }
+
+        /// <summary>
+        /// </summary>
+        private void ValidateState()
+        {
+            addTagToolStripMenuItem.Enabled = SelectedClient != null && addTagToolStripMenuItem.DropDownItems.Count > 0;
+
+            if (SelectedClient != null)
+            { 
+                List<Guid> TagIds = SelectedClient.TagIds;
+
+                foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
+                {
+                    Tag MenuTag = (Item.Tag as Tag);
+                    Item.Checked = TagIds.Contains(MenuTag.Id);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void TagItemClicked(object sender, EventArgs e)
+        {
+            ToolStripMenuItem TagItem = sender as ToolStripMenuItem;
+            if (TagItem == null)
+            {
+                return;
+            }
+
+            if (SelectedClient == null)
+            {
+                return;
+            }
+
+            Tag Tag = TagItem.Tag as Tag;
+
+            if (!TagItem.Checked)
+            {
+                Program.NetClient.AddTagToClient(SelectedClient.Address, Tag.Id);
+            }
+            else
+            {
+                Program.NetClient.RemoveTagFromClient(SelectedClient.Address, Tag.Id);
+            }
+        }
+        /// <summary>
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -120,6 +259,7 @@ namespace BuildSync.Client.Forms
 
             Program.NetClient.OnServerStateRecieved += ServerStateRecieved;
             Program.NetClient.RequestServerState();
+            Program.NetClient.RequestTagList();
 
             if (BandwithGraph.Series.Length == 0 || BandwithGraph.Series[0] == null)
             {
@@ -155,6 +295,7 @@ namespace BuildSync.Client.Forms
             }
 
             Program.NetClient.RequestServerState();
+            Program.NetClient.RequestTagList();
         }
 
         /// <summary>
@@ -170,7 +311,7 @@ namespace BuildSync.Client.Forms
                 bool Exists = false;
                 foreach (ListViewItem Item in MainListView.Items)
                 {
-                    if (Item.Tag as string == State.Address)
+                    if ((Item.Tag as NetMessage_GetServerStateResponse.ClientState).Address == State.Address)
                     {
                         Exists = true;
                         break;
@@ -179,8 +320,8 @@ namespace BuildSync.Client.Forms
 
                 if (!Exists)
                 {
-                    ListViewItem Item = new ListViewItem(new string[8]);
-                    Item.Tag = State.Address;
+                    ListViewItem Item = new ListViewItem(new string[9]);
+                    Item.Tag = State;
                     Item.ImageIndex = 0;
 
                     MainListView.Items.Add(Item);
@@ -195,16 +336,18 @@ namespace BuildSync.Client.Forms
                 bool Exists = false;
                 foreach (NetMessage_GetServerStateResponse.ClientState State in Msg.ClientStates)
                 {
-                    if (Item.Tag as string == State.Address)
+                    if ((Item.Tag as NetMessage_GetServerStateResponse.ClientState).Address == State.Address)
                     {
                         Item.SubItems[0].Text = HostnameCache.GetHostname(State.Address);
-                        Item.SubItems[1].Text = StringUtils.FormatAsTransferRate(State.DownloadRate);
-                        Item.SubItems[2].Text = StringUtils.FormatAsTransferRate(State.UploadRate);
-                        Item.SubItems[3].Text = StringUtils.FormatAsSize(State.TotalDownloaded);
-                        Item.SubItems[4].Text = StringUtils.FormatAsSize(State.TotalUploaded);
-                        Item.SubItems[5].Text = State.ConnectedPeerCount.ToString();
-                        Item.SubItems[6].Text = StringUtils.FormatAsSize(State.DiskUsage);
-                        Item.SubItems[7].Text = State.Version;
+                        Item.SubItems[1].Text = Program.TagRegistry.IdsToString(State.TagIds);
+                        Item.SubItems[2].Text = StringUtils.FormatAsTransferRate(State.DownloadRate);
+                        Item.SubItems[3].Text = StringUtils.FormatAsTransferRate(State.UploadRate);
+                        Item.SubItems[4].Text = StringUtils.FormatAsSize(State.TotalDownloaded);
+                        Item.SubItems[5].Text = StringUtils.FormatAsSize(State.TotalUploaded);
+                        Item.SubItems[6].Text = State.ConnectedPeerCount.ToString();
+                        Item.SubItems[7].Text = StringUtils.FormatAsSize(State.DiskUsage);
+                        Item.SubItems[8].Text = State.Version;
+                        Item.Tag = State;
 
                         Exists = true;
                         break;

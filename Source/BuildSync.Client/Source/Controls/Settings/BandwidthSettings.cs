@@ -50,6 +50,7 @@ namespace BuildSync.Client.Controls.Settings
             BandwidthTimespanStartMinBox.Value = Program.Settings.BandwidthStartTimeMin;
             BandwidthTimespanEndHourBox.Value = Program.Settings.BandwidthEndTimeHour;
             BandwidthTimespanEndMinBox.Value = Program.Settings.BandwidthEndTimeMin;
+            compressDataCheckBox.Checked = Program.Settings.CompressDataDuringTransfer;
             SkipValidity = false;
 
             UpdateValidityState();
@@ -79,6 +80,7 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.BandwidthStartTimeMin = (int) BandwidthTimespanStartMinBox.Value;
             Program.Settings.BandwidthEndTimeHour = (int) BandwidthTimespanEndHourBox.Value;
             Program.Settings.BandwidthEndTimeMin = (int) BandwidthTimespanEndMinBox.Value;
+            Program.Settings.CompressDataDuringTransfer = compressDataCheckBox.Checked;
         }
     }
 }

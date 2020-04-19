@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using BuildSync.Client.Forms;
 using BuildSync.Client.Properties;
@@ -51,6 +52,7 @@ namespace BuildSync.Client.Controls.Settings
             ServerPortTextBox.Value = Program.Settings.ServerPort;
             PeerPortRangeStartBox.Value = Program.Settings.ClientPortRangeMin;
             PeerPortRangeEndBox.Value = Program.Settings.ClientPortRangeMax;
+            tagsTextBox.TagIds = new List<Guid>(Program.Settings.TagIds);
             SkipValidity = false;
 
             UpdateValidityState();
@@ -94,6 +96,7 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.ServerPort = (int) ServerPortTextBox.Value;
             Program.Settings.ClientPortRangeMin = (int) PeerPortRangeStartBox.Value;
             Program.Settings.ClientPortRangeMax = (int) PeerPortRangeEndBox.Value;
+            Program.Settings.TagIds = tagsTextBox.TagIds;
 
             if (Uri.CheckHostName(Program.Settings.ServerHostname) != UriHostNameType.Unknown)
             {

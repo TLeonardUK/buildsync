@@ -19,6 +19,9 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System.Collections.Generic;
+using BuildSync.Core.Routes;
+
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
@@ -32,7 +35,12 @@ namespace BuildSync.Core.Networking.Messages
         /// <summary>
         ///     Maximum global bandwidth client should use in bytes per second.
         /// </summary>
-        public long BandwidthLimit;
+        public long BandwidthLimitGlobal;
+
+        /// <summary>
+        ///     Maximum bandwidth per route
+        /// </summary>
+        public List<RoutePair> BandwidthLimitRoutes = new List<RoutePair>();
 
         /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
@@ -40,7 +48,25 @@ namespace BuildSync.Core.Networking.Messages
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
-            serializer.Serialize(ref BandwidthLimit);
+            serializer.Serialize(ref BandwidthLimitGlobal);
+
+            int Count = BandwidthLimitRoutes.Count;
+            serializer.Serialize(ref Count);
+            for (int i = 0; i < Count; i++)
+            {
+                if (serializer.IsLoading)
+                {
+                    BandwidthLimitRoutes.Add(new RoutePair());
+                }
+
+                RoutePair Pair = BandwidthLimitRoutes[i];
+
+                serializer.Serialize(ref Pair.Bandwidth);
+                serializer.Serialize(ref Pair.DestinationTagId);
+                serializer.Serialize(ref Pair.SourceTagId);
+
+                BandwidthLimitRoutes[i] = Pair;
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ using BuildSync.Core.Scm;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Tags;
 
 namespace BuildSync.Core.Downloads
 {
@@ -135,9 +136,9 @@ namespace BuildSync.Core.Downloads
             {
                 bool Found = false;
 
-                foreach (BuildManifestTag Tag in Info.Tags)
+                foreach (Tag tag in Info.Tags)
                 {
-                    if (Tag.Id == Id)
+                    if (tag.Id == Id)
                     {
                         Found = true;
                         break;
@@ -161,7 +162,7 @@ namespace BuildSync.Core.Downloads
         /// <returns></returns>
         private bool BuildHasAnyTags(NetMessage_GetBuildsResponse.BuildInfo Info, List<Guid> Ids)
         {
-            foreach (BuildManifestTag Tag in Info.Tags)
+            foreach (Tag Tag in Info.Tags)
             {
                 if (Ids.Contains(Tag.Id))
                 {

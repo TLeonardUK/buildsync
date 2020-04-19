@@ -127,6 +127,9 @@
     <Reference Include="Aga.Controls, Version=1.7.0.0, Culture=neutral, PublicKeyToken=fcc90fbf924463a3, processorArchitecture=MSIL">
       <HintPath>..\..\packages\TreeViewAdv.1.7.0.0\lib\net\Aga.Controls.dll</HintPath>
     </Reference>
+    <Reference Include="Crc32C.NET, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Crc32C.NET.1.0.5.0\lib\net20\Crc32C.NET.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=1.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Microsoft.Bcl.AsyncInterfaces.1.1.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
@@ -145,6 +148,9 @@
     <Reference Include="Microsoft.Deployment.WindowsInstaller, Version=3.0.0.0, Culture=neutral, PublicKeyToken=ce35f76fcda82bad, processorArchitecture=MSIL" />
     <Reference Include="p4api.net, Version=2019.3.189.3442, Culture=neutral, PublicKeyToken=f6b9b9d036c873e1, processorArchitecture=x86">
       <HintPath>..\..\packages\p4api.net.x86.2019.3.189.3442\lib\net40\p4api.net.dll</HintPath>
+    </Reference>
+    <Reference Include="Snappy.NET, Version=1.1.1.8, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Snappy.NET.1.1.1.8\lib\net45\Snappy.NET.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -202,12 +208,18 @@
     <Compile Include="Controls\SegmentedProgressBar.Designer.cs">
       <DependentUpon>SegmentedProgressBar.cs</DependentUpon>
     </Compile>
+    <Compile Include="Networking\Messages\NetMessage_AddTagToClient.cs" />
+    <Compile Include="Networking\Messages\NetMessage_CreateRoute.cs" />
+    <Compile Include="Networking\Messages\NetMessage_DeleteRoute.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteTag.cs" />
     <Compile Include="Networking\Messages\NetMessage_CreateTag.cs" />
     <Compile Include="Networking\Messages\NetMessage_AddTagToManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteUserGroup.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetRoutes.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetRoutesResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetTags.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetTagsResponse.cs" />
+    <Compile Include="Networking\Messages\NetMessage_RemoveTagFromClient.cs" />
     <Compile Include="Networking\Messages\NetMessage_RemoveUserToUserGroup.cs" />
     <Compile Include="Networking\Messages\NetMessage_RemoveUserGroupPermission.cs" />
     <Compile Include="Networking\Messages\NetMessage_AddUserGroupPermission.cs" />
@@ -217,6 +229,8 @@
     <Compile Include="Networking\Messages\NetMessage_CreateUserGroup.cs" />
     <Compile Include="Networking\Messages\NetMessage_RemoveTagFromManifest.cs" />
     <Compile Include="Networking\NetDiscoveryServer.cs" />
+    <Compile Include="Routes\Route.cs" />
+    <Compile Include="Routes\RouteRegistry.cs" />
     <Compile Include="Server\Server.cs" />
     <Compile Include="Controls\Graph\GraphAxis.cs" />
     <Compile Include="Controls\Graph\GraphControl.cs">
@@ -281,11 +295,14 @@
     <Compile Include="Scripting\ScriptLaunchMode.cs" />
     <Compile Include="Scripting\ScriptUtils.cs" />
     <Compile Include="Server\ServerConnectedClient.cs" />
+    <Compile Include="Tags\Tag.cs" />
+    <Compile Include="Tags\TagRegistry.cs" />
     <Compile Include="Users\User.cs" />
     <Compile Include="Users\UserGroup.cs" />
     <Compile Include="Users\UserPermission.cs" />
     <Compile Include="Utils\DomainUtils.cs" />
     <Compile Include="Utils\FileCopyEx.cs" />
+    <Compile Include="Utils\RollingAverageOverTime.cs" />
     <Compile Include="Utils\Sha1.cs" />
     <Compile Include="Users\UserManager.cs" />
     <Compile Include="Utils\AsyncIOQueue.cs" />

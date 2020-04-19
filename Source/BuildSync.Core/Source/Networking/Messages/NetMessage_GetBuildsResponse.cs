@@ -21,6 +21,7 @@
 
 using System;
 using BuildSync.Core.Manifests;
+using BuildSync.Core.Tags;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -70,7 +71,7 @@ namespace BuildSync.Core.Networking.Messages
             /// <summary>
             /// 
             /// </summary>
-            public BuildManifestTag[] Tags;
+            public Tag[] Tags;
         }
 
         /// <summary>
@@ -111,7 +112,7 @@ namespace BuildSync.Core.Networking.Messages
                 {
                     if (Builds[i].Tags == null)
                     {
-                        Builds[i].Tags = new BuildManifestTag[0];
+                        Builds[i].Tags = new Tag[0];
                     }
 
                     int TagCount = Builds[i].Tags.Length;
@@ -119,14 +120,14 @@ namespace BuildSync.Core.Networking.Messages
 
                     if (serializer.IsLoading)
                     {
-                        Builds[i].Tags = new BuildManifestTag[TagCount];
+                        Builds[i].Tags = new Tag[TagCount];
                     }
 
                     for (int j = 0; j < TagCount; j++)
                     {
                         if (serializer.IsLoading)
                         {
-                            Builds[i].Tags[j] = new BuildManifestTag();
+                            Builds[i].Tags[j] = new Tag();
                         }
                         Builds[i].Tags[j].Serialize(serializer);
                     }

@@ -88,6 +88,10 @@ namespace BuildSync.Client.Forms
 
         /// <summary>
         /// </summary>
+        private readonly ManageRoutesForm ManageRoutesForm;
+
+        /// <summary>
+        /// </summary>
         private DownloadListItem ContextMenuDownloadItem;
 
         /// <summary>
@@ -130,6 +134,7 @@ namespace BuildSync.Client.Forms
             StatsForm = new StatisticsForm();
             ManageBuildsForm = new ManageBuildsForm();
             ManageTagsForm = new ManageTagsForm();
+            ManageRoutesForm = new ManageRoutesForm();
             ManageUsersForm = new ManageUsersForm();
             ManageServerForm = new ManageServerForm();
             ConsoleOutputForm = new ConsoleForm();
@@ -163,6 +168,11 @@ namespace BuildSync.Client.Forms
             if (persistString == typeof(ManageTagsForm).ToString())
             {
                 return ManageTagsForm;
+            }
+
+            if (persistString == typeof(ManageRoutesForm).ToString())
+            {
+                return ManageRoutesForm;
             }
 
             if (persistString == typeof(ManageUsersForm).ToString())
@@ -304,15 +314,17 @@ namespace BuildSync.Client.Forms
 
             if (Program.Settings.FirstRun)
             {
-                if (MessageBox.Show(this, "Server connection information has not yet been set.\n\nWould you like to view settings and configure?", "No Server Configured", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
-                {
-                    PreferencesForm form = new PreferencesForm();
-                    form.ShowDialog(this);
-                }
-
-                Program.Settings.FirstRun = false;
-                Program.SaveSettings();
+                SetupForm form = new SetupForm();
+                form.ShowDialog(this);
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void ShowAddDownload()
+        {
+            new AddDownloadForm().ShowDialog(this);
         }
 
         /// <summary>
@@ -322,7 +334,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void AddDownloadClicked(object sender, EventArgs e)
         {
-            new AddDownloadForm().ShowDialog(this);
+            ShowAddDownload();
         }
 
         /// <summary>
@@ -535,6 +547,16 @@ namespace BuildSync.Client.Forms
         private void ManageTagsClicked(object sender, EventArgs e)
         {
             ShowContent(ManageTagsForm, DockState.Document);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ManageRoutesClicked(object sender, EventArgs e)
+        {
+            ShowContent(ManageRoutesForm, DockState.Document);
         }
 
         /// <summary>
@@ -899,6 +921,17 @@ namespace BuildSync.Client.Forms
                 {
                     tagManagerToolStripMenuItem.Enabled = false;
                     tagManagerToolStripMenuItem.Text = "Tag Manager (Permission Required)";
+                }
+            }
+
+            routeManagerToolStripMenuItem.Text = "Route Manager";
+            routeManagerToolStripMenuItem.Enabled = Connected;
+            if (Connected)
+            {
+                if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyRoutes, ""))
+                {
+                    routeManagerToolStripMenuItem.Enabled = false;
+                    routeManagerToolStripMenuItem.Text = "Route Manager (Permission Required)";
                 }
             }
 

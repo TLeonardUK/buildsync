@@ -27,6 +27,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Tags;
 using BuildSync.Core.Manifests;
 using Aga.Controls.Tree;
 using Aga.Controls.Tree.NodeControls;
@@ -119,7 +120,7 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
-        public List<BuildManifestTag> SelectedManifestTags
+        public List<Tag> SelectedManifestTags
         {
             get
             {
@@ -133,7 +134,7 @@ namespace BuildSync.Client.Controls
                         if (Node != null && Node.Metadata != null)
                         {
                             NetMessage_GetBuildsResponse.BuildInfo BuildInfo = (NetMessage_GetBuildsResponse.BuildInfo)Node.Metadata;
-                            return new List<BuildManifestTag>(BuildInfo.Tags);
+                            return new List<Tag>(BuildInfo.Tags);
                         }
                     }
                 }
@@ -498,7 +499,7 @@ namespace BuildSync.Client.Controls
                 if (BuildInfo.Tags != null)
                 {
                     TrNode.TagsFormatted = "";
-                    foreach (BuildManifestTag Tag in BuildInfo.Tags)
+                    foreach (Tag Tag in BuildInfo.Tags)
                     {
                         if (TrNode.TagsFormatted.Length > 0)
                         {

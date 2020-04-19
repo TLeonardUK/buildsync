@@ -236,7 +236,7 @@ namespace BuildSync.Core.Utils
             CloseStreamsInDir
         }
 
-        public static RateTracker GlobalBandwidthStats = new RateTracker(30);
+        public static RateTracker GlobalBandwidthStats = new RateTracker(10000);
         public static RollingAverage InLatency = new RollingAverage(25);
 
         public static RollingAverage OutLatency = new RollingAverage(25);

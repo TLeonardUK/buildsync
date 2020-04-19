@@ -19,11 +19,15 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+#define LOG_COMPRESS_RATIO
+
 using System;
+using System.Threading;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
+using Snappy;
 
 namespace BuildSync.Core.Utils
 {
@@ -63,7 +67,7 @@ namespace BuildSync.Core.Utils
         public static byte[] Compress(byte[] data)
         {
             MemoryStream output = new MemoryStream();
-            using (DeflateStream dstream = new DeflateStream(output, CompressionLevel.Optimal))
+            using (DeflateStream dstream = new DeflateStream(output, CompressionLevel.Fastest))
             {
                 dstream.Write(data, 0, data.Length);
             }
@@ -85,6 +89,126 @@ namespace BuildSync.Core.Utils
             }
 
             return output.ToArray();
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static ThreadLocal<byte[]> CompressBuffer = new ThreadLocal<byte[]>(() => new byte[2 * 1024 * 1024]);
+        public static object CompressLock = new object();
+
+#if LOG_COMPRESS_RATIO
+        /// <summary>
+        /// 
+        /// </summary>
+        public static long CompressedBytes = 0;
+        public static long UncompressedBytes = 0;
+#endif
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Data"></param>
+        /// <returns></returns>
+        public static bool CompressInPlace(byte[] Data, long DataOffset, long DataLength, out long ResultLength)
+        {
+            byte[] Buffer = CompressBuffer.Value;
+
+#if LOG_COMPRESS_RATIO
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+#endif
+
+            int MaxBufferSize = SnappyCodec.GetMaxCompressedLength((int)DataLength);
+            if (Buffer.Length < MaxBufferSize)
+            {
+                Buffer = new byte[MaxBufferSize];
+                CompressBuffer.Value = Buffer;
+            }
+
+            ResultLength = SnappyCodec.Compress(Data, (int)DataOffset, (int)DataLength, Buffer, 0);
+            if (ResultLength < DataLength)
+            {
+                Array.Copy(Buffer, 0, Data, (int)DataOffset, ResultLength);
+
+#if LOG_COMPRESS_RATIO
+                watch.Stop();
+                float elapsed = ((float)watch.ElapsedTicks / (float)Stopwatch.Frequency) * 1000.0f;
+                CompressedBytes += ResultLength;
+                UncompressedBytes += DataLength;
+
+                float Reduction = ((float)CompressedBytes / (float)UncompressedBytes) * 100.0f;
+
+                Console.WriteLine("CompressInPlace: ratio={0} elapsed={1}ms compressed={2} uncompressed={3} saved={4}", 
+                    Reduction, 
+                    elapsed,
+                    StringUtils.FormatAsSize(CompressedBytes),
+                    StringUtils.FormatAsSize(UncompressedBytes),
+                    StringUtils.FormatAsSize(UncompressedBytes - CompressedBytes));
+#endif
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Data"></param>
+        /// <returns></returns>
+        public static int GetDecompressedLength(byte[] Data, long DataOffset, long DataLength)
+        {
+            return SnappyCodec.GetUncompressedLength(Data, (int)DataOffset, (int)DataLength);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Data"></param>
+        /// <returns></returns>
+        public static bool DecompressInPlace(byte[] Data, long DataOffset, long DataLength, out long ResultLength)
+        {
+            byte[] Buffer = CompressBuffer.Value;
+
+            int MaxBufferSize = SnappyCodec.GetUncompressedLength(Data, (int)DataOffset, (int)DataLength);
+            if (Buffer.Length < MaxBufferSize)
+            {
+                Buffer = new byte[MaxBufferSize];
+                CompressBuffer.Value = Buffer;
+            }
+
+#if LOG_COMPRESS_RATIO
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
+#endif
+
+            ResultLength = SnappyCodec.Uncompress(Data, (int)DataOffset, (int)DataLength, Buffer, 0);
+            if (ResultLength <= Buffer.Length)
+            {
+                Array.Copy(Buffer, 0, Data, (int)DataOffset, ResultLength);
+
+#if LOG_COMPRESS_RATIO
+                watch.Stop();
+                float elapsed = ((float)watch.ElapsedTicks / (float)Stopwatch.Frequency) * 1000.0f;
+
+                CompressedBytes += ResultLength;
+                UncompressedBytes += DataLength;
+
+                float Reduction = ((float)CompressedBytes / (float)UncompressedBytes) * 100.0f;
+
+                Console.WriteLine("DecompressInPlace: elapsed={0}ms", elapsed);
+#endif
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>

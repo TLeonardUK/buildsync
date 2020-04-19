@@ -74,7 +74,7 @@ namespace BuildSync.Core.Server
         /// <summary>
         /// 
         /// </summary>
-        public List<IPEndPoint> RelevantPeerAddresses = new List<IPEndPoint>();
+        public List<NetConnection> RelevantPeers = new List<NetConnection>();
 
         /// <summary>
         /// 

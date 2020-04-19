@@ -85,11 +85,14 @@ namespace BuildSync.Core.Users
 
                 UserGroup AdminsGroup = new UserGroup();
                 AdminsGroup.Name = "Administrators";
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.Write, "");
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.ModifyUsers, "");
                 AdminsGroup.Permissions.GrantPermission(UserPermissionType.Read, "");
                 AdminsGroup.Permissions.GrantPermission(UserPermissionType.PushUpdate, "");
-                AdminsGroup.Permissions.GrantPermission(UserPermissionType.Write, "");
                 AdminsGroup.Permissions.GrantPermission(UserPermissionType.ModifyServer, "");
-                AdminsGroup.Permissions.GrantPermission(UserPermissionType.ModifyUsers, "");
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.TagBuilds, "");
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.ModifyTags, "");
+                AdminsGroup.Permissions.GrantPermission(UserPermissionType.ModifyRoutes, "");
                 UserGroups.Add(AdminsGroup);
             }
 

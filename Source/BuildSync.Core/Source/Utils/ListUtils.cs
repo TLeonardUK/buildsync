@@ -40,5 +40,77 @@ namespace BuildSync.Core.Utils
         {
             return listToClone.Select(item => (T) item.Clone()).ToList();
         }
+
+        /// <summary>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="listToClone"></param>
+        /// <returns></returns>
+        public static bool IsEqual<T>(this IList<T> listA, IList<T> listB, bool orderIndependent = true)
+        {
+            if (listA.Count != listB.Count)
+            {
+                return false;
+            }
+
+            if (orderIndependent)
+            {
+                foreach (T val in listA)
+                {
+                    if (!listB.Contains(val))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < listA.Count; i++)
+                {
+                    if (!listA[i].Equals(listB[i]))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="listToClone"></param>
+        /// <returns></returns>
+        public static List<T> GetAdded<T>(this IList<T> listA, IList<T> baseList)
+        {
+            List<T> Result = new List<T>();
+            foreach (T val in listA)
+            {
+                if (!baseList.Contains(val))
+                {
+                    Result.Add(val);
+                }
+            }            
+            return Result;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="listToClone"></param>
+        /// <returns></returns>
+        public static List<T> GetRemoved<T>(this IList<T> listA, IList<T> baseList)
+        {
+            List<T> Result = new List<T>();
+            foreach (T val in baseList)
+            {
+                if (!listA.Contains(val))
+                {
+                    Result.Add(val);
+                }
+            }
+            return Result;
+        }
     }
 }

@@ -29,6 +29,7 @@ using System.Windows.Forms;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Users;
+using BuildSync.Core.Tags;
 using WeifenLuo.WinFormsUI.Docking;
 using Aga.Controls.Tree;
 using Aga.Controls.Tree.NodeControls;
@@ -49,7 +50,7 @@ namespace BuildSync.Client.Forms
             public Image Icon;
             public string Name;
 
-            public BuildManifestTag BuildTag;
+            public Tag BuildTag;
         }
 
         /// <summary>
@@ -98,12 +99,22 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RefreshTagList(object sender, EventArgs e)
+        {
+            Program.NetClient.RequestTagList();
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Users"></param>
-        private void TagsRecieved(List<BuildManifestTag> InTags)
+        private void TagsRecieved(List<Tag> InTags)
         {
             // Add new tags.
-            foreach (BuildManifestTag Tag in InTags)
+            foreach (Tag Tag in InTags)
             {
                 bool Found = false;
 
@@ -132,7 +143,7 @@ namespace BuildSync.Client.Forms
             {
                 bool Found = false;
 
-                foreach (BuildManifestTag Tag in InTags)
+                foreach (Tag Tag in InTags)
                 {
                     if (Node.BuildTag.Id == Tag.Id)
                     {
