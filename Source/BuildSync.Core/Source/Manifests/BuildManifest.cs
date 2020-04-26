@@ -579,11 +579,18 @@ namespace BuildSync.Core.Manifests
         public static BuildManifest ReadFromFile(string FilePath, bool CacheDownloadInfo)
         {
             BuildManifest Manifest = FileUtils.ReadFromBinaryFile<BuildManifest>(FilePath);
-            if (Manifest != null && CacheDownloadInfo)
+            if (Manifest != null)
             {
-                Manifest.CacheBlockInfo();
+                if (CacheDownloadInfo)
+                {
+                    Manifest.CacheBlockInfo();
+                }
+                Manifest.CacheSizeInfo();
+                if (!CacheDownloadInfo)
+                {
+                    Manifest.TrimBlockInfo();
+                }
             }
-            Manifest.CacheSizeInfo();
 
             return Manifest;
         }
@@ -689,6 +696,15 @@ namespace BuildSync.Core.Manifests
                     FilesByPath.Add(FileInfo.Path, FileInfo);
                 }
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        private void TrimBlockInfo()
+        {
+            BlockChecksums = null;
+            SparseBlockChecksums = null;
+            Files = null;
         }
 
         /// <summary>

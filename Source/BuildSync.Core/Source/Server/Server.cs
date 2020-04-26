@@ -261,22 +261,28 @@ namespace BuildSync.Core.Server
             foreach (NetConnection Connection in ActivelyDownloadingClients)
             {
                 ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
-                foreach (Guid SourceTag in Connection.Handshake.TagIds)
+                if (State != null)
                 {
-                    foreach (NetConnection RelevantPeer in State.RelevantPeers)
+                    foreach (Guid SourceTag in Connection.Handshake.TagIds)
                     {
-                        foreach (Guid DestinationTag in RelevantPeer.Handshake.TagIds)
+                        foreach (NetConnection RelevantPeer in State.RelevantPeers)
                         {
-                            RoutePair Pair = new RoutePair { SourceTagId = SourceTag, DestinationTagId = DestinationTag };
-
-                            if (!ActiveRouteDestinations.ContainsKey(Pair))
+                            if (RelevantPeer.Handshake != null)
                             {
-                                ActiveRouteDestinations.Add(Pair, new List<NetConnection>());
-                            }
+                                foreach (Guid DestinationTag in RelevantPeer.Handshake.TagIds)
+                                {
+                                    RoutePair Pair = new RoutePair { SourceTagId = SourceTag, DestinationTagId = DestinationTag };
 
-                            if (!ActiveRouteDestinations[Pair].Contains(Connection))
-                            {
-                                ActiveRouteDestinations[Pair].Add(Connection);
+                                    if (!ActiveRouteDestinations.ContainsKey(Pair))
+                                    {
+                                        ActiveRouteDestinations.Add(Pair, new List<NetConnection>());
+                                    }
+
+                                    if (!ActiveRouteDestinations[Pair].Contains(Connection))
+                                    {
+                                        ActiveRouteDestinations[Pair].Add(Connection);
+                                    }
+                                }
                             }
                         }
                     }
@@ -665,9 +671,9 @@ namespace BuildSync.Core.Server
 
                 State.PeerConnectionAddress = Msg.PeerConnectionAddress;
 
-                if (State.Username != Msg.Username)
+                if (State.Username != Connection.Handshake.Username)
                 {
-                    State.Username = Msg.Username;
+                    State.Username = Connection.Handshake.Username;
                     State.PermissionsNeedUpdate = true;
                 }
 
@@ -1185,6 +1191,7 @@ namespace BuildSync.Core.Server
                         if (Sub.PeerConnectionAddress != null)
                         {
                             NetMessage_GetServerStateResponse.ClientState NewState = new NetMessage_GetServerStateResponse.ClientState();
+                            NewState.Username = Sub.Username;
                             NewState.Address = Sub.PeerConnectionAddress.Address.ToString();
                             NewState.DownloadRate = Sub.DownloadRate;
                             NewState.UploadRate = Sub.UploadRate;
@@ -1343,7 +1350,7 @@ namespace BuildSync.Core.Server
                     if (ClientConnection.Metadata != null)
                     {
                         ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
-                        if (Sub.PeerConnectionAddress.Address.ToString() == Msg.ClientAddress)
+                        if (Sub.PeerConnectionAddress != null && Sub.PeerConnectionAddress.Address.ToString() == Msg.ClientAddress)
                         {
                             ClientConnection.Send(Msg);
                         }
@@ -1382,7 +1389,7 @@ namespace BuildSync.Core.Server
                     if (ClientConnection.Metadata != null)
                     {
                         ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
-                        if (Sub.PeerConnectionAddress.Address.ToString() == Msg.ClientAddress)
+                        if (Sub.PeerConnectionAddress != null && Sub.PeerConnectionAddress.Address.ToString() == Msg.ClientAddress)
                         {
                             ClientConnection.Send(Msg);
                         }

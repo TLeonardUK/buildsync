@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Tags;
 
@@ -189,37 +190,60 @@ namespace BuildSync.Core.Manifests
             watch.Start();
 
             string[] ManifestFilePaths = Directory.GetFiles(Path, "*.manifest", SearchOption.AllDirectories);
+
+            List<Task> Tasks = new List<Task>();
+            List<BuildManifest> Results = new List<BuildManifest>();
+
             foreach (string FilePath in ManifestFilePaths)
             {
-                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading manifest: {0}", FilePath);
-
-#if false
-                try
+                Tasks.Add(Task.Run(() =>
                 {
-#endif
-                    BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath, CacheDownloadInfo);
-
-                    string MetaFile = FilePath + ".metadata";
-                    if (File.Exists(MetaFile))
-                    {
-                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading manifest metadata: {0}", MetaFile);
-                        Manifest.Metadata = BuildManifestMetadata.ReadFromFile(MetaFile);
-                    }
-
-                    if (Manifest.Metadata == null)
-                    {
-                        Manifest.Metadata = new BuildManifestMetadata();
-                    }
-
-                    AddManifest(Manifest);
 #if false
+                    try
+                    {
+#endif
+                        Logger.Log(LogLevel.Verbose, LogCategory.Manifest, "Loading manifest: {0}", FilePath);
+
+                        BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath, CacheDownloadInfo);
+                        if (Manifest != null)
+                        {
+                            string MetaFile = FilePath + ".metadata";
+                            if (File.Exists(MetaFile))
+                            {
+                                Logger.Log(LogLevel.Verbose, LogCategory.Manifest, "Loading manifest metadata: {0}", MetaFile);
+                                Manifest.Metadata = BuildManifestMetadata.ReadFromFile(MetaFile);
+                            }
+
+                            if (Manifest.Metadata == null)
+                            {
+                                Manifest.Metadata = new BuildManifestMetadata();
+                            }
+
+                            lock (Results)
+                            {
+                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loaded Manifest: {0} -> {1}", Manifest.Guid.ToString(), Manifest.VirtualPath);
+
+                                Results.Add(Manifest);
+                            }
+                        }
+#if false
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read manifest '{0}', due to error {1}", FilePath, ex.Message);
+                    //    File.Delete(FilePath);
+                    }
+#endif
+                }));
             }
-                catch (Exception ex)
-                {
-                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read manifest '{0}', due to error {1}", FilePath, ex.Message);
-                //    File.Delete(FilePath);
-                }
-#endif
+
+            Task.WaitAll(Tasks.ToArray());
+
+            GC.Collect();
+
+            foreach (BuildManifest Manifest in Results)
+            {
+                AddManifest(Manifest);
             }
 
             watch.Stop();
@@ -299,8 +323,9 @@ namespace BuildSync.Core.Manifests
                         {
                             Logger.Log(LogLevel.Info, LogCategory.Manifest, "Pruning manifest '{0}' '{1}' as it's {2} days since it was last seen on any peer.", Manifest.Guid.ToString(), Manifest.VirtualPath, (int)Elapsed.TotalDays);
 
-                            ManifestFileSystem.RemoveNode(Manifest.VirtualPath);
-                            Manifests.RemoveAt(i);
+                            UnregisterManifest(Manifest.Guid);
+//                            ManifestFileSystem.RemoveNode(Manifest.VirtualPath);
+                            //Manifests.RemoveAt(i);
                             i--;
 
                             ManifestLastSeenTimesDirty = true;

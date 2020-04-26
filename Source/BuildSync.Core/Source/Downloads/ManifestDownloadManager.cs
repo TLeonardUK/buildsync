@@ -1101,14 +1101,23 @@ namespace BuildSync.Core.Downloads
                             {
                                 try
                                 {
-                                    string[] Devices = State.InstallDeviceName.Split(',');
-                                    foreach (string Device in Devices)
+                                    if (State.InstallDeviceName == "")
                                     {
-                                        string Trimmed = Device.Trim();
-                                        if (Trimmed.Length > 0)
+                                        string Trimmed = "localhost";
+                                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", Trimmed, State.InstallLocation, State.LocalFolder);
+                                        PerformInstallation(State, Trimmed);
+                                    }
+                                    else
+                                    {
+                                        string[] Devices = State.InstallDeviceName.Split(',');
+                                        foreach (string Device in Devices)
                                         {
-                                            Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", Trimmed, State.InstallLocation, State.LocalFolder);
-                                            PerformInstallation(State, Trimmed);
+                                            string Trimmed = Device.Trim();
+                                            if (Trimmed.Length > 0)
+                                            {
+                                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", Trimmed, State.InstallLocation, State.LocalFolder);
+                                                PerformInstallation(State, Trimmed);
+                                            }
                                         }
                                     }
                                 }

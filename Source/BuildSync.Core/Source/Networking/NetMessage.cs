@@ -41,7 +41,7 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        public const int MinSizeToCompress = 512;
+        public const int MinSizeToCompress = 128;
 
         /// <summary>
         /// 

@@ -3,7 +3,7 @@
   <?define ComponentRules="OneToOne"?>
   <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
   <?define SourceDir="..\..\Build\Deploy"?>
-  <Module Id="BuildSync" Language="1033" Version="1.0.0.578">
+  <Module Id="BuildSync" Language="1033" Version="1.0.0.586">
     <Package Id="2bfad680-e708-481c-9cd4-f285482e7ace" Manufacturer="Tim Leonard" InstallerVersion="200" Description="Tool for distributing application builds" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" />
@@ -42,7 +42,19 @@
         </Component>
         <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA334D" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb75E">
           <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA334D" Source="$(var.SourceDir)\Aga.Controls.dll" KeyPath="yes" />
+        </Component>                    
+        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA331E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb71d">
+          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA331E" Source="$(var.SourceDir)\Crc32C.NET.dll" KeyPath="yes" />
         </Component>
+        <Component Id="owcCC0B5763E5D746D67336096F2BA79D1F" Guid="b369ef03-816b-f2b9-8776-5a4261f85415">
+          <File Id="owfCC0B5763E5D746D67336096F2BA79D1F" Source="$(var.SourceDir)\Crc32C.NET.xml" KeyPath="yes" />
+        </Component>          
+        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA332E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb72d">
+          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA332E" Source="$(var.SourceDir)\Snappy.NET.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owcCC0B5763E5D746D67336096F2BA79D2F" Guid="b369ef03-816b-f2b9-8776-5a4261f85425">
+          <File Id="owfCC0B5763E5D746D67336096F2BA79D2F" Source="$(var.SourceDir)\Snappy.NET.xml" KeyPath="yes" />
+        </Component>          
         <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA334E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb75d">
           <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA334E" Source="$(var.SourceDir)\CommandLine.dll" KeyPath="yes" />
         </Component>

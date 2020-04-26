@@ -112,7 +112,7 @@
             // 
             // columnHeader1
             // 
-            this.columnHeader1.Text = "Address";
+            this.columnHeader1.Text = "Username";
             this.columnHeader1.Width = 180;
             // 
             // columnHeader9

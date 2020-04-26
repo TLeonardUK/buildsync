@@ -704,6 +704,8 @@ namespace BuildSync.Client
                     long TotalIn = Peer.Connection.BandwidthStats.TotalIn;
                     long TotalOut = Peer.Connection.BandwidthStats.TotalOut;
 
+                    Record.Username = Peer.Connection.Handshake.Username;
+
                     Record.LastSeen = DateTime.Now;
 
                     Record.TotalIn += Record.TotalInTracker == -1 ? 0 : TotalIn - Record.TotalInTracker;

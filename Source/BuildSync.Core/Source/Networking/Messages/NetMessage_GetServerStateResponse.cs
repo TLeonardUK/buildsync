@@ -41,6 +41,7 @@ namespace BuildSync.Core.Networking.Messages
             public long TotalUploaded;
             public long UploadRate;
             public string Version;
+            public string Username;
             public List<Guid> TagIds = new List<Guid>();
         }
 
@@ -73,6 +74,11 @@ namespace BuildSync.Core.Networking.Messages
                 if (serializer.IsLoading)
                 {
                     ClientStates.Add(new ClientState());
+                }
+
+                if (serializer.Version > 100000584)
+                {
+                    serializer.Serialize(ref ClientStates[i].Username);
                 }
 
                 serializer.Serialize(ref ClientStates[i].Address);

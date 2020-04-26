@@ -39,6 +39,11 @@ namespace BuildSync.Core.Networking.Messages
         public List<Guid> TagIds = new List<Guid>();
 
         /// <summary>
+        ///     Fully qualified name of user using the tool (eg. MY-DOMAIN\Username).
+        /// </summary>
+        public string Username = "";
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
@@ -60,6 +65,11 @@ namespace BuildSync.Core.Networking.Messages
                 Guid value = TagIds[i];
                 serializer.Serialize(ref value);
                 TagIds[i] = value;
+            }
+
+            if (serializer.Version > 100000584)
+            {
+                serializer.Serialize(ref Username);
             }
         }
     }

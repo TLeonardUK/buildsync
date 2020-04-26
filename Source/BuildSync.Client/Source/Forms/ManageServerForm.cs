@@ -338,7 +338,7 @@ namespace BuildSync.Client.Forms
                 {
                     if ((Item.Tag as NetMessage_GetServerStateResponse.ClientState).Address == State.Address)
                     {
-                        Item.SubItems[0].Text = HostnameCache.GetHostname(State.Address);
+                        Item.SubItems[0].Text = State.Username + " (" + HostnameCache.GetHostname(State.Address) + ")";
                         Item.SubItems[1].Text = Program.TagRegistry.IdsToString(State.TagIds);
                         Item.SubItems[2].Text = StringUtils.FormatAsTransferRate(State.DownloadRate);
                         Item.SubItems[3].Text = StringUtils.FormatAsTransferRate(State.UploadRate);

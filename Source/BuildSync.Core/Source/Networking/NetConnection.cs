@@ -314,6 +314,140 @@ namespace BuildSync.Core.Networking
 
     /// <summary>
     /// </summary>
+    public class Statistic_CompressionRatio : Statistic
+    {
+        public Statistic_CompressionRatio()
+        {
+            Name = @"Compression\Compression Ratio (%)";
+            MaxLabel = "100";
+            MaxValue = 100;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample((float)NetConnection.CompressionRatio.Get() * 100);
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public class Statistic_PacketsCompressed : Statistic
+    {
+        public Statistic_PacketsCompressed()
+        {
+            Name = @"Compression\Packets Compressed";
+            MaxLabel = "10";
+            MaxValue = 10;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+
+        private long LastSample = 0;
+
+        public override void Gather()
+        {
+            long Sample = NetConnection.PacketsCompressed;
+            AddSample(Sample - LastSample);
+            LastSample = Sample;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public class Statistic_PacketsDecompressed : Statistic
+    {
+        public Statistic_PacketsDecompressed()
+        {
+            Name = @"Compression\Packets Decompressed";
+            MaxLabel = "10";
+            MaxValue = 10;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+
+        private long LastSample = 0;
+
+        public override void Gather()
+        {
+            long Sample = NetConnection.PacketsDecompressed;
+            AddSample(Sample - LastSample);
+            LastSample = Sample;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public class Statistic_CompressionTime : Statistic
+    {
+        public Statistic_CompressionTime()
+        {
+            Name = @"Compression\Compression Time (ms)";
+            MaxLabel = "100";
+            MaxValue = 100.0f;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample((float)NetConnection.CompressionTime.Get());
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public class Statistic_DecompressionTime : Statistic
+    {
+        public Statistic_DecompressionTime()
+        {
+            Name = @"Compression\Decompression Time (ms)";
+            MaxLabel = "100";
+            MaxValue = 100.0f;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample((float)NetConnection.DecompressionTime.Get());
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public class Statistic_CompressionSavedBandwidth : Statistic
+    {
+        public Statistic_CompressionSavedBandwidth()
+        {
+            Name = @"Compression\Bandwidth Saved (MB)";
+            MaxLabel = "1 MB";
+            MaxValue = 1 * 1024 * 1024;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsSize = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.CompressionSavedBandwidth);
+        }
+    }
+
+    /// <summary>
+    /// </summary>
     public class NetConnection
     {
         private Socket Socket;
@@ -467,6 +601,38 @@ namespace BuildSync.Core.Networking
         /// 
         /// </summary>
         public static bool CompressDataDuringTransfer = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static RollingAverageOverTime CompressionRatio = new RollingAverageOverTime(5000);
+
+        /// <summary>
+        /// </summary>
+        public static long PacketsCompressed = 0;
+
+        /// <summary>
+        /// </summary>
+        public static long PacketsDecompressed = 0;
+
+        /// <summary>
+        /// </summary>
+        public static long CompressionSavedBandwidth = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static RollingAverage DecompressionTime = new RollingAverage(10);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static RollingAverage CompressionTime = new RollingAverage(10);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private Stopwatch DecompressionTimer = new Stopwatch();
 
         /// <summary>
         /// </summary>
@@ -1110,6 +1276,7 @@ namespace BuildSync.Core.Networking
 
                             // Send handshake.
                             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
+                            HandshakeMsg.Username = Environment.UserDomainName + "\\" + Environment.UserName;
                             HandshakeMsg.Version = AppVersion.ProtocolVersion;
                             HandshakeMsg.TagIds = LocalTagIds;
                             Send(HandshakeMsg);
@@ -1270,6 +1437,8 @@ namespace BuildSync.Core.Networking
         /// </summary>
         private void SendThreadEntry()
         {
+            Stopwatch CompressionTimer = new Stopwatch();
+
             while (IsSendingThreadRunning)
             {
                 MessageQueueEntry SendData;
@@ -1313,34 +1482,24 @@ namespace BuildSync.Core.Networking
                 {
                     // We only compress the payload, we want the header uncompressed.
                     long CompressedLength = 0;
-                    /*Console.WriteLine("> Pre Compress: {0},{1},{2},{3},{4},{5},{6},{7},{8}",
-                        SendData.Data[NetMessage.HeaderSize + 0],
-                        SendData.Data[NetMessage.HeaderSize + 1],
-                        SendData.Data[NetMessage.HeaderSize + 2],
-                        SendData.Data[NetMessage.HeaderSize + 3],
-                        SendData.Data[NetMessage.HeaderSize + 4],
-                        SendData.Data[NetMessage.HeaderSize + 5],
-                        SendData.Data[NetMessage.HeaderSize + 6],
-                        SendData.Data[NetMessage.HeaderSize + 7],
-                        SendData.Data[NetMessage.HeaderSize + 8]);
-                    */
+
+                    CompressionTimer.Restart();
+
                     if (FileUtils.CompressInPlace(SendData.Data, NetMessage.HeaderSize, SendData.BufferSize - NetMessage.HeaderSize, out CompressedLength))
                     {
                         WriteLength = NetMessage.HeaderSize + (int)CompressedLength;
-                    //    Console.WriteLine("> Compress: {0} -> {1}", SendData.BufferSize - NetMessage.HeaderSize, CompressedLength);
                         NetMessage.SetCompressedFlag(SendData.Data, (int)CompressedLength, true);
+
+                        CompressionRatio.Add((float)CompressedLength / (float)(SendData.BufferSize - NetMessage.HeaderSize));
+                        Interlocked.Add(ref CompressionSavedBandwidth, (SendData.BufferSize - NetMessage.HeaderSize) - CompressedLength);
+                        Interlocked.Increment(ref PacketsCompressed);
+
+                        CompressionTimer.Stop();
+                        CompressionTime.Add(CompressionTimer.Elapsed.TotalMilliseconds);
                     }
                 }
                 
-                /*
-                if (WriteLength > 16)
-                {
-                    NetMessage TmpMsg = new NetMessage();
-                    TmpMsg.ReadHeader(SendData.Data);
-                    Console.WriteLine("> Post Compress [index={0} length={1} compressed={2}]: {3},{4},{5}", TmpMsg.Index, WriteLength, TmpMsg.Compressed, SendData.Data[NetMessage.HeaderSize + 0], SendData.Data[NetMessage.HeaderSize + 1], SendData.Data[NetMessage.HeaderSize + 2]);
-                }
-                */
- 
+
                 bSuccess = SendBlock(SendData.Data, 0, WriteLength);
 
                 SendData.Callback?.Invoke(bSuccess);
@@ -1468,6 +1627,7 @@ namespace BuildSync.Core.Networking
         {
             // Send handshake to client.
             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
+            HandshakeMsg.Username = Environment.UserDomainName + "\\" + Environment.UserName;
             HandshakeMsg.Version = AppVersion.ProtocolVersion;
             HandshakeMsg.TagIds = LocalTagIds;
             Send(HandshakeMsg);
@@ -1900,18 +2060,6 @@ namespace BuildSync.Core.Networking
             {
                 long UncompressedLength = 0;
 
-                /*Console.WriteLine("> Pre Decompress [index={0}]:: {0},{1},{2},{3},{4},{5},{6},{7},{8}",
-                    TmpMsg.Index,
-                    Buffer[NetMessage.HeaderSize + 0],
-                    Buffer[NetMessage.HeaderSize + 1],
-                    Buffer[NetMessage.HeaderSize + 2],
-                    Buffer[NetMessage.HeaderSize + 3],
-                    Buffer[NetMessage.HeaderSize + 4],
-                    Buffer[NetMessage.HeaderSize + 5],
-                    Buffer[NetMessage.HeaderSize + 6],
-                    Buffer[NetMessage.HeaderSize + 7],
-                    Buffer[NetMessage.HeaderSize + 8]);*/
-
                 // If the result of decompression is going to be larger than our buffer, upgrade it's size to a large one.
                 long ResultSize = FileUtils.GetDecompressedLength(Buffer, NetMessage.HeaderSize, Size - NetMessage.HeaderSize);
                 if (ResultSize > Buffer.Length)
@@ -1922,9 +2070,16 @@ namespace BuildSync.Core.Networking
                     ReleaseMessageBuffer(OldBuffer, "ProcessMessage.UpgradeBufferForDecompress", "Recieve", false); 
                 }
 
+                DecompressionTimer.Restart();
+
                 FileUtils.DecompressInPlace(Buffer, NetMessage.HeaderSize, Size - NetMessage.HeaderSize, out UncompressedLength);
-                //Console.WriteLine("> Dompress: {0} -> {1}", Size - NetMessage.HeaderSize, UncompressedLength);
-                //Console.WriteLine("> Post Decompress [index={0}]: {1},{2},{3}", TmpMsg.Index, Buffer[NetMessage.HeaderSize + 0], Buffer[NetMessage.HeaderSize + 1], Buffer[NetMessage.HeaderSize + 2]);
+
+                DecompressionTimer.Stop();
+                DecompressionTime.Add(DecompressionTimer.Elapsed.TotalMilliseconds);
+
+                CompressionRatio.Add((float)(Size - NetMessage.HeaderSize) / (float)UncompressedLength);
+                Interlocked.Add(ref CompressionSavedBandwidth, UncompressedLength - (Size - NetMessage.HeaderSize));
+                Interlocked.Increment(ref PacketsDecompressed);
 
                 NetMessage.SetCompressedFlag(Buffer, (int)UncompressedLength, false);
 

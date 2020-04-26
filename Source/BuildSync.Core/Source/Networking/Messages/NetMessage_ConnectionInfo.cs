@@ -37,9 +37,9 @@ namespace BuildSync.Core.Networking.Messages
         public IPEndPoint PeerConnectionAddress = new IPEndPoint(IPAddress.Any, 0);
 
         /// <summary>
-        ///     Fully qualified name of user using the tool (eg. MY-DOMAIN\Username).
+        ///     DEPRECATED, Do not use.
         /// </summary>
-        public string Username = "";
+        public string DEPRECATED_Username = "";
 
         /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
@@ -53,7 +53,7 @@ namespace BuildSync.Core.Networking.Messages
             serializer.Serialize(ref Port);
             PeerConnectionAddress = new IPEndPoint(IPAddress.Parse(Address), Port);
 
-            serializer.Serialize(ref Username);
+            serializer.Serialize(ref DEPRECATED_Username);
         }
     }
 }

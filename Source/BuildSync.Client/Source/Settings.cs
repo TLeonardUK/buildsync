@@ -101,6 +101,11 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
+        public string Username { get; set; } = "Unknown User";
+
+        /// <summary>
+        /// 
+        /// </summary>
         public float AverageRateIn { get; set; } = 0;
 
         /// <summary>

@@ -2097,7 +2097,6 @@ namespace BuildSync.Core.Client
             }
 
             NetMessage_ConnectionInfo Msg = new NetMessage_ConnectionInfo();
-            Msg.Username = Environment.UserDomainName + "\\" + Environment.UserName;
 
             // We do this to ensure the local-ip connected to is the same one as we connect to the server on. 
             // This ensures we get the ip is routed through the correct network interfaces in the cases of using VPN's etc.

@@ -477,11 +477,11 @@ namespace BuildSync.Client.Controls
                                 if (State.DurationHistory.Count > 0)
                                 {
                                     long TotalTimeRemaining = Program.DownloadManager.GetEstimatedTimeRemaining(State);
-                                    Status = string.Format("S {0}   T {1}", StringUtils.FormatAsDuration(TimeRemaining), StringUtils.FormatAsDuration(TotalTimeRemaining));
+                                    Status = string.Format("{0} (Previous {1})", StringUtils.FormatAsDuration(TimeRemaining), StringUtils.FormatAsDuration(TotalTimeRemaining));
                                 }
                                 else
                                 {
-                                    Status = string.Format("S {0}", StringUtils.FormatAsDuration(TimeRemaining));
+                                    Status = string.Format("{0}", StringUtils.FormatAsDuration(TimeRemaining));
                                 }
                             }
 

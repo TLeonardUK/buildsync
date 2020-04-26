@@ -136,7 +136,8 @@ namespace BuildSync.Client.Forms
                 }
 
                 Item.Group = ConnectedAddresses.Contains(Peer.Address) ? MainListView.Groups[0] : MainListView.Groups[1];
-                Item.SubItems[0].Text = HostnameCache.GetHostname(Peer.Address);
+                //Item.SubItems[0].Text = HostnameCache.GetHostname(Peer.Address);
+                Item.SubItems[0].Text = Peer.Username + " (" + HostnameCache.GetHostname(Peer.Address) + ")";
                 Item.SubItems[1].Text = StringUtils.FormatAsTransferRate((long) Peer.AverageRateIn);
                 Item.SubItems[2].Text = StringUtils.FormatAsTransferRate((long) Peer.PeakRateIn);
                 Item.SubItems[3].Text = StringUtils.FormatAsTransferRate((long) Peer.AverageRateOut);
