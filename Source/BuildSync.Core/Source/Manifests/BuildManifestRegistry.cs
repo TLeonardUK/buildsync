@@ -116,6 +116,20 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
+        /// <param name="Id"></param>
+        /// <returns></returns>
+        public byte[] GetManifestBytesByid(Guid Id)
+        {
+            string FilePath = Path.Combine(RootPath, Id + ".manifest");
+            if (File.Exists(FilePath))
+            {
+                return File.ReadAllBytes(FilePath);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// </summary>
         /// <param name="Path"></param>
         /// <returns></returns>
         public BuildManifest GetManifestByPath(string Path)
@@ -198,10 +212,8 @@ namespace BuildSync.Core.Manifests
             {
                 Tasks.Add(Task.Run(() =>
                 {
-#if false
                     try
                     {
-#endif
                         Logger.Log(LogLevel.Verbose, LogCategory.Manifest, "Loading manifest: {0}", FilePath);
 
                         BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath, CacheDownloadInfo);
@@ -226,14 +238,12 @@ namespace BuildSync.Core.Manifests
                                 Results.Add(Manifest);
                             }
                         }
-#if false
                     }
                     catch (Exception ex)
                     {
                         Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read manifest '{0}', due to error {1}", FilePath, ex.Message);
                     //    File.Delete(FilePath);
                     }
-#endif
                 }));
             }
 

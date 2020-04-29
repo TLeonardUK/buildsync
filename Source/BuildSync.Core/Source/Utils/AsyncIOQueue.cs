@@ -538,18 +538,26 @@ namespace BuildSync.Core.Utils
                             try
                             {
                                 int BytesRead = Stm.Stream.EndRead(Result);
-                                GlobalBandwidthStats.Out(BytesRead);
-
-                                if (BytesRead < Work.Size)
+                                if (BytesRead == 0)
                                 {
-                                    ReadWithOffset(Stm, Work, Offset + BytesRead);
-                                    return;
+                                    Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to read file {0} at offset {1} size {2}. Encountered end of file.", Stm.Path, Work.Offset + Offset, Work.Size - Offset);
+                                    Work.Callback?.Invoke(false);
                                 }
+                                else
+                                {
+                                    GlobalBandwidthStats.Out(BytesRead);
 
-                                ulong ElapsedTime = TimeUtils.Ticks - Work.QueueTime;
-                                OutLatency.Add(ElapsedTime);
+                                    if (BytesRead < Work.Size)
+                                    {
+                                        ReadWithOffset(Stm, Work, Offset + BytesRead);
+                                        return;
+                                    }
 
-                                Work.Callback?.Invoke(true);
+                                    ulong ElapsedTime = TimeUtils.Ticks - Work.QueueTime;
+                                    OutLatency.Add(ElapsedTime);
+
+                                    Work.Callback?.Invoke(true);
+                                }
                             }
                             catch (Exception Ex)
                             {

@@ -1260,6 +1260,7 @@ namespace BuildSync.Core.Downloads
                                             return !State.Paused;
                                         }
                                     );
+                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validation finished, {0} blocks failed.", ValidateFailedBlocks.Count);
                                 }
                                 catch (Exception Ex)
                                 {

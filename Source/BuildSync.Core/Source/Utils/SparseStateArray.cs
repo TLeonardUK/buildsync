@@ -384,6 +384,8 @@ namespace BuildSync.Core.Utils
         /// <param name="State"></param>
         public void SetAll(bool InState)
         {
+            Resize(Size);
+
             Ranges.Clear();
             Ranges.Add(new Range {Start = 0, End = Size - 1, State = InState});
         }

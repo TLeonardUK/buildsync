@@ -703,12 +703,12 @@ namespace BuildSync.Core.Server
 
                 try
                 {
-                    BuildManifest Manifest = ManifestRegistry.GetManifestById(Msg.ManifestId);
+                    byte[] Manifest = ManifestRegistry.GetManifestBytesByid(Msg.ManifestId);
                     if (Manifest != null)
                     {
                         NetMessage_GetManifestResponse ResponseMsg = new NetMessage_GetManifestResponse();
                         ResponseMsg.ManifestId = Msg.ManifestId;
-                        ResponseMsg.Data = Manifest.ToByteArray();
+                        ResponseMsg.Data = Manifest;
                         Connection.Send(ResponseMsg);
                     }
                 }

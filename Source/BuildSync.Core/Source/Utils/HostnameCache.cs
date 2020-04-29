@@ -53,7 +53,7 @@ namespace BuildSync.Core.Utils
 
             try
             {
-                Logger.Log(LogLevel.Info, LogCategory.Transport, "Resolving hostname '{0}' ...", Addr);
+                Logger.Log(LogLevel.Verbose, LogCategory.Transport, "Resolving hostname '{0}' ...", Addr);
                 Dns.BeginGetHostEntry(
                     Addr, DnsResult =>
                     {
@@ -62,20 +62,20 @@ namespace BuildSync.Core.Utils
                             IPHostEntry HostEntry = Dns.EndGetHostEntry(DnsResult);
                             lock (Resolved)
                             {
-                                Logger.Log(LogLevel.Error, LogCategory.Transport, "Resolved '{0}' to '{1}'", Addr, HostEntry.HostName);
+                                Logger.Log(LogLevel.Verbose, LogCategory.Transport, "Resolved '{0}' to '{1}'", Addr, HostEntry.HostName);
                                 Resolved[Addr] = HostEntry.HostName;
                             }
                         }
                         catch (Exception ex)
                         {
-                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to resolved hostname '{0}' with error: {1}", Addr, ex.Message);
+                            Logger.Log(LogLevel.Verbose, LogCategory.Transport, "Failed to resolved hostname '{0}' with error: {1}", Addr, ex.Message);
                         }
                     }, null
                 );
             }
             catch (Exception ex)
             {
-                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to resolved hostname '{0}' with error: {1}", Addr, ex.Message);
+                Logger.Log(LogLevel.Verbose, LogCategory.Transport, "Failed to resolved hostname '{0}' with error: {1}", Addr, ex.Message);
             }
 
             return Addr;

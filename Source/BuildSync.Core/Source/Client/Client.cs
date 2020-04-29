@@ -1664,7 +1664,7 @@ namespace BuildSync.Core.Client
             {
                 NetMessage_RelevantPeerListUpdate Msg = BaseMessage as NetMessage_RelevantPeerListUpdate;
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved relevant peer list update.");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved relevant peer list update.");
 
                 RelevantPeerAddresses = Msg.PeerAddresses;
             }
@@ -1709,7 +1709,7 @@ namespace BuildSync.Core.Client
                 }
                 catch (Exception ex)
                 {
-                    Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to process manifest response due to error: {0}", ex.Message);
+                    Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to process manifest response due to error: {0}", ex.ToString());
                 }
             }
 

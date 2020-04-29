@@ -342,7 +342,11 @@ namespace BuildSync.Core.Manifests
                                 }
 
                                 long BufferLength = 0;
-                                Manifest.GetBlockData(CalculateBlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
+                                if (!Manifest.GetBlockData(CalculateBlockIndex, RootPath, IOQueue, Buffer, out BufferLength))
+                                {
+                                    // We should never end up in this situation when publishing ...
+                                    Debug.Assert(false);
+                                }
 
                                 Manifest.BlockChecksums[CalculateBlockIndex] = Crc32.Compute(Buffer, (int) BufferLength);
                                 Manifest.SparseBlockChecksums[CalculateBlockIndex] = Crc32.ComputeSparse(Buffer, (int)BufferLength);
@@ -395,13 +399,14 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         /// <param name="Index"></param>
         /// <returns></returns>
-        public void GetBlockData(int Index, string RootPath, AsyncIOQueue IOQueue, byte[] Data, out long DataLength)
+        public bool GetBlockData(int Index, string RootPath, AsyncIOQueue IOQueue, byte[] Data, out long DataLength)
         {
             DataLength = 0;
 
             if (Index < 0 || Index >= BlockCount)
             {
                 throw new ArgumentOutOfRangeException("Index", "Block index out of range.");
+                return false;
             }
 
             BuildManifestBlockInfo Info = BlockInfo[Index];
@@ -411,26 +416,33 @@ namespace BuildSync.Core.Manifests
             ManualResetEvent CompleteEvent = new ManualResetEvent(false);
             int QueuedReads = Info.SubBlocks.Count;
 
+            bool Success = true;
+
             foreach (BuildManifestSubBlockInfo SubBlock in Info.SubBlocks)
             {
                 string PathName = Path.Combine(RootPath, SubBlock.File.Path);
                 IOQueue.Read(
                     PathName, SubBlock.FileOffset, SubBlock.FileSize, Data, SubBlock.OffsetInBlock, bSuccess =>
                     {
-                        if (!bSuccess)
-                        {
-                            throw new IOException("Failed to read data for block from file: " + PathName + ".");
-                        }
-
-                        if (Interlocked.Decrement(ref QueuedReads) == 0)
+                        int Result = Interlocked.Decrement(ref QueuedReads);
+                        if (Result == 0)
                         {
                             CompleteEvent.Set();
+                        }
+
+                        if (!bSuccess)
+                        {
+                            Success = false;
+
+                            Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to read data for block (offset={0} size={1}) from file {2}", SubBlock.FileOffset, SubBlock.FileSize, SubBlock.File);
                         }
                     }
                 );
             }
 
             CompleteEvent.WaitOne();
+
+            return Success;
         }
 
         /// <summary>
@@ -616,6 +628,31 @@ namespace BuildSync.Core.Manifests
             long BytesValidated = 0;
             bool Aborted = false;
 
+            // Check the size of each file.
+            for (int i = 0; i < Files.Count; i++)
+            {
+                BuildManifestFileInfo FileInfo = Files[i];
+                string FilePath = Path.Combine(RootPath, FileInfo.Path);
+                string DirPath = Path.GetDirectoryName(FilePath);
+
+                if (!Directory.Exists(DirPath))
+                {
+                    Directory.CreateDirectory(DirPath);
+                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Expected directory {0} does not exist, creating.", DirPath);
+                }
+
+                FileInfo Info = new FileInfo(FilePath);
+                if (!Info.Exists || Info.Length != FileInfo.Size)
+                {
+                    using (FileStream Stream = new FileStream(FilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
+                    {
+                        Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File {0} is not of expected length {1} (is {2}) settting length.", FilePath, FileInfo.Size, Info.Length);
+                        Stream.SetLength(FileInfo.Size);
+                    }
+                }
+            }
+
+            // Check each individual block of data for validity.
             for (int i = 0; i < TaskCount; i++)
             {
                 FileTasks[i] = Task.Run(
@@ -634,9 +671,9 @@ namespace BuildSync.Core.Manifests
                             BuildManifestBlockInfo BInfo = BlockInfo[BlockIndex];
 
                             long BufferLength = 0;
-                            GetBlockData(BlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
+                            bool Success = GetBlockData(BlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
 
-                            if (BlockChecksums[BlockIndex] != Crc32.Compute(Buffer, (int) BufferLength))
+                            if (!Success || BlockChecksums[BlockIndex] != Crc32.Compute(Buffer, (int) BufferLength))
                             {
                                 Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block {0} failed checksum, block contains following sub-blocks:", BlockIndex);
 

@@ -1792,26 +1792,6 @@ namespace BuildSync.Core.Networking
                                     return;
                                 }
 
-                                // DEBUG DEBUG DEBUG
-                                /*NetMessage TmpMsg = new NetMessage();
-                                TmpMsg.ReadHeader(MessageBuffer);
-
-                                if (TmpMsg.PayloadSize > 16)
-                                {
-                                    Console.WriteLine("> Recieve [index={0}]: {0},{1},{2},{3},{4},{5},{6},{7},{8}",
-                                        MessageHeaderTempStorage.Index,
-                                        MessageBuffer[NetMessage.HeaderSize + 0],
-                                        MessageBuffer[NetMessage.HeaderSize + 1],
-                                        MessageBuffer[NetMessage.HeaderSize + 2],
-                                        MessageBuffer[NetMessage.HeaderSize + 3],
-                                        MessageBuffer[NetMessage.HeaderSize + 4],
-                                        MessageBuffer[NetMessage.HeaderSize + 5],
-                                        MessageBuffer[NetMessage.HeaderSize + 6],
-                                        MessageBuffer[NetMessage.HeaderSize + 7],
-                                        MessageBuffer[NetMessage.HeaderSize + 8]);
-                                }*/
-                                // DEBUG DEBUG DEBUG
-
                                 ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size });
 
                                 BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader", "Recieve", false, true));
@@ -1819,7 +1799,7 @@ namespace BuildSync.Core.Networking
                         }
                         catch (Exception ex)
                         {
-                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
+                            Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.ToString());
                             ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.Exception", "Recieve", false);
                             QueueDisconnect();
                         }
@@ -1835,7 +1815,7 @@ namespace BuildSync.Core.Networking
                 ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.OuterException", "Recieve", false);
 
                 RecordEndAsyncCall(AsyncCallType.Recieve);
-                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.Message);
+                Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve payload from {0}, with error: {1}", Address.ToString(), ex.ToString());
                 QueueDisconnect();
             }
         }
@@ -2058,11 +2038,11 @@ namespace BuildSync.Core.Networking
             // Decompress if required.
             if (TmpMsg.Compressed)
             {
-                long UncompressedLength = 0;
+                int OriginalSize = Size;
 
                 // If the result of decompression is going to be larger than our buffer, upgrade it's size to a large one.
-                long ResultSize = FileUtils.GetDecompressedLength(Buffer, NetMessage.HeaderSize, Size - NetMessage.HeaderSize);
-                if (ResultSize > Buffer.Length)
+                long RequiredSize = FileUtils.GetDecompressedLength(Buffer, NetMessage.HeaderSize, Size - NetMessage.HeaderSize) + NetMessage.HeaderSize;
+                if (RequiredSize > Buffer.Length)
                 {
                     byte[] OldBuffer = Buffer;
                     Buffer = AllocMessageBuffer("ProcessMessage.UpgradeBufferForDecompress", "Recieve", false, false);
@@ -2070,20 +2050,21 @@ namespace BuildSync.Core.Networking
                     ReleaseMessageBuffer(OldBuffer, "ProcessMessage.UpgradeBufferForDecompress", "Recieve", false); 
                 }
 
+                Size = (int)RequiredSize;
                 DecompressionTimer.Restart();
 
-                FileUtils.DecompressInPlace(Buffer, NetMessage.HeaderSize, Size - NetMessage.HeaderSize, out UncompressedLength);
+                long UncompressedLength = 0;
+                FileUtils.DecompressInPlace(Buffer, NetMessage.HeaderSize, OriginalSize - NetMessage.HeaderSize, out UncompressedLength);
+                Debug.Assert((UncompressedLength + NetMessage.HeaderSize) == Size);
 
                 DecompressionTimer.Stop();
                 DecompressionTime.Add(DecompressionTimer.Elapsed.TotalMilliseconds);
 
-                CompressionRatio.Add((float)(Size - NetMessage.HeaderSize) / (float)UncompressedLength);
-                Interlocked.Add(ref CompressionSavedBandwidth, UncompressedLength - (Size - NetMessage.HeaderSize));
+                CompressionRatio.Add((float)(OriginalSize / (float)RequiredSize));
+                Interlocked.Add(ref CompressionSavedBandwidth, RequiredSize - OriginalSize);
                 Interlocked.Increment(ref PacketsDecompressed);
 
                 NetMessage.SetCompressedFlag(Buffer, (int)UncompressedLength, false);
-
-                Size = (int)UncompressedLength + NetMessage.HeaderSize;
             }
 
             // Parse message.
