@@ -34,10 +34,22 @@ namespace BuildSync.Client.Forms
     /// </summary>
     public partial class ManageBuildsForm : DockContent
     {
+        private class ItemContext
+        {
+            public Tag Tag;
+            public ToolStripMenuItem Parent;
+            public string Path;
+        }
+
         /// <summary>
         /// 
         /// </summary>
         private List<Tag> Tags = new List<Tag>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private List<ToolStripMenuItem> MenuItems = new List<ToolStripMenuItem>();
 
         /// <summary>
         /// </summary>
@@ -73,63 +85,107 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
+        private ToolStripMenuItem CreateMenuItem(string Name, Tag tag, List<ToolStripMenuItem> TouchedItems)
+        {
+            ToolStripMenuItem Parent = null;
+
+            string[] Split = Name.Split('/');
+            if (Split.Length > 1)
+            {
+                string ParentName = "";
+                for (int i = 0; i < Split.Length - 1; i++)
+                {
+                    if (ParentName.Length > 0)
+                    {
+                        ParentName += "/";
+                    }
+                    ParentName += Split[i];
+                }
+
+                Parent = CreateMenuItem(ParentName, null, TouchedItems);
+            }
+
+            foreach (ToolStripMenuItem ExistingItem in MenuItems)
+            {
+                if ((ExistingItem.Tag as ItemContext).Path == Name)
+                {
+                    if (tag != null)
+                    {
+                        (ExistingItem.Tag as ItemContext).Tag = tag;
+                    }
+                    TouchedItems.Add(ExistingItem);
+                    return ExistingItem;
+                }
+            }
+
+            ItemContext Context = new ItemContext();
+            Context.Parent = Parent;
+            Context.Path = Name;
+            Context.Tag = tag;
+
+            ToolStripMenuItem Item = new ToolStripMenuItem();
+            Item.Text = Split[Split.Length - 1];
+            Item.Tag = Context;
+            Item.ImageScaling = ToolStripItemImageScaling.None;
+            Item.Click += TagItemClicked;
+            addTagToolStripMenuItem.DropDownItems.Add(Item);
+            
+            if (Parent == null)
+            {
+                addTagToolStripMenuItem.DropDownItems.Add(Item);
+            }
+            else
+            {
+                Parent.DropDownItems.Add(Item);
+            }
+
+            MenuItems.Add(Item);
+            TouchedItems.Add(Item);
+
+            return Item;
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Users"></param>
         private void TagsRecieved(List<Tag> InTags)
         {
             Tags = InTags;
 
-            // Add new tags.
-            foreach (Tag Tag in InTags)
+            List<ToolStripMenuItem> ValidMenuItems = new List<ToolStripMenuItem>();
+
+            // Add each tag.
+            foreach (Tag tag in InTags)
             {
-                bool Found = false;
-                foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
-                {
-                    if ((Item.Tag as Tag).Id == Tag.Id)
-                    {
-                        Found = true;
-                        break;
-                    }
-                }
-
-                if (!Found)
-                {
-                    ToolStripMenuItem TagItem = new ToolStripMenuItem();
-                    TagItem.Text = Tag.Name;
-                    TagItem.Tag = Tag;
-                    TagItem.ImageScaling = ToolStripItemImageScaling.None;
-                    TagItem.Click += TagItemClicked;
-                    addTagToolStripMenuItem.DropDownItems.Add(TagItem);
-
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "Added tag menu: {0}", Tag.Name);
-                }
+                tag.Name = tag.Name.Replace("\\", "/");
+                CreateMenuItem(tag.Name.Replace("\\", "/"), tag, ValidMenuItems);
             }
 
-            // Remove old tags.
-            List<ToolStripMenuItem> RemovedItems = new List<ToolStripMenuItem>();
-            foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
+            // Remove tags that no longer exist.
+            for (int i = 0; i < MenuItems.Count; i++)
             {
-                bool Found = false;
-
-                foreach (Tag Tag in InTags)
+                ToolStripMenuItem Menu = MenuItems[i];
+                if (!ValidMenuItems.Contains(Menu))
                 {
-                    if ((Item.Tag as Tag).Id == Tag.Id)
+                    ItemContext Context = Menu.Tag as ItemContext;
+
+                    if (Context.Parent == null)
                     {
-                        Found = true;
-                        break;
+                        addTagToolStripMenuItem.DropDownItems.Remove(Menu);
                     }
-                }
+                    else
+                    {
+                        Context.Parent.DropDownItems.Remove(Menu);
+                    }
 
-                if (!Found)
-                {
-                    RemovedItems.Add(Item);
+                    Logger.Log(LogLevel.Info, LogCategory.Main, "Removing tag menu: {0}", Menu.Text);
+                    MenuItems.RemoveAt(i);
+                    i--;
                 }
-            }
-
-            foreach (ToolStripMenuItem Item in RemovedItems)
-            {
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Removing tag menu: {0}", Item.Text);
-                addTagToolStripMenuItem.DropDownItems.Remove(Item);
             }
 
             ValidateState();
@@ -148,21 +204,27 @@ namespace BuildSync.Client.Forms
                 return;
             }
 
+            ItemContext Context = TagItem.Tag as ItemContext;
+            if (Context == null || Context.Tag == null)
+            {
+                return;
+            }
+
             Guid ManifestId = downloadFileSystemTree.SelectedManifestId;
             if (ManifestId == Guid.Empty)
             {
                 return;
             }
 
-            Tag Tag = TagItem.Tag as Tag;
+            Guid TagId = Context.Tag.Id;
 
             if (!TagItem.Checked)
             {
-                Program.NetClient.AddTagToManifest(ManifestId, Tag.Id);
+                Program.NetClient.AddTagToManifest(ManifestId, TagId);
             }
             else
             {
-                Program.NetClient.RemoveTagFromManifest(ManifestId, Tag.Id);
+                Program.NetClient.RemoveTagFromManifest(ManifestId, TagId);
             }
         }
 
@@ -237,14 +299,18 @@ namespace BuildSync.Client.Forms
             List<Tag> Tags = downloadFileSystemTree.SelectedManifestTags;
             if (Tags != null)
             {
-                foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
+                foreach (ToolStripMenuItem Item in MenuItems)
                 {
-                    Tag MenuTag = (Item.Tag as Tag);
+                    ItemContext Context = Item.Tag as ItemContext;
+                    if (Context == null || Context.Tag == null)
+                    {
+                        continue;
+                    }
 
                     bool Found = false;
                     foreach (Tag BuildTag in Tags)
                     {
-                        if (MenuTag.Id == BuildTag.Id)
+                        if (Context.Tag.Id == BuildTag.Id)
                         {
                             Found = true;
                             break;
