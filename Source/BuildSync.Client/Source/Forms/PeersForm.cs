@@ -42,6 +42,7 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private readonly IComparer[] ColumnSorterComparers =
         {
+            new CaseInsensitiveComparer(), // Username
             new CaseInsensitiveComparer(), // Hostname
             new TransferRateStringComparer(), // Down Rate
             new TransferRateStringComparer(), // Peak Down Rate
@@ -126,7 +127,7 @@ namespace BuildSync.Client.Forms
 
                 if (Item == null)
                 {
-                    Item = new ListViewItem(new string[12]);
+                    Item = new ListViewItem(new string[13]);
                     Item.Tag = Peer;
                     Item.ImageIndex = 0;
                     Item.StateImageIndex = 0;
@@ -137,18 +138,19 @@ namespace BuildSync.Client.Forms
 
                 Item.Group = ConnectedAddresses.Contains(Peer.Address) ? MainListView.Groups[0] : MainListView.Groups[1];
                 //Item.SubItems[0].Text = HostnameCache.GetHostname(Peer.Address);
-                Item.SubItems[0].Text = Peer.Username + " (" + HostnameCache.GetHostname(Peer.Address) + ")";
-                Item.SubItems[1].Text = StringUtils.FormatAsTransferRate((long) Peer.AverageRateIn);
-                Item.SubItems[2].Text = StringUtils.FormatAsTransferRate((long) Peer.PeakRateIn);
-                Item.SubItems[3].Text = StringUtils.FormatAsTransferRate((long) Peer.AverageRateOut);
-                Item.SubItems[4].Text = StringUtils.FormatAsTransferRate((long) Peer.PeakRateOut);
-                Item.SubItems[5].Text = StringUtils.FormatAsSize(Peer.TotalIn);
-                Item.SubItems[6].Text = StringUtils.FormatAsSize(Peer.TotalOut);
-                Item.SubItems[7].Text = Peer.LastSeen.ToString("dd/MM/yyyy HH:mm");
-                Item.SubItems[8].Text = StringUtils.FormatAsSize((long) Peer.TargetInFlightData);
-                Item.SubItems[9].Text = StringUtils.FormatAsSize((long) Peer.CurrentInFlightData);
-                Item.SubItems[10].Text = string.Format("{0} ms", Peer.Ping);
-                Item.SubItems[11].Text = string.Format("{0} ms", Peer.BestPing);
+                Item.SubItems[0].Text = Peer.Username;
+                Item.SubItems[1].Text = HostnameCache.GetHostname(Peer.Address);
+                Item.SubItems[2].Text = StringUtils.FormatAsTransferRate((long) Peer.AverageRateIn);
+                Item.SubItems[3].Text = StringUtils.FormatAsTransferRate((long) Peer.PeakRateIn);
+                Item.SubItems[4].Text = StringUtils.FormatAsTransferRate((long) Peer.AverageRateOut);
+                Item.SubItems[5].Text = StringUtils.FormatAsTransferRate((long) Peer.PeakRateOut);
+                Item.SubItems[6].Text = StringUtils.FormatAsSize(Peer.TotalIn);
+                Item.SubItems[7].Text = StringUtils.FormatAsSize(Peer.TotalOut);
+                Item.SubItems[8].Text = Peer.LastSeen.ToString("dd/MM/yyyy HH:mm");
+                Item.SubItems[9].Text = StringUtils.FormatAsSize((long) Peer.TargetInFlightData);
+                Item.SubItems[10].Text = StringUtils.FormatAsSize((long) Peer.CurrentInFlightData);
+                Item.SubItems[11].Text = string.Format("{0} ms", Peer.Ping);
+                Item.SubItems[12].Text = string.Format("{0} ms", Peer.BestPing);
             }
         }
 

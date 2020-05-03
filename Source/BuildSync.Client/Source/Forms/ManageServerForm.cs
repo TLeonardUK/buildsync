@@ -54,6 +54,7 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private readonly IComparer[] ColumnSorterComparers =
         {
+            new CaseInsensitiveComparer(), // Username
             new CaseInsensitiveComparer(), // Hostname
             new CaseInsensitiveComparer(), // Tags
             new TransferRateStringComparer(), // Download Speed
@@ -111,7 +112,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void MaxBandwidthBoxChanged(object sender, EventArgs e)
         {
-            Program.NetClient.SetServerMaxBandwidth((long) MaxBandwidthBox.Value * 1024L);
+            Program.NetClient.SetServerMaxBandwidth((long) MaxBandwidthBox.Value);
         }
 
         /// <summary>
@@ -303,7 +304,7 @@ namespace BuildSync.Client.Forms
         /// <param name="Users"></param>
         private void ServerStateRecieved(NetMessage_GetServerStateResponse Msg)
         {
-            MaxBandwidthBox.Value = Msg.BandwidthLimit / 1024;
+            MaxBandwidthBox.Value = Msg.BandwidthLimit;
 
             // Add new items.
             foreach (NetMessage_GetServerStateResponse.ClientState State in Msg.ClientStates)
@@ -320,7 +321,7 @@ namespace BuildSync.Client.Forms
 
                 if (!Exists)
                 {
-                    ListViewItem Item = new ListViewItem(new string[9]);
+                    ListViewItem Item = new ListViewItem(new string[10]);
                     Item.Tag = State;
                     Item.ImageIndex = 0;
 
@@ -338,15 +339,16 @@ namespace BuildSync.Client.Forms
                 {
                     if ((Item.Tag as NetMessage_GetServerStateResponse.ClientState).Address == State.Address)
                     {
-                        Item.SubItems[0].Text = State.Username + " (" + HostnameCache.GetHostname(State.Address) + ")";
-                        Item.SubItems[1].Text = Program.TagRegistry.IdsToString(State.TagIds);
-                        Item.SubItems[2].Text = StringUtils.FormatAsTransferRate(State.DownloadRate);
-                        Item.SubItems[3].Text = StringUtils.FormatAsTransferRate(State.UploadRate);
-                        Item.SubItems[4].Text = StringUtils.FormatAsSize(State.TotalDownloaded);
-                        Item.SubItems[5].Text = StringUtils.FormatAsSize(State.TotalUploaded);
-                        Item.SubItems[6].Text = State.ConnectedPeerCount.ToString();
-                        Item.SubItems[7].Text = StringUtils.FormatAsSize(State.DiskUsage);
-                        Item.SubItems[8].Text = State.Version;
+                        Item.SubItems[0].Text = State.Username;
+                        Item.SubItems[1].Text = HostnameCache.GetHostname(State.Address);
+                        Item.SubItems[2].Text = Program.TagRegistry.IdsToString(State.TagIds);
+                        Item.SubItems[3].Text = StringUtils.FormatAsTransferRate(State.DownloadRate);
+                        Item.SubItems[4].Text = StringUtils.FormatAsTransferRate(State.UploadRate);
+                        Item.SubItems[5].Text = StringUtils.FormatAsSize(State.TotalDownloaded);
+                        Item.SubItems[6].Text = StringUtils.FormatAsSize(State.TotalUploaded);
+                        Item.SubItems[7].Text = State.ConnectedPeerCount.ToString();
+                        Item.SubItems[8].Text = StringUtils.FormatAsSize(State.DiskUsage);
+                        Item.SubItems[9].Text = State.Version;
                         Item.Tag = State;
 
                         Exists = true;

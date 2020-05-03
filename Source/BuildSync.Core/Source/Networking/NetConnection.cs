@@ -450,6 +450,8 @@ namespace BuildSync.Core.Networking
     /// </summary>
     public class NetConnection
     {
+        private const int SIO_LOOPBACK_FAST_PATH = (-1744830448);
+
         private Socket Socket;
         private readonly List<NetConnection> Clients = new List<NetConnection>();
 
@@ -605,7 +607,7 @@ namespace BuildSync.Core.Networking
         /// <summary>
         /// 
         /// </summary>
-        public static RollingAverageOverTime CompressionRatio = new RollingAverageOverTime(5000);
+        public static RollingAverageOverTime CompressionRatio = new RollingAverageOverTime(5 * 60 * 1000);
 
         /// <summary>
         /// </summary>
@@ -1137,6 +1139,16 @@ namespace BuildSync.Core.Networking
             Socket.ReceiveTimeout = 0;// 30 * 1000;
             Socket.NoDelay = true;
 
+            /*try
+            {
+                Byte[] OptionInValue = BitConverter.GetBytes(1);
+                Socket.IOControl(SIO_LOOPBACK_FAST_PATH, OptionInValue, null);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Transport, "Unable to enable loopback fast path (old OS?).");
+            }*/
+
             if (ReuseAddresses)
             {
                 Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, false);
@@ -1163,6 +1175,16 @@ namespace BuildSync.Core.Networking
                         ClientSocket.SendTimeout = 0;// 30 * 1000;
                         ClientSocket.ReceiveBufferSize = 128 * 1024;
                         ClientSocket.ReceiveTimeout = 0;// 30 * 1000;
+
+                        /*try
+                        {
+                            Byte[] OptionInValue = BitConverter.GetBytes(1);
+                            ClientSocket.IOControl(SIO_LOOPBACK_FAST_PATH, OptionInValue, null);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Log(LogLevel.Info, LogCategory.Transport, "Unable to enable loopback fast path (old OS?).");
+                        }*/
 
                         ClientSocket.NoDelay = true;
 
@@ -1251,6 +1273,21 @@ namespace BuildSync.Core.Networking
             try
             {
                 Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Socket.SendBufferSize = 128 * 1024;
+                Socket.SendTimeout = 0;// 30 * 1000;
+                Socket.ReceiveBufferSize = 128 * 1024;
+                Socket.ReceiveTimeout = 0;// 30 * 1000;
+                Socket.NoDelay = true;
+
+                /*try
+                {
+                    Byte[] OptionInValue = BitConverter.GetBytes(1);
+                    Socket.IOControl(SIO_LOOPBACK_FAST_PATH, OptionInValue, null);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Transport, "Unable to enable loopback fast path (old OS?).");
+                }*/
 
                 Logger.Log(LogLevel.Info, LogCategory.Transport, "Connecting to {0}", Address.ToString());
 

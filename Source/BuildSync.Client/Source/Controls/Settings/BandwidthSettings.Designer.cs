@@ -28,9 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.MaxUploadBandwidthBox = new System.Windows.Forms.NumericUpDown();
             this.label2 = new System.Windows.Forms.Label();
-            this.MaxDownloadBandwidthBox = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
             this.MaxDownloadBandwidthIcon = new System.Windows.Forms.PictureBox();
             this.MaxUploadBandwidthIcon = new System.Windows.Forms.PictureBox();
@@ -44,8 +42,8 @@
             this.BandwidthTimespanEndHourBox = new System.Windows.Forms.NumericUpDown();
             this.label6 = new System.Windows.Forms.Label();
             this.compressDataCheckBox = new System.Windows.Forms.CheckBox();
-            ((System.ComponentModel.ISupportInitialize)(this.MaxUploadBandwidthBox)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.MaxDownloadBandwidthBox)).BeginInit();
+            this.MaxUploadBandwidthBox = new BuildSync.Core.Controls.SizeTextBox();
+            this.MaxDownloadBandwidthBox = new BuildSync.Core.Controls.SizeTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDownloadBandwidthIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.MaxUploadBandwidthIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.BandwidthTimespanStartHourBox)).BeginInit();
@@ -55,43 +53,15 @@
             ((System.ComponentModel.ISupportInitialize)(this.BandwidthTimespanEndHourBox)).BeginInit();
             this.SuspendLayout();
             // 
-            // MaxUploadBandwidthBox
-            // 
-            this.MaxUploadBandwidthBox.Location = new System.Drawing.Point(54, 42);
-            this.MaxUploadBandwidthBox.Margin = new System.Windows.Forms.Padding(2);
-            this.MaxUploadBandwidthBox.Maximum = new decimal(new int[] {
-            1073741824,
-            0,
-            0,
-            0});
-            this.MaxUploadBandwidthBox.Name = "MaxUploadBandwidthBox";
-            this.MaxUploadBandwidthBox.Size = new System.Drawing.Size(337, 20);
-            this.MaxUploadBandwidthBox.TabIndex = 20;
-            this.MaxUploadBandwidthBox.ValueChanged += new System.EventHandler(this.StateChanged);
-            // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(13, 15);
             this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(237, 13);
+            this.label2.Size = new System.Drawing.Size(206, 13);
             this.label2.TabIndex = 18;
-            this.label2.Text = "Maximum upload bandwidith (kb/s), 0 is unlimited";
-            // 
-            // MaxDownloadBandwidthBox
-            // 
-            this.MaxDownloadBandwidthBox.Location = new System.Drawing.Point(54, 104);
-            this.MaxDownloadBandwidthBox.Margin = new System.Windows.Forms.Padding(2);
-            this.MaxDownloadBandwidthBox.Maximum = new decimal(new int[] {
-            1073741824,
-            0,
-            0,
-            0});
-            this.MaxDownloadBandwidthBox.Name = "MaxDownloadBandwidthBox";
-            this.MaxDownloadBandwidthBox.Size = new System.Drawing.Size(337, 20);
-            this.MaxDownloadBandwidthBox.TabIndex = 23;
-            this.MaxDownloadBandwidthBox.ValueChanged += new System.EventHandler(this.StateChanged);
+            this.label2.Text = "Maximum upload bandwidith, 0 is unlimited";
             // 
             // label1
             // 
@@ -99,9 +69,9 @@
             this.label1.Location = new System.Drawing.Point(13, 77);
             this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(254, 13);
+            this.label1.Size = new System.Drawing.Size(220, 13);
             this.label1.TabIndex = 21;
-            this.label1.Text = "Maximum download bandwidith  (kb/s), 0 is unlimited";
+            this.label1.Text = "Maximum download bandwidith, 0 is unlimited";
             // 
             // MaxDownloadBandwidthIcon
             // 
@@ -245,9 +215,31 @@
             this.compressDataCheckBox.UseVisualStyleBackColor = true;
             this.compressDataCheckBox.CheckedChanged += new System.EventHandler(this.StateChanged);
             // 
+            // MaxUploadBandwidthBox
+            // 
+            this.MaxUploadBandwidthBox.DisplayAsTransferRate = true;
+            this.MaxUploadBandwidthBox.Location = new System.Drawing.Point(51, 38);
+            this.MaxUploadBandwidthBox.Name = "MaxUploadBandwidthBox";
+            this.MaxUploadBandwidthBox.Size = new System.Drawing.Size(340, 27);
+            this.MaxUploadBandwidthBox.TabIndex = 52;
+            this.MaxUploadBandwidthBox.Value = ((long)(0));
+            this.MaxUploadBandwidthBox.OnValueChanged += new System.EventHandler(this.StateChanged);
+            // 
+            // MaxDownloadBandwidthBox
+            // 
+            this.MaxDownloadBandwidthBox.DisplayAsTransferRate = true;
+            this.MaxDownloadBandwidthBox.Location = new System.Drawing.Point(51, 100);
+            this.MaxDownloadBandwidthBox.Name = "MaxDownloadBandwidthBox";
+            this.MaxDownloadBandwidthBox.Size = new System.Drawing.Size(340, 27);
+            this.MaxDownloadBandwidthBox.TabIndex = 53;
+            this.MaxDownloadBandwidthBox.Value = ((long)(0));
+            this.MaxDownloadBandwidthBox.OnValueChanged += new System.EventHandler(this.StateChanged);
+            // 
             // BandwidthSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.Controls.Add(this.MaxDownloadBandwidthBox);
+            this.Controls.Add(this.MaxUploadBandwidthBox);
             this.Controls.Add(this.compressDataCheckBox);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.BandwidthTimespanEndMinBox);
@@ -258,17 +250,13 @@
             this.Controls.Add(this.BandwidthTimespanStartHourBox);
             this.Controls.Add(this.BandwidthTimespanIcon);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.MaxDownloadBandwidthBox);
             this.Controls.Add(this.MaxDownloadBandwidthIcon);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.MaxUploadBandwidthBox);
             this.Controls.Add(this.MaxUploadBandwidthIcon);
             this.Controls.Add(this.label2);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "BandwidthSettings";
             this.Size = new System.Drawing.Size(519, 248);
-            ((System.ComponentModel.ISupportInitialize)(this.MaxUploadBandwidthBox)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.MaxDownloadBandwidthBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.MaxDownloadBandwidthIcon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.MaxUploadBandwidthIcon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.BandwidthTimespanStartHourBox)).EndInit();
@@ -282,11 +270,8 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.NumericUpDown MaxUploadBandwidthBox;
         private System.Windows.Forms.PictureBox MaxUploadBandwidthIcon;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.NumericUpDown MaxDownloadBandwidthBox;
         private System.Windows.Forms.PictureBox MaxDownloadBandwidthIcon;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.NumericUpDown BandwidthTimespanStartHourBox;
@@ -299,5 +284,7 @@
         private System.Windows.Forms.NumericUpDown BandwidthTimespanEndHourBox;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.CheckBox compressDataCheckBox;
+        private Core.Controls.SizeTextBox MaxUploadBandwidthBox;
+        private Core.Controls.SizeTextBox MaxDownloadBandwidthBox;
     }
 }

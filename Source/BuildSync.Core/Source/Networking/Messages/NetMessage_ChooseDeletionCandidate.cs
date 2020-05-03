@@ -26,29 +26,32 @@ namespace BuildSync.Core.Networking.Messages
         public ManifestStorageHeuristic Heuristic = ManifestStorageHeuristic.LeastAvailable;
 
         /// <summary>
+        ///     Build tag id's to prioritize keeping.
+        /// </summary>
+        public List<Guid> PrioritizeKeepingTagIds = new List<Guid>();
+
+        /// <summary>
+        ///     Build tag id's to prioritize deleting.
+        /// </summary>
+        public List<Guid> PrioritizeDeletingTagIds = new List<Guid>();
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
-            int Count = CandidateManifestIds.Count;
-            serializer.Serialize(ref Count);
-
-            for (int i = 0; i < Count; i++)
-            {
-                if (serializer.IsLoading)
-                {
-                    CandidateManifestIds.Add(new Guid());
-                }
-
-                Guid Id = CandidateManifestIds[i];
-                serializer.Serialize(ref Id);
-                CandidateManifestIds[i] = Id;
-            }
+            serializer.SerializeList(ref CandidateManifestIds);
 
             if (serializer.Version > 100000560)
             {
                 serializer.SerializeEnum<ManifestStorageHeuristic>(ref Heuristic);
+            }
+
+            if (serializer.Version >= 100000603)
+            {
+                serializer.SerializeList(ref PrioritizeKeepingTagIds);
+                serializer.SerializeList(ref PrioritizeDeletingTagIds);
             }
         }
     }

@@ -315,6 +315,7 @@ namespace BuildSync.Client.Forms
             if (Program.Settings.FirstRun)
             {
                 SetupForm form = new SetupForm();
+                form.QuitOnClose = true;
                 form.ShowDialog(this);
             }
         }
@@ -344,6 +345,17 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void PublishBuildClicked(object sender, EventArgs e)
         {
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FirstTimeSetupClicked(object sender, EventArgs e)
+        {
+            SetupForm form = new SetupForm();
+            form.ShowDialog(this);
         }
 
         /// <summary>
@@ -791,6 +803,7 @@ namespace BuildSync.Client.Forms
                 pauseToolStripMenuItem.Image = Downloader != null && Downloader.Paused ? Resources.appbar_control_play : Resources.appbar_control_pause;
                 deleteToolStripMenuItem.Enabled = Downloader != null;
                 settingsToolStripMenuItem.Enabled = Downloader != null;
+                openInExplorerToolStripMenuItem.Enabled = (Downloader != null && Directory.Exists(Downloader.LocalFolder));
             }
             else
             {
@@ -801,6 +814,7 @@ namespace BuildSync.Client.Forms
                 pauseToolStripMenuItem.Text = "Pause";
                 deleteToolStripMenuItem.Enabled = false;
                 settingsToolStripMenuItem.Enabled = false;
+                openInExplorerToolStripMenuItem.Enabled = false;
             }
         }
 
@@ -834,6 +848,20 @@ namespace BuildSync.Client.Forms
             AddDownloadForm Dialog = new AddDownloadForm();
             Dialog.EditState = ContextMenuDownloadItem.State;
             Dialog.ShowDialog(this);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OpenInExplorerClicked(object sender, EventArgs e)
+        {
+            ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(ContextMenuDownloadItem.State.ActiveManifestId);
+            if (Downloader != null)
+            {
+                Process.Start("explorer.exe", Downloader.LocalFolder);
+            }            
         }
 
         /// <summary>

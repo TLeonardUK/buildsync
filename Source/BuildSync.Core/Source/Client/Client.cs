@@ -402,6 +402,11 @@ namespace BuildSync.Core.Client
         private int LastManifestStateDirtyCounter;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private int LastManifestStateBlockDirtyCounter;
+
+        /// <summary>
         /// </summary>
         private readonly NetConnection ListenConnection = new NetConnection();
 
@@ -658,7 +663,7 @@ namespace BuildSync.Core.Client
             ListenConnection.OnClientConnect += PeerConnected;
 
             MemoryPool.PreallocateBuffers((int) BuildManifest.BlockSize, 128);
-            MemoryPool.PreallocateBuffers(Crc32.BufferSize, 16);
+            MemoryPool.PreallocateBuffers(Crc32Slow.BufferSize, 16);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
 
             try
@@ -866,7 +871,14 @@ namespace BuildSync.Core.Client
                 if (ManifestDownloadManager.StateDirtyCount > LastManifestStateDirtyCounter)
                 {
                     BlockListUpdatePending = true;
+                    ForceBlockListUpdate = true;
                     LastManifestStateDirtyCounter = ManifestDownloadManager.StateDirtyCount;
+                }
+
+                if (ManifestDownloadManager.StateBlockDirtyCount > LastManifestStateBlockDirtyCounter)
+                {
+                    BlockListUpdatePending = true;
+                    LastManifestStateBlockDirtyCounter = ManifestDownloadManager.StateBlockDirtyCount;
                 }
 
                 if (ConnectionInfoUpdateRequired && ListenConnection.IsListening)
@@ -1144,7 +1156,7 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// 
         /// </summary>
-        public bool RequestChooseDeletionCandidate(List<Guid> Candidates, ManifestStorageHeuristic Heuristic)
+        public bool RequestChooseDeletionCandidate(List<Guid> Candidates, ManifestStorageHeuristic Heuristic, List<Guid> PrioritizeKeepingTagIds, List<Guid> PrioritizeDeletingTagIds)
         {
             if (!Connection.IsReadyForData)
             {
@@ -1155,6 +1167,8 @@ namespace BuildSync.Core.Client
             NetMessage_ChooseDeletionCandidate Msg = new NetMessage_ChooseDeletionCandidate();
             Msg.CandidateManifestIds = Candidates;
             Msg.Heuristic = Heuristic;
+            Msg.PrioritizeKeepingTagIds = PrioritizeKeepingTagIds;
+            Msg.PrioritizeDeletingTagIds = PrioritizeDeletingTagIds;
             Connection.Send(Msg);
 
             return true;
@@ -1444,7 +1458,7 @@ namespace BuildSync.Core.Client
             ManifestRegistry = BuildManifest;
             ManifestDownloadManager = DownloadManager;
             ManifestDownloadManager.OnManifestRequested += Id => { RequestManifest(Id); };
-            ManifestDownloadManager.OnRequestChooseDeletionCandidate += (Candidates, Heuristic) => { RequestChooseDeletionCandidate(Candidates, Heuristic); };
+            ManifestDownloadManager.OnRequestChooseDeletionCandidate += (Candidates, Heuristic, PrioritizeKeepingTagIds, PrioritizeDeletingTagIds) => { RequestChooseDeletionCandidate(Candidates, Heuristic, PrioritizeKeepingTagIds, PrioritizeDeletingTagIds); };
             TagRegistry = InTagRegistry;
             RouteRegistry = InRouteRegistry;
 
@@ -1664,7 +1678,7 @@ namespace BuildSync.Core.Client
             {
                 NetMessage_RelevantPeerListUpdate Msg = BaseMessage as NetMessage_RelevantPeerListUpdate;
 
-                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved relevant peer list update.");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved relevant peer list update (count {0}).", Msg.PeerAddresses.Count);
 
                 RelevantPeerAddresses = Msg.PeerAddresses;
             }
@@ -2036,21 +2050,6 @@ namespace BuildSync.Core.Client
 
             Logger.Log(LogLevel.Verbose, LogCategory.Main, "\tSent to server.");
             Connection.Send(Msg);
-
-            /*
-            BlockListState DeltaEncoded = State;
-            if (LastBlockListState != null)
-            {
-                DeltaEncoded = State.GetDelta(LastBlockListState);
-            }
-
-            NetMessage_BlockListUpdate Msg = new NetMessage_BlockListUpdate();
-            Msg.BlockState = DeltaEncoded;
-
-            LastBlockListState = DeltaEncoded;
-
-            Connection.Send(Msg);
-            */
         }
 
         /// <summary>

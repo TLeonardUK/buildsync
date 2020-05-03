@@ -74,7 +74,7 @@ namespace BuildSync.Client.Tasks
             ManifestDownloadState LocalState = Program.ManifestDownloadManager.AddLocalDownload(Manifest, LocalPath);
 
             // Allow this manifest id to be downloaded now.
-            Program.ManifestDownloadManager.BlockDownload(Manifest.Guid);
+            Program.ManifestDownloadManager.UnblockDownload(Manifest.Guid);
 
             Program.SaveSettings();
         }
@@ -109,6 +109,8 @@ namespace BuildSync.Client.Tasks
                         }
 
                         Directory.CreateDirectory(LocalFolder);
+
+                        // TODO: Supress pruning of directory!?
 
                         // Copy each file over to the storage folder.
                         State = BuildPublishingState.CopyingFiles;

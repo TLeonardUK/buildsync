@@ -20,8 +20,10 @@
 */
 
 using System;
+using System.IO;
 using System.Collections;
 using System.Windows.Forms;
+using System.Diagnostics;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
 using WeifenLuo.WinFormsUI.Docking;
@@ -35,6 +37,11 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// </summary>
         private readonly ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ManifestDownloadState ContextMenuState = null;
 
         /// <summary>
         /// </summary>
@@ -137,6 +144,7 @@ namespace BuildSync.Client.Forms
                 {
                     ListViewItem Item = new ListViewItem(new string[8]);
                     Item.Tag = Manifest;
+                    Item.ImageIndex = 0;
                     mainListView.Items.Add(Item);
                 }
             }
@@ -176,6 +184,51 @@ namespace BuildSync.Client.Forms
         private void UpdateTimerTick(object sender, EventArgs e)
         {
             RefreshManifests();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OpenInExplorerClicked(object sender, EventArgs e)
+        {
+            if (ContextMenuState != null)
+            {
+                Process.Start("explorer.exe", ContextMenuState.LocalFolder);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DeleteClicked(object sender, EventArgs e)
+        {
+            if (ContextMenuState.Active)
+            {
+                MessageBox.Show("Manifest is active for a download. Delete the download using it before deleting this manifest.", "Manifest Active", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else
+            {
+                Program.ManifestDownloadManager.PruneManifest(ContextMenuState.ManifestId);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ContextMenuOpening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            ManifestDownloadState Manifest = mainListView.SelectedItems.Count == 0 ? null : mainListView.SelectedItems[0].Tag as ManifestDownloadState;
+
+            openInExplorerToolStripMenuItem.Enabled = (Manifest != null && Directory.Exists(Manifest.LocalFolder));
+            deleteToolStripMenuItem.Enabled = (Manifest != null);
+
+            ContextMenuState = Manifest;
         }
     }
 }

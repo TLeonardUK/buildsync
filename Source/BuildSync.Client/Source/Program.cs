@@ -205,12 +205,19 @@ namespace BuildSync.Client
                 SaveSettings();
             }
 
-            if (ManifestDownloadManager != null && (Settings.StorageMaxSize != ManifestDownloadManager.StorageMaxSize || Settings.StorageHeuristic != ManifestDownloadManager.StorageHeuristic))
+            if (ManifestDownloadManager != null && (
+                    Settings.StorageMaxSize != ManifestDownloadManager.StorageMaxSize || 
+                    Settings.StorageHeuristic != ManifestDownloadManager.StorageHeuristic ||
+                    !ManifestDownloadManager.StoragePrioritizeKeepingBuildTagIds.IsEqual(Settings.PrioritizeKeepingBuildTagIds) ||
+                    !ManifestDownloadManager.StoragePrioritizeDeletingBuildTagIds.IsEqual(Settings.PrioritizeDeletingBuildTagIds)
+                ))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply manifest download manager settings");
 
                 ManifestDownloadManager.StorageMaxSize = Settings.StorageMaxSize;
                 ManifestDownloadManager.StorageHeuristic = Settings.StorageHeuristic;
+                ManifestDownloadManager.StoragePrioritizeKeepingBuildTagIds = Settings.PrioritizeKeepingBuildTagIds;
+                ManifestDownloadManager.StoragePrioritizeDeletingBuildTagIds = Settings.PrioritizeDeletingBuildTagIds;
 
                 SaveSettings();
             }

@@ -46,6 +46,23 @@ namespace BuildSync.Core.Utils
         /// <typeparam name="T"></typeparam>
         /// <param name="listToClone"></param>
         /// <returns></returns>
+        public static bool ContainsAny<T>(this IList<T> haystack, IList<T> needles)
+        {
+            foreach (T needle in needles)
+            {
+                if (haystack.Contains(needle))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="listToClone"></param>
+        /// <returns></returns>
         public static bool IsEqual<T>(this IList<T> listA, IList<T> listB, bool orderIndependent = true)
         {
             if (listA.Count != listB.Count)

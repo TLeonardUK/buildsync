@@ -117,6 +117,30 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <metadata name="listContextMenu.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>258, 17</value>
+  </metadata>
+  <metadata name="listImageList.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>139, 17</value>
+  </metadata>
+  <data name="listImageList.ImageStream" mimetype="application/x-microsoft.net.object.binary.base64">
+    <value>
+        AAEAAAD/////AQAAAAAAAAAMAgAAAFdTeXN0ZW0uV2luZG93cy5Gb3JtcywgVmVyc2lvbj00LjAuMC4w
+        LCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkFAQAAACZTeXN0
+        ZW0uV2luZG93cy5Gb3Jtcy5JbWFnZUxpc3RTdHJlYW1lcgEAAAAERGF0YQcCAgAAAAkDAAAADwMAAACO
+        AgAAAk1TRnQBSQFMAwEBAAEYAQABGAEAARgBAAEYAQAE/wEhAQAI/wFCAU0BNgcAATYDAAEoAwABYAMA
+        ARgDAAEBAQABIAYAAST/AP8A/wD/AP8A/wD/AP8A/wBDAAMtAUUDAAH/AwAB/wMPAfgDFAEb/wBlAAMy
+        AVEDAAH/A0wBqgMAAQEDAAH/AwoBDQM9AdcDIAHuAxwBKP8AVQADNwFbAwAB/wNLAaIDAQECCwAB/wgA
+        AxIBGQM5AdkDKAHp/wBUAAH/AxoBJRMAAf8QAAM5Adv/AFQAAf8DGgEkEwAB/xAAAzkB2/8AVAAB/wMa
+        ASQTAAH/EAADOQHb/wBUAAH/AxoBJAgAAzABSwMAAf8DLgHkAw8B+AMUARsIAAM5Adv/AFQAAf8DGgEk
+        AzUBVgMAAf8DSwGwAwABAQQAAwoBDQM9AdcDIAHuAxwBKAM5Adv/AFEAAzoB2gMAAf8DRQHHAwIBAxQA
+        AxIBGQMYAfMDAAH//wBVAAMSARkDNAHeAy4B5QMWAR8MAAM3AVwDDAH5A0sBowMDAQT/AF0AAw4BEwMn
+        AeoDIwHsAzIBUAMJAfoDSwGwAwQBBv8AcQADRQHK/wD/AP8A/wD/AP8A/wD/AP8A/wBWAAFCAU0BPgcA
+        AT4DAAEoAwABYAMAARgDAAEBAQABAQUAASABARYAA/8BAAP/CQAD/wkAA/8JAAP/CQAD/wkAA/8JAAH/
+        AcEB/wkAAf8BAAF/CQAB/AE2AT8JAAH8AfcBvwkAAfwB9wG/CQAB/AH3Ab8JAAH8AcEBvwkAAfwBCAE/
+        CQAB/AE+AT8JAAH+ARwBPwkAAf8BgAH/CQAB/wH3Af8JAAP/CQAD/wkAA/8JAAP/CQAD/wkAA/8JAAs=
+</value>
+  </data>
   <metadata name="UpdateTimer.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>

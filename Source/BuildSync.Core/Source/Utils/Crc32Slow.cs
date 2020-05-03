@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
+using Crc32C;
 
 namespace BuildSync.Core.Utils
 {
@@ -42,11 +43,12 @@ namespace BuildSync.Core.Utils
     ///     interface or remember that the result of one Compute call needs to be ~ (XOR) before
     ///     being passed in as the seed for the next Compute call.
     /// </remarks>
-    public sealed class Crc32 : HashAlgorithm
+    public sealed class Crc32Slow : HashAlgorithm
     {
         public const int BufferSize = 256 * 1024;
         public const uint DefaultPolynomial = 0xedb88320u;
         public const uint DefaultSeed = 0xffffffffu;
+        public const int SparseStepInterval = 100;
         private static uint[] defaultTable;
         private uint hash;
         private readonly uint seed;
@@ -54,12 +56,12 @@ namespace BuildSync.Core.Utils
 
         public override int HashSize => 32;
 
-        public Crc32()
+        public Crc32Slow()
             : this(DefaultPolynomial, DefaultSeed)
         {
         }
 
-        public Crc32(uint polynomial, uint seed)
+        public Crc32Slow(uint polynomial, uint seed)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -107,7 +109,7 @@ namespace BuildSync.Core.Utils
 
         public static uint ComputeSparse(uint polynomial, uint seed, byte[] buffer, int Length)
         {
-            return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, Length, Length / 100);
+            return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, Length, Length / SparseStepInterval); 
         }
 
         /// <summary>
@@ -217,5 +219,30 @@ namespace BuildSync.Core.Utils
 
             return result;
         }
+    }
+
+    // Fast implementation of CRC32.
+    public sealed class Crc32Fast : Crc32CAlgorithm
+    {
+        public const int BufferSize = 256 * 1024;
+        private static uint[] defaultTable;
+        private uint hash;
+        private readonly uint seed;
+        private readonly uint[] table;
+
+        public Crc32Fast()
+        {
+        }
+
+        /*public static uint ComputeSparse(byte[] buffer)
+        {
+            return ComputeSparse(buffer, 0, buffer.Length);
+        }
+
+        public static uint ComputeSparse(byte[] buffer, int Offset, int Length)
+        {
+            for (int i = 0; i < Length )
+
+        }*/
     }
 }

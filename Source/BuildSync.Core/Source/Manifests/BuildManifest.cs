@@ -19,6 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+//#define USE_SPARSE_CHECKSUMS
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -151,6 +153,16 @@ namespace BuildSync.Core.Manifests
         public static long MaxSubBlockCount = long.MaxValue;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public const int CurrentVersion = 2;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int Version = 0;
+
+        /// <summary>
         /// </summary>
         public uint[] BlockChecksums;
 
@@ -260,7 +272,12 @@ namespace BuildSync.Core.Manifests
             Manifest.VirtualPath = VirtualPath;
             Manifest.BlockCount = BlockIndex;
             Manifest.BlockChecksums = new uint[Manifest.BlockCount];
+#if USE_SPARSE_CHECKSUMS
             Manifest.SparseBlockChecksums = new uint[Manifest.BlockCount];
+#else
+            Manifest.SparseBlockChecksums = null;
+#endif
+            Manifest.Version = BuildManifest.CurrentVersion;
 
             List<Task> ChecksumTasks = new List<Task>();
             int FileCounter = 0;
@@ -325,6 +342,9 @@ namespace BuildSync.Core.Manifests
             Manifest.DebugCheck();
 
             // Calculate checksum for each individual block.
+            long TimeFast = 0;
+            long TimeSlow = 0;
+
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
                 ChecksumTasks.Add(
@@ -332,6 +352,8 @@ namespace BuildSync.Core.Manifests
                         () =>
                         {
                             byte[] Buffer = new byte[BlockSize];
+
+                            Stopwatch stopwatch = new Stopwatch();
 
                             while (true)
                             {
@@ -348,8 +370,20 @@ namespace BuildSync.Core.Manifests
                                     Debug.Assert(false);
                                 }
 
-                                Manifest.BlockChecksums[CalculateBlockIndex] = Crc32.Compute(Buffer, (int) BufferLength);
-                                Manifest.SparseBlockChecksums[CalculateBlockIndex] = Crc32.ComputeSparse(Buffer, (int)BufferLength);
+                                uint Checksum = 0;
+                                if (Manifest.Version >= 2)
+                                {
+                                    Checksum = Crc32Fast.Compute(Buffer, 0, (int)BufferLength);
+                                }
+                                else
+                                {
+                                    Checksum = Crc32Slow.Compute(Buffer, (int)BufferLength);
+                                }
+
+                                Manifest.BlockChecksums[CalculateBlockIndex] = Checksum;
+#if USE_SPARSE_CHECKSUMS
+                                Manifest.SparseBlockChecksums[CalculateBlockIndex] = Crc32Slow.ComputeSparse(Buffer, (int)BufferLength);
+#endif
 
                                 if (Callback != null)
                                 {
@@ -369,6 +403,9 @@ namespace BuildSync.Core.Manifests
             {
                 task.Wait();
             }
+
+            Console.WriteLine("Time Fast: {0} s", TimeFast / (float)Stopwatch.Frequency);
+            Console.WriteLine("Time Slow: {0} s", TimeSlow / (float)Stopwatch.Frequency);
 
             return Manifest;
         }
@@ -673,7 +710,17 @@ namespace BuildSync.Core.Manifests
                             long BufferLength = 0;
                             bool Success = GetBlockData(BlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
 
-                            if (!Success || BlockChecksums[BlockIndex] != Crc32.Compute(Buffer, (int) BufferLength))
+                            uint Checksum = 0;
+                            if (Version >= 2)
+                            {
+                                Checksum = Crc32Fast.Compute(Buffer, 0, (int)BufferLength);
+                            }
+                            else
+                            {
+                                Checksum = Crc32Slow.Compute(Buffer, (int)BufferLength);
+                            }
+
+                            if (!Success || BlockChecksums[BlockIndex] != Checksum)
                             {
                                 Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block {0} failed checksum, block contains following sub-blocks:", BlockIndex);
 

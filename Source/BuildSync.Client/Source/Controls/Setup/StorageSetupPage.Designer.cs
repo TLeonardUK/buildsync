@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StorageSetupPage));
-            this.StorageMaxSizeTextBox = new System.Windows.Forms.NumericUpDown();
             this.label2 = new System.Windows.Forms.Label();
             this.savePathBrowseButton = new System.Windows.Forms.Button();
             this.StoragePathTextBox = new System.Windows.Forms.TextBox();
@@ -37,35 +36,10 @@
             this.StorageMaxSizeIcon = new System.Windows.Forms.PictureBox();
             this.StoragePathIcon = new System.Windows.Forms.PictureBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeTextBox)).BeginInit();
+            this.StorageMaxSizeTextBox = new BuildSync.Core.Controls.SizeTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeIcon)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.StoragePathIcon)).BeginInit();
             this.SuspendLayout();
-            // 
-            // StorageMaxSizeTextBox
-            // 
-            this.StorageMaxSizeTextBox.Location = new System.Drawing.Point(61, 203);
-            this.StorageMaxSizeTextBox.Margin = new System.Windows.Forms.Padding(2);
-            this.StorageMaxSizeTextBox.Maximum = new decimal(new int[] {
-            100000000,
-            0,
-            0,
-            0});
-            this.StorageMaxSizeTextBox.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.StorageMaxSizeTextBox.Name = "StorageMaxSizeTextBox";
-            this.StorageMaxSizeTextBox.Size = new System.Drawing.Size(545, 20);
-            this.StorageMaxSizeTextBox.TabIndex = 27;
-            this.StorageMaxSizeTextBox.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.StorageMaxSizeTextBox.ValueChanged += new System.EventHandler(this.StateChanged);
             // 
             // label2
             // 
@@ -139,23 +113,21 @@
             this.label3.Text = "WARNING: Please do not delete or modify the contents of this folder manually. Fil" +
     "es in it may be used for seeding builds.\r\n";
             // 
-            // label4
+            // StorageMaxSizeTextBox
             // 
-            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(610, 203);
-            this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(25, 20);
-            this.label4.TabIndex = 29;
-            this.label4.Text = "GB";
-            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.StorageMaxSizeTextBox.DisplayAsTransferRate = false;
+            this.StorageMaxSizeTextBox.Location = new System.Drawing.Point(59, 201);
+            this.StorageMaxSizeTextBox.Name = "StorageMaxSizeTextBox";
+            this.StorageMaxSizeTextBox.Size = new System.Drawing.Size(469, 26);
+            this.StorageMaxSizeTextBox.TabIndex = 29;
+            this.StorageMaxSizeTextBox.Value = ((long)(0));
+            this.StorageMaxSizeTextBox.Load += new System.EventHandler(this.StateChanged);
             // 
             // StorageSetupPage
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.label3);
             this.Controls.Add(this.StorageMaxSizeTextBox);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.StorageMaxSizeIcon);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.StoragePathIcon);
@@ -165,7 +137,6 @@
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "StorageSetupPage";
             this.Size = new System.Drawing.Size(656, 238);
-            ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeTextBox)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeIcon)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.StoragePathIcon)).EndInit();
             this.ResumeLayout(false);
@@ -174,8 +145,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.NumericUpDown StorageMaxSizeTextBox;
         private System.Windows.Forms.PictureBox StorageMaxSizeIcon;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.PictureBox StoragePathIcon;
@@ -183,6 +152,6 @@
         private System.Windows.Forms.TextBox StoragePathTextBox;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label4;
+        private Core.Controls.SizeTextBox StorageMaxSizeTextBox;
     }
 }

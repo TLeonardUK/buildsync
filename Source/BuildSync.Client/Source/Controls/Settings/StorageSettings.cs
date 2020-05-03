@@ -58,8 +58,10 @@ namespace BuildSync.Client.Controls.Settings
 
             SkipValidity = true;
             StoragePathTextBox.Text = Program.Settings.StoragePath;
-            StorageMaxSizeTextBox.Value = Program.Settings.StorageMaxSize / 1024 / 1024 / 1024;
+            StorageMaxSizeTextBox.Value = Program.Settings.StorageMaxSize;
             HeuristicComboBox.SelectedIndex = (int)Program.Settings.StorageHeuristic;
+            prioritizeTagsTextBox.TagIds = new List<Guid>(Program.Settings.PrioritizeKeepingBuildTagIds);
+            deprioritizeTagsTextBox.TagIds = new List<Guid>(Program.Settings.PrioritizeDeletingBuildTagIds);
             SkipValidity = false;
 
             UpdateValidityState();
@@ -106,8 +108,11 @@ namespace BuildSync.Client.Controls.Settings
             }
 
             Program.Settings.StoragePath = StoragePathTextBox.Text;
-            Program.Settings.StorageMaxSize = (long) StorageMaxSizeTextBox.Value * 1024 * 1024 * 1024;
+            Program.Settings.StorageMaxSize = StorageMaxSizeTextBox.Value;
             Program.Settings.StorageHeuristic = (ManifestStorageHeuristic)HeuristicComboBox.SelectedIndex;
+
+            Program.Settings.PrioritizeKeepingBuildTagIds = prioritizeTagsTextBox.TagIds;
+            Program.Settings.PrioritizeDeletingBuildTagIds = deprioritizeTagsTextBox.TagIds;
 
             if (Directory.Exists(Program.Settings.StoragePath))
             {

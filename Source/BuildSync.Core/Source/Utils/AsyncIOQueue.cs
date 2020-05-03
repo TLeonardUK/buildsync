@@ -389,6 +389,8 @@ namespace BuildSync.Core.Utils
         /// </summary>
         private void CloseStreamsWithStall(string Dir)
         {
+            Logger.Log(LogLevel.Info, LogCategory.IO, "Stalling for directory close: '{0}'", Dir);
+
             lock (ActiveStreams)
             {
                 for (int i = 0; i < ActiveStreams.Count; i++)
@@ -396,7 +398,7 @@ namespace BuildSync.Core.Utils
                     ActiveStream Stm = ActiveStreams[i];
                     if (Stm.Path.StartsWith(Dir))
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.IO, "Stalling while draining queue while closing directory: '{0}'", Dir);
+                        Logger.Log(LogLevel.Verbose, LogCategory.IO, "Closing stream for directory close: '{0}'", Stm.Path);
 
                         // This is not ideal, we should remove this if practical, it wastes processing time.
                         while (Stm.ActiveOperations > 0)
@@ -407,9 +409,13 @@ namespace BuildSync.Core.Utils
                         Stm.Stream.Close();
                         ActiveStreams.Remove(Stm);
                         ActiveStreamsByPath.Remove(Stm.Path);
+
+                        i--;
                     }
                 }
             }
+
+            Logger.Log(LogLevel.Info, LogCategory.IO, "Finished closing directory: '{0}'", Dir);
         }
 
         /// <summary>

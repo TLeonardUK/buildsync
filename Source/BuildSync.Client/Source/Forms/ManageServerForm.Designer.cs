@@ -36,6 +36,7 @@
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.MainListView = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -44,15 +45,14 @@
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.clientLstContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.addTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label1 = new System.Windows.Forms.Label();
-            this.MaxBandwidthBox = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.RefreshTimer = new System.Windows.Forms.Timer(this.components);
-            this.clientLstContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.addTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.BandwithGraph = new BuildSync.Core.Controls.Graph.GraphControl();
-            ((System.ComponentModel.ISupportInitialize)(this.MaxBandwidthBox)).BeginInit();
+            this.MaxBandwidthBox = new BuildSync.Core.Controls.SizeTextBox();
             this.clientLstContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -80,6 +80,7 @@
             this.MainListView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.MainListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
+            this.columnHeader10,
             this.columnHeader9,
             this.columnHeader4,
             this.columnHeader5,
@@ -113,7 +114,12 @@
             // columnHeader1
             // 
             this.columnHeader1.Text = "Username";
-            this.columnHeader1.Width = 180;
+            this.columnHeader1.Width = 190;
+            // 
+            // columnHeader10
+            // 
+            this.columnHeader10.Text = "Hostname";
+            this.columnHeader10.Width = 190;
             // 
             // columnHeader9
             // 
@@ -142,8 +148,8 @@
             // 
             // columnHeader3
             // 
-            this.columnHeader3.Text = "Active Peers";
-            this.columnHeader3.Width = 80;
+            this.columnHeader3.Text = "Peers";
+            this.columnHeader3.Width = 50;
             // 
             // columnHeader7
             // 
@@ -155,6 +161,22 @@
             this.columnHeader8.Text = "Version";
             this.columnHeader8.Width = 80;
             // 
+            // clientLstContextMenu
+            // 
+            this.clientLstContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
+            this.clientLstContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addTagToolStripMenuItem});
+            this.clientLstContextMenu.Name = "downloadListContextMenu";
+            this.clientLstContextMenu.Size = new System.Drawing.Size(151, 34);
+            this.clientLstContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuOpening);
+            // 
+            // addTagToolStripMenuItem
+            // 
+            this.addTagToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_tag;
+            this.addTagToolStripMenuItem.Name = "addTagToolStripMenuItem";
+            this.addTagToolStripMenuItem.Size = new System.Drawing.Size(150, 30);
+            this.addTagToolStripMenuItem.Text = "Toggle Tag ...";
+            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -164,62 +186,32 @@
             this.label1.TabIndex = 2;
             this.label1.Text = "Connected Clients";
             // 
-            // MaxBandwidthBox
-            // 
-            this.MaxBandwidthBox.Location = new System.Drawing.Point(7, 60);
-            this.MaxBandwidthBox.Margin = new System.Windows.Forms.Padding(2);
-            this.MaxBandwidthBox.Maximum = new decimal(new int[] {
-            1073741824,
-            0,
-            0,
-            0});
-            this.MaxBandwidthBox.Name = "MaxBandwidthBox";
-            this.MaxBandwidthBox.Size = new System.Drawing.Size(340, 20);
-            this.MaxBandwidthBox.TabIndex = 26;
-            this.MaxBandwidthBox.ValueChanged += new System.EventHandler(this.MaxBandwidthBoxChanged);
-            // 
             // label3
             // 
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(4, 10);
             this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(200, 13);
+            this.label3.Size = new System.Drawing.Size(169, 13);
             this.label3.TabIndex = 24;
-            this.label3.Text = "Maximum bandwidth (kb/s), 0 is unlimited\r\n";
+            this.label3.Text = "Maximum bandwidth, 0 is unlimited\r\n";
             // 
             // label2
             // 
-            this.label2.AutoSize = true;
             this.label2.ForeColor = System.Drawing.SystemColors.ControlDark;
             this.label2.Location = new System.Drawing.Point(4, 28);
             this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(307, 26);
+            this.label2.Size = new System.Drawing.Size(422, 26);
             this.label2.TabIndex = 27;
             this.label2.Text = "This bandwidth will be split across all downloading peers to cap \r\ntotal network " +
-    "bandwidth utilization.";
+    "bandwidth utilization. This takes priority over route specific bandwidth limits\r" +
+    "\n";
             // 
             // RefreshTimer
             // 
             this.RefreshTimer.Interval = 1000;
             this.RefreshTimer.Tick += new System.EventHandler(this.RefreshTicked);
-            // 
-            // clientLstContextMenu
-            // 
-            this.clientLstContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
-            this.clientLstContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.addTagToolStripMenuItem});
-            this.clientLstContextMenu.Name = "downloadListContextMenu";
-            this.clientLstContextMenu.Size = new System.Drawing.Size(189, 56);
-            this.clientLstContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuOpening);
-            // 
-            // addTagToolStripMenuItem
-            // 
-            this.addTagToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_tag;
-            this.addTagToolStripMenuItem.Name = "addTagToolStripMenuItem";
-            this.addTagToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.addTagToolStripMenuItem.Text = "Toggle Tag ...";
             // 
             // BandwithGraph
             // 
@@ -228,20 +220,30 @@
             this.BandwithGraph.DrawGridLines = true;
             this.BandwithGraph.DrawLabels = true;
             this.BandwithGraph.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(223)))), ((int)(((byte)(238)))), ((int)(((byte)(246)))));
-            this.BandwithGraph.Location = new System.Drawing.Point(363, 2);
+            this.BandwithGraph.Location = new System.Drawing.Point(441, 2);
             this.BandwithGraph.Name = "BandwithGraph";
             this.BandwithGraph.Series = new BuildSync.Core.Controls.Graph.GraphSeries[] {
         null};
-            this.BandwithGraph.Size = new System.Drawing.Size(556, 104);
+            this.BandwithGraph.Size = new System.Drawing.Size(488, 104);
             this.BandwithGraph.TabIndex = 3;
+            // 
+            // MaxBandwidthBox
+            // 
+            this.MaxBandwidthBox.DisplayAsTransferRate = true;
+            this.MaxBandwidthBox.Location = new System.Drawing.Point(7, 61);
+            this.MaxBandwidthBox.Name = "MaxBandwidthBox";
+            this.MaxBandwidthBox.Size = new System.Drawing.Size(419, 26);
+            this.MaxBandwidthBox.TabIndex = 28;
+            this.MaxBandwidthBox.Value = ((long)(0));
+            this.MaxBandwidthBox.OnValueChanged += new System.EventHandler(this.MaxBandwidthBoxChanged);
             // 
             // ManageServerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(931, 315);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.MaxBandwidthBox);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.BandwithGraph);
             this.Controls.Add(this.label1);
@@ -257,7 +259,6 @@
             this.Text = "Server Manager";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
             this.Shown += new System.EventHandler(this.OnShown);
-            ((System.ComponentModel.ISupportInitialize)(this.MaxBandwidthBox)).EndInit();
             this.clientLstContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -275,7 +276,6 @@
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.Label label1;
         private Core.Controls.Graph.GraphControl BandwithGraph;
-        private System.Windows.Forms.NumericUpDown MaxBandwidthBox;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Timer RefreshTimer;
@@ -285,5 +285,7 @@
 		private System.Windows.Forms.ColumnHeader columnHeader9;
         private System.Windows.Forms.ContextMenuStrip clientLstContextMenu;
         private System.Windows.Forms.ToolStripMenuItem addTagToolStripMenuItem;
+        private System.Windows.Forms.ColumnHeader columnHeader10;
+        private Core.Controls.SizeTextBox MaxBandwidthBox;
     }
 }

@@ -49,6 +49,11 @@ namespace BuildSync.Client.Forms
         private bool CloseOnFinish = false;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public bool QuitOnClose = false;
+
+        /// <summary>
         ///     Initializes a new instance of the <see cref="SetupForm" /> class.
         /// </summary>
         public SetupForm()
@@ -112,7 +117,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnFormClosed(object sender, FormClosedEventArgs e)
         {
-            if (!CloseOnFinish)
+            if (!CloseOnFinish && QuitOnClose)
             {
                 Environment.Exit(0);
                 return;

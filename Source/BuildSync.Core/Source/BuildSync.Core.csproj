@@ -208,6 +208,12 @@
     <Compile Include="Controls\SegmentedProgressBar.Designer.cs">
       <DependentUpon>SegmentedProgressBar.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\SizeTextBox.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\SizeTextBox.Designer.cs">
+      <DependentUpon>SizeTextBox.cs</DependentUpon>
+    </Compile>
     <Compile Include="Networking\Messages\NetMessage_AddTagToClient.cs" />
     <Compile Include="Networking\Messages\NetMessage_CreateRoute.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteRoute.cs" />
@@ -314,7 +320,7 @@
     <Compile Include="Utils\OptionsAttribute.cs" />
     <Compile Include="Utils\RateTracker.cs" />
     <Compile Include="Utils\CommandIPC.cs" />
-    <Compile Include="Utils\Crc32.cs" />
+    <Compile Include="Utils\Crc32Slow.cs" />
     <Compile Include="Utils\Drawing.cs" />
     <Compile Include="Utils\DynamicPropertyGrid.cs" />
     <Compile Include="Utils\EnumUtils.cs" />
@@ -351,6 +357,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\SegmentedProgressBar.resx">
       <DependentUpon>SegmentedProgressBar.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\SizeTextBox.resx">
+      <DependentUpon>SizeTextBox.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\public.cer" />
   </ItemGroup>

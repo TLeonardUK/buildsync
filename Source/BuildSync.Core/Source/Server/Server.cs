@@ -55,6 +55,7 @@ namespace BuildSync.Core.Server
             public DateTime LastSeen;
             public DateTime CreateTime;
             public int NumberOfPeersWithFullBuild;
+            public List<Guid> TagIds;
         }
 
         /// <summary>
@@ -211,7 +212,7 @@ namespace BuildSync.Core.Server
                         List<NetConnection> NewPeers = GetRelevantPeerForBlockState(Clients, Connection);
 
                         // If the new list is different than the old one send it.
-                        bool IsDifferent = NewPeers.IsEqual(State.RelevantPeers);
+                        bool IsDifferent = !NewPeers.IsEqual(State.RelevantPeers);
 
                         Logger.Log(LogLevel.Verbose, LogCategory.Peers, "----- Peer Relevant Addresses -----");
                         Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer: {0}", State.PeerConnectionAddress == null ? "Unknown" : State.PeerConnectionAddress.ToString());
@@ -1270,47 +1271,51 @@ namespace BuildSync.Core.Server
                     Candidate.LastSeen = ManifestRegistry.GetLastSeenTime(Id); // This is always going to basically be this timestamp ... how is this helpful? 
                     Candidate.CreateTime = Manifest != null ? Manifest.CreateTime : DateTime.UtcNow;
                     Candidate.NumberOfPeersWithFullBuild = Math.Max(0, GetPeerCountForManifest(Id) - 1); // Don't take our peer into account.
+                    Candidate.TagIds = Manifest != null && Manifest.Metadata != null ? Manifest.Metadata.TagIds : new List<Guid>();
                     Candidates.Add(Candidate);
                 }
 
                 if (Candidates.Count > 0)
                 {
-                    switch (Msg.Heuristic)
+                    // Split into 3 lists, prioritize keep, normal, prioritize delete.
+                    List<ManifestDeletionCandidate> PriorityKeep = new List<ManifestDeletionCandidate>();
+                    List<ManifestDeletionCandidate> PriorityDelete = new List<ManifestDeletionCandidate>();
+                    List<ManifestDeletionCandidate> NoPriority = new List<ManifestDeletionCandidate>();
+
+                    foreach (ManifestDeletionCandidate Candidate in Candidates)
                     {
-                        case ManifestStorageHeuristic.Oldest:
-                            {
-                                Candidates.Sort((Item1, Item2) =>
-                                {
-                                    return Item1.CreateTime.CompareTo(Item2.CreateTime);
-                                });
+                        bool Keep = Candidate.TagIds.ContainsAny(Msg.PrioritizeKeepingTagIds);
+                        bool Delete = Candidate.TagIds.ContainsAny(Msg.PrioritizeDeletingTagIds);
 
-                                break;
-                            }
-                        case ManifestStorageHeuristic.LeastAvailable:
-                            {
-                                Candidates.Sort((Item1, Item2) =>
-                                {
-                                    // Our aim is to maintain highest availability of all builds, to do that:
-                                    //      Compare first by number of peers, the ones with the most are the lowest priority.
-                                    //      If same number of peers, prioritize deletion of ones seen most recently.
-                                    if (Item1.NumberOfPeersWithFullBuild == Item2.NumberOfPeersWithFullBuild)
-                                    {
-                                        return -Item1.LastSeen.CompareTo(Item2.LastSeen);
-                                    }
-                                    else
-                                    {
-                                        return -Item1.NumberOfPeersWithFullBuild.CompareTo(Item2.NumberOfPeersWithFullBuild);
-                                    }
-                                });
-
-                                break;
-                            }
+                        if (Keep)
+                        {
+                            PriorityKeep.Add(Candidate);
+                        }
+                        else if (Delete)
+                        {
+                            PriorityDelete.Add(Candidate);
+                        }
+                        else 
+                        {
+                            NoPriority.Add(Candidate);
+                        }
                     }
+
+                    // Sort each list independently.
+                    SortDeletionCandidates(PriorityKeep, Msg.Heuristic);
+                    SortDeletionCandidates(PriorityDelete, Msg.Heuristic);
+                    SortDeletionCandidates(NoPriority, Msg.Heuristic);
+
+                    // Combine into final list.
+                    Candidates.Clear();
+                    Candidates.AddRange(PriorityDelete);
+                    Candidates.AddRange(NoPriority);
+                    Candidates.AddRange(PriorityKeep);
 
                     Logger.Log(LogLevel.Info, LogCategory.Main, "User '{0}' asked us to select manifest to delete (using heuristic {1}), priority order:", State.Username, Msg.Heuristic.ToString());
                     foreach (ManifestDeletionCandidate Candidate in Candidates)
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.Main, "\tManifest Id={0} PeersWithFullBuild={1} LastSeen={2} CreateTime={3}", Candidate.Id, Candidate.NumberOfPeersWithFullBuild, Candidate.LastSeen.ToString(), Candidate.CreateTime.ToString());
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "\tManifest Id={0} PeersWithFullBuild={1} LastSeen={2} CreateTime={3} PrioritizeKeep={4} PrioritizeDelete={5}", Candidate.Id, Candidate.NumberOfPeersWithFullBuild, Candidate.LastSeen.ToString(), Candidate.CreateTime.ToString(), PriorityKeep.Contains(Candidate), PriorityDelete.Contains(Candidate));
                     }
 
                     Guid ChosenCandidate = Candidates[0].Id;
@@ -1397,6 +1402,44 @@ namespace BuildSync.Core.Server
                 }
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' untagged client '{1}' with tag '{2}'.", State.Username, Msg.ClientAddress.ToString(), Msg.TagId.ToString());
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void SortDeletionCandidates(List<ManifestDeletionCandidate> Candidates, ManifestStorageHeuristic Heuristic)
+        {
+            switch (Heuristic)
+            {
+                case ManifestStorageHeuristic.Oldest:
+                    {
+                        Candidates.Sort((Item1, Item2) =>
+                        {
+                            return Item1.CreateTime.CompareTo(Item2.CreateTime);
+                        });
+
+                        break;
+                    }
+                case ManifestStorageHeuristic.LeastAvailable:
+                    {
+                        Candidates.Sort((Item1, Item2) =>
+                        {
+                            // Our aim is to maintain highest availability of all builds, to do that:
+                            //      Compare first by number of peers, the ones with the most are the lowest priority.
+                            //      If same number of peers, prioritize deletion of ones seen most recently.
+                            if (Item1.NumberOfPeersWithFullBuild == Item2.NumberOfPeersWithFullBuild)
+                            {
+                                return -Item1.LastSeen.CompareTo(Item2.LastSeen);
+                            }
+                            else
+                            {
+                                return -Item1.NumberOfPeersWithFullBuild.CompareTo(Item2.NumberOfPeersWithFullBuild);
+                            }
+                        });
+
+                        break;
+                    }
             }
         }
 

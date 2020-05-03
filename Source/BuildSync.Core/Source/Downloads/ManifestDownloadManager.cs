@@ -19,8 +19,8 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
-//#define CHECKSUM_EACH_BLOCK
-#define SPARSE_CHECKSUM_EACH_BLOCK
+#define CHECKSUM_EACH_BLOCK
+//#define SPARSE_CHECKSUM_EACH_BLOCK
 //#define CONSTANT_REDOWNLOAD
 //#define LARGE_DOWNLOAD_QUEUE
 
@@ -52,7 +52,7 @@ namespace BuildSync.Core.Downloads
 
     /// <summary>
     /// </summary>
-    public delegate void RequestChooseDeletionCandidateHandler(List<Guid> Candidates, ManifestStorageHeuristic Heuristic);
+    public delegate void RequestChooseDeletionCandidateHandler(List<Guid> Candidates, ManifestStorageHeuristic Heuristic, List<Guid> PrioritizeKeepingTagIds, List<Guid> PrioritizeDeletingTagIds);
 
     /// <summary>
     /// </summary>
@@ -178,6 +178,16 @@ namespace BuildSync.Core.Downloads
         public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.LeastAvailable;
 
         /// <summary>
+        ///     List of all tag id's to prioritize keeping when deleting builds for space.
+        /// </summary>
+        public List<Guid> StoragePrioritizeKeepingBuildTagIds { get; set; } = new List<Guid>();
+
+        /// <summary>
+        ///     List of all tag id's to prioritize deleting when deleting builds for space.
+        /// </summary>
+        public List<Guid> StoragePrioritizeDeletingBuildTagIds { get; set; } = new List<Guid>();
+
+        /// <summary>
         /// </summary>
         private const int ManifestRequestInterval = 30 * 1000;
 
@@ -256,6 +266,20 @@ namespace BuildSync.Core.Downloads
             set
             {
                 Internal_StateDirtyCount = value;
+                AreStatesDirty = true;
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        private int Internal_StateBlockDirtyCount;
+
+        public int StateBlockDirtyCount
+        {
+            get => Internal_StateBlockDirtyCount;
+            set
+            {
+                Internal_StateBlockDirtyCount = value;
                 AreStatesDirty = true;
             }
         }
@@ -437,7 +461,7 @@ namespace BuildSync.Core.Downloads
                     // If we don't have the manifest locally we cannot determine we have all blocks, so mark all as unavailable.
                     // Someone probably balls up their local storage.
                     State.BlockStates.SetAll(false);
-                    StateDirtyCount++;
+                    StateBlockDirtyCount++;
 
                     State.State = ManifestDownloadProgressState.RetrievingManifest;
                 }
@@ -819,7 +843,7 @@ namespace BuildSync.Core.Downloads
                         ChangeState(State, ManifestDownloadProgressState.Initializing);
                         State.BlockStates.Resize((int) State.Manifest.BlockCount);
 
-                        StateDirtyCount++;
+                        StateBlockDirtyCount++;
                     }
                     else
                     {
@@ -1443,8 +1467,7 @@ namespace BuildSync.Core.Downloads
                     {
                         if (!State.Active)
                         {
-                            if (!FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder) &&
-                                State.Manifest != null)
+                            if (State.Manifest != null && !FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder))
                             {
                                 DeletionCandidates.Add(State);
                             }
@@ -1461,10 +1484,10 @@ namespace BuildSync.Core.Downloads
                             DeletionCandidatesIds.Add(State.ManifestId);
                         }
 
-                        OnRequestChooseDeletionCandidate?.Invoke(DeletionCandidatesIds, StorageHeuristic);
-
-                        TimeSinceLastPruneRequest = TimeUtils.Ticks;
+                        OnRequestChooseDeletionCandidate?.Invoke(DeletionCandidatesIds, StorageHeuristic, StoragePrioritizeKeepingBuildTagIds, StoragePrioritizeDeletingBuildTagIds);
                     }
+
+                    TimeSinceLastPruneRequest = TimeUtils.Ticks;
                 }
             }
         }
@@ -1513,6 +1536,15 @@ namespace BuildSync.Core.Downloads
 
                     if (Guid.TryParse(Path.GetFileName(Dir), out ManifestId))
                     {
+                        // This download is currently being worked on, don't try and clean it up.
+                        lock (BlockedDownloadManifestIds)
+                        {
+                            if (BlockedDownloadManifestIds.Contains(ManifestId))
+                            {
+                                continue;
+                            }
+                        }
+
                         BuildManifest Manifest = ManifestRegistry.GetManifestById(ManifestId);
                         if (Manifest == null)
                         {
@@ -1651,8 +1683,18 @@ namespace BuildSync.Core.Downloads
                             // Checksum block to make sure nobody has balls it up.
 #if CHECKSUM_EACH_BLOCK
                             if (State.Manifest.BlockChecksums != null)
-                            {
-                                uint Checksum = Crc32.Compute(DataBuffer, (int)BlockInfo.TotalSize);
+                            {                            
+                                uint Checksum = 0;
+                                if (State.Manifest.Version >= 2)
+                                {
+                                    Checksum = Crc32Fast.Compute(DataBuffer, 0, (int)BlockInfo.TotalSize);
+                                }
+                                else
+                                {
+                                    Checksum = Crc32Slow.Compute(DataBuffer, (int)BlockInfo.TotalSize);
+                                }
+
+                                //uint Checksum = Crc32.Compute(DataBuffer, (int)BlockInfo.TotalSize);
                                 uint ExpectedChecksum = State.Manifest.BlockChecksums[BlockIndex];
                                 if (Checksum != ExpectedChecksum)
                                 {
@@ -1663,7 +1705,7 @@ namespace BuildSync.Core.Downloads
 #elif SPARSE_CHECKSUM_EACH_BLOCK
                             if (State.Manifest.SparseBlockChecksums != null)
                             {
-                                uint Checksum = Crc32.ComputeSparse(DataBuffer, (int)BlockInfo.TotalSize);
+                                uint Checksum = Crc32Slow.ComputeSparse(DataBuffer, (int)BlockInfo.TotalSize);
                                 uint ExpectedChecksum = State.Manifest.SparseBlockChecksums[BlockIndex];
                                 if (Checksum != ExpectedChecksum)
                                 {
@@ -1733,8 +1775,18 @@ namespace BuildSync.Core.Downloads
 
 #if CHECKSUM_EACH_BLOCK
             if (State.Manifest.BlockChecksums != null)
-            {
-                uint Checksum = Crc32.Compute(Data.Data, (int)Data.Length);
+            {                                        
+                uint Checksum = 0;
+                if (State.Manifest.Version >= 2)
+                {
+                    Checksum = Crc32Fast.Compute(Data.Data, 0, (int)Data.Length);
+                }
+                else
+                {
+                    Checksum = Crc32Slow.Compute(Data.Data, (int)Data.Length);
+                }
+
+                //uint Checksum = Crc32.Compute(Data.Data, (int)Data.Length);
                 if (Checksum != State.Manifest.BlockChecksums[BlockIndex])
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Manifest, "FAILED: Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to set block data.", BlockIndex, ManifestId.ToString(), State.Manifest.BlockChecksums[BlockIndex], Checksum);
@@ -1742,15 +1794,11 @@ namespace BuildSync.Core.Downloads
                     Callback?.Invoke(WriteState.WasSuccess);
                     return false;
                 }
-                else
-                {
-                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "SUCCESS: Block index {0} in manifest {1}", BlockIndex, ManifestId.ToString());
-                }
             }
 #elif SPARSE_CHECKSUM_EACH_BLOCK
             if (State.Manifest.SparseBlockChecksums != null)
             {
-                uint Checksum = Crc32.ComputeSparse(Data.Data, (int)Data.Length);
+                uint Checksum = Crc32Slow.ComputeSparse(Data.Data, (int)Data.Length);
                 if (Checksum != State.Manifest.SparseBlockChecksums[BlockIndex])
                 {
                     Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to set block data.", BlockIndex, ManifestId.ToString(), State.Manifest.SparseBlockChecksums[BlockIndex], Checksum);
@@ -1821,7 +1869,7 @@ namespace BuildSync.Core.Downloads
 
             // Mark block as having block.
             State.BlockStates.Set(BlockIndex, true);
-            StateDirtyCount++;
+            StateBlockDirtyCount++;
         }
 
         /// <summary>
@@ -1842,7 +1890,7 @@ namespace BuildSync.Core.Downloads
                 State.BlockStates.Set(i, false);
             }
 
-            StateDirtyCount++;
+            StateBlockDirtyCount++;
 
             if (State.State == ManifestDownloadProgressState.Complete && BlockIndices.Count > 0)
             {
@@ -1865,7 +1913,7 @@ namespace BuildSync.Core.Downloads
                 if (State.Manifest == null)
                 {
                     State.BlockStates.SetAll(false);
-                    StateDirtyCount++;
+                    StateBlockDirtyCount++;
                 }
 
                 return;
@@ -1880,7 +1928,7 @@ namespace BuildSync.Core.Downloads
 
             // Mark block as having block.
             State.BlockStates.Set(BlockIndex, false);
-            StateDirtyCount++;
+            StateBlockDirtyCount++;
 
             if (State.State == ManifestDownloadProgressState.Complete && !State.BlockStates.AreAllSet(true))
             {
@@ -1903,7 +1951,7 @@ namespace BuildSync.Core.Downloads
                 if (State != null && State.Manifest == null)
                 {
                     State.BlockStates.SetAll(false);
-                    StateDirtyCount++;
+                    StateBlockDirtyCount++;
                 }
 
                 return;
@@ -1927,7 +1975,7 @@ namespace BuildSync.Core.Downloads
                 State.BlockStates.CompactRanges();
             }
 
-            StateDirtyCount++;
+            StateBlockDirtyCount++;
 
             if (State.State == ManifestDownloadProgressState.Complete && !State.BlockStates.AreAllSet(true))
             {

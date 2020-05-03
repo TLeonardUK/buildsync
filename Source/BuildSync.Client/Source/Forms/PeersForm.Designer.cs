@@ -47,6 +47,7 @@
             this.columnHeader12 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.columnHeader13 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SuspendLayout();
             // 
             // MainListView
@@ -55,6 +56,7 @@
             this.MainListView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.MainListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
+            this.columnHeader13,
             this.columnHeader4,
             this.columnHeader10,
             this.columnHeader5,
@@ -90,7 +92,7 @@
             // columnHeader1
             // 
             this.columnHeader1.Text = "Username";
-            this.columnHeader1.Width = 190;
+            this.columnHeader1.Width = 130;
             // 
             // columnHeader4
             // 
@@ -99,8 +101,8 @@
             // 
             // columnHeader10
             // 
-            this.columnHeader10.Text = "Peak Down Rate";
-            this.columnHeader10.Width = 100;
+            this.columnHeader10.Text = "Peak Down";
+            this.columnHeader10.Width = 75;
             // 
             // columnHeader5
             // 
@@ -109,8 +111,8 @@
             // 
             // columnHeader11
             // 
-            this.columnHeader11.Text = "Peak Up Rate";
-            this.columnHeader11.Width = 100;
+            this.columnHeader11.Text = "Peak Up";
+            this.columnHeader11.Width = 75;
             // 
             // columnHeader6
             // 
@@ -125,7 +127,7 @@
             // columnHeader3
             // 
             this.columnHeader3.Text = "Last Seen";
-            this.columnHeader3.Width = 140;
+            this.columnHeader3.Width = 110;
             // 
             // columnHeader7
             // 
@@ -155,6 +157,11 @@
             // 
             this.ListUpdateTimer.Interval = 1000;
             this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
+            // 
+            // columnHeader13
+            // 
+            this.columnHeader13.Text = "Hostname";
+            this.columnHeader13.Width = 130;
             // 
             // PeersForm
             // 
@@ -194,5 +201,6 @@
         private System.Windows.Forms.ColumnHeader columnHeader10;
         private System.Windows.Forms.ColumnHeader columnHeader11;
         private System.Windows.Forms.ColumnHeader columnHeader12;
+        private System.Windows.Forms.ColumnHeader columnHeader13;
     }
 }

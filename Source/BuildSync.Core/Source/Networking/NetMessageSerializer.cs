@@ -20,6 +20,8 @@
 */
 
 using System;
+using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
 
 namespace BuildSync.Core.Networking
@@ -265,6 +267,50 @@ namespace BuildSync.Core.Networking
             }
 
             Value = (T) (object) Id;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Value"></param>
+        /*        
+        // C# Specialization Fucking blows, why the hell can I not do something like this -_-
+
+        public void SerializeList<T>(ref List<T> Value)
+            where T : new()
+        {
+            int Count = Value.Count;
+            Serialize(ref Count);
+
+            for (int i = 0; i < Count; i++)
+            {
+                if (IsLoading)
+                {
+                    Value.Add(new T());
+                }
+
+                T Id = Value[i];
+                Serialize<T>(ref Id);
+                Value[i] = Id;
+            }
+        }
+        */
+
+        public void SerializeList(ref List<Guid> Value)
+        {
+            int Count = Value.Count;
+            Serialize(ref Count);
+
+            for (int i = 0; i < Count; i++)
+            {
+                if (IsLoading)
+                {
+                    Value.Add(new Guid());
+                }
+
+                Guid Id = Value[i];
+                Serialize(ref Id);
+                Value[i] = Id;
+            }
         }
     }
 }

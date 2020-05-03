@@ -193,7 +193,7 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.LeastAvailable;
+        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.Oldest;
 
         /// <summary>
         /// 
@@ -338,6 +338,16 @@ namespace BuildSync.Client
         ///     List of all client tags id's for the client.
         /// </summary>
         public List<Guid> TagIds { get; set; } = new List<Guid>();
+
+        /// <summary>
+        ///     List of all tag id's to prioritize keeping when deleting builds for space.
+        /// </summary>
+        public List<Guid> PrioritizeKeepingBuildTagIds { get; set; } = new List<Guid>();
+
+        /// <summary>
+        ///     List of all tag id's to prioritize deleting when deleting builds for space.
+        /// </summary>
+        public List<Guid> PrioritizeDeletingBuildTagIds { get; set; } = new List<Guid>();
 
         /// <summary>
         /// </summary>
