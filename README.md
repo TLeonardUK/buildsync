@@ -42,6 +42,12 @@ Provided with the tool is a help file that you can access from the clients Help-
 
 <a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true" width="350"></a>
 
+<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true" width="350"></a>
+
+<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true" width="350"></a>
+
+<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true" width="350"></a>
+
 ## Contact Details
 Any questions you are welcome to send me an email;
 
