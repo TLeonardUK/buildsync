@@ -14,7 +14,13 @@ The tool works similarly to peer-to-peer torrenting, with each peer both downloa
 
 It also supports scriptable support for installation and user-defined parametric launching of builds. This allows things like automatically installing console packages to devkits, or giving the user different options for launching a build - to different levels, in windowed mode, etc.
 
-It uses delta-encoding, reuse of previous build data, and compression to reduce the bandwidth transfered.
+It uses various techniques such as delta-encoding, re-use of previous build data, and compression to reduce the bandwidth transfered.
+
+## Features
+
+* A
+* B
+* C
 
 ## Building
 The source code comes as a visual studio 2019 solution. A few additional extensions are required to fully build install and help files.
@@ -24,9 +30,6 @@ The source code comes as a visual studio 2019 solution. A few additional extensi
 
 ## Basic Usage
 Provided with the tool is a help file that you can access from the clients Help->View Help menu item. This gives a general description on setting it up and general usage.
-
-## Speeds
-The tool should be able to staurate a 1gbps connection if downloading/uploading from an SSD. Higher speeds are theoretical possible, but untested, and will probably run into other limits.
 
 ## Screenshots
 <a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true" width="350"></a>
