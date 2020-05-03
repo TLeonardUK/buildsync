@@ -17,10 +17,22 @@ It also supports scriptable support for installation and user-defined parametric
 It uses various techniques such as delta-encoding, re-use of previous build data, and compression to reduce the bandwidth transfered.
 
 ## Features
+* Centralized server model allowing global build registry, access control and network management.
+* Distributed P2P download model to increased maximum throughput across your network and reduce bandwith saturation of any specific peers.
+* Granular usergroup based permissions to restrict access to builds, eg. by project or platform.
+* C# Scriptable installation of builds. Permits doing things such as auto-installing builds to devkits, setting up symlinks, decompressing files, apply patches, etc.
+* C# Scriptable launching of builds. Allows the user to be given launch options (boot to specific maps, to specific kits, etc), as well as configuring how the build is launched (from a devkit, on the local machine, etc).
+* Automatic distribution of updates.
+* Automatic updating and installation of builds as they become available, or ability to install indiividual builds.
+* Flexible tagging support used to control which builds to download and which to exclude. Allows tagging builds for useful states such as "Latest-QA, Broken, etc".
+* Automatic management of storage space. Set the maximum amount of space you can afford to use for builds, along with what builds you would prefer to prioritize keeping (eg. builds tagged as archived) or deleting (eg. builds tagged as broken). After that the tool will dynamically manage builds to try to keep within space limits.
+* Dynamic management of network routing. Permits the explicit definitions of what client tags can communicate with each other, and what bandwidth limits are enforced. Using this you can do things like segregating offices, setting up spatial proxies, setting up replica servers, changing to a central download model rather than P2P, etc.
+* Validation of builds to ensure transfers were successful. Can be re-run to erase local changes.
+* Re-use of files from previous builds to reduce download sizes.
+* Transport level compression to reduce data transfered.
+* Source control integration (currently for Perforce and GIT). Can be used to filter which builds are downloaded (eg. only downloading builds at or below the current head revision of a workspace).
 
-* A
-* B
-* C
+
 
 ## Building
 The source code comes as a visual studio 2019 solution. A few additional extensions are required to fully build install and help files.
