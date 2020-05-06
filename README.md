@@ -58,9 +58,6 @@ Provided with the tool is a help file that you can access from the clients Help-
  </tr>
 </table>
 
-## FAQ
-TODO
-
 ## Contact Details
 Any questions you are welcome to send me an email;
 
