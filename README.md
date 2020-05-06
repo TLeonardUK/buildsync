@@ -27,6 +27,7 @@ In principle it works similarily to peer-to-peer torrenting but with the benefit
 * Re-use of files from previous builds to reduce download sizes.
 * Transport level SNAPPY compression to reduce data transfered.
 * Source control integration (currently for Perforce and GIT). Can be used to filter which builds are downloaded (eg. only downloading builds at or below the current head revision of a workspace).
+* Automatic mass replication of builds. Allowing machines to be setup to act as replicas or proxies. 
 
 ## Building
 The source code comes as a visual studio 2019 solution. A few additional extensions are required to fully build install and help files.
