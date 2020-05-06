@@ -39,21 +39,24 @@ The source code comes as a visual studio 2019 solution. A few additional extensi
 Provided with the tool is a help file that you can access from the clients Help->View Help menu item. This gives a general description on setting it up and general usage.
 
 ## Screenshots
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true" width="350"></a>
+<html>
+<tr>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true" width="350"></a></td>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true" width="350"></a></td>
+ </tr>
+<tr>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true" width="350"></a></td>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true" width="350"></a></td>
+ </tr>
+ <tr>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true" width="350"></a></td>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true" width="350"></a></td>
+ </tr>
+ <tr>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true" width="350"></a></td>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true" width="350"></a></td>
+ </tr>
+</table>
 
 ## Contact Details
 Any questions you are welcome to send me an email;
