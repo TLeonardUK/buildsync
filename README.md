@@ -8,7 +8,7 @@ ___.         .__.__       .___
 ```
 
 ## About buildsync
-Buildsync is a simple windows tool for distributing package builds, binaries and tool across internal LAN networks. It's primarily focused on the needs of game developers, and is active use on various large projects.
+Buildsync is a simple windows tool for distributing package builds, binaries and tools across internal LAN networks. It's primarily focused on the needs of game developers, and is active use on various large projects.
 
 In principle it works similarily to peer-to-peer torrenting but with the benefit of having a central server which can maintain a build registry and permit the coordination of admin tasks (modifying network routing, user permissions and so forth). It also supports C# scriptable actions for each build, to configure installation, launching and so forth.
 
