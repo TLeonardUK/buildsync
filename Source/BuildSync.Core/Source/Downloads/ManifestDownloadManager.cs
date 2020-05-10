@@ -83,6 +83,27 @@ namespace BuildSync.Core.Downloads
         public long Size;
 
         public bool Recieved;
+
+        public override bool Equals(object x)
+        {
+            if (!(x is ManifestPendingDownloadBlock))
+            {
+                return false;
+            }
+
+            ManifestPendingDownloadBlock pair = (ManifestPendingDownloadBlock)x;
+
+            return ManifestId == pair.ManifestId &&
+                   BlockIndex == pair.BlockIndex;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            hash = hash * 31 + ManifestId.GetHashCode();
+            hash = hash * 31 + BlockIndex.GetHashCode();
+            return hash;
+        }
     }
 
     /// <summary>
@@ -174,7 +195,7 @@ namespace BuildSync.Core.Downloads
 #if LARGE_DOWNLOAD_QUEUE
         private const int MaxDownloadQueueItems = 1000;
 #else
-        private const int MaxDownloadQueueItems = 200;
+        private const int MaxDownloadQueueItems = 512;
 #endif
 
         /// <summary>

@@ -694,9 +694,9 @@ namespace BuildSync.Core.Client
 
             ListenConnection.OnClientConnect += PeerConnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 8);
-            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 128);
-            MemoryPool.PreallocateBuffers(Crc32Slow.BufferSize, 16);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 64);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.DefaultBlockSize, 64);
+            MemoryPool.PreallocateBuffers(Crc32Slow.BufferSize, 128);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
 
             try
@@ -2276,22 +2276,26 @@ namespace BuildSync.Core.Client
                     peer.PruneTimeoutDownloads();
                 }
 
+                // Hash all the active downloads to save lookup time.
+                HashSet<ManifestPendingDownloadBlock> ActiveDownloads = new HashSet<ManifestPendingDownloadBlock>();
+                foreach (Peer peer in Peers)
+                {
+                    lock (peer.ActiveBlockDownloads)
+                    {
+                        foreach (ManifestPendingDownloadBlock Download in peer.ActiveBlockDownloads)
+                        {
+                            ActiveDownloads.Add(Download);
+                        }
+                    }
+                }
+
                 for (int i = 0; i < ManifestDownloadManager.DownloadQueue.Count; i++)
                 {
                     ManifestPendingDownloadBlock Item = ManifestDownloadManager.DownloadQueue[i];
 
                     // Make sure block is not already being downloaded.
                     // TODO: Change to a set lookup, this is slow.
-                    bool AlreadyDownloading = false;
-                    foreach (Peer peer in Peers)
-                    {
-                        if (peer.IsDownloadingBlock(Item))
-                        {
-                            AlreadyDownloading = true;
-                        }
-                    }
-
-                    if (AlreadyDownloading)
+                    if (ActiveDownloads.Contains(Item))
                     {
                         continue;
                     }
@@ -2306,6 +2310,7 @@ namespace BuildSync.Core.Client
                     // Find all peers that have this block.
                     List<Peer> LeastLoadedPeers = new List<Peer>();
                     long LeastLoadedPeerAvailableBandwidth = 0;
+                    bool AnyPeersWithSpace = false;
                     for (int j = 0; j < Peers.Count; j++)
                     {
                         Peer Peer = Peers[j];
@@ -2314,13 +2319,18 @@ namespace BuildSync.Core.Client
                             continue;
                         }
 
+                        long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
+                        long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
+
+                        if (BandwidthAvailable > 0)
+                        {
+                            AnyPeersWithSpace = true;
+                        }
+
                         if (!Peer.HasBlock(Item))
                         {
                             continue;
                         }
-
-                        long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
-                        long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
 
                         if ((BandwidthAvailable >= BlockInfo.TotalSize || BlockInfo.TotalSize > MaxBandwidth) && (LeastLoadedPeers.Count == 0 || Peer.ActiveBlockDownloadSize <= LeastLoadedPeerAvailableBandwidth))
                         {
@@ -2352,6 +2362,14 @@ namespace BuildSync.Core.Client
                         Item.Size = BlockInfo.TotalSize;
 
                         LeastLoadedPeer.AddActiveBlockDownload(Item);
+                    }
+                    else
+                    {
+                        // Early out if we now know no peers have bandwidth available.
+                        if (!AnyPeersWithSpace)
+                        {
+                            break;
+                        }
                     }
                 }
 

@@ -142,8 +142,8 @@ namespace BuildSync.Core.Server
             ListenConnection.OnClientConnect += ClientConnected;
             ListenConnection.OnClientDisconnect += ClientDisconnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 8);
-            MemoryPool.PreallocateBuffers((int)BuildManifest.DefaultBlockSize, 16);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 32);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.DefaultBlockSize, 32);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
         }
 
