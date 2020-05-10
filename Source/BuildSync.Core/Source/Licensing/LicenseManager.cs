@@ -119,10 +119,13 @@ namespace BuildSync.Core.Licensing
         /// </summary>
         private void PrintLicenseInfo()
         {
-            Logger.Log(LogLevel.Info, LogCategory.Licensing, "Active License:");
-            Logger.Log(LogLevel.Info, LogCategory.Licensing, "\tLicensed to: {0}", ActiveLicense.LicensedTo);
-            Logger.Log(LogLevel.Info, LogCategory.Licensing, "\tMax seats: {0}", ActiveLicense.MaxSeats);
-            Logger.Log(LogLevel.Info, LogCategory.Licensing, "\tExpiration date: {0}", ActiveLicense.ExpirationTime);
+            if (!AppVersion.NonLicensed)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Licensing, "Active License:");
+                Logger.Log(LogLevel.Info, LogCategory.Licensing, "\tLicensed to: {0}", ActiveLicense.LicensedTo);
+                Logger.Log(LogLevel.Info, LogCategory.Licensing, "\tMax seats: {0}", ActiveLicense.MaxSeats);
+                Logger.Log(LogLevel.Info, LogCategory.Licensing, "\tExpiration date: {0}", ActiveLicense.ExpirationTime);
+            }
         }
     }
 }

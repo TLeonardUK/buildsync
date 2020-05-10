@@ -409,13 +409,25 @@ namespace BuildSync.Server
         /// </summary>
         private static void PrintStatus()
         {
-            Logger.Log(
-                LogLevel.Info, LogCategory.Main, "Status: Clients={0}/{1}, Download={2}, Upload={3}",
-                NetServer.ClientCount,
-                NetServer.MaxConnectedClients,
-                StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn),
-                StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut)
-            );
+            if (AppVersion.NonLicensed)
+            {
+                Logger.Log(
+                    LogLevel.Info, LogCategory.Main, "Status: Clients={0}, Download={1}, Upload={2}",
+                    NetServer.ClientCount,
+                    StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn),
+                    StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut)
+                );
+            }
+            else
+            {
+                Logger.Log(
+                    LogLevel.Info, LogCategory.Main, "Status: Clients={0}/{1}, Download={2}, Upload={3}",
+                    NetServer.ClientCount,
+                    NetServer.MaxConnectedClients,
+                    StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn),
+                    StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut)
+                );
+            }
         }
 
         #region Unmanaged Functions

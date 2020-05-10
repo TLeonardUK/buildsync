@@ -2193,7 +2193,7 @@ namespace BuildSync.Core.Networking
                         }
                     }
 
-                    if (ParentConnection != null)
+                    if (ParentConnection != null && !AppVersion.NonLicensed)
                     {
                         Logger.Log(LogLevel.Info, LogCategory.Transport, "Current seats used {0} of {1}.", ParentConnection.Clients.Count, ParentConnection.MaxConnectedClients);
                     }
