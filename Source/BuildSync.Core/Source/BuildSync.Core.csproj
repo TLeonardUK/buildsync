@@ -215,14 +215,18 @@
       <DependentUpon>SizeTextBox.cs</DependentUpon>
     </Compile>
     <Compile Include="Networking\Messages\NetMessage_AddTagToClient.cs" />
+    <Compile Include="Networking\Messages\NetMessage_BuildUpdated.cs" />
     <Compile Include="Networking\Messages\NetMessage_CreateRoute.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteRoute.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteTag.cs" />
     <Compile Include="Networking\Messages\NetMessage_CreateTag.cs" />
     <Compile Include="Networking\Messages\NetMessage_AddTagToManifest.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteUserGroup.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetFilteredBuilds.cs" />
+    <Compile Include="Networking\Messages\NetMessage_GetFilteredBuildsResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetRoutes.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetRoutesResponse.cs" />
+    <Compile Include="Networking\Messages\NetMessage_BulidPublished.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetTags.cs" />
     <Compile Include="Networking\Messages\NetMessage_GetTagsResponse.cs" />
     <Compile Include="Networking\Messages\NetMessage_RemoveTagFromClient.cs" />
@@ -301,6 +305,8 @@
     <Compile Include="Scripting\ScriptLaunchMode.cs" />
     <Compile Include="Scripting\ScriptUtils.cs" />
     <Compile Include="Server\ServerConnectedClient.cs" />
+    <Compile Include="Storage\StorageLocation.cs" />
+    <Compile Include="Storage\StorageManager.cs" />
     <Compile Include="Tags\Tag.cs" />
     <Compile Include="Tags\TagRegistry.cs" />
     <Compile Include="Users\User.cs" />

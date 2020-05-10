@@ -120,6 +120,11 @@ namespace BuildSync.Core.Manifests
         public List<Guid> TagIds = new List<Guid>();
 
         /// <summary>
+        /// 
+        /// </summary>
+        public DateTime ModifiedTime = DateTime.UtcNow;
+
+        /// <summary>
         /// </summary>
         /// <param name="FilePath"></param>
         /// <returns></returns>
@@ -145,7 +150,11 @@ namespace BuildSync.Core.Manifests
     {
         /// <summary>
         /// </summary>
-        public static long BlockSize = 1 * 1024 * 1024;
+        public static long MaxBlockSize = 1 * 1024 * 1024;
+
+        /// <summary>
+        /// </summary>
+        public static long DefaultBlockSize = 256 * 1024;
 
         /// <summary>
         /// 
@@ -156,6 +165,11 @@ namespace BuildSync.Core.Manifests
         /// 
         /// </summary>
         public const int CurrentVersion = 2;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long BlockSize = DefaultBlockSize;
 
         /// <summary>
         /// 
@@ -231,6 +245,9 @@ namespace BuildSync.Core.Manifests
             // Order main list from largest to smallest.
             RemainingFiles.Sort((Item1, Item2) => -Item1.Length.CompareTo(Item2.Length));
 
+            // Block size.
+            long ActualBlockSize = DefaultBlockSize;
+
             // Try and add in optimal block packing format.
             long BlockIndex = 0;
             while (RemainingFiles.Count > 0)
@@ -240,8 +257,8 @@ namespace BuildSync.Core.Manifests
                 OrderedList.Add(Info);
                 //Console.WriteLine("Block[{0}] {1}", BlockIndex, Info.Name);
 
-                long BlockCount = (Info.Length + (BlockSize - 1)) / BlockSize;
-                long BytesRemaining = (Info.Length % BlockSize) == 0 ? 0 : BlockSize - Info.Length % BlockSize;
+                long BlockCount = (Info.Length + (ActualBlockSize - 1)) / ActualBlockSize;
+                long BytesRemaining = (Info.Length % ActualBlockSize) == 0 ? 0 : ActualBlockSize - Info.Length % ActualBlockSize;
                 BlockIndex += BlockCount;
 
                 long SubBlockCount = BlockCount;
@@ -278,6 +295,7 @@ namespace BuildSync.Core.Manifests
             Manifest.SparseBlockChecksums = null;
 #endif
             Manifest.Version = BuildManifest.CurrentVersion;
+            Manifest.BlockSize = ActualBlockSize;
 
             List<Task> ChecksumTasks = new List<Task>();
             int FileCounter = 0;
@@ -342,16 +360,13 @@ namespace BuildSync.Core.Manifests
             Manifest.DebugCheck();
 
             // Calculate checksum for each individual block.
-            long TimeFast = 0;
-            long TimeSlow = 0;
-
             for (int i = 0; i < Environment.ProcessorCount; i++)
             {
                 ChecksumTasks.Add(
                     Task.Run(
                         () =>
                         {
-                            byte[] Buffer = new byte[BlockSize];
+                            byte[] Buffer = new byte[ActualBlockSize];
 
                             Stopwatch stopwatch = new Stopwatch();
 
@@ -404,10 +419,19 @@ namespace BuildSync.Core.Manifests
                 task.Wait();
             }
 
-            Console.WriteLine("Time Fast: {0} s", TimeFast / (float)Stopwatch.Frequency);
-            Console.WriteLine("Time Slow: {0} s", TimeSlow / (float)Stopwatch.Frequency);
-
             return Manifest;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void UpgradeVersion()
+        {
+            // Old unconfigurable block size manifest.
+            if (BlockSize == 0)
+            {
+                BlockSize = 1 * 1024 * 1024;
+            }
         }
 
         /// <summary>
@@ -425,6 +449,7 @@ namespace BuildSync.Core.Manifests
             BuildManifest Manifest = FileUtils.ReadFromArray<BuildManifest>(ByteArray);
             if (Manifest != null)
             {
+                Manifest.UpgradeVersion();
                 Manifest.CacheBlockInfo();
                 Manifest.CacheSizeInfo();
             }
@@ -630,6 +655,7 @@ namespace BuildSync.Core.Manifests
             BuildManifest Manifest = FileUtils.ReadFromBinaryFile<BuildManifest>(FilePath);
             if (Manifest != null)
             {
+                Manifest.UpgradeVersion();
                 if (CacheDownloadInfo)
                 {
                     Manifest.CacheBlockInfo();
@@ -833,7 +859,7 @@ namespace BuildSync.Core.Manifests
                     BlockInfo[BlockIndex].SubBlocks.Add(SubBlock);
                     BlockInfo[BlockIndex].TotalSize += SubBlock.FileSize;
 
-                    Debug.Assert(BlockInfo[BlockIndex].TotalSize <= BuildManifest.BlockSize);
+                    Debug.Assert(BlockInfo[BlockIndex].TotalSize <= BlockSize);
 
                     Total += SubBlock.FileSize;
 
@@ -847,7 +873,7 @@ namespace BuildSync.Core.Manifests
                 int LastBlockIndex = Info.LastBlockIndex;
 
                 // Fill remaining space with blocks.
-                Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BuildManifest.BlockSize);
+                Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BlockSize);
                 while (BytesRemaining > 0 && fi < Files.Count && BlockInfo[LastBlockIndex].SubBlocks.Count < BuildManifest.MaxSubBlockCount)
                 {
                     BuildManifestFileInfo NextInfo = Files[fi];
@@ -866,7 +892,7 @@ namespace BuildSync.Core.Manifests
                         BlockInfo[LastBlockIndex].SubBlocks.Add(SubBlock);
                         BlockInfo[LastBlockIndex].TotalSize += SubBlock.FileSize;
 
-                        Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BuildManifest.BlockSize);
+                        Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BlockSize);
 
                         //Console.WriteLine("\tSubblock[{0}] {1}", BlockIndex, SubBlock.File.Path);
                     }

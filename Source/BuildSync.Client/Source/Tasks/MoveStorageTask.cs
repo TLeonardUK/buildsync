@@ -49,16 +49,6 @@ namespace BuildSync.Client.Tasks
     public class MoveStorageTask
     {
         /// <summary>
-        /// 
-        /// </summary>
-        private string DestPath = "";
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private string SrcPath = "";
-
-        /// <summary>
         /// </summary>
         public string CurrentFile { get; private set; }
 
@@ -79,10 +69,8 @@ namespace BuildSync.Client.Tasks
         /// <param name="Name"></param>
         /// <param name="VirtualPath"></param>
         /// <param name="LocalPath"></param>
-        public void Start(string InSrcPath, string InDestPath)
+        public void Start()
         {
-            SrcPath = InSrcPath;
-            DestPath = InDestPath;
             State = MoveStorageState.WaitingForIOQueueToDrain;
             Progress = 0;
 
@@ -126,29 +114,36 @@ namespace BuildSync.Client.Tasks
 
                         // Incase someone has parented the storage directory to a root drive or something
                         // super stupid like that, make sure we only move our sub directories around.
-                        string[] OldDirectories =
-                        {
-                            Path.Combine(SrcPath, "Builds"),
-                            Path.Combine(SrcPath, "Manifests")
-                        };
-                        string[] NewDirectories =
-                        {
-                            Path.Combine(DestPath, "Builds"),
-                            Path.Combine(DestPath, "Manifests")
-                        };
+                        List<string> OldDirectories = new List<string>();
+                        List<string> NewDirectories = new List<string>();
+                        Program.StorageManager.GetMoveStorageTasks(ref OldDirectories, ref NewDirectories);
 
                         try
                         {
                             // Make list of everything we need to copy around.
                             List<Tuple<string, string, string>> FilesToCopy = new List<Tuple<string, string, string>>();
-                            foreach (string Dir in OldDirectories)
+                            int Index = 0;
+                            foreach (string SrcPath in OldDirectories)
                             {
-                                string[] Files = Directory.GetFiles(SrcPath, "*", SearchOption.AllDirectories);
-                                foreach (string File in Files)
+                                string DestPath = NewDirectories[Index++];
+                                if (!Directory.Exists(SrcPath))
                                 {
-                                    string RelativePath = File.Substring(SrcPath.Length).Trim('\\', '/');
-                                    string NewPath = Path.Combine(DestPath, RelativePath);
-                                    FilesToCopy.Add(new Tuple<string, string, string>(File, NewPath, RelativePath));
+                                    continue;
+                                }
+
+                                if (DestPath == "")
+                                {
+                                    Directory.Delete(SrcPath, true);
+                                }
+                                else
+                                {
+                                    string[] Files = Directory.GetFiles(SrcPath, "*", SearchOption.AllDirectories);
+                                    foreach (string File in Files)
+                                    {
+                                        string RelativePath = File.Substring(SrcPath.Length).Trim('\\', '/');
+                                        string NewPath = Path.Combine(DestPath, RelativePath);
+                                        FilesToCopy.Add(new Tuple<string, string, string>(File, NewPath, RelativePath));
+                                    }
                                 }
                             }
 
@@ -213,8 +208,7 @@ namespace BuildSync.Client.Tasks
                             }
 
                             // Update local paths of all manifests.
-                            Program.ManifestDownloadManager.UpdateStoragePath(Path.Combine(DestPath, "Builds"));
-                            Program.BuildRegistry.UpdateStoragePath(Path.Combine(DestPath, "Manifests"));
+                            Program.ManifestDownloadManager.UpdateStoragePath(OldDirectories, NewDirectories);
 
                             State = MoveStorageState.Success;
                         }

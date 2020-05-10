@@ -21,10 +21,29 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using BuildSync.Core.Utils;
 
-namespace BuildSync.Server.Tasks
+namespace BuildSync.Core.Networking.Messages
 {
+    /// <summary>
+    /// </summary>
+    public class NetMessage_BuildPublished : NetMessage
+    {
+        /// <summary>
+        /// </summary>
+        public Guid ManifestId;
+
+        /// <summary>
+        /// </summary>
+        public string Path;
+
+        /// <summary>
+        ///     Serializes the payload of this message to a memory buffer.
+        /// </summary>
+        /// <param name="serializer">Serializer to read/write payload to.</param>
+        protected override void SerializePayload(NetMessageSerializer serializer)
+        {
+            serializer.Serialize(ref ManifestId);
+            serializer.Serialize(ref Path);
+        }
+    }
 }

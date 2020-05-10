@@ -63,9 +63,9 @@
             listViewGroup2});
             this.workspaceList.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
             this.workspaceList.HideSelection = false;
-            this.workspaceList.Location = new System.Drawing.Point(3, 42);
+            this.workspaceList.Location = new System.Drawing.Point(14, 42);
             this.workspaceList.Name = "workspaceList";
-            this.workspaceList.Size = new System.Drawing.Size(510, 191);
+            this.workspaceList.Size = new System.Drawing.Size(490, 268);
             this.workspaceList.TabIndex = 0;
             this.workspaceList.UseCompatibleStateImageBehavior = false;
             this.workspaceList.View = System.Windows.Forms.View.Details;
@@ -74,7 +74,7 @@
             // columnHeader1
             // 
             this.columnHeader1.Text = "Server";
-            this.columnHeader1.Width = 120;
+            this.columnHeader1.Width = 110;
             // 
             // columnHeader2
             // 
@@ -94,7 +94,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(3, 16);
+            this.label1.Location = new System.Drawing.Point(11, 16);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(140, 13);
             this.label1.TabIndex = 1;
@@ -114,7 +114,7 @@
             this.AddServerButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.AddServerButton.ImageIndex = 0;
             this.AddServerButton.ImageList = this.ButtonImageIndex;
-            this.AddServerButton.Location = new System.Drawing.Point(448, 8);
+            this.AddServerButton.Location = new System.Drawing.Point(439, 8);
             this.AddServerButton.Margin = new System.Windows.Forms.Padding(2);
             this.AddServerButton.Name = "AddServerButton";
             this.AddServerButton.Size = new System.Drawing.Size(30, 29);
@@ -127,7 +127,7 @@
             this.RemoveServerButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.RemoveServerButton.ImageIndex = 1;
             this.RemoveServerButton.ImageList = this.ButtonImageIndex;
-            this.RemoveServerButton.Location = new System.Drawing.Point(483, 8);
+            this.RemoveServerButton.Location = new System.Drawing.Point(474, 8);
             this.RemoveServerButton.Margin = new System.Windows.Forms.Padding(2);
             this.RemoveServerButton.Name = "RemoveServerButton";
             this.RemoveServerButton.Size = new System.Drawing.Size(30, 29);
@@ -144,7 +144,7 @@
             this.Controls.Add(this.workspaceList);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "ScmSettings";
-            this.Size = new System.Drawing.Size(519, 236);
+            this.Size = new System.Drawing.Size(519, 313);
             this.ResumeLayout(false);
             this.PerformLayout();
 

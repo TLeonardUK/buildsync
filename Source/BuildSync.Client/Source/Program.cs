@@ -39,6 +39,7 @@ using BuildSync.Core.Scm.Perforce;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Tags;
 using BuildSync.Core.Routes;
+using BuildSync.Core.Storage;
 using CommandLine;
 
 namespace BuildSync.Client
@@ -75,6 +76,10 @@ namespace BuildSync.Client
 
         /// <summary>
         /// </summary>
+        public static StorageManager StorageManager;
+
+        /// <summary>
+        /// </summary>
         public static DownloadManager DownloadManager;
 
         /// <summary>
@@ -108,10 +113,6 @@ namespace BuildSync.Client
         /// <summary>
         /// </summary>
         public static Settings Settings;
-
-        /// <summary>
-        /// </summary>
-        private static string CurrentStoragePath = "";
 
         /// <summary>
         /// </summary>
@@ -188,36 +189,27 @@ namespace BuildSync.Client
             }
 
             // Storage settings.
-            if (Settings.StoragePath != CurrentStoragePath)
+            if (StorageManager != null && StorageManager.MoveLocations(Settings.StorageLocations))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply storage path change");
 
-                MoveStorageDirectoryForm Dialog = new MoveStorageDirectoryForm(CurrentStoragePath, Settings.StoragePath);
-                if (Dialog.ShowDialog() != DialogResult.OK)
-                {
-                    Settings.StoragePath = CurrentStoragePath;
-                }
-                else
-                {
-                    CurrentStoragePath = Settings.StoragePath;
-                }
+                MoveStorageDirectoryForm Dialog = new MoveStorageDirectoryForm();
+                Dialog.ShowDialog();
 
                 SaveSettings();
             }
 
-            if (ManifestDownloadManager != null && (
-                    Settings.StorageMaxSize != ManifestDownloadManager.StorageMaxSize || 
-                    Settings.StorageHeuristic != ManifestDownloadManager.StorageHeuristic ||
-                    !ManifestDownloadManager.StoragePrioritizeKeepingBuildTagIds.IsEqual(Settings.PrioritizeKeepingBuildTagIds) ||
-                    !ManifestDownloadManager.StoragePrioritizeDeletingBuildTagIds.IsEqual(Settings.PrioritizeDeletingBuildTagIds)
+            if (StorageManager != null && (
+                    Settings.StorageHeuristic != StorageManager.StorageHeuristic ||
+                    !StorageManager.StoragePrioritizeKeepingBuildTagIds.IsEqual(Settings.PrioritizeKeepingBuildTagIds) ||
+                    !StorageManager.StoragePrioritizeDeletingBuildTagIds.IsEqual(Settings.PrioritizeDeletingBuildTagIds)
                 ))
             {
                 Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply manifest download manager settings");
 
-                ManifestDownloadManager.StorageMaxSize = Settings.StorageMaxSize;
-                ManifestDownloadManager.StorageHeuristic = Settings.StorageHeuristic;
-                ManifestDownloadManager.StoragePrioritizeKeepingBuildTagIds = Settings.PrioritizeKeepingBuildTagIds;
-                ManifestDownloadManager.StoragePrioritizeDeletingBuildTagIds = Settings.PrioritizeDeletingBuildTagIds;
+                StorageManager.StorageHeuristic = Settings.StorageHeuristic;
+                StorageManager.StoragePrioritizeKeepingBuildTagIds = Settings.PrioritizeKeepingBuildTagIds;
+                StorageManager.StoragePrioritizeDeletingBuildTagIds = Settings.PrioritizeDeletingBuildTagIds;
 
                 SaveSettings();
             }
@@ -298,6 +290,10 @@ namespace BuildSync.Client
             ManifestDownloadManager.SkipValidation = Settings.SkipValidation;
             ManifestDownloadManager.SkipDiskAllocation = Settings.SkipDiskAllocation;
             ManifestDownloadManager.AutoFixValidationErrors = Settings.AutoFixValidationErrors;
+
+            DownloadManager.AutoReplicate = Settings.AutoReplicate;
+            DownloadManager.ReplicateSelectTags = Settings.ReplicateSelectTags;
+            DownloadManager.ReplicateIgnoreTags = Settings.ReplicateIgnoreTags;
 
             // General settings.
             Logger.MaximumVerbosity = Program.Settings.LoggingLevel;
@@ -491,6 +487,7 @@ namespace BuildSync.Client
             NetClient.Poll();
             DownloadManager.Poll(NetClient.IsReadyForData);
             ManifestDownloadManager.Poll();
+            StorageManager.Poll();
 
             // Update save data if download states have changed recently.
             if (TimeUtils.Ticks - LastSettingsSaveTime > MinimumTimeBetweenSettingsSaves || ForceSaveSettingsPending)
@@ -525,7 +522,15 @@ namespace BuildSync.Client
             ScmManager = new ScmManager();
             IOQueue = new AsyncIOQueue();
             ManifestDownloadManager = new ManifestDownloadManager();
+
             DownloadManager = new DownloadManager();
+            DownloadManager.OnRequestReplicatedBuilds += (List<Guid> SelectTags, List<Guid> IgnoreTags, DateTime NewerThan) =>
+            {
+                NetClient.RequestFilteredBuilds(SelectTags, IgnoreTags, NewerThan);
+
+                Settings.ReplicationNewerThanTime = DownloadManager.ReplicationNewerThanTime;
+                SaveSettings();
+            };
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Initializing settings");
             InitSettings();
@@ -534,10 +539,12 @@ namespace BuildSync.Client
 
             TagRegistry = new TagRegistry();
             RouteRegistry = new RouteRegistry(null, TagRegistry);
+            BuildRegistry = new BuildManifestRegistry(TagRegistry);
+
+            StorageManager = new StorageManager(Settings.StorageLocations, ManifestDownloadManager, BuildRegistry, IOQueue);
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up network client");
-            BuildRegistry = new BuildManifestRegistry(TagRegistry);
-            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), int.MaxValue, true);
+            BuildRegistry.Open(Path.Combine(AppDataDir, "Manifests"), int.MaxValue, true);
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up network client");
             NetClient.Start(
@@ -546,6 +553,7 @@ namespace BuildSync.Client
                 Settings.ClientPortRangeMin,
                 Settings.ClientPortRangeMax,
                 BuildRegistry,
+                StorageManager,
                 ManifestDownloadManager,
                 TagRegistry,
                 RouteRegistry
@@ -568,7 +576,21 @@ namespace BuildSync.Client
                 BuildFileSystem.ForceRefresh();
                 DownloadManager.ForceRefresh();
             };
+            NetClient.OnBuildPublished += (string Path, Guid Id) =>
+            {
+                BuildFileSystem.ForceRefresh();
+                DownloadManager.ForceRefresh();
+            };
+            NetClient.OnBuildUpdated += (string Path, Guid Id) =>
+            {
+                BuildFileSystem.ForceRefresh();
+                DownloadManager.ForceRefresh();
+            };
             NetClient.OnConnectedToServer += () => { BuildFileSystem.ForceRefresh(); };
+            NetClient.OnFilteredBuildsRecieved += (Builds) =>
+            {
+                DownloadManager.RecieveReplicatedBuilds(Builds);
+            };
             NetClient.OnBuildsRecieved += (RootPath, Builds) =>
             {
                 List<VirtualFileSystemInsertChild> NewChildren = new List<VirtualFileSystemInsertChild>();
@@ -599,8 +621,7 @@ namespace BuildSync.Client
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up manifest download manager");
 
             ManifestDownloadManager.Start(
-                Path.Combine(Settings.StoragePath, "Builds"),
-                Settings.StorageMaxSize,
+                StorageManager,
                 Settings.ManifestDownloadStates,
                 BuildRegistry,
                 IOQueue
@@ -612,7 +633,8 @@ namespace BuildSync.Client
                 ManifestDownloadManager,
                 Settings.DownloadStates,
                 BuildFileSystem,
-                ScmManager
+                ScmManager,
+                Settings.ReplicationNewerThanTime
             );
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up update download");
@@ -636,6 +658,9 @@ namespace BuildSync.Client
 
             // Make sure we have to get the latest manifest id before updating.
             InternalUpdateDownload.ActiveManifestId = Guid.Empty;
+
+            // Clean up any orphan builds.
+            StorageManager.CleanUpOrphanBuilds();
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Complete");
         }
@@ -779,18 +804,6 @@ namespace BuildSync.Client
             SettingsPath = Path.Combine(AppDir, "Config.json");
             SettingsBase.Load(SettingsPath, out Settings);
 
-            Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Creating storage directory");
-            if (Settings.StoragePath.Length == 0)
-            {
-                Settings.StoragePath = Path.Combine(AppDir, "Storage");
-                if (!Directory.Exists(Settings.StoragePath))
-                {
-                    Directory.CreateDirectory(Settings.StoragePath);
-                }
-            }
-
-            CurrentStoragePath = Settings.StoragePath;
-
             Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Initializing statistic states");
             if (Settings.ActiveStatistics.Count > 0)
             {
@@ -827,6 +840,35 @@ namespace BuildSync.Client
                 if (Settings.ServerPort == 12341)
                 {
                     Settings.ServerPort = 12340;
+                }
+            }
+
+            if (Settings.LastUpgradeVersion < 100000612)
+            {
+                // Copy over manifests folder from old storage path.
+                string SrcPath = Path.Combine(Settings.StoragePath, "Manifests");
+                string DstPath = Path.Combine(AppDataDir, "Manifests");
+                if (Directory.Exists(SrcPath))
+                {
+                    if (!Directory.Exists(DstPath))
+                    {
+                        Directory.CreateDirectory(DstPath);
+                    }
+
+                    foreach (string SrcFile in Directory.GetFiles(SrcPath))
+                    {
+                        string DstFile = Path.Combine(DstPath, SrcFile.Substring(SrcPath.Length + 1));
+                        if (!File.Exists(DstFile))
+                        {
+                            File.Copy(SrcFile, DstFile);
+                        }
+                    }
+                }
+
+                // Storage settings need to use old paths.
+                if (Settings.StoragePath.Length > 0)
+                {
+                    Settings.StorageLocations.Add(new StorageLocation { Path = Settings.StoragePath, MaxSize = Settings.StorageMaxSize });
                 }
             }
 

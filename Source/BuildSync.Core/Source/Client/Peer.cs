@@ -183,13 +183,13 @@ namespace BuildSync.Core.Client
             long MaxInFlightBytes = TargetInFlight;
 
             // Cap to minimum of a couple of 2 blocks, so we always have one being sent out and one before processed.
-            MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
+            MaxInFlightBytes = Math.Max(BuildManifest.MaxBlockSize * 1, MaxInFlightBytes);
 
             // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
             MaxInFlightBytes = (long) (MaxInFlightBytes * TrendUpwardsFactor);
 
             // Round to next largest block size.
-            MaxInFlightBytes = (MaxInFlightBytes + (BuildManifest.BlockSize - 1)) / BuildManifest.BlockSize * BuildManifest.BlockSize;
+            MaxInFlightBytes = (MaxInFlightBytes + (BuildManifest.MaxBlockSize - 1)) / BuildManifest.MaxBlockSize * BuildManifest.MaxBlockSize;
 
             return MaxInFlightBytes;
 #elif false

@@ -52,6 +52,7 @@ namespace BuildSync.Client.Tasks
     public class PublishBuildTask
     {
         private string LocalPath = "";
+        private string StoragePath = "";
         private BuildManifest Manifest;
 
         /// <summary>
@@ -71,7 +72,7 @@ namespace BuildSync.Client.Tasks
         public void Commit()
         {
             // Add "completed" manifest downloader entry for this build so we can start seeding it.
-            ManifestDownloadState LocalState = Program.ManifestDownloadManager.AddLocalDownload(Manifest, LocalPath);
+            ManifestDownloadState LocalState = Program.ManifestDownloadManager.AddLocalDownload(Manifest, StoragePath);
 
             // Allow this manifest id to be downloaded now.
             Program.ManifestDownloadManager.UnblockDownload(Manifest.Guid);
@@ -96,30 +97,41 @@ namespace BuildSync.Client.Tasks
                     {
                         Guid NewManifestId = Guid.NewGuid();
 
+                        // Calculate max size of all files in folder to publish.
+                        string[] Files = Directory.GetFiles(LocalPath, "*", SearchOption.AllDirectories);
+                        long TotalSize = 0;
+                        for (int i = 0; i < Files.Length; i++)
+                        {
+                            TotalSize += new FileInfo(Files[i]).Length;
+                        }
+
+                        // Allocate appropriate folder to store build in.
+                        if (!Program.StorageManager.AllocateSpace(TotalSize, NewManifestId, out StoragePath))
+                        {
+                            Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to allocate space, storage folders likely at capacity.");
+
+                            State = BuildPublishingState.Failed;
+                            return;
+                        }
+
                         // Don't allow downloading of this manifest until we have fully committed it.
                         Program.ManifestDownloadManager.BlockDownload(NewManifestId);
 
-                        // Copy files over.
-                        string LocalFolder = Program.ManifestDownloadManager.GetManifestStorageDirectory(NewManifestId).TrimEnd('/', '\\');
-
                         // Recreated directory.
-                        if (Directory.Exists(LocalFolder))
+                        if (Directory.Exists(StoragePath))
                         {
-                            FileUtils.DeleteDirectory(LocalFolder);
+                            FileUtils.DeleteDirectory(StoragePath);
                         }
 
-                        Directory.CreateDirectory(LocalFolder);
-
-                        // TODO: Supress pruning of directory!?
+                        Directory.CreateDirectory(StoragePath);
 
                         // Copy each file over to the storage folder.
                         State = BuildPublishingState.CopyingFiles;
-                        string[] Files = Directory.GetFiles(LocalPath, "*", SearchOption.AllDirectories);
                         for (int i = 0; i < Files.Length; i++)
                         {
                             string Src = Files[i];
                             string RelativePath = Files[i].Substring(LocalPath.Length).TrimStart('/', '\\');
-                            string Dst = Path.Combine(LocalFolder, RelativePath);
+                            string Dst = Path.Combine(StoragePath, RelativePath);
 
                             string DstDir = Path.GetDirectoryName(Dst);
                             if (!Directory.Exists(DstDir))
@@ -135,7 +147,7 @@ namespace BuildSync.Client.Tasks
 
                         // Build manifest from directory.
                         Manifest = BuildManifest.BuildFromDirectory(
-                            NewManifestId, LocalFolder, VirtualPath, Program.IOQueue, (InFile, InProgress) =>
+                            NewManifestId, StoragePath, VirtualPath, Program.IOQueue, (InFile, InProgress) =>
                             {
                                 Progress = 50.0f + InProgress * 0.5f;
                                 if (InFile.Length > 0)

@@ -63,6 +63,7 @@ namespace BuildSync.Client.Forms
             new FileSizeStringComparer(), // Total Uploaded
             new CaseInsensitiveComparer(), // Connected Peer Count
             new FileSizeStringComparer(), // Disk Usage
+            new FileSizeStringComparer(), // Disk Quota
             new CaseInsensitiveComparer() // Version
         };
 
@@ -321,7 +322,7 @@ namespace BuildSync.Client.Forms
 
                 if (!Exists)
                 {
-                    ListViewItem Item = new ListViewItem(new string[10]);
+                    ListViewItem Item = new ListViewItem(new string[11]);
                     Item.Tag = State;
                     Item.ImageIndex = 0;
 
@@ -348,7 +349,8 @@ namespace BuildSync.Client.Forms
                         Item.SubItems[6].Text = StringUtils.FormatAsSize(State.TotalUploaded);
                         Item.SubItems[7].Text = State.ConnectedPeerCount.ToString();
                         Item.SubItems[8].Text = StringUtils.FormatAsSize(State.DiskUsage);
-                        Item.SubItems[9].Text = State.Version;
+                        Item.SubItems[9].Text = StringUtils.FormatAsSize(State.DiskQuota);
+                        Item.SubItems[10].Text = State.Version;
                         Item.Tag = State;
 
                         Exists = true;

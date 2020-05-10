@@ -33,6 +33,7 @@ using System.Threading.Tasks;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Storage;
 
 namespace BuildSync.Core.Downloads
 {
@@ -49,10 +50,6 @@ namespace BuildSync.Core.Downloads
     /// <summary>
     /// </summary>
     public delegate void BlockAccessCompleteHandler(bool bSuccess);
-
-    /// <summary>
-    /// </summary>
-    public delegate void RequestChooseDeletionCandidateHandler(List<Guid> Candidates, ManifestStorageHeuristic Heuristic, List<Guid> PrioritizeKeepingTagIds, List<Guid> PrioritizeDeletingTagIds);
 
     /// <summary>
     /// </summary>
@@ -129,11 +126,6 @@ namespace BuildSync.Core.Downloads
         public event DownloadErrorHandler OnDownloadError;
 
         /// <summary>
-        ///
-        /// </summary>
-        public event RequestChooseDeletionCandidateHandler OnRequestChooseDeletionCandidate;
-
-        /// <summary>
         /// </summary>
         private ManifestDownloadStateCollection StateCollection = new ManifestDownloadStateCollection();
 
@@ -163,29 +155,7 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
-        private string StorageRootPath = "";
-
-        /// <summary>
-        /// </summary>
-        private readonly List<string> PendingOrphanCleanups = new List<string>();
-
-        /// <summary>
-        /// </summary>
-        public long StorageMaxSize { get; set; }
-
-        /// <summary>
-        /// </summary>
-        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.LeastAvailable;
-
-        /// <summary>
-        ///     List of all tag id's to prioritize keeping when deleting builds for space.
-        /// </summary>
-        public List<Guid> StoragePrioritizeKeepingBuildTagIds { get; set; } = new List<Guid>();
-
-        /// <summary>
-        ///     List of all tag id's to prioritize deleting when deleting builds for space.
-        /// </summary>
-        public List<Guid> StoragePrioritizeDeletingBuildTagIds { get; set; } = new List<Guid>();
+        private StorageManager StorageManager = null;
 
         /// <summary>
         /// </summary>
@@ -339,11 +309,6 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        private ulong TimeSinceLastPruneRequest = 0;
-
-        /// <summary>
-        /// 
-        /// </summary>
         private bool StateWaitingForFinalize = false;
 
         /// <summary>
@@ -439,13 +404,10 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         /// <param name="ManifestDownloader"></param>
         /// <param name="Config"></param>
-        public void Start(string InStorageRootPath, long InStorageMaxSize, ManifestDownloadStateCollection ResumeStateCollection, BuildManifestRegistry Registry, AsyncIOQueue InIOQueue)
+        public void Start(StorageManager InStorageManager, ManifestDownloadStateCollection ResumeStateCollection, BuildManifestRegistry Registry, AsyncIOQueue InIOQueue)
         {
-            StorageRootPath = InStorageRootPath;
-            StorageMaxSize = InStorageMaxSize;
-
+            StorageManager = InStorageManager;
             IOQueue = InIOQueue;
-
             ManifestRegistry = Registry;
             StateCollection = ResumeStateCollection;
             if (StateCollection == null)
@@ -467,33 +429,7 @@ namespace BuildSync.Core.Downloads
                 }
             }
 
-            CleanUpOrphanBuilds();
-
             StateDirtyCount++;
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="NewDirectory"></param>
-        public void UpdateStoragePath(string NewDirectory)
-        {
-            string OldPath = StorageRootPath;
-            StorageRootPath = NewDirectory;
-
-            foreach (ManifestDownloadState State in StateCollection.States)
-            {
-                string RelativePath = State.LocalFolder.Substring(OldPath.Length).Trim('\\', '/');
-                State.LocalFolder = Path.Combine(NewDirectory, RelativePath);
-            }
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="Manifest"></param>
-        /// <returns></returns>
-        public string GetManifestStorageDirectory(Guid ManifestId)
-        {
-            return Path.Combine(StorageRootPath, ManifestId.ToString());
         }
 
         /// <summary>
@@ -504,6 +440,17 @@ namespace BuildSync.Core.Downloads
             lock (BlockedDownloadManifestIds)
             {
                 BlockedDownloadManifestIds.Add(ManifestId);
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="ManifestId"></param>
+        public bool IsDownloadBlocked(Guid ManifestId)
+        {
+            lock (BlockedDownloadManifestIds)
+            {
+                return BlockedDownloadManifestIds.Contains(ManifestId);
             }
         }
 
@@ -522,7 +469,7 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         /// <param name="Manifest"></param>
         /// <param name="Priority"></param>
-        public ManifestDownloadState AddLocalDownload(BuildManifest Manifest, string LocalPath, bool Available = true)
+        public ManifestDownloadState AddLocalDownload(BuildManifest Manifest, string StoragePath, bool Available = true)
         {
             ManifestDownloadState State = GetDownload(Manifest.Guid);
 
@@ -541,7 +488,7 @@ namespace BuildSync.Core.Downloads
             State.Priority = 2;
             State.Manifest = Manifest;
             State.State = ManifestDownloadProgressState.Complete;
-            State.LocalFolder = Path.Combine(StorageRootPath, State.ManifestId.ToString());
+            State.LocalFolder = StoragePath;
             State.LastActive = DateTime.Now;
 
             // We have everything.
@@ -584,7 +531,7 @@ namespace BuildSync.Core.Downloads
             State.Priority = Priority;
             State.Manifest = null;
             State.State = ManifestDownloadProgressState.RetrievingManifest;
-            State.LocalFolder = Path.Combine(StorageRootPath, State.ManifestId.ToString());
+            State.LocalFolder = "";
             State.LastActive = DateTime.Now;
 
             Logger.Log(LogLevel.Info, LogCategory.Manifest, "Started download of manifest: {0}", ManifestId.ToString());
@@ -839,7 +786,8 @@ namespace BuildSync.Core.Downloads
                     State.Manifest = ManifestRegistry.GetManifestById(State.ManifestId);
                     if (State.Manifest != null)
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrieved manifest for download '{0}', starting download.", State.Id);
+                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Retrieved manifest for download '{0}', starting download.", State.Id);                        
+
                         ChangeState(State, ManifestDownloadProgressState.Initializing);
                         State.BlockStates.Resize((int) State.Manifest.BlockCount);
 
@@ -862,7 +810,21 @@ namespace BuildSync.Core.Downloads
                 // Create all the files in the directory.
                 case ManifestDownloadProgressState.Initializing:
                 {
-                    if (StateWaitingForFinalize)
+                    if (State.LocalFolder == "")
+                    {
+                        string StorageFolder = State.LocalFolder;
+                        if (StorageManager.AllocateSpace(State.Manifest.GetTotalSize(), State.ManifestId, out StorageFolder))
+                        {
+                            State.LocalFolder = StorageFolder;
+                        }
+                        else
+                        {
+                            Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to allocate storage folder for build, {0}, storage directories likely out of capacity.", State.ManifestId.ToString());
+                                
+                            ChangeState(State, ManifestDownloadProgressState.DiskError, true);
+                        }
+                    }
+                    else if (StateWaitingForFinalize)
                     {
                         if (InitializeFailed)
                         {
@@ -1433,61 +1395,28 @@ namespace BuildSync.Core.Downloads
             DownloadValidationInProgress = AnyValidating;
             DownloadInstallInProgress = AnyInstalling;
 
-            PruneDiskSpace();
             PruneBlockChanges();
         }
 
         /// <summary>
         /// </summary>
-        public void PruneDiskSpace()
+        /// <param name="NewDirectory"></param>
+        public void UpdateStoragePath(List<string> OldDirectories, List<string> NewDirectories)
         {
-            long TotalSize = 0;
-            foreach (ManifestDownloadState State in StateCollection.States)
+            List<string> NormalizedOldDirectories = new List<string>();
+            foreach (string Value in OldDirectories)
             {
-                if (State.Manifest != null)
-                {
-                    TotalSize += State.Manifest.GetTotalSize();
-                }
-
-                // Don't allow any pruning to occur while delta copying as we may be moving data between 
-                // states we might want to download.
-                if (State.State == ManifestDownloadProgressState.DeltaCopying)
-                {
-                    return;   
-                }
+                NormalizedOldDirectories.Add(FileUtils.NormalizePath(Value));
             }
 
-            if (TotalSize > StorageMaxSize && TimeUtils.Ticks - TimeSinceLastPruneRequest > 3000) // Throttle send rate to give server time to respond.
+            foreach (ManifestDownloadState State in StateCollection.States)
             {
-                if (!CleanUpOrphanBuilds())
+                int Index = NormalizedOldDirectories.IndexOf(FileUtils.NormalizePath(State.LocalFolder));
+                if (Index >= 0)
                 {
-                    // Select manifests for deletion.
-                    List<ManifestDownloadState> DeletionCandidates = new List<ManifestDownloadState>();
-                    foreach (ManifestDownloadState State in StateCollection.States)
-                    {
-                        if (!State.Active)
-                        {
-                            if (State.Manifest != null && !FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder))
-                            {
-                                DeletionCandidates.Add(State);
-                            }
-                        }
-                    }
-                    if (DeletionCandidates.Count > 0)
-                    {
-                        DeletionCandidates.Sort((Item1, Item2) => Item1.LastActive.CompareTo(Item2.LastActive));
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Updating storage path of '{0}' to '{1}'", State.LocalFolder, NewDirectories[Index]);
 
-                        // Request the server to select the next candidate for deletion.
-                        List<Guid> DeletionCandidatesIds = new List<Guid>();
-                        foreach (ManifestDownloadState State in DeletionCandidates)
-                        {
-                            DeletionCandidatesIds.Add(State.ManifestId);
-                        }
-
-                        OnRequestChooseDeletionCandidate?.Invoke(DeletionCandidatesIds, StorageHeuristic, StoragePrioritizeKeepingBuildTagIds, StoragePrioritizeDeletingBuildTagIds);
-                    }
-
-                    TimeSinceLastPruneRequest = TimeUtils.Ticks;
+                    State.LocalFolder = NewDirectories[Index];
                 }
             }
         }
@@ -1517,64 +1446,6 @@ namespace BuildSync.Core.Downloads
                     break;
                 }
             }
-
-            TimeSinceLastPruneRequest = 0;
-        }
-
-        /// <summary>
-        /// </summary>
-        private bool CleanUpOrphanBuilds()
-        {
-            bool Result = false;
-
-            if (Directory.Exists(StorageRootPath))
-            {
-                // Check if there are any folders in the storage directory that do not have a manifest associated with them.
-                foreach (string Dir in Directory.GetDirectories(StorageRootPath))
-                {
-                    Guid ManifestId = Guid.Empty;
-
-                    if (Guid.TryParse(Path.GetFileName(Dir), out ManifestId))
-                    {
-                        // This download is currently being worked on, don't try and clean it up.
-                        lock (BlockedDownloadManifestIds)
-                        {
-                            if (BlockedDownloadManifestIds.Contains(ManifestId))
-                            {
-                                continue;
-                            }
-                        }
-
-                        BuildManifest Manifest = ManifestRegistry.GetManifestById(ManifestId);
-                        if (Manifest == null)
-                        {
-                            lock (PendingOrphanCleanups)
-                            {
-                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Deleting directory in storage folder that appears to have no matching manifest (probably a previous failed delete): {0}", Dir);
-                                if (!PendingOrphanCleanups.Contains(Dir))
-                                {
-                                    PendingOrphanCleanups.Add(Dir);
-                                    IOQueue.DeleteDir(Dir, bSuccess => { PendingOrphanCleanups.Remove(Dir); });
-                                    Result = true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // If we have a manifest but no download state add as local download
-                            // with no available blocks so we can clean it up if needed for space.
-                            if (GetDownload(ManifestId) == null)
-                            {
-                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Found build directory for manifest, but no download state, added as local download, might have been orphaned due to settings save failure?: {0}", Dir);
-                                AddLocalDownload(Manifest, Dir, false);
-                                Result = true;
-                            }
-                        }
-                    }
-                }
-            }
-
-            return Result;
         }
 
         /// <summary>
@@ -1637,7 +1508,7 @@ namespace BuildSync.Core.Downloads
             WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
             WriteState.WasSuccess = true;
 
-            if (!Data.Resize((int) BlockInfo.TotalSize, (int) BuildManifest.BlockSize, true))
+            if (!Data.Resize((int) BlockInfo.TotalSize, (int)State.Manifest.BlockSize, true))
             {
                 FailedOutOfMemory = true;
                 return false;
@@ -1866,6 +1737,9 @@ namespace BuildSync.Core.Downloads
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Request to set block which we don't have info for.");
                 return;
             }
+
+            // Keep track of when this manifest last recieved data.
+            State.LastRecievedData = DateTime.UtcNow;
 
             // Mark block as having block.
             State.BlockStates.Set(BlockIndex, true);

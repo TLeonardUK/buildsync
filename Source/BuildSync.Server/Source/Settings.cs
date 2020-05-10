@@ -71,6 +71,7 @@ namespace BuildSync.Server
         public int ServerPort { get; set; } = 12340;
 
         /// <summary>
+        ///     DEPRECATED
         ///     Path on the local device that manifests and configuration data will be stored.
         /// </summary>
         public string StoragePath { get; set; } = "";

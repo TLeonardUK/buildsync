@@ -35,6 +35,7 @@ using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Tags;
 using BuildSync.Core.Routes;
+using BuildSync.Core.Storage;
 
 namespace BuildSync.Core.Client
 {
@@ -43,6 +44,12 @@ namespace BuildSync.Core.Client
     /// <param name="Connection"></param>
     /// <param name="Message"></param>
     public delegate void BuildsRecievedHandler(string RootPath, NetMessage_GetBuildsResponse.BuildInfo[] Builds);
+
+    /// <summary>
+    /// </summary>
+    /// <param name="Connection"></param>
+    /// <param name="Message"></param>
+    public delegate void FilteredBuildsRecievedHandler(NetMessage_GetFilteredBuildsResponse.BuildInfo[] Builds);
 
     /// <summary>
     /// </summary>
@@ -79,6 +86,14 @@ namespace BuildSync.Core.Client
     /// <summary>
     /// </summary>
     public delegate void RouteListRecievedHandler(List<Route> Routes);
+
+    /// <summary>
+    /// </summary>
+    public delegate void BuildPublishedHandler(string Path, Guid ManifestId);
+
+    /// <summary>
+    /// </summary>
+    public delegate void BuildUpdatedHandler(string Path, Guid ManifestId);
 
     /// <summary>
     /// </summary>
@@ -419,6 +434,11 @@ namespace BuildSync.Core.Client
         private BuildManifestRegistry ManifestRegistry;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private StorageManager StorageManager;
+
+        /// <summary>
         /// </summary>
         private TagRegistry TagRegistry;
 
@@ -477,6 +497,10 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
+        public event FilteredBuildsRecievedHandler OnFilteredBuildsRecieved;
+
+        /// <summary>
+        /// </summary>
         public event ConenctedToServerHandler OnConnectedToServer;
 
         /// <summary>
@@ -502,6 +526,14 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         public event PermissionsUpdatedHandler OnPermissionsUpdated;
+
+        /// <summary>
+        /// </summary>
+        public event BuildPublishedHandler OnBuildPublished;
+
+        /// <summary>
+        /// </summary>
+        public event BuildUpdatedHandler OnBuildUpdated;
 
         /// <summary>
         /// </summary>
@@ -662,7 +694,8 @@ namespace BuildSync.Core.Client
 
             ListenConnection.OnClientConnect += PeerConnected;
 
-            MemoryPool.PreallocateBuffers((int) BuildManifest.BlockSize, 128);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 8);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 128);
             MemoryPool.PreallocateBuffers(Crc32Slow.BufferSize, 16);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
 
@@ -1122,6 +1155,26 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         /// <param name="Path"></param>
+        public bool RequestFilteredBuilds(List<Guid> SelectTags, List<Guid> IgnoreTags, DateTime NewerThan)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request builds, no connection to server?");
+                return false;
+            }
+
+            NetMessage_GetFilteredBuilds Msg = new NetMessage_GetFilteredBuilds();
+            Msg.SelectTags = SelectTags;
+            Msg.IgnoreTags = IgnoreTags;
+            Msg.NewerThan = NewerThan;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
         public bool RequestLicenseInfo()
         {
             if (!Connection.IsReadyForData)
@@ -1449,7 +1502,7 @@ namespace BuildSync.Core.Client
         /// </summary>
         /// <param name="Hostname"></param>
         /// <param name="Port"></param>
-        public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, BuildManifestRegistry BuildManifest, ManifestDownloadManager DownloadManager, TagRegistry InTagRegistry, RouteRegistry InRouteRegistry)
+        public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, BuildManifestRegistry BuildManifest, StorageManager InStorageManager, ManifestDownloadManager DownloadManager, TagRegistry InTagRegistry, RouteRegistry InRouteRegistry)
         {
             ServerHostname = Hostname;
             ServerPort = Port;
@@ -1458,7 +1511,8 @@ namespace BuildSync.Core.Client
             ManifestRegistry = BuildManifest;
             ManifestDownloadManager = DownloadManager;
             ManifestDownloadManager.OnManifestRequested += Id => { RequestManifest(Id); };
-            ManifestDownloadManager.OnRequestChooseDeletionCandidate += (Candidates, Heuristic, PrioritizeKeepingTagIds, PrioritizeDeletingTagIds) => { RequestChooseDeletionCandidate(Candidates, Heuristic, PrioritizeKeepingTagIds, PrioritizeDeletingTagIds); };
+            StorageManager = InStorageManager;
+            StorageManager.OnRequestChooseDeletionCandidate += (Candidates, Heuristic, PrioritizeKeepingTagIds, PrioritizeDeletingTagIds) => { RequestChooseDeletionCandidate(Candidates, Heuristic, PrioritizeKeepingTagIds, PrioritizeDeletingTagIds); };
             TagRegistry = InTagRegistry;
             RouteRegistry = InRouteRegistry;
 
@@ -1651,6 +1705,16 @@ namespace BuildSync.Core.Client
                 Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved builds in folder: {0}", Msg.RootPath);
 
                 OnBuildsRecieved?.Invoke(Msg.RootPath, Msg.Builds);
+            }
+
+            // Server has sent us back a list of filtered builds from previous response.
+            else if (BaseMessage is NetMessage_GetFilteredBuildsResponse)
+            {
+                NetMessage_GetFilteredBuildsResponse Msg = BaseMessage as NetMessage_GetFilteredBuildsResponse;
+
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved filtered builds.");
+
+                OnFilteredBuildsRecieved?.Invoke(Msg.Builds);
             }
 
             // Server is giving us response to manifest publishing.
@@ -1960,6 +2024,30 @@ namespace BuildSync.Core.Client
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "Server untagged client '{0}' with tag '{1}'.", Msg.ClientAddress.ToString(), Msg.TagId.ToString());
             }
+
+            // ------------------------------------------------------------------------------
+            // Build Published
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_BuildPublished)
+            {
+                NetMessage_BuildPublished Msg = BaseMessage as NetMessage_BuildPublished;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Server notified us of new build published '{0}'.", Msg.Path);
+
+                OnBuildPublished?.Invoke(Msg.Path, Msg.ManifestId);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Build Updated
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_BuildUpdated)
+            {
+                NetMessage_BuildUpdated Msg = BaseMessage as NetMessage_BuildUpdated;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Server notified us of new build updated '{0}'.", Msg.Path);
+
+                OnBuildUpdated?.Invoke(Msg.Path, Msg.ManifestId);
+            }
         }
 
         /// <summary>
@@ -2077,11 +2165,8 @@ namespace BuildSync.Core.Client
                 }
             }
 
-
-            foreach (ManifestDownloadState Manifest in ManifestDownloadManager.States.States)
-            {
-                Msg.DiskUsage += Manifest.Manifest != null ? Manifest.Manifest.GetTotalSize() : 0;
-            }
+            Msg.DiskUsage = StorageManager.GetDiskUsage();
+            Msg.DiskQuota = StorageManager.GetDiskQuota();
 
             Connection.Send(Msg);
         }

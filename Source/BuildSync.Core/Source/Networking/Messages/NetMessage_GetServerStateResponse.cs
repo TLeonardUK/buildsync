@@ -36,6 +36,7 @@ namespace BuildSync.Core.Networking.Messages
             public string Address;
             public int ConnectedPeerCount;
             public long DiskUsage;
+            public long DiskQuota;
             public long DownloadRate;
             public long TotalDownloaded;
             public long TotalUploaded;
@@ -89,6 +90,11 @@ namespace BuildSync.Core.Networking.Messages
                 serializer.Serialize(ref ClientStates[i].ConnectedPeerCount);
                 serializer.Serialize(ref ClientStates[i].DiskUsage);
                 serializer.Serialize(ref ClientStates[i].Version);
+
+                if (serializer.Version >= 100000613)
+                {
+                    serializer.Serialize(ref ClientStates[i].DiskQuota);
+                }
 
                 int TagCount = ClientStates[i].TagIds.Count;
                 serializer.Serialize(ref TagCount);

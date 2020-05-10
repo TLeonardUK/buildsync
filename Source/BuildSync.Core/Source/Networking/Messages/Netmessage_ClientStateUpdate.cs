@@ -42,6 +42,11 @@ namespace BuildSync.Core.Networking.Messages
         public long DiskUsage;
 
         /// <summary>
+        ///     The amount of disk space allocated for storing builds.
+        /// </summary>
+        public long DiskQuota;
+
+        /// <summary>
         ///     The rate in bytes per second the sender is currently downloading data.
         /// </summary>
         public long DownloadRate;
@@ -79,6 +84,11 @@ namespace BuildSync.Core.Networking.Messages
             serializer.Serialize(ref ConnectedPeerCount);
             serializer.Serialize(ref DiskUsage);
             serializer.Serialize(ref Version);
+
+            if (serializer.Version >= 100000613)
+            {
+                serializer.Serialize(ref DiskQuota);
+            }
         }
     }
 }

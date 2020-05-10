@@ -21,42 +21,38 @@
 
 using System;
 using BuildSync.Core.Manifests;
+using BuildSync.Core.Tags;
 
 namespace BuildSync.Core.Networking.Messages
 {
     /// <summary>
-    ///     Client->Client
+    ///     Server->Client
     ///
-    ///     Sent by a client in response to a <see cref="NetMessage_GetBlock" /> 
+    ///     Sent by a server in response to a <see cref="NetMessage_GetFilteredBuilds" /> 
     ///     providing the data that was requested by the original sender.
     /// </summary>
-    public class NetMessage_GetBlockResponse : NetMessage
+    public class NetMessage_GetFilteredBuildsResponse : NetMessage
     {
         /// <summary>
-        ///     Block index of data contained.
+        ///     Represents an individual build returned by this message.
         /// </summary>
-        public int BlockIndex;
+        public struct BuildInfo
+        {
+            /// <summary>
+            ///     Full path within the manifest registry of this build.
+            /// </summary>
+            public string VirtualPath;
+
+            /// <summary>
+            ///     Unique id of this build manifest.
+            /// </summary>
+            public Guid Guid;
+        }
 
         /// <summary>
-        ///     Id of manifest that block originated from.
+        ///     Array of all child builds that were retrieved.
         /// </summary>
-        public Guid ManifestId;
-
-        /// <summary>
-        ///     Buffer containing the blocks data.
-        /// </summary>
-        public NetCachedArray Data = new NetCachedArray();
-
-        /// <summary>
-        ///     Gets or sets if the reciver handles calling the Cleanup function at an appropriate time. If false
-        ///     the Cleanup function will be called as soon as the message handler has returned.
-        /// </summary>
-        public override bool DoesRecieverHandleCleanup => true;
-
-        /// <summary>
-        ///     Gets or sets that this message can get large enough that no attempts should be made to fit it into small message buffers..
-        /// </summary>
-        public override bool HasLargePayload => true;
+        public BuildInfo[] Builds = new BuildInfo[0];
 
         /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
@@ -64,22 +60,16 @@ namespace BuildSync.Core.Networking.Messages
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
-            serializer.Serialize(ref ManifestId);
-            serializer.Serialize(ref BlockIndex);
+            int BuildCount = Builds.Length;
+            serializer.Serialize(ref BuildCount);
 
-            // TODO: Modify this so it stores a reference to the deserializing buffer
-            // rather than doing a pointless and time consuming copy.
-            if (!serializer.Serialize(ref Data, (int) BuildManifest.DefaultBlockSize, true))
+            Array.Resize(ref Builds, BuildCount);
+
+            for (int i = 0; i < BuildCount; i++)
             {
+                serializer.Serialize(ref Builds[i].VirtualPath);
+                serializer.Serialize(ref Builds[i].Guid);
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        internal override void Cleanup()
-        {
-            Data.SetNull();
         }
     }
 }

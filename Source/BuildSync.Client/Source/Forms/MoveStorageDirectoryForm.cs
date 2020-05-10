@@ -32,16 +32,11 @@ namespace BuildSync.Client.Forms
         private bool Finished;
 
         private readonly MoveStorageTask MoveTask = new MoveStorageTask();
-        private readonly string NewDirectory = "";
-        private readonly string OldDirectory = "";
 
         /// <summary>
         /// </summary>
-        public MoveStorageDirectoryForm(string InOldDirectory, string InNewDirectory)
+        public MoveStorageDirectoryForm()
         {
-            OldDirectory = InOldDirectory;
-            NewDirectory = InNewDirectory;
-
             InitializeComponent();
         }
 
@@ -85,161 +80,7 @@ namespace BuildSync.Client.Forms
         private void FormLoaded(object sender, EventArgs e)
         {
             // Disconnect from everybody.
-            MoveTask.Start(OldDirectory, NewDirectory);
-            /*
-                        // Run the rest async.
-                        Task.Run(() =>
-                        {
-                            bool Success = false;
-                            try
-                            {
-                                // Drain the IO queue.
-                                SetProgress("Waiting for io queue to empty", 0, 0);
-                                while (!Program.IOQueue.IsEmpty)
-                                {
-                                    Thread.Sleep(1);
-                                }
-
-                                // Wait for initialization or validation of any manifests to complete.
-                                SetProgress("Waiting for download initialization to finish.", 0, 0);
-                                while (Program.ManifestDownloadManager.DownloadInitializationInProgress)
-                                {
-                                    Thread.Sleep(1);
-                                }
-                                SetProgress("Waiting for download validation to finish.", 0, 0);
-                                while (Program.ManifestDownloadManager.DownloadValidationInProgress)
-                                {
-                                    Thread.Sleep(1);
-                                }
-
-                                // Incase someone has parented the storage directory to a root drive or something
-                                // super stupid like that, make sure we only move our sub directories around.
-                                string[] OldDirectories =
-                                {
-                                    Path.Combine(OldDirectory, "Builds"),
-                                    Path.Combine(OldDirectory, "Manifests"),
-                                };
-                                string[] NewDirectories =
-                                {
-                                    Path.Combine(NewDirectory, "Builds"),
-                                    Path.Combine(NewDirectory, "Manifests"),
-                                };
-
-                                try
-                                {
-                                    // Make list of everything we need to copy around.
-                                    List<Tuple<string, string, string>> FilesToCopy = new List<Tuple<string, string, string>>();
-                                    foreach (string Dir in OldDirectories)
-                                    {
-                                        string[] Files = Directory.GetFiles(OldDirectory, "*", SearchOption.AllDirectories);
-                                        foreach (string File in Files)
-                                        {
-                                            string RelativePath = File.Substring(OldDirectory.Length).Trim('\\', '/');
-                                            string NewPath = Path.Combine(NewDirectory, RelativePath);
-                                            FilesToCopy.Add(new Tuple<string, string, string>(File, NewPath, RelativePath));
-                                        }
-                                    }
-
-                                    // Get copying.
-                                    for (int i = 0; i < FilesToCopy.Count; i++)
-                                    {
-                                        string OldPath = FilesToCopy[i].Item1;
-                                        string NewPath = FilesToCopy[i].Item2;
-                                        string RelativePath = FilesToCopy[i].Item3;
-
-                                        string NewPathDir = Path.GetDirectoryName(NewPath);
-
-                                        if (!Directory.Exists(NewPathDir))
-                                        {
-                                            Directory.CreateDirectory(NewPathDir);
-                                        }
-
-                                        byte[] CopyBuffer = new byte[1024 * 1024];
-                                        using (FileStream Source = new FileStream(OldPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite|FileShare.Delete))
-                                        {
-                                            long FileLength = Source.Length;
-                                            using (FileStream Dest = new FileStream(NewPath, FileMode.Create, FileAccess.Write))
-                                            {
-                                                long TotalBytes = 0;
-                                                int CurrentBlockSize = 0;
-
-                                                while ((CurrentBlockSize = Source.Read(CopyBuffer, 0, CopyBuffer.Length)) > 0)
-                                                {
-                                                    TotalBytes += CurrentBlockSize;
-
-                                                    SetProgress("Copying: " + RelativePath, (float)TotalBytes / (float)FileLength, (float)i / (float)FilesToCopy.Count);
-
-                                                    Dest.Write(CopyBuffer, 0, CurrentBlockSize);
-                                                }
-
-                                                Dest.Flush();
-                                                Dest.Close();
-                                            }
-
-                                            Source.Flush();
-                                            Source.Close();
-                                        }
-                                    }
-
-                                    // Delete old directory.
-                                    SetProgress("Cleaning up old directory.", 0.0f, 1.0f);
-                                    foreach (string Dir in OldDirectories)
-                                    {
-                                        try
-                                        {
-                                            FileUtils.DeleteDirectory(Dir);
-                                        }
-                                        catch (Exception Ex)
-                                        {
-                                            Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to delete directory {0} with error: {1}", Dir, Ex.Message);
-                                        }
-                                    }
-
-                                    // Update local paths of all manifests.
-                                    Program.ManifestDownloadManager.UpdateStoragePath(Path.Combine(NewDirectory, "Builds"));
-                                    Program.BuildRegistry.UpdateStoragePath(Path.Combine(NewDirectory, "Manifests"));
-
-                                    Success = true;
-                                }
-                                catch (Exception Ex)
-                                {
-                                    Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to move storage directory with error: {0}", Ex.Message);
-
-                                    // Delete all the copied files.
-                                    foreach (string Dir in NewDirectories)
-                                    {
-                                        try
-                                        {
-                                            FileUtils.DeleteDirectory(Dir);
-                                        }
-                                        catch (Exception SubEx)
-                                        {
-                                            Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to delete directory {0} with error: {1}", Dir, SubEx.Message);
-                                        }
-                                    }
-                                }
-                                finally
-                                {
-                                    // Renable connections.
-                                    Program.NetClient.ConnectionsDisabled = false;
-
-                                    Invoke((MethodInvoker)(() => {
-                                        DialogResult = Success ? DialogResult.OK : DialogResult.Abort;
-                                        Finished = true;
-                                        Close();
-
-                                        if (!Success)
-                                        {
-                                            MessageBox.Show("Failed to change storage directory due to disk error.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                        }
-                                    }));
-                                }                        
-                            }
-                            catch (Exception Ex)
-                            {
-                            }
-                        });
-                        */
+            MoveTask.Start();
         }
 
         /// <summary>

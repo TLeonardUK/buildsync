@@ -59,6 +59,11 @@ namespace BuildSync.Core.Server
         /// <summary>
         /// 
         /// </summary>
+        public long DiskQuota;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public long DownloadRate;
 
         /// <summary>

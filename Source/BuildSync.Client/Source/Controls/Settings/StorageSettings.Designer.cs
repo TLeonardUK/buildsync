@@ -28,44 +28,41 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StorageSettings));
-            this.pictureBox3 = new System.Windows.Forms.PictureBox();
+            System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Perforce", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Git", System.Windows.Forms.HorizontalAlignment.Left);
             this.deprioritizeTagsTextBox = new BuildSync.Client.Controls.TagTextBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.prioritizeTagsTextBox = new BuildSync.Client.Controls.TagTextBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.label3 = new System.Windows.Forms.Label();
             this.HeuristicComboBox = new System.Windows.Forms.ComboBox();
-            this.StorageMaxSizeIcon = new System.Windows.Forms.PictureBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.StoragePathIcon = new System.Windows.Forms.PictureBox();
-            this.savePathBrowseButton = new System.Windows.Forms.Button();
-            this.StoragePathTextBox = new System.Windows.Forms.TextBox();
+            this.ButtonImageIndex = new System.Windows.Forms.ImageList(this.components);
             this.label1 = new System.Windows.Forms.Label();
-            this.StorageMaxSizeTextBox = new BuildSync.Core.Controls.SizeTextBox();
+            this.storageLocationList = new System.Windows.Forms.ListView();
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.locationListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.addLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.deleteLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.AddStorageLocationButton = new System.Windows.Forms.Button();
+            this.RemoveStorageLocationButton = new System.Windows.Forms.Button();
+            this.pictureBox3 = new System.Windows.Forms.PictureBox();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.locationListContextMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeIcon)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.StoragePathIcon)).BeginInit();
             this.SuspendLayout();
-            // 
-            // pictureBox3
-            // 
-            this.pictureBox3.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
-            this.pictureBox3.Location = new System.Drawing.Point(14, 287);
-            this.pictureBox3.Margin = new System.Windows.Forms.Padding(2);
-            this.pictureBox3.Name = "pictureBox3";
-            this.pictureBox3.Size = new System.Drawing.Size(32, 31);
-            this.pictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox3.TabIndex = 50;
-            this.pictureBox3.TabStop = false;
             // 
             // deprioritizeTagsTextBox
             // 
-            this.deprioritizeTagsTextBox.Location = new System.Drawing.Point(54, 294);
+            this.deprioritizeTagsTextBox.Location = new System.Drawing.Point(54, 164);
             this.deprioritizeTagsTextBox.Name = "deprioritizeTagsTextBox";
             this.deprioritizeTagsTextBox.Size = new System.Drawing.Size(337, 21);
             this.deprioritizeTagsTextBox.TabIndex = 49;
@@ -74,27 +71,16 @@
             // 
             // label4
             // 
-            this.label4.Location = new System.Drawing.Point(13, 268);
+            this.label4.Location = new System.Drawing.Point(13, 138);
             this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(483, 17);
             this.label4.TabIndex = 48;
             this.label4.Text = "Prioritize deleting builds with any tags";
             // 
-            // pictureBox2
-            // 
-            this.pictureBox2.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
-            this.pictureBox2.Location = new System.Drawing.Point(14, 226);
-            this.pictureBox2.Margin = new System.Windows.Forms.Padding(2);
-            this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(32, 31);
-            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox2.TabIndex = 47;
-            this.pictureBox2.TabStop = false;
-            // 
             // prioritizeTagsTextBox
             // 
-            this.prioritizeTagsTextBox.Location = new System.Drawing.Point(54, 233);
+            this.prioritizeTagsTextBox.Location = new System.Drawing.Point(54, 103);
             this.prioritizeTagsTextBox.Name = "prioritizeTagsTextBox";
             this.prioritizeTagsTextBox.Size = new System.Drawing.Size(337, 21);
             this.prioritizeTagsTextBox.TabIndex = 46;
@@ -103,28 +89,17 @@
             // 
             // label5
             // 
-            this.label5.Location = new System.Drawing.Point(13, 207);
+            this.label5.Location = new System.Drawing.Point(13, 77);
             this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(483, 17);
             this.label5.TabIndex = 45;
             this.label5.Text = "Prioritize keeping builds with any tags";
             // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
-            this.pictureBox1.Location = new System.Drawing.Point(14, 163);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(32, 31);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 44;
-            this.pictureBox1.TabStop = false;
-            // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(13, 145);
+            this.label3.Location = new System.Drawing.Point(13, 15);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(243, 13);
             this.label3.TabIndex = 43;
@@ -133,89 +108,183 @@
             // HeuristicComboBox
             // 
             this.HeuristicComboBox.FormattingEnabled = true;
-            this.HeuristicComboBox.Location = new System.Drawing.Point(54, 169);
+            this.HeuristicComboBox.Location = new System.Drawing.Point(54, 39);
             this.HeuristicComboBox.Name = "HeuristicComboBox";
             this.HeuristicComboBox.Size = new System.Drawing.Size(337, 21);
             this.HeuristicComboBox.TabIndex = 42;
             this.HeuristicComboBox.SelectedIndexChanged += new System.EventHandler(this.StateChanged);
             // 
-            // StorageMaxSizeIcon
+            // ButtonImageIndex
             // 
-            this.StorageMaxSizeIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
-            this.StorageMaxSizeIcon.Location = new System.Drawing.Point(14, 99);
-            this.StorageMaxSizeIcon.Margin = new System.Windows.Forms.Padding(2);
-            this.StorageMaxSizeIcon.Name = "StorageMaxSizeIcon";
-            this.StorageMaxSizeIcon.Size = new System.Drawing.Size(32, 31);
-            this.StorageMaxSizeIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.StorageMaxSizeIcon.TabIndex = 19;
-            this.StorageMaxSizeIcon.TabStop = false;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(13, 80);
-            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(330, 13);
-            this.label2.TabIndex = 18;
-            this.label2.Text = "Maximum storage space to use, old builds will be deleted to maintain.";
-            // 
-            // StoragePathIcon
-            // 
-            this.StoragePathIcon.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
-            this.StoragePathIcon.Location = new System.Drawing.Point(14, 34);
-            this.StoragePathIcon.Margin = new System.Windows.Forms.Padding(2);
-            this.StoragePathIcon.Name = "StoragePathIcon";
-            this.StoragePathIcon.Size = new System.Drawing.Size(32, 31);
-            this.StoragePathIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.StoragePathIcon.TabIndex = 17;
-            this.StoragePathIcon.TabStop = false;
-            // 
-            // savePathBrowseButton
-            // 
-            this.savePathBrowseButton.Location = new System.Drawing.Point(403, 36);
-            this.savePathBrowseButton.Margin = new System.Windows.Forms.Padding(2);
-            this.savePathBrowseButton.Name = "savePathBrowseButton";
-            this.savePathBrowseButton.Size = new System.Drawing.Size(93, 27);
-            this.savePathBrowseButton.TabIndex = 16;
-            this.savePathBrowseButton.Text = "Browse";
-            this.savePathBrowseButton.UseVisualStyleBackColor = true;
-            this.savePathBrowseButton.Click += new System.EventHandler(this.BrowseClicked);
-            // 
-            // StoragePathTextBox
-            // 
-            this.StoragePathTextBox.Location = new System.Drawing.Point(54, 42);
-            this.StoragePathTextBox.Margin = new System.Windows.Forms.Padding(2);
-            this.StoragePathTextBox.Name = "StoragePathTextBox";
-            this.StoragePathTextBox.ReadOnly = true;
-            this.StoragePathTextBox.Size = new System.Drawing.Size(338, 20);
-            this.StoragePathTextBox.TabIndex = 15;
-            this.StoragePathTextBox.TextChanged += new System.EventHandler(this.StateChanged);
+            this.ButtonImageIndex.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("ButtonImageIndex.ImageStream")));
+            this.ButtonImageIndex.TransparentColor = System.Drawing.Color.Transparent;
+            this.ButtonImageIndex.Images.SetKeyName(0, "appbar.add.png");
+            this.ButtonImageIndex.Images.SetKeyName(1, "appbar.delete.png");
+            this.ButtonImageIndex.Images.SetKeyName(2, "appbar.user.add.png");
+            this.ButtonImageIndex.Images.SetKeyName(3, "appbar.user.delete.png");
+            this.ButtonImageIndex.Images.SetKeyName(4, "appbar.database.png");
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(13, 15);
-            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label1.Location = new System.Drawing.Point(11, 200);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(202, 13);
-            this.label1.TabIndex = 14;
-            this.label1.Text = "Local folder to store downloaded builds in";
+            this.label1.Size = new System.Drawing.Size(93, 13);
+            this.label1.TabIndex = 52;
+            this.label1.Text = "Storage Locations";
             // 
-            // StorageMaxSizeTextBox
+            // storageLocationList
             // 
-            this.StorageMaxSizeTextBox.DisplayAsTransferRate = false;
-            this.StorageMaxSizeTextBox.Location = new System.Drawing.Point(54, 103);
-            this.StorageMaxSizeTextBox.Name = "StorageMaxSizeTextBox";
-            this.StorageMaxSizeTextBox.Size = new System.Drawing.Size(337, 27);
-            this.StorageMaxSizeTextBox.TabIndex = 51;
-            this.StorageMaxSizeTextBox.Value = ((long)(0));
-            this.StorageMaxSizeTextBox.OnValueChanged += new System.EventHandler(this.StateChanged);
+            this.storageLocationList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.storageLocationList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader5,
+            this.columnHeader1,
+            this.columnHeader6});
+            this.storageLocationList.ContextMenuStrip = this.locationListContextMenu;
+            this.storageLocationList.FullRowSelect = true;
+            listViewGroup1.Header = "Perforce";
+            listViewGroup1.Name = "Perforce";
+            listViewGroup2.Header = "Git";
+            listViewGroup2.Name = "Git";
+            this.storageLocationList.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
+            listViewGroup1,
+            listViewGroup2});
+            this.storageLocationList.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.storageLocationList.HideSelection = false;
+            this.storageLocationList.Location = new System.Drawing.Point(14, 221);
+            this.storageLocationList.Name = "storageLocationList";
+            this.storageLocationList.ShowGroups = false;
+            this.storageLocationList.Size = new System.Drawing.Size(490, 113);
+            this.storageLocationList.SmallImageList = this.ButtonImageIndex;
+            this.storageLocationList.TabIndex = 51;
+            this.storageLocationList.UseCompatibleStateImageBehavior = false;
+            this.storageLocationList.View = System.Windows.Forms.View.Details;
+            this.storageLocationList.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.StorageLocationItemChanged);
+            this.storageLocationList.DoubleClick += new System.EventHandler(this.EditClicked);
+            // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Location";
+            this.columnHeader5.Width = 320;
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "Current Size";
+            this.columnHeader1.Width = 80;
+            // 
+            // columnHeader6
+            // 
+            this.columnHeader6.Text = "Max Size";
+            this.columnHeader6.Width = 80;
+            // 
+            // locationListContextMenu
+            // 
+            this.locationListContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
+            this.locationListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addLocationToolStripMenuItem,
+            this.editLocationToolStripMenuItem,
+            this.toolStripSeparator6,
+            this.deleteLocationToolStripMenuItem});
+            this.locationListContextMenu.Name = "downloadListContextMenu";
+            this.locationListContextMenu.Size = new System.Drawing.Size(166, 100);
+            // 
+            // addLocationToolStripMenuItem
+            // 
+            this.addLocationToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
+            this.addLocationToolStripMenuItem.Name = "addLocationToolStripMenuItem";
+            this.addLocationToolStripMenuItem.Size = new System.Drawing.Size(165, 30);
+            this.addLocationToolStripMenuItem.Text = "Add Location ...";
+            this.addLocationToolStripMenuItem.Click += new System.EventHandler(this.AddStorageClicked);
+            // 
+            // editLocationToolStripMenuItem
+            // 
+            this.editLocationToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_draw_pencil;
+            this.editLocationToolStripMenuItem.Name = "editLocationToolStripMenuItem";
+            this.editLocationToolStripMenuItem.Size = new System.Drawing.Size(165, 30);
+            this.editLocationToolStripMenuItem.Text = "Edit Location ...";
+            this.editLocationToolStripMenuItem.Click += new System.EventHandler(this.EditClicked);
+            // 
+            // toolStripSeparator6
+            // 
+            this.toolStripSeparator6.Name = "toolStripSeparator6";
+            this.toolStripSeparator6.Size = new System.Drawing.Size(162, 6);
+            // 
+            // deleteLocationToolStripMenuItem
+            // 
+            this.deleteLocationToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_delete;
+            this.deleteLocationToolStripMenuItem.Name = "deleteLocationToolStripMenuItem";
+            this.deleteLocationToolStripMenuItem.Size = new System.Drawing.Size(165, 30);
+            this.deleteLocationToolStripMenuItem.Text = "Delete";
+            this.deleteLocationToolStripMenuItem.Click += new System.EventHandler(this.RemoveStorageClicked);
+            // 
+            // AddStorageLocationButton
+            // 
+            this.AddStorageLocationButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.AddStorageLocationButton.ImageIndex = 0;
+            this.AddStorageLocationButton.ImageList = this.ButtonImageIndex;
+            this.AddStorageLocationButton.Location = new System.Drawing.Point(439, 187);
+            this.AddStorageLocationButton.Margin = new System.Windows.Forms.Padding(2);
+            this.AddStorageLocationButton.Name = "AddStorageLocationButton";
+            this.AddStorageLocationButton.Size = new System.Drawing.Size(30, 29);
+            this.AddStorageLocationButton.TabIndex = 54;
+            this.AddStorageLocationButton.UseVisualStyleBackColor = true;
+            this.AddStorageLocationButton.Click += new System.EventHandler(this.AddStorageClicked);
+            // 
+            // RemoveStorageLocationButton
+            // 
+            this.RemoveStorageLocationButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.RemoveStorageLocationButton.ImageIndex = 1;
+            this.RemoveStorageLocationButton.ImageList = this.ButtonImageIndex;
+            this.RemoveStorageLocationButton.Location = new System.Drawing.Point(474, 187);
+            this.RemoveStorageLocationButton.Margin = new System.Windows.Forms.Padding(2);
+            this.RemoveStorageLocationButton.Name = "RemoveStorageLocationButton";
+            this.RemoveStorageLocationButton.Size = new System.Drawing.Size(30, 29);
+            this.RemoveStorageLocationButton.TabIndex = 53;
+            this.RemoveStorageLocationButton.UseVisualStyleBackColor = true;
+            this.RemoveStorageLocationButton.Click += new System.EventHandler(this.RemoveStorageClicked);
+            // 
+            // pictureBox3
+            // 
+            this.pictureBox3.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
+            this.pictureBox3.Location = new System.Drawing.Point(14, 157);
+            this.pictureBox3.Margin = new System.Windows.Forms.Padding(2);
+            this.pictureBox3.Name = "pictureBox3";
+            this.pictureBox3.Size = new System.Drawing.Size(32, 31);
+            this.pictureBox3.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox3.TabIndex = 50;
+            this.pictureBox3.TabStop = false;
+            // 
+            // pictureBox2
+            // 
+            this.pictureBox2.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
+            this.pictureBox2.Location = new System.Drawing.Point(14, 96);
+            this.pictureBox2.Margin = new System.Windows.Forms.Padding(2);
+            this.pictureBox2.Name = "pictureBox2";
+            this.pictureBox2.Size = new System.Drawing.Size(32, 31);
+            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox2.TabIndex = 47;
+            this.pictureBox2.TabStop = false;
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = global::BuildSync.Client.Properties.Resources.ic_check_circle_2x;
+            this.pictureBox1.Location = new System.Drawing.Point(14, 33);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(32, 31);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 44;
+            this.pictureBox1.TabStop = false;
             // 
             // StorageSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.Controls.Add(this.StorageMaxSizeTextBox);
+            this.Controls.Add(this.AddStorageLocationButton);
+            this.Controls.Add(this.RemoveStorageLocationButton);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.storageLocationList);
             this.Controls.Add(this.pictureBox3);
             this.Controls.Add(this.deprioritizeTagsTextBox);
             this.Controls.Add(this.label4);
@@ -225,33 +294,19 @@
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.HeuristicComboBox);
-            this.Controls.Add(this.StorageMaxSizeIcon);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.StoragePathIcon);
-            this.Controls.Add(this.savePathBrowseButton);
-            this.Controls.Add(this.StoragePathTextBox);
-            this.Controls.Add(this.label1);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "StorageSettings";
-            this.Size = new System.Drawing.Size(519, 323);
+            this.Size = new System.Drawing.Size(519, 337);
+            this.locationListContextMenu.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.StorageMaxSizeIcon)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.StoragePathIcon)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.PictureBox StoragePathIcon;
-        private System.Windows.Forms.Button savePathBrowseButton;
-        private System.Windows.Forms.TextBox StoragePathTextBox;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.PictureBox StorageMaxSizeIcon;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ComboBox HeuristicComboBox;
         private System.Windows.Forms.PictureBox pictureBox1;
@@ -261,6 +316,18 @@
         private System.Windows.Forms.PictureBox pictureBox3;
         private TagTextBox deprioritizeTagsTextBox;
         private System.Windows.Forms.Label label4;
-        private Core.Controls.SizeTextBox StorageMaxSizeTextBox;
+        private System.Windows.Forms.Button AddStorageLocationButton;
+        private System.Windows.Forms.Button RemoveStorageLocationButton;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ListView storageLocationList;
+        private System.Windows.Forms.ColumnHeader columnHeader5;
+        private System.Windows.Forms.ColumnHeader columnHeader6;
+        private System.Windows.Forms.ImageList ButtonImageIndex;
+        private System.Windows.Forms.ContextMenuStrip locationListContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem addLocationToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
+        private System.Windows.Forms.ToolStripMenuItem deleteLocationToolStripMenuItem;
+        private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.ToolStripMenuItem editLocationToolStripMenuItem;
     }
 }

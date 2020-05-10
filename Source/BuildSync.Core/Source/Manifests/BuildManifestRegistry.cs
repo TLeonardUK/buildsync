@@ -195,10 +195,14 @@ namespace BuildSync.Core.Manifests
         public void Open(string Path, int InMaxManifests, bool CacheDownloadInfo)
         {
             MaximumManifests = InMaxManifests;
+            RootPath = Path;
 
             Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loading build manfiests from: {0}", Path);
 
-            UpdateStoragePath(Path);
+            if (!Directory.Exists(RootPath))
+            {
+                Directory.CreateDirectory(RootPath);
+            }
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
@@ -233,7 +237,7 @@ namespace BuildSync.Core.Manifests
 
                             lock (Results)
                             {
-                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loaded Manifest: {0} -> {1}", Manifest.Guid.ToString(), Manifest.VirtualPath);
+                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Loaded Manifest (Version {2}): {0} -> {1}", Manifest.Guid.ToString(), Manifest.VirtualPath, Manifest.Version);
 
                                 Results.Add(Manifest);
                             }
@@ -409,6 +413,7 @@ namespace BuildSync.Core.Manifests
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Tagging manifest {0} with {1}", ManifestId.ToString(), Tag.Name);
 
+                Manifest.Metadata.ModifiedTime = DateTime.UtcNow;
                 Manifest.Metadata.TagIds.Add(TagId);
                 StoreMetadata(Manifest);
             }
@@ -437,6 +442,7 @@ namespace BuildSync.Core.Manifests
             {
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Unagging manifest {0} with {1}", ManifestId.ToString(), Tag.Name);
 
+                Manifest.Metadata.ModifiedTime = DateTime.UtcNow;
                 Manifest.Metadata.TagIds.Remove(TagId);
                 StoreMetadata(Manifest);
             }
@@ -473,19 +479,6 @@ namespace BuildSync.Core.Manifests
 
             ManifestFileSystem.RemoveNode(Manifest.VirtualPath);
             Manifests.Remove(Manifest);
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="NewDirectory"></param>
-        public void UpdateStoragePath(string NewDirectory)
-        {
-            RootPath = NewDirectory;
-
-            if (!Directory.Exists(RootPath))
-            {
-                Directory.CreateDirectory(RootPath);
-            }
         }
     }
 }

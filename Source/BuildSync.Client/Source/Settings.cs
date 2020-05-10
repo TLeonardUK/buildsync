@@ -25,6 +25,7 @@ using System.Drawing;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Scm;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Storage;
 
 namespace BuildSync.Client
 {
@@ -168,7 +169,7 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        public int LastUpgradeVersion = 0;
+        public int LastUpgradeVersion { get; set; } = 0;
 
         /// <summary>
         /// 
@@ -183,10 +184,15 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
+        public List<StorageLocation> StorageLocations { get; set; } = new List<StorageLocation>();
+
+        /// <summary>
+        ///     DEPRECATED: Use StorageLocations instead.
+        /// </summary>
         public string StoragePath { get; set; } = "";
 
         /// <summary>
-        /// 
+        ///     DEPRECATED: Use StorageLocations instead.
         /// </summary>
         public long StorageMaxSize { get; set; } = 512L * 1024L * 1024L * 1024L;
 
@@ -348,6 +354,26 @@ namespace BuildSync.Client
         ///     List of all tag id's to prioritize deleting when deleting builds for space.
         /// </summary>
         public List<Guid> PrioritizeDeletingBuildTagIds { get; set; } = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool AutoReplicate { get; set; } = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<Guid> ReplicateSelectTags { get; set; } = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<Guid> ReplicateIgnoreTags { get; set; } = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DateTime ReplicationNewerThanTime { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// </summary>

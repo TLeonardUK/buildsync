@@ -49,6 +49,7 @@ namespace BuildSync.Client.Forms
             AddSettingsPanel<StorageSettings>("storageSettingsNode");
             AddSettingsPanel<BandwidthSettings>("bandwidthSettingsNode");
             AddSettingsPanel<ScmSettings>("scmSettingsNode");
+            AddSettingsPanel<ReplicationSettings>("replicationSettingsNode");
 
             groupTreeView.ExpandAll();
             groupTreeView.SelectedNode = groupTreeView.Nodes[0];

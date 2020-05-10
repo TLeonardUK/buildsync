@@ -21,10 +21,23 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
-using BuildSync.Core.Utils;
 
-namespace BuildSync.Server.Tasks
+namespace BuildSync.Core.Storage
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    public class StorageLocation
+    {
+        /// <summary>
+        /// </summary>
+        public string Path { get; set; } = "";
+
+        /// <summary>
+        /// </summary>
+        public long MaxSize { get; set; } = 512L * 1024L * 1024L * 1024L;
+    }
 }

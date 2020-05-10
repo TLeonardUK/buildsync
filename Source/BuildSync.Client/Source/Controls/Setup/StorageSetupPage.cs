@@ -28,6 +28,7 @@ using BuildSync.Client.Properties;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Storage;
 
 namespace BuildSync.Client.Controls.Setup
 {
@@ -52,7 +53,13 @@ namespace BuildSync.Client.Controls.Setup
         /// <summary>
         /// 
         /// </summary>
-        public override bool NextEnabled => true;
+        public override bool NextEnabled
+        {
+            get
+            {
+                return StorageMaxSizeTextBox.Value > 0 && Directory.Exists(StoragePathTextBox.Text);
+            }       
+        }
 
 
         /// <summary>
@@ -63,8 +70,8 @@ namespace BuildSync.Client.Controls.Setup
             InitializeComponent();
 
             SkipValidity = true;
-            StoragePathTextBox.Text = Program.Settings.StoragePath;
-            StorageMaxSizeTextBox.Value = Program.Settings.StorageMaxSize / 1024 / 1024 / 1024;
+            StoragePathTextBox.Text = Program.Settings.StorageLocations.Count > 0 ? Program.Settings.StorageLocations[0].Path : "";
+            StorageMaxSizeTextBox.Value = Program.Settings.StorageLocations.Count > 0 ? Program.Settings.StorageLocations[0].MaxSize : 0;
             SkipValidity = false;
 
             UpdateValidityState();
@@ -81,13 +88,12 @@ namespace BuildSync.Client.Controls.Setup
             Dialog.Multiselect = true;
             Dialog.IsFolderPicker = true;
             Dialog.Title = "Select Storage Folder";
-            Dialog.InitialDirectory = Program.Settings.StoragePath;
+            Dialog.InitialDirectory = StoragePathTextBox.Text;
 
             if (Dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 StoragePathTextBox.Text = Dialog.FileName;
-                Program.Settings.StoragePath = Dialog.FileName;
-
+                
                 UpdateValidityState();
             }
         }
@@ -110,12 +116,17 @@ namespace BuildSync.Client.Controls.Setup
                 return;
             }
 
-            Program.Settings.StoragePath = StoragePathTextBox.Text;
-            Program.Settings.StorageMaxSize = (long)StorageMaxSizeTextBox.Value * 1024 * 1024 * 1024;
-
-            if (Directory.Exists(Program.Settings.StoragePath))
+            if (Directory.Exists(StoragePathTextBox.Text))
             {
                 StoragePathIcon.Image = Resources.ic_check_circle_2x;
+
+                if (Program.Settings.StorageLocations.Count == 0)
+                {
+                    Program.Settings.StorageLocations.Add(new StorageLocation());
+                }
+
+                Program.Settings.StorageLocations[0].Path = StoragePathTextBox.Text;
+                Program.Settings.StorageLocations[0].MaxSize = StorageMaxSizeTextBox.Value;
             }
             else
             {

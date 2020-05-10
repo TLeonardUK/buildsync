@@ -53,6 +53,7 @@
             this.RefreshTimer = new System.Windows.Forms.Timer(this.components);
             this.BandwithGraph = new BuildSync.Core.Controls.Graph.GraphControl();
             this.MaxBandwidthBox = new BuildSync.Core.Controls.SizeTextBox();
+            this.columnHeader11 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.clientLstContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -88,6 +89,7 @@
             this.columnHeader2,
             this.columnHeader3,
             this.columnHeader7,
+            this.columnHeader11,
             this.columnHeader8});
             this.MainListView.ContextMenuStrip = this.clientLstContextMenu;
             this.MainListView.FullRowSelect = true;
@@ -103,7 +105,7 @@
             this.MainListView.Location = new System.Drawing.Point(0, 111);
             this.MainListView.Name = "MainListView";
             this.MainListView.ShowGroups = false;
-            this.MainListView.Size = new System.Drawing.Size(929, 204);
+            this.MainListView.Size = new System.Drawing.Size(1147, 204);
             this.MainListView.SmallImageList = this.UserImageList;
             this.MainListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.MainListView.TabIndex = 1;
@@ -159,7 +161,7 @@
             // columnHeader8
             // 
             this.columnHeader8.Text = "Version";
-            this.columnHeader8.Width = 80;
+            this.columnHeader8.Width = 70;
             // 
             // clientLstContextMenu
             // 
@@ -224,7 +226,7 @@
             this.BandwithGraph.Name = "BandwithGraph";
             this.BandwithGraph.Series = new BuildSync.Core.Controls.Graph.GraphSeries[] {
         null};
-            this.BandwithGraph.Size = new System.Drawing.Size(488, 104);
+            this.BandwithGraph.Size = new System.Drawing.Size(706, 104);
             this.BandwithGraph.TabIndex = 3;
             // 
             // MaxBandwidthBox
@@ -237,11 +239,16 @@
             this.MaxBandwidthBox.Value = ((long)(0));
             this.MaxBandwidthBox.OnValueChanged += new System.EventHandler(this.MaxBandwidthBoxChanged);
             // 
+            // columnHeader11
+            // 
+            this.columnHeader11.Text = "Disk Quota";
+            this.columnHeader11.Width = 70;
+            // 
             // ManageServerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(931, 315);
+            this.ClientSize = new System.Drawing.Size(1149, 315);
             this.Controls.Add(this.MaxBandwidthBox);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label3);
@@ -287,5 +294,6 @@
         private System.Windows.Forms.ToolStripMenuItem addTagToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader10;
         private Core.Controls.SizeTextBox MaxBandwidthBox;
+        private System.Windows.Forms.ColumnHeader columnHeader11;
     }
 }

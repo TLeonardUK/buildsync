@@ -223,6 +223,10 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
+        public DateTime LastRecievedData { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// </summary>
         public string LocalFolder { get; set; }
 
         /// <summary>

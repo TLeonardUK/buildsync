@@ -195,6 +195,11 @@ namespace BuildSync.Core.Downloads
         public bool Paused { get; set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public bool IsAutomaticReplication { get; set; }
+
+        /// <summary>
         /// </summary>
         public int Priority { get; set; }
 

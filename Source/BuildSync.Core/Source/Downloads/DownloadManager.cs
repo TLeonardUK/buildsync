@@ -43,6 +43,11 @@ namespace BuildSync.Core.Downloads
 
     /// <summary>
     /// </summary>
+    /// <param name="State"></param>
+    public delegate void RequestReplicatedBuildsHandler(List<Guid> SelectTags, List<Guid> IgnoreTags, DateTime NewerThan);
+
+    /// <summary>
+    /// </summary>
     public class DownloadManager
     {
         /// <summary>
@@ -74,6 +79,41 @@ namespace BuildSync.Core.Downloads
         public bool AreStatesDirty { get; set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public bool AutoReplicate { get; set; } = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<Guid> ReplicateSelectTags { get; set; } = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<Guid> ReplicateIgnoreTags { get; set; } = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ulong LastReplicationRequestTime = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public DateTime ReplicationNewerThanTime = DateTime.UtcNow;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private const long ReplicationCheckInterval = 60 * 1000;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public const long ReplicationMaxIdleDays = 3;
+
+        /// <summary>
         /// </summary>
         public DownloadStateCollection States => StateCollection;
 
@@ -88,12 +128,17 @@ namespace BuildSync.Core.Downloads
         public event DownloadFinishedHandler OnDownloadFinished;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public event RequestReplicatedBuildsHandler OnRequestReplicatedBuilds;
+
+        /// <summary>
         /// </summary>
         /// <param name="Name"></param>
         /// <param name="VirtualPath"></param>
         /// <param name="Priority"></param>
         /// <param name="KeepUpToDate"></param>
-        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, BuildSelectionRule Rule, BuildSelectionFilter Filter, string SelectionFilterFilePath, string ScmWorkspaceLocation, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName, string InstallLocation, List<Guid> IncludeTags, List<Guid> ExcludeTags)
+        public DownloadState AddDownload(string Name, string VirtualPath, int Priority, BuildSelectionRule Rule, BuildSelectionFilter Filter, string SelectionFilterFilePath, string ScmWorkspaceLocation, bool AutomaticallyUpdate, bool AutomaticallyInstall, string InstallDeviceName, string InstallLocation, List<Guid> IncludeTags, List<Guid> ExcludeTags, bool DeleteOnComplete = false)
         {
             DownloadState State = new DownloadState();
             State.Id = Guid.NewGuid();
@@ -110,6 +155,7 @@ namespace BuildSync.Core.Downloads
             State.ScmWorkspaceLocation = ScmWorkspaceLocation;
             State.IncludeTags = IncludeTags;
             State.ExcludeTags = ExcludeTags;
+            State.IsAutomaticReplication = DeleteOnComplete;
 
             StateCollection.States.Add(State);
             AreStatesDirty = true;
@@ -122,6 +168,7 @@ namespace BuildSync.Core.Downloads
         public void ForceRefresh()
         {
             BuildFileSystem.ForceRefresh();
+            LastReplicationRequestTime = 0;
         }
 
         /// <summary>
@@ -452,14 +499,90 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         public void Poll(bool bHasConnection)
         {
-            List<Guid> ActiveManifestIds = new List<Guid>();
-
             if (bHasConnection && !bHadConnection)
             {
                 ForceRefresh();
             }
 
             bHadConnection = bHasConnection;
+
+            if (bHasConnection)
+            {
+                UpdateReplication();
+            }
+            UpdateDownloads(bHasConnection);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void RecieveReplicatedBuilds(NetMessage_GetFilteredBuildsResponse.BuildInfo[] Builds)
+        {
+            if (!AutoReplicate)
+            {
+                return;
+            }
+
+            Logger.Log(LogLevel.Info, LogCategory.Download, "Recieved {0} replicated builds from server.", Builds.Length);
+
+            foreach (NetMessage_GetFilteredBuildsResponse.BuildInfo Build in Builds)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Download, "\tBuild:{0} Path:{1}", Build.Guid.ToString(), Build.VirtualPath);
+
+                // Already downloaded/downloading.
+                ManifestDownloadState State = ManifestDownloader.GetDownload(Build.Guid);
+                if (State != null)
+                {
+                    continue;
+                }
+
+                // Create a new download.
+                AddDownload(
+                    "Automatic Replication",
+                    Build.VirtualPath,
+                    0,
+                    BuildSelectionRule.Newest,
+                    BuildSelectionFilter.None,
+                    "",
+                    "",
+                    false,
+                    false,
+                    "",
+                    "",
+                    new List<Guid>(),
+                    new List<Guid>(),
+                    true
+                );
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void UpdateReplication()
+        {
+            if (!AutoReplicate)
+            {
+                return;
+            }
+
+            ulong Elapsed = TimeUtils.Ticks - LastReplicationRequestTime;
+            if (Elapsed > ReplicationCheckInterval && bHadConnection)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Download, "Requesting update on published builds.");
+
+                OnRequestReplicatedBuilds?.Invoke(ReplicateSelectTags, ReplicateIgnoreTags, ReplicationNewerThanTime);
+
+                ReplicationNewerThanTime = DateTime.UtcNow;
+                LastReplicationRequestTime = TimeUtils.Ticks;
+            }        
+        }
+
+        /// <summary>
+        /// </summary>
+        private void UpdateDownloads(bool bHasConnection)
+        {
+            List<Guid> ActiveManifestIds = new List<Guid>();
 
             foreach (DownloadState State in StateCollection.States)
             {
@@ -523,7 +646,7 @@ namespace BuildSync.Core.Downloads
                     Downloader.InstallLocation = State.InstallLocation;
 
                     // Have we finished this download?
-                    if (Downloader.State == ManifestDownloadProgressState.Complete && 
+                    if (Downloader.State == ManifestDownloadProgressState.Complete &&
                         State.PreviousDownloaderState != Downloader.State &&
                         State.PreviousDownloaderState != ManifestDownloadProgressState.Unknown)
                     {
@@ -591,6 +714,59 @@ namespace BuildSync.Core.Downloads
                 {
                     Downloader.Active = true;
                     Downloader.LastActive = DateTime.Now;
+                }
+            }
+
+            // Remove auto replication downloads as required.
+            for (int i = 0; i < StateCollection.States.Count; i++)
+            {
+                DownloadState State = StateCollection.States[i];
+
+                if (State.ActiveManifestId == Guid.Empty)
+                {
+                    continue;
+                }
+
+                if (!State.IsAutomaticReplication)
+                {
+                    continue;
+                }
+
+                ManifestDownloadState Downloader = ManifestDownloader.GetDownload(State.ActiveManifestId);
+                if (Downloader != null)
+                {
+                    bool ShouldRemove = false;
+
+                    // Always remove downloads that have completed.
+                    if (Downloader.State == ManifestDownloadProgressState.Complete)
+                    {
+                        ShouldRemove = true;
+                    }
+
+                    // Download has not recieved any blocks in a long time, remove.
+                    TimeSpan Elapsed = DateTime.UtcNow - Downloader.LastRecievedData;
+                    if (Elapsed.TotalDays > ReplicationMaxIdleDays)
+                    {
+                        ShouldRemove = true;
+                    }
+
+                    // Automatically resume replication downloads if they are in an error state.
+                    if (Downloader.Paused && (
+                        Downloader.State == ManifestDownloadProgressState.DiskError ||
+                        Downloader.State == ManifestDownloadProgressState.InitializeFailed ||
+                        Downloader.State == ManifestDownloadProgressState.InstallFailed ||
+                        Downloader.State == ManifestDownloadProgressState.ValidationFailed
+                    ))
+                    {
+                        ManifestDownloader.ResumeDownload(Downloader.ManifestId);
+                    }
+
+                    if (ShouldRemove)
+                    {
+                        StateCollection.States.RemoveAt(i);
+                        AreStatesDirty = false;
+                        i--;
+                    }
                 }
             }
         }
@@ -759,10 +935,12 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         /// <param name="InManifestDownloader"></param>
         /// <param name="Config"></param>
-        public void Start(ManifestDownloadManager InManifestDownloader, DownloadStateCollection ResumeStateCollection, VirtualFileSystem FileSystem, ScmManager InScmManager)
+        public void Start(ManifestDownloadManager InManifestDownloader, DownloadStateCollection ResumeStateCollection, VirtualFileSystem FileSystem, ScmManager InScmManager, DateTime InReplicationNewestTime)
         {
             ManifestDownloader = InManifestDownloader;
             ManifestDownloader.OnDownloadError += DownloadError;
+
+            ReplicationNewerThanTime = InReplicationNewestTime;
 
             ScmManager = InScmManager;
 

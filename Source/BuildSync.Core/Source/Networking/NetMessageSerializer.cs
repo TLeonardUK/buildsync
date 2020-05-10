@@ -226,6 +226,11 @@ namespace BuildSync.Core.Networking
                 }
                 else
                 {
+                    if (Length > Capacity)
+                    {
+                        Capacity = Length;
+                    }
+
                     if (!Value.Resize(Length, Capacity, FailIfNoMemory))
                     {
                         FailedOutOfMemory = true;

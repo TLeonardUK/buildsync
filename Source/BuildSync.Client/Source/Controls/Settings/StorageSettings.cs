@@ -28,6 +28,8 @@ using BuildSync.Client.Properties;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Storage;
+using BuildSync.Client.Forms;
 
 namespace BuildSync.Client.Controls.Settings
 {
@@ -57,35 +59,33 @@ namespace BuildSync.Client.Controls.Settings
             }
 
             SkipValidity = true;
-            StoragePathTextBox.Text = Program.Settings.StoragePath;
-            StorageMaxSizeTextBox.Value = Program.Settings.StorageMaxSize;
             HeuristicComboBox.SelectedIndex = (int)Program.Settings.StorageHeuristic;
             prioritizeTagsTextBox.TagIds = new List<Guid>(Program.Settings.PrioritizeKeepingBuildTagIds);
             deprioritizeTagsTextBox.TagIds = new List<Guid>(Program.Settings.PrioritizeDeletingBuildTagIds);
             SkipValidity = false;
 
+            RefreshItems();
             UpdateValidityState();
         }
 
         /// <summary>
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void BrowseClicked(object sender, EventArgs e)
+        private void RefreshItems()
         {
-            CommonOpenFileDialog Dialog = new CommonOpenFileDialog();
-            Dialog.AllowNonFileSystemItems = true;
-            Dialog.Multiselect = true;
-            Dialog.IsFolderPicker = true;
-            Dialog.Title = "Select Storage Folder";
-            Dialog.InitialDirectory = Program.Settings.StoragePath;
-
-            if (Dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            storageLocationList.Items.Clear();
+            foreach (StorageLocation Settings in Program.Settings.StorageLocations)
             {
-                StoragePathTextBox.Text = Dialog.FileName;
-                Program.Settings.StoragePath = Dialog.FileName;
-
-                UpdateValidityState();
+                ListViewItem Item = new ListViewItem(
+                    new[]
+                    {
+                        Settings.Path,
+                        StringUtils.FormatAsSize(Program.StorageManager.GetLocationDiskUsage(Settings)),
+                        StringUtils.FormatAsSize(Settings.MaxSize),
+                    }
+                );
+                Item.ImageIndex = 4;
+                Item.Tag = Settings;
+                storageLocationList.Items.Add(Item);
             }
         }
 
@@ -107,20 +107,81 @@ namespace BuildSync.Client.Controls.Settings
                 return;
             }
 
-            Program.Settings.StoragePath = StoragePathTextBox.Text;
-            Program.Settings.StorageMaxSize = StorageMaxSizeTextBox.Value;
             Program.Settings.StorageHeuristic = (ManifestStorageHeuristic)HeuristicComboBox.SelectedIndex;
 
             Program.Settings.PrioritizeKeepingBuildTagIds = prioritizeTagsTextBox.TagIds;
             Program.Settings.PrioritizeDeletingBuildTagIds = deprioritizeTagsTextBox.TagIds;
 
-            if (Directory.Exists(Program.Settings.StoragePath))
+            deleteLocationToolStripMenuItem.Enabled = storageLocationList.SelectedItems.Count > 0;
+            RemoveStorageLocationButton.Enabled = storageLocationList.SelectedItems.Count > 0;
+            editLocationToolStripMenuItem.Enabled = storageLocationList.SelectedItems.Count > 0;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void AddStorageClicked(object sender, EventArgs e)
+        {
+            AddStorageLocationForm Form = new AddStorageLocationForm();
+            if (Form.ShowDialog(this) == DialogResult.OK)
             {
-                StoragePathIcon.Image = Resources.ic_check_circle_2x;
+                Program.Settings.StorageLocations.Add(Form.Settings);
+                Program.SaveSettings();
+
+                RefreshItems();
             }
-            else
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RemoveStorageClicked(object sender, EventArgs e)
+        {
+            if (storageLocationList.SelectedItems.Count == 0)
             {
-                StoragePathIcon.Image = Resources.ic_error_red_48pt;
+                return;
+            }
+
+            StorageLocation Settings = storageLocationList.SelectedItems[0].Tag as StorageLocation;
+            Program.Settings.StorageLocations.Remove(Settings);
+            Program.SaveSettings();
+
+            RefreshItems();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void StorageLocationItemChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            UpdateValidityState();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void EditClicked(object sender, EventArgs e)
+        {
+            if (storageLocationList.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            AddStorageLocationForm Form = new AddStorageLocationForm();
+            Form.Settings = storageLocationList.SelectedItems[0].Tag as StorageLocation;
+            if (Form.ShowDialog(this) == DialogResult.OK)
+            {
+                Program.SaveSettings();
+
+                RefreshItems();
             }
         }
     }

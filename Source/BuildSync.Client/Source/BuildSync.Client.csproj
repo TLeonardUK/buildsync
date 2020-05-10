@@ -238,6 +238,12 @@
     <Compile Include="Controls\Settings\BandwidthSettings.Designer.cs">
       <DependentUpon>BandwidthSettings.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\Settings\ReplicationSettings.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\Settings\ReplicationSettings.Designer.cs">
+      <DependentUpon>ReplicationSettings.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\Settings\ScmSettings.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -321,6 +327,12 @@
     </Compile>
     <Compile Include="Forms\AddRouteForm.Designer.cs">
       <DependentUpon>AddRouteForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\AddStorageLocationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AddStorageLocationForm.Designer.cs">
+      <DependentUpon>AddStorageLocationForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\AddUserForm.cs">
       <SubType>Form</SubType>
@@ -483,6 +495,9 @@
     <EmbeddedResource Include="Controls\Settings\BandwidthSettings.resx">
       <DependentUpon>BandwidthSettings.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Controls\Settings\ReplicationSettings.resx">
+      <DependentUpon>ReplicationSettings.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\Settings\ScmSettings.resx">
       <DependentUpon>ScmSettings.cs</DependentUpon>
     </EmbeddedResource>
@@ -524,6 +539,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\AddRouteForm.resx">
       <DependentUpon>AddRouteForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\AddStorageLocationForm.resx">
+      <DependentUpon>AddStorageLocationForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\AddUserForm.resx">
       <DependentUpon>AddUserForm.cs</DependentUpon>
@@ -671,6 +689,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.draw.pencil.png" />
     <None Include="Resources\appbar.transit.connection.png" />
     <None Include="Resources\appbar.network.home.png" />
     <None Include="Resources\appbar.refresh1.png" />

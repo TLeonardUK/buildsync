@@ -142,7 +142,8 @@ namespace BuildSync.Core.Server
             ListenConnection.OnClientConnect += ClientConnected;
             ListenConnection.OnClientDisconnect += ClientDisconnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.BlockSize, 16);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 8);
+            MemoryPool.PreallocateBuffers((int)BuildManifest.DefaultBlockSize, 16);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
         }
 
@@ -567,6 +568,63 @@ namespace BuildSync.Core.Server
             }
 
             // ------------------------------------------------------------------------------
+            // Remote client requests all builds that match a specific criterial.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_GetFilteredBuilds)
+            {
+                NetMessage_GetFilteredBuilds Msg = BaseMessage as NetMessage_GetFilteredBuilds;
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Recieved request for builds that match filter.");
+
+                NetMessage_GetFilteredBuildsResponse ResponseMsg = new NetMessage_GetFilteredBuildsResponse();
+                List<NetMessage_GetFilteredBuildsResponse.BuildInfo> Result = new List<NetMessage_GetFilteredBuildsResponse.BuildInfo>();
+
+                foreach (BuildManifest Manifest in ManifestRegistry.Manifests)
+                {
+                    DateTime UpdateTime = Manifest.CreateTime;
+                    if (Manifest.Metadata.ModifiedTime > UpdateTime)
+                    {
+                        UpdateTime = Manifest.Metadata.ModifiedTime;
+                    }
+
+                    if (UpdateTime < Msg.NewerThan)
+                    {
+                        continue;
+                    }
+
+                    if (Msg.SelectTags.Count > 0)
+                    {
+                        if (Manifest.Metadata == null || !Manifest.Metadata.TagIds.ContainsAny(Msg.SelectTags))
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (Msg.IgnoreTags.Count > 0)
+                    {
+                        if (Manifest.Metadata != null && Manifest.Metadata.TagIds.ContainsAny(Msg.IgnoreTags))
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (!UserManager.CheckPermission(State.Username, UserPermissionType.Read, Manifest.VirtualPath))
+                    {
+                        continue;
+                    }
+
+                    NetMessage_GetFilteredBuildsResponse.BuildInfo BuildInfo;
+                    BuildInfo.Guid = Manifest.Guid;
+                    BuildInfo.VirtualPath = Manifest.VirtualPath;
+                    Result.Add(BuildInfo);
+                }
+
+                ResponseMsg.Builds = Result.ToArray();
+                Connection.Send(ResponseMsg);
+            }
+
+            // ------------------------------------------------------------------------------
             // Remove client wants to publish a manifest.
             // ------------------------------------------------------------------------------
             else if (BaseMessage is NetMessage_PublishManifest)
@@ -582,6 +640,7 @@ namespace BuildSync.Core.Server
                 try
                 {
                     Manifest = BuildManifest.FromByteArray(Msg.Data);
+                    Manifest.CreateTime = DateTime.UtcNow;
                     ResponseMsg.ManifestId = Msg.ManifestId;
 
                     if (!UserManager.CheckPermission(State.Username, UserPermissionType.Write, Manifest.VirtualPath))
@@ -615,6 +674,30 @@ namespace BuildSync.Core.Server
                 if (Manifest != null)
                 {
                     SendBuildsUpdate(Connection, VirtualFileSystem.GetParentPath(Manifest.VirtualPath));
+                }
+
+                // Notify all clients a new build has been published.
+                if (ResponseMsg.Result == PublishManifestResult.Success)
+                {
+                    NetMessage_BuildPublished PublishMsg = new NetMessage_BuildPublished();
+                    PublishMsg.Path = Manifest.VirtualPath;
+                    PublishMsg.ManifestId = Manifest.Guid;
+
+                    List<NetConnection> Clients = ListenConnection.AllClients;
+                    foreach (NetConnection ClientConnection in Clients)
+                    {
+                        if (ClientConnection.Metadata != null)
+                        {
+                            ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                            if (Sub.VersionNumeric >= 100000613)
+                            {
+                                if (UserManager.CheckPermission(Sub.Username, UserPermissionType.Read, Manifest.VirtualPath))
+                                {
+                                    ClientConnection.Send(PublishMsg);
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -918,6 +1001,27 @@ namespace BuildSync.Core.Server
 
                 SendBuildsUpdate(Connection, VirtualFileSystem.GetParentPath(Manifest.VirtualPath));
 
+                // Notify all clients a build has been updated.
+                NetMessage_BuildUpdated UpdateMsg = new NetMessage_BuildUpdated();
+                UpdateMsg.Path = Manifest.VirtualPath;
+                UpdateMsg.ManifestId = Manifest.Guid;
+
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        if (Sub.VersionNumeric >= 100000613)
+                        {
+                            if (UserManager.CheckPermission(Sub.Username, UserPermissionType.Read, Manifest.VirtualPath))
+                            {
+                                ClientConnection.Send(UpdateMsg);
+                            }
+                        }
+                    }
+                }
+
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tagged build '{1}' with tag '{2}'.", State.Username, Manifest.VirtualPath, Tag.Name);
             }
 
@@ -953,6 +1057,27 @@ namespace BuildSync.Core.Server
                 ManifestRegistry.UntagManifest(Msg.ManifestId, Msg.TagId);
 
                 SendBuildsUpdate(Connection, VirtualFileSystem.GetParentPath(Manifest.VirtualPath));
+
+                // Notify all clients a build has been updated.
+                NetMessage_BuildUpdated UpdateMsg = new NetMessage_BuildUpdated();
+                UpdateMsg.Path = Manifest.VirtualPath;
+                UpdateMsg.ManifestId = Manifest.Guid;
+
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        if (Sub.VersionNumeric >= 100000613)
+                        {
+                            if (UserManager.CheckPermission(Sub.Username, UserPermissionType.Read, Manifest.VirtualPath))
+                            {
+                                ClientConnection.Send(UpdateMsg);
+                            }
+                        }
+                    }
+                }
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' untagged build '{1}' with tag '{2}'.", State.Username, Manifest.VirtualPath, Tag.Name);
             }
@@ -1200,6 +1325,7 @@ namespace BuildSync.Core.Server
                             NewState.TotalUploaded = Sub.TotalUploaded;
                             NewState.ConnectedPeerCount = Sub.ConnectedPeerCount;
                             NewState.DiskUsage = Sub.DiskUsage;
+                            NewState.DiskQuota = Sub.DiskQuota;
                             NewState.Version = Sub.Version;
                             NewState.TagIds = ClientConnection.Handshake.TagIds;
 
@@ -1226,6 +1352,7 @@ namespace BuildSync.Core.Server
                 State.UploadRate = Msg.UploadRate;
                 State.ConnectedPeerCount = Msg.ConnectedPeerCount;
                 State.DiskUsage = Msg.DiskUsage;
+                State.DiskQuota = Msg.DiskQuota;
                 State.Version = Msg.Version;
                 State.VersionNumeric = StringUtils.ConvertSemanticVerisonNumber(State.Version);
 

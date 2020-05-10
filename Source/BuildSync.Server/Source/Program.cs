@@ -248,7 +248,7 @@ namespace BuildSync.Server
             };
 
             BuildRegistry = new BuildManifestRegistry(TagRegistry);
-            BuildRegistry.Open(Path.Combine(Settings.StoragePath, "Manifests"), Settings.MaximumManifests, false);
+            BuildRegistry.Open(Path.Combine(AppDataDir, "Manifests"), Settings.MaximumManifests, false);
             BuildRegistry.ManifestLastSeenTimes = new Dictionary<string, DateTime>(Settings.ManifestLastSeenTimes);
 
             LicenseMgr = new LicenseManager();
@@ -309,19 +309,33 @@ namespace BuildSync.Server
             SettingsPath = Path.Combine(AppDir, "Config.json");
             SettingsBase.Load(SettingsPath, out Settings);
 
-            if (Settings.StoragePath.Length == 0)
-            {
-                Settings.StoragePath = Path.Combine(AppDir, "Storage");
-                if (!Directory.Exists(Settings.StoragePath))
-                {
-                    Directory.CreateDirectory(Settings.StoragePath);
-                }
-            }
-
             if (Settings.LastUpgradeVersion < AppVersion.VersionNumber)
             {
                 Logger.Log(LogLevel.Info, LogCategory.Main, "InitSettings: Upgrading settings.");
                 UpgradeSettings();
+            }
+
+            if (Settings.LastUpgradeVersion < 100000613)
+            {
+                // Copy over manifests folder from old storage path.
+                string SrcPath = Path.Combine(Settings.StoragePath, "Manifests");
+                string DstPath = Path.Combine(AppDataDir, "Manifests");
+                if (Directory.Exists(SrcPath))
+                {
+                    if (!Directory.Exists(DstPath))
+                    {
+                        Directory.CreateDirectory(DstPath);
+                    }
+
+                    foreach (string SrcFile in Directory.GetFiles(SrcPath))
+                    {
+                        string DstFile = Path.Combine(DstPath, SrcFile.Substring(SrcPath.Length + 1));
+                        if (!File.Exists(DstFile))
+                        {
+                            File.Copy(SrcFile, DstFile);
+                        }
+                    }
+                }
             }
 
             Settings.Save(SettingsPath);

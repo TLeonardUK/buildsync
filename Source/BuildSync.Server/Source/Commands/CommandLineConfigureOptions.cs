@@ -152,55 +152,6 @@ namespace BuildSync.Server.Commands
                 return;
             }
 
-            // Special handling for storage path changing, we need to run some code to clean things up.
-            if (Name.ToLower() == "storagepath")
-            {
-                MoveStorageTask MoveTask = new MoveStorageTask();
-                MoveTask.Start(Program.Settings.StoragePath, Value);
-
-                MoveStorageState OldState = MoveStorageState.Unknown;
-                string OldFile = "";
-                while (MoveTask.State != MoveStorageState.Success)
-                {
-                    if (OldState != MoveTask.State || OldFile != MoveTask.CurrentFile)
-                    {
-                        switch (MoveTask.State)
-                        {
-                            case MoveStorageState.CopyingFiles:
-                            {
-                                if (MoveTask.CurrentFile != null && MoveTask.CurrentFile.Trim().Length > 0)
-                                {
-                                    IpcClient.Respond(string.Format("Copying: {0}", MoveTask.CurrentFile));
-                                }
-
-                                break;
-                            }
-                            case MoveStorageState.CleaningUpOldDirectory:
-                            {
-                                IpcClient.Respond("Cleaning up old directory.");
-                                break;
-                            }
-                            case MoveStorageState.Success:
-                            {
-                                break;
-                            }
-                            case MoveStorageState.FailedDiskError:
-                            case MoveStorageState.Failed:
-                            default:
-                            {
-                                IpcClient.Respond("FAILED: Failed to change storage directory due to disk error.");
-                                return;
-                            }
-                        }
-
-                        OldFile = MoveTask.CurrentFile;
-                        OldState = MoveTask.State;
-                    }
-
-                    Thread.Sleep(10);
-                }
-            }
-
             // Update the value.
             IpcClient.Respond(string.Format("Applying value '{1}' to '{0}'.", Name, Value));
             Property.SetValue(Program.Settings, ValueToSet);
