@@ -27,6 +27,7 @@ In principle it works similarily to peer-to-peer torrenting but with the benefit
 * Re-use of files from previous builds to reduce download sizes.
 * Transport level SNAPPY compression to reduce data transfered.
 * Source control integration (currently for Perforce and GIT). Can be used to filter which builds are downloaded (eg. only downloading builds at or below the current head revision of a workspace).
+* Automatic mass replication of builds. Allowing machines to be setup to act as replicas or proxies. 
 
 ## Building
 The source code comes as a visual studio 2019 solution. A few additional extensions are required to fully build install and help files.
@@ -38,21 +39,24 @@ The source code comes as a visual studio 2019 solution. A few additional extensi
 Provided with the tool is a help file that you can access from the clients Help->View Help menu item. This gives a general description on setting it up and general usage.
 
 ## Screenshots
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true" width="350"></a>
-
-<a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true" width="350"></a>
+<html>
+<tr>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/downloads.png?raw=true" width="350"></a></td>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/launch_build.png?raw=true" width="350"></a></td>
+ </tr>
+<tr>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/build_manager.png?raw=true" width="350"></a></td>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/server_manager.png?raw=true" width="350"></a></td>
+ </tr>
+ <tr>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/users.png?raw=true" width="350"></a></td>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/manifests.png?raw=true" width="350"></a></td>
+ </tr>
+ <tr>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/routes.png?raw=true" width="350"></a></td>
+<td><a href="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true"><img src="https://github.com/TLeonardUK/buildsync/blob/master/Resources/GitHub/statistics.png?raw=true" width="350"></a></td>
+ </tr>
+</table>
 
 ## Contact Details
 Any questions you are welcome to send me an email;
