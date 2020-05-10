@@ -751,14 +751,10 @@ namespace BuildSync.Core.Downloads
                     }
 
                     // Automatically resume replication downloads if they are in an error state.
-                    if (Downloader.Paused && (
-                        Downloader.State == ManifestDownloadProgressState.DiskError ||
-                        Downloader.State == ManifestDownloadProgressState.InitializeFailed ||
-                        Downloader.State == ManifestDownloadProgressState.InstallFailed ||
-                        Downloader.State == ManifestDownloadProgressState.ValidationFailed
-                    ))
+                    if (State.Paused)
                     {
-                        ManifestDownloader.ResumeDownload(Downloader.ManifestId);
+                        State.Paused = false;
+                        //ManifestDownloader.ResumeDownload(Downloader.ManifestId);
                     }
 
                     if (ShouldRemove)

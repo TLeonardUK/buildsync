@@ -267,7 +267,7 @@ namespace BuildSync.Core.Storage
         /// 
         /// </summary>
         /// <returns></returns>
-        public long GetLocationFreeSpace(StorageLocation Location)
+        public long GetLocationFreeSpace(StorageLocation Location, bool UseDiskSpace = false)
         {
             long UsedSpace = GetLocationDiskUsage(Location);
             long AvailableSpace = Math.Max(0, Location.MaxSize - UsedSpace);
@@ -283,7 +283,14 @@ namespace BuildSync.Core.Storage
                 long AvailableDriveSpace = GetDriveFreeSpace(Location.Path.Substring(0, 3));
                 if (AvailableDriveSpace >= 0)
                 {
-                    AvailableSpace = Math.Min(AvailableSpace, AvailableDriveSpace);
+                    if (UseDiskSpace)
+                    {
+                        AvailableSpace = AvailableDriveSpace;
+                    }
+                    else
+                    {
+                        AvailableSpace = Math.Min(AvailableSpace, AvailableDriveSpace);
+                    }
                 }
             }
 
@@ -302,6 +309,7 @@ namespace BuildSync.Core.Storage
 
             long MostFreeSpace = 0;
 
+            // Find the location with the most free space.
             foreach (StorageLocation Location in Locations)
             {
                 long FreeSpace = GetLocationFreeSpace(Location);
@@ -309,6 +317,21 @@ namespace BuildSync.Core.Storage
                 {
                     OutPath = Path.Combine(Path.Combine(Location.Path, @"Builds"), ManifestId.ToString());
                     MostFreeSpace = FreeSpace;
+                }
+            }
+
+            // If no location was found, find the one with the most disk space available and leave pruning to 
+            // keep the storage limits to the quota.
+            if (MostFreeSpace == 0)
+            {
+                foreach (StorageLocation Location in Locations)
+                {
+                    long FreeSpace = GetLocationFreeSpace(Location, true);
+                    if (FreeSpace >= Size && FreeSpace > MostFreeSpace)
+                    {
+                        OutPath = Path.Combine(Path.Combine(Location.Path, @"Builds"), ManifestId.ToString());
+                        MostFreeSpace = FreeSpace;
+                    }
                 }
             }
 

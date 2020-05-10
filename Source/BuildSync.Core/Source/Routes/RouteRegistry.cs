@@ -169,6 +169,26 @@ namespace BuildSync.Core.Routes
         /// 
         /// </summary>
         /// <param name="Name"></param>
+        public void UpdateRoute(Guid RouteId, Guid SourceTagId, Guid DestinationTagId, bool Blacklisted, long BandwidthLimit)
+        {
+            Route Tag = GetRouteById(RouteId);
+            if (Tag == null)
+            {
+                return;
+            }
+
+            Tag.SourceTagId = SourceTagId;
+            Tag.DestinationTagId = DestinationTagId;
+            Tag.Blacklisted = Blacklisted;
+            Tag.BandwidthLimit = BandwidthLimit;
+
+            RoutesUpdated?.Invoke();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Name"></param>
         public Guid CreateRoute(Guid SourceTagId, Guid DestinationTagId, bool Blacklisted, long BandwidthLimit)
         {
             Route Tag = new Route();

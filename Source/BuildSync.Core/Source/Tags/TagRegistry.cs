@@ -150,6 +150,23 @@ namespace BuildSync.Core.Tags
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="TagId"></param>
+        public void RenameTag(Guid TagId, string Name)
+        {
+            Tag Tag = GetTagById(TagId);
+            if (Tag == null)
+            {
+                return;
+            }
+
+            Tag.Name = Name;
+
+            TagsUpdated?.Invoke();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="Name"></param>
         public Guid CreateTag(string Name)
         {

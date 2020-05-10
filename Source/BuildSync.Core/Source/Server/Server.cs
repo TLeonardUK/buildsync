@@ -952,7 +952,39 @@ namespace BuildSync.Core.Server
                 }
                 ActiveBandwidthLimitsSentToClients.Clear();
 
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' deleted route '{1}'.", State.Username, Msg.RouteId.ToString());
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' delete route '{1}'.", State.Username, Msg.RouteId.ToString());
+            }
+
+            // ------------------------------------------------------------------------------
+            // Update a route
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_UpdateRoute)
+            {
+                NetMessage_UpdateRoute Msg = BaseMessage as NetMessage_UpdateRoute;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyRoutes, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to update route without permission.", State.Username);
+                    return;
+                }
+
+                RouteRegistry.UpdateRoute(Msg.RouteId, Msg.SourceTagId, Msg.DestinationTagId, Msg.Blacklisted, Msg.BandwidthLimit);
+
+                // Dirty all relevant peer connections.
+                List<NetConnection> Clients = ListenConnection.AllClients;
+                foreach (NetConnection ClientConnection in Clients)
+                {
+                    if (ClientConnection.Metadata != null)
+                    {
+                        ServerConnectedClient Sub = ClientConnection.Metadata as ServerConnectedClient;
+                        Sub.RelevantPeerAddressesNeedUpdate = true;
+                    }
+                }
+                ActiveBandwidthLimitsSentToClients.Clear();
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' update route '{1}'.", State.Username, Msg.RouteId.ToString());
             }
 
             // ------------------------------------------------------------------------------
@@ -1100,6 +1132,26 @@ namespace BuildSync.Core.Server
                 TagRegistry.CreateTag(Msg.Name);
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' created tag '{1}'.", State.Username, Msg.Name);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Renames a tag
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RenameTag)
+            {
+                NetMessage_RenameTag Msg = BaseMessage as NetMessage_RenameTag;
+
+                ServerConnectedClient State = Connection.Metadata as ServerConnectedClient;
+
+                if (!UserManager.CheckPermission(State.Username, UserPermissionType.ModifyTags, ""))
+                {
+                    Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' tried to rename tag without permission.", State.Username);
+                    return;
+                }
+
+                TagRegistry.RenameTag(Msg.Id, Msg.Name);
+
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' renamed tag '{1}' to '{2}'.", State.Username, Msg.Id.ToString(), Msg.Name);
             }
 
             // ------------------------------------------------------------------------------

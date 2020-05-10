@@ -75,7 +75,7 @@
             this.addGroupButton.Name = "addGroupButton";
             this.addGroupButton.Size = new System.Drawing.Size(95, 29);
             this.addGroupButton.TabIndex = 15;
-            this.addGroupButton.Text = "Add Tag";
+            this.addGroupButton.Text = "OK";
             this.addGroupButton.UseVisualStyleBackColor = true;
             this.addGroupButton.Click += new System.EventHandler(this.OkClicked);
             // 
@@ -92,7 +92,7 @@
             this.Name = "AddTagForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Add Tag";
+            this.Text = "Modify Tag";
             this.Shown += new System.EventHandler(this.OnShown);
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -34,11 +34,10 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.blacklistCheckBox = new System.Windows.Forms.CheckBox();
-            this.bandwidthLimitTextBox = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
             this.destinationTagTextBox = new BuildSync.Client.Controls.TagTextBox();
             this.sourceTagTextBox = new BuildSync.Client.Controls.TagTextBox();
-            ((System.ComponentModel.ISupportInitialize)(this.bandwidthLimitTextBox)).BeginInit();
+            this.bandwidthLimitTextBox = new BuildSync.Core.Controls.SizeTextBox();
             this.SuspendLayout();
             // 
             // panel1
@@ -61,7 +60,7 @@
             this.addGroupButton.Name = "addGroupButton";
             this.addGroupButton.Size = new System.Drawing.Size(95, 29);
             this.addGroupButton.TabIndex = 15;
-            this.addGroupButton.Text = "Add Route";
+            this.addGroupButton.Text = "OK";
             this.addGroupButton.UseVisualStyleBackColor = true;
             this.addGroupButton.Click += new System.EventHandler(this.OkClicked);
             // 
@@ -94,27 +93,14 @@
             this.blacklistCheckBox.UseVisualStyleBackColor = true;
             this.blacklistCheckBox.CheckedChanged += new System.EventHandler(this.StateChanged);
             // 
-            // bandwidthLimitTextBox
-            // 
-            this.bandwidthLimitTextBox.Location = new System.Drawing.Point(10, 121);
-            this.bandwidthLimitTextBox.Maximum = new decimal(new int[] {
-            1410065408,
-            2,
-            0,
-            0});
-            this.bandwidthLimitTextBox.Name = "bandwidthLimitTextBox";
-            this.bandwidthLimitTextBox.Size = new System.Drawing.Size(519, 20);
-            this.bandwidthLimitTextBox.TabIndex = 23;
-            this.bandwidthLimitTextBox.ValueChanged += new System.EventHandler(this.StateChanged);
-            // 
             // label3
             // 
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(7, 105);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(183, 13);
+            this.label3.Size = new System.Drawing.Size(150, 13);
             this.label3.TabIndex = 24;
-            this.label3.Text = "Bandwidth Limit (KB/s), 0 is unlimited.";
+            this.label3.Text = "Bandwidth Limit (0 is unlimited)";
             // 
             // destinationTagTextBox
             // 
@@ -134,13 +120,23 @@
             this.sourceTagTextBox.TagIds = ((System.Collections.Generic.List<System.Guid>)(resources.GetObject("sourceTagTextBox.TagIds")));
             this.sourceTagTextBox.OnTagsChanged += new System.EventHandler(this.StateChanged);
             // 
+            // bandwidthLimitTextBox
+            // 
+            this.bandwidthLimitTextBox.DisplayAsTransferRate = false;
+            this.bandwidthLimitTextBox.Location = new System.Drawing.Point(10, 121);
+            this.bandwidthLimitTextBox.Name = "bandwidthLimitTextBox";
+            this.bandwidthLimitTextBox.Size = new System.Drawing.Size(519, 26);
+            this.bandwidthLimitTextBox.TabIndex = 25;
+            this.bandwidthLimitTextBox.Value = ((long)(0));
+            this.bandwidthLimitTextBox.OnValueChanged += new System.EventHandler(this.StateChanged);
+            // 
             // AddRouteForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(541, 230);
-            this.Controls.Add(this.label3);
             this.Controls.Add(this.bandwidthLimitTextBox);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.blacklistCheckBox);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.destinationTagTextBox);
@@ -152,9 +148,8 @@
             this.Name = "AddRouteForm";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Add Route";
+            this.Text = "Edit Route";
             this.Shown += new System.EventHandler(this.OnShown);
-            ((System.ComponentModel.ISupportInitialize)(this.bandwidthLimitTextBox)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -168,7 +163,7 @@
         private System.Windows.Forms.Label label2;
         private Controls.TagTextBox destinationTagTextBox;
         private System.Windows.Forms.CheckBox blacklistCheckBox;
-        private System.Windows.Forms.NumericUpDown bandwidthLimitTextBox;
         private System.Windows.Forms.Label label3;
+        private Core.Controls.SizeTextBox bandwidthLimitTextBox;
     }
 }

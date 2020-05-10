@@ -32,7 +32,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DownloadListItem));
             this.MainPanel = new System.Windows.Forms.Panel();
             this.MainProgressBar = new BuildSync.Core.Controls.SegmentedProgressBar();
-            this.blockStatusPanel = new BuildSync.Client.Controls.BlockStatusPanel();
+            this.blockStatusPanel = new BuildSync.Client.Controls.BlockStatusPanelLinear();
             this.collapseButton = new System.Windows.Forms.Button();
             this.NameLabel = new System.Windows.Forms.Label();
             this.PlayButton = new System.Windows.Forms.Button();
@@ -89,7 +89,7 @@
             this.blockStatusPanel.BackColor = System.Drawing.SystemColors.Control;
             this.blockStatusPanel.Location = new System.Drawing.Point(0, 45);
             this.blockStatusPanel.Name = "blockStatusPanel";
-            this.blockStatusPanel.Size = new System.Drawing.Size(602, 101);
+            this.blockStatusPanel.Size = new System.Drawing.Size(602, 33);
             this.blockStatusPanel.TabIndex = 9;
             // 
             // collapseButton
@@ -312,7 +312,7 @@
         private System.Windows.Forms.ImageList Buttonimages;
         private System.Windows.Forms.Button collapseButton;
         private System.Windows.Forms.Timer blockRefreshTimer;
-        private BlockStatusPanel blockStatusPanel;
+        private BlockStatusPanelLinear blockStatusPanel;
         private Core.Controls.SegmentedProgressBar MainProgressBar;
     }
 }

@@ -589,7 +589,6 @@ namespace BuildSync.Client.Controls
             }
         }
 
-
         /// <summary>
         /// </summary>
         /// <param name="State"></param>
@@ -654,13 +653,14 @@ namespace BuildSync.Client.Controls
         private void CollapseButtonClicked(object sender, EventArgs e)
         {
             Collapsed = !Collapsed;
+            blockStatusPanel.Active = !Collapsed;
             if (Collapsed)
             {
                 Size = new Size(610, 50);
             }
             else
             {
-                Size = new Size(610, 150);
+                Size = new Size(610, 80);
             }
         }
 

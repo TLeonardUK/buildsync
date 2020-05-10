@@ -32,6 +32,7 @@
             this.MainTreeView = new Aga.Controls.Tree.TreeViewAdv();
             this.downloadListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RefreshTimer = new System.Windows.Forms.Timer(this.components);
@@ -58,16 +59,18 @@
             this.MainTreeView.Text = "treeViewAdv1";
             this.MainTreeView.UseColumns = true;
             this.MainTreeView.SelectionChanged += new System.EventHandler(this.OnSelectedChanged);
+            this.MainTreeView.DoubleClick += new System.EventHandler(this.EditClicked);
             // 
             // downloadListContextMenu
             // 
             this.downloadListContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.downloadListContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addTagToolStripMenuItem,
+            this.editToolStripMenuItem,
             this.toolStripSeparator9,
             this.deleteToolStripMenuItem});
             this.downloadListContextMenu.Name = "downloadListContextMenu";
-            this.downloadListContextMenu.Size = new System.Drawing.Size(138, 70);
+            this.downloadListContextMenu.Size = new System.Drawing.Size(138, 100);
             // 
             // addTagToolStripMenuItem
             // 
@@ -76,6 +79,14 @@
             this.addTagToolStripMenuItem.Size = new System.Drawing.Size(137, 30);
             this.addTagToolStripMenuItem.Text = "Add Tag ...";
             this.addTagToolStripMenuItem.Click += new System.EventHandler(this.AddClicked);
+            // 
+            // editToolStripMenuItem
+            // 
+            this.editToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_draw_pencil;
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(137, 30);
+            this.editToolStripMenuItem.Text = "Edit Tag ...";
+            this.editToolStripMenuItem.Click += new System.EventHandler(this.EditClicked);
             // 
             // toolStripSeparator9
             // 
@@ -119,5 +130,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
         private System.Windows.Forms.ToolStripMenuItem deleteToolStripMenuItem;
 		private System.Windows.Forms.Timer RefreshTimer;
-	}
+        private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+    }
 }

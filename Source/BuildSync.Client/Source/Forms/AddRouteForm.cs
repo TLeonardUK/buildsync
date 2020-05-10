@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using BuildSync.Core.Users;
 
@@ -50,6 +51,11 @@ namespace BuildSync.Client.Forms
         public long BandwidthLimit = 0;
 
         /// <summary>
+        /// 
+        /// </summary>
+        private bool ChangingInternal = false;
+
+        /// <summary>
         /// </summary>
         public AddRouteForm()
         {
@@ -75,6 +81,25 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
+            ChangingInternal = true;
+
+            sourceTagTextBox.TagIds = new List<Guid>();
+            if (SourceTagId != Guid.Empty)
+            {
+                sourceTagTextBox.TagIds.Add(SourceTagId);
+            }
+
+            destinationTagTextBox.TagIds = new List<Guid>();
+            if (DestinationTagId != Guid.Empty)
+            {
+                destinationTagTextBox.TagIds.Add(DestinationTagId);
+            }
+
+            blacklistCheckBox.Checked = Blacklisted;
+            bandwidthLimitTextBox.Value = BandwidthLimit;
+
+            ChangingInternal = false;
+
             UpdateState();
         }
 
@@ -91,7 +116,7 @@ namespace BuildSync.Client.Forms
             SourceTagId = sourceTagTextBox.TagIds.Count > 0 ? sourceTagTextBox.TagIds[0] : Guid.Empty;
             DestinationTagId = destinationTagTextBox.TagIds.Count > 0 ? destinationTagTextBox.TagIds[0] : Guid.Empty;
             Blacklisted = blacklistCheckBox.Checked;
-            BandwidthLimit = (long)bandwidthLimitTextBox.Value * 1024;
+            BandwidthLimit = bandwidthLimitTextBox.Value;
         }
 
         /// <summary>
@@ -101,6 +126,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void StateChanged(object sender, EventArgs e)
         {
+            if (ChangingInternal)
+            {
+                return;
+            }
+
             UpdateState();
         }
     }

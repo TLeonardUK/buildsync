@@ -1337,6 +1337,28 @@ namespace BuildSync.Core.Client
         }
 
         /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool UpdateRoute(Guid RouteId, Guid SourceTagId, Guid DestinationTagId, bool Blacklisted, long BandwidthLimit)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create route, no connection to server?");
+                return false;
+            }
+
+            NetMessage_UpdateRoute Msg = new NetMessage_UpdateRoute();
+            Msg.RouteId = RouteId;
+            Msg.SourceTagId = SourceTagId;
+            Msg.DestinationTagId = DestinationTagId;
+            Msg.Blacklisted = Blacklisted;
+            Msg.BandwidthLimit = BandwidthLimit;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="ManifestId"></param>
@@ -1450,6 +1472,25 @@ namespace BuildSync.Core.Client
             }
 
             NetMessage_CreateTag Msg = new NetMessage_CreateTag();
+            Msg.Name = Name;
+            Connection.Send(Msg);
+
+            return true;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Path"></param>
+        public bool RenameTag(Guid Id, string Name)
+        {
+            if (!Connection.IsReadyForData)
+            {
+                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create tag, no connection to server?");
+                return false;
+            }
+
+            NetMessage_RenameTag Msg = new NetMessage_RenameTag();
+            Msg.Id = Id;
             Msg.Name = Name;
             Connection.Send(Msg);
 

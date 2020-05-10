@@ -170,7 +170,7 @@ namespace BuildSync.Client.Forms
                 Item.SubItems[1].Text = Manifest.Manifest != null ? Manifest.Manifest.VirtualPath : "";
                 Item.SubItems[2].Text = Manifest.LocalFolder;
                 Item.SubItems[3].Text = string.Format("{0:0.##}%", Manifest.Progress * 100);
-                Item.SubItems[4].Text = Manifest.State.ToString();
+                Item.SubItems[4].Text = Manifest.Paused && Manifest.State != ManifestDownloadProgressState.Complete ? "Inactive" : Manifest.State.ToString();
                 Item.SubItems[5].Text = StringUtils.FormatAsSize(Manifest.Manifest != null ? Manifest.Manifest.GetTotalSize() : 0);
                 Item.SubItems[6].Text = StringUtils.FormatAsTransferRate(Manifest.BandwidthStats.RateOut);
                 Item.SubItems[7].Text = StringUtils.FormatAsTransferRate(Manifest.BandwidthStats.RateIn);

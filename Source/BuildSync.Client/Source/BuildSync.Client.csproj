@@ -202,6 +202,12 @@
     <Compile Include="Commands\CommandLineConfigureOptions.cs" />
     <Compile Include="Commands\CommandLineDeleteOptions.cs" />
     <Compile Include="Commands\CommandLineListOptions.cs" />
+    <Compile Include="Controls\BlockStatusPanelLinear.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\BlockStatusPanelLinear.Designer.cs">
+      <DependentUpon>BlockStatusPanelLinear.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\BlockStatusPanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -477,6 +483,9 @@
     <Compile Include="Tasks\PublishBuildTask.cs" />
     <Compile Include="Tasks\MoveStorageTask.cs" />
     <Compile Include="Settings.cs" />
+    <EmbeddedResource Include="Controls\BlockStatusPanelLinear.resx">
+      <DependentUpon>BlockStatusPanelLinear.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\BlockStatusPanel.resx">
       <DependentUpon>BlockStatusPanel.cs</DependentUpon>
     </EmbeddedResource>

@@ -182,6 +182,7 @@ namespace BuildSync.Client.Forms
             TagTreeNode Node = MainTreeView.SelectedNode == null ? null : MainTreeView.SelectedNode.Tag as TagTreeNode;
 
             deleteToolStripMenuItem.Enabled = (Node != null);
+            editToolStripMenuItem.Enabled = (Node != null);
             addTagToolStripMenuItem.Enabled = true;
         }
 
@@ -213,6 +214,30 @@ namespace BuildSync.Client.Forms
             if (form.ShowDialog(this) == DialogResult.OK)
             {
                 Program.NetClient.CreateTag(form.TagName);
+                Program.NetClient.RequestTagList();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void EditClicked(object sender, EventArgs e)
+        {
+            TagTreeNode Node = MainTreeView.SelectedNode == null ? null : MainTreeView.SelectedNode.Tag as TagTreeNode;
+            if (Node == null)
+            {
+                return;
+            }
+
+            AddTagForm form = new AddTagForm();
+            form.TagName = Node.Name;
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
+                Node.Name = form.TagName;
+
+                Program.NetClient.RenameTag(Node.BuildTag.Id, form.TagName);
                 Program.NetClient.RequestTagList();
             }
         }

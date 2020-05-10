@@ -254,5 +254,40 @@ namespace BuildSync.Client.Forms
                 Program.NetClient.RequestRouteList();
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void EditClicked(object sender, EventArgs e)
+        {
+            RouteTreeNode Node = MainTreeView.SelectedNode == null ? null : MainTreeView.SelectedNode.Tag as RouteTreeNode;
+            if (Node == null)
+            {
+                return;
+            }
+
+            AddRouteForm form = new AddRouteForm();
+            form.SourceTagId = Node.Route.SourceTagId;
+            form.DestinationTagId = Node.Route.DestinationTagId;
+            form.Blacklisted = Node.Route.Blacklisted;
+            form.BandwidthLimit = Node.Route.BandwidthLimit;
+            if (form.ShowDialog(this) == DialogResult.OK)
+            {
+                Node.Route.SourceTagId = form.SourceTagId;
+                Node.Route.DestinationTagId = form.DestinationTagId;
+                Node.Route.Blacklisted = form.Blacklisted;
+                Node.Route.BandwidthLimit = form.BandwidthLimit;
+
+                Node.Source = Program.TagRegistry.IdToString(form.SourceTagId);
+                Node.Destination = Program.TagRegistry.IdToString(form.DestinationTagId);
+                Node.Blacklisted = form.Blacklisted ? "Yes" : "No";
+                Node.BandwidthLimit = form.BandwidthLimit == 0 ? "Unlimited" : StringUtils.FormatAsTransferRate(form.BandwidthLimit);
+
+                Program.NetClient.UpdateRoute(Node.Route.Id, form.SourceTagId, form.DestinationTagId, form.Blacklisted, form.BandwidthLimit);
+                Program.NetClient.RequestRouteList();
+            }
+        }
     }
 }
