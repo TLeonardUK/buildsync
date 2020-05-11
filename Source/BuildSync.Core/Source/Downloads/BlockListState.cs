@@ -192,7 +192,7 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         /// <param name="Id"></param>
         /// <returns></returns>
-        private ManifestBlockListState GetStateById(Guid Id)
+        public ManifestBlockListState GetStateById(Guid Id)
         {
             foreach (ManifestBlockListState State in States)
             {

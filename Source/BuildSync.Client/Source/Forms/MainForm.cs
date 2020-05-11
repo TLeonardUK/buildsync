@@ -803,7 +803,7 @@ namespace BuildSync.Client.Forms
                 pauseToolStripMenuItem.Image = Downloader != null && Downloader.Paused ? Resources.appbar_control_play : Resources.appbar_control_pause;
                 deleteToolStripMenuItem.Enabled = Downloader != null;
                 settingsToolStripMenuItem.Enabled = Downloader != null;
-                openInExplorerToolStripMenuItem.Enabled = (Downloader != null && Directory.Exists(Downloader.LocalFolder));
+                viewAvailabilityToolStripMenuItem.Enabled = (Downloader != null && Directory.Exists(Downloader.LocalFolder));
             }
             else
             {
@@ -814,7 +814,7 @@ namespace BuildSync.Client.Forms
                 pauseToolStripMenuItem.Text = "Pause";
                 deleteToolStripMenuItem.Enabled = false;
                 settingsToolStripMenuItem.Enabled = false;
-                openInExplorerToolStripMenuItem.Enabled = false;
+                viewAvailabilityToolStripMenuItem.Enabled = false;
             }
         }
 
@@ -862,6 +862,18 @@ namespace BuildSync.Client.Forms
             {
                 Process.Start("explorer.exe", Downloader.LocalFolder);
             }            
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ViewAvailabilityClicked(object sender, EventArgs e)
+        {
+            DownloadAvailabilityForm Form = new DownloadAvailabilityForm();
+            Form.Download = ContextMenuDownloadItem.State;
+            Form.ShowDialog();
         }
 
         /// <summary>

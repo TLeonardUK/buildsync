@@ -40,6 +40,7 @@ namespace BuildSync.Core.Client
     {
         public NetMessage_GetBlock Message;
         public NetConnection Requester;
+        public ulong QueueTime;
     }
 
     /// <summary>

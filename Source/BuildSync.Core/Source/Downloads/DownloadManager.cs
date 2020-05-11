@@ -529,6 +529,12 @@ namespace BuildSync.Core.Downloads
             {
                 Logger.Log(LogLevel.Info, LogCategory.Download, "\tBuild:{0} Path:{1}", Build.Guid.ToString(), Build.VirtualPath);
 
+                // Manifest is being manipulated elsewhere.
+                if (ManifestDownloader.IsDownloadBlocked(Build.Guid))
+                {
+                    continue;
+                }
+
                 // Already downloaded/downloading.
                 ManifestDownloadState State = ManifestDownloader.GetDownload(Build.Guid);
                 if (State != null)
@@ -937,6 +943,11 @@ namespace BuildSync.Core.Downloads
             ManifestDownloader.OnDownloadError += DownloadError;
 
             ReplicationNewerThanTime = InReplicationNewestTime;
+
+            if (ReplicationNewerThanTime.Equals(new DateTime(0)))
+            {
+                ReplicationNewerThanTime = DateTime.UtcNow;
+            }
 
             ScmManager = InScmManager;
 

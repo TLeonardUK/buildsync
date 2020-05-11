@@ -34,6 +34,7 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PeersForm));
             this.MainListView = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader13 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader10 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -45,9 +46,11 @@
             this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader12 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.MainContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.availabilityToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
-            this.columnHeader13 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.MainContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // MainListView
@@ -68,6 +71,7 @@
             this.columnHeader8,
             this.columnHeader9,
             this.columnHeader12});
+            this.MainListView.ContextMenuStrip = this.MainContextMenu;
             this.MainListView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.MainListView.FullRowSelect = true;
             this.MainListView.GridLines = true;
@@ -93,6 +97,11 @@
             // 
             this.columnHeader1.Text = "Username";
             this.columnHeader1.Width = 130;
+            // 
+            // columnHeader13
+            // 
+            this.columnHeader13.Text = "Hostname";
+            this.columnHeader13.Width = 130;
             // 
             // columnHeader4
             // 
@@ -147,6 +156,23 @@
             // 
             this.columnHeader12.Text = "Min RTT";
             // 
+            // MainContextMenu
+            // 
+            this.MainContextMenu.ImageScalingSize = new System.Drawing.Size(24, 24);
+            this.MainContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.availabilityToolStripMenuItem});
+            this.MainContextMenu.Name = "downloadListContextMenu";
+            this.MainContextMenu.Size = new System.Drawing.Size(218, 34);
+            this.MainContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuOpening);
+            // 
+            // availabilityToolStripMenuItem
+            // 
+            this.availabilityToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_network_server_connecting;
+            this.availabilityToolStripMenuItem.Name = "availabilityToolStripMenuItem";
+            this.availabilityToolStripMenuItem.Size = new System.Drawing.Size(217, 30);
+            this.availabilityToolStripMenuItem.Text = "View Manifest Availability";
+            this.availabilityToolStripMenuItem.Click += new System.EventHandler(this.PeerAvailabilityClicked);
+            // 
             // UserImageList
             // 
             this.UserImageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("UserImageList.ImageStream")));
@@ -157,11 +183,6 @@
             // 
             this.ListUpdateTimer.Interval = 1000;
             this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
-            // 
-            // columnHeader13
-            // 
-            this.columnHeader13.Text = "Hostname";
-            this.columnHeader13.Width = 130;
             // 
             // PeersForm
             // 
@@ -180,6 +201,7 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OnStartClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
             this.Shown += new System.EventHandler(this.OnShown);
+            this.MainContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -202,5 +224,7 @@
         private System.Windows.Forms.ColumnHeader columnHeader11;
         private System.Windows.Forms.ColumnHeader columnHeader12;
         private System.Windows.Forms.ColumnHeader columnHeader13;
+        private System.Windows.Forms.ContextMenuStrip MainContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem availabilityToolStripMenuItem;
     }
 }

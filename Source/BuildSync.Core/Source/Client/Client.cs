@@ -294,6 +294,22 @@ namespace BuildSync.Core.Client
 
     /// <summary>
     /// </summary>
+    public class Statistic_OutstandingBlockSends : Statistic
+    {
+        public Statistic_OutstandingBlockSends()
+        {
+            Name = @"Peers\Oustanding Block Sends";
+            MaxLabel = "32";
+            MaxValue = 32;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
     public class Client
     {
         /// <summary>
@@ -469,6 +485,11 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         private bool Started;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private ulong LastRequestManifestTime = TimeUtils.Ticks;
 
         /// <summary>
         /// 
@@ -1014,6 +1035,7 @@ namespace BuildSync.Core.Client
                 Statistic.Get<Statistic_AverageBlockSize>().AddSample((float) AverageBlockSize / 1024 / 1024);
 
                 Statistic.Get<Statistic_ActiveBlockRequests>().AddSample(ActivePeerRequests);
+                Statistic.Get<Statistic_OutstandingBlockSends>().AddSample(OutstandingBlockSends);                
                 Statistic.Get<Statistic_PendingBlockRequests>().AddSample(PendingBlockRequests);
 
                 // Querying perf counter is super expensive, don't do it often.
@@ -1204,6 +1226,30 @@ namespace BuildSync.Core.Client
             Connection.Send(Msg);
 
             return true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Id"></param>
+        /// <returns></returns>
+        public BuildManifest GetOrRequestManifestById(Guid Id, bool Throttle = true)
+        {
+            BuildManifest Manifest = ManifestRegistry.GetManifestById(Id);
+            if (Manifest == null)
+            {
+                if (!Throttle || TimeUtils.Ticks - LastRequestManifestTime > 500)
+                {
+                    LastRequestManifestTime = TimeUtils.Ticks;
+                    RequestManifest(Id);
+                }
+            }
+            else
+            {
+                return Manifest;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -1864,6 +1910,7 @@ namespace BuildSync.Core.Client
                     PendingBlockRequest Request;
                     Request.Message = Msg;
                     Request.Requester = Connection;
+                    Request.QueueTime = TimeUtils.Ticks;
                     peer.BlockRequestQueue.Enqueue(Request);
                     //Console.WriteLine("[Enqueing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
                 }
@@ -2239,11 +2286,17 @@ namespace BuildSync.Core.Client
 
             lock (Peers)
             {
+                //Console.WriteLine("========== Available Blocks ==========");
                 foreach (Peer peer in Peers)
                 {
                     if (peer.BlockState != null)
                     {
+                        //Console.WriteLine("[ Peer {0} ]", peer.Connection.Handshake == null ? "" : peer.Connection.Handshake.Username);
                         State.Union(peer.BlockState);
+                        //foreach (ManifestBlockListState OtherState in State.States)
+                        //{
+                        //    Console.WriteLine("{0}: Active={1} Size={2}", OtherState.Id.ToString(), OtherState.IsActive, OtherState.BlockState.Size);
+                        //}
                     }
                 }
             }
@@ -2388,20 +2441,24 @@ namespace BuildSync.Core.Client
             while (ActiveRequests < MaxConcurrentPeerRequests)
             {
                 Peer BestPeer = null;
-                ulong BestPeerElapsed = ulong.MaxValue;
+                ulong BestPeerElapsed = ulong.MinValue;
 
                 lock (Peers)
                 {
-                    // Find peer with the longest time since one if its requests were fulfilled.
+                    // Find peer with the longest time its next block has been queued for.
                     foreach (Peer peer in Peers)
                     {
                         if (peer.BlockRequestQueue.Count > 0 && peer.Connection.IsReadyForData)
                         {
-                            ulong Elapsed = TimeUtils.Ticks - peer.LastBlockRequestFulfillTime;
-                            if (Elapsed < BestPeerElapsed)
+                            PendingBlockRequest Request;
+                            if (peer.BlockRequestQueue.TryPeek(out Request))
                             {
-                                BestPeer = peer;
-                                BestPeerElapsed = Elapsed;
+                                ulong Elapsed = TimeUtils.Ticks - Request.QueueTime;
+                                if (Elapsed > BestPeerElapsed)
+                                {
+                                    BestPeer = peer;
+                                    BestPeerElapsed = Elapsed;
+                                }
                             }
                         }
                     }

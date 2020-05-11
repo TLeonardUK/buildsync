@@ -65,6 +65,7 @@
             this.pushUpdateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpTopicsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.firstTimeSetupToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.viewLicenseMenuToolstrip = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -81,7 +82,7 @@
             this.pauseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
-            this.openInExplorerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.viewAvailabilityToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
             this.forceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.forceRedownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -96,7 +97,7 @@
             this.runAutoUpdaterButton = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.firstTimeSetupToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openInExplorerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip.SuspendLayout();
             this.menuStrip.SuspendLayout();
             this.notifyIconContextMenu.SuspendLayout();
@@ -409,20 +410,28 @@
             // 
             this.helpTopicsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_book_perspective_help;
             this.helpTopicsToolStripMenuItem.Name = "helpTopicsToolStripMenuItem";
-            this.helpTopicsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.helpTopicsToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
             this.helpTopicsToolStripMenuItem.Text = "View Help ...";
             this.helpTopicsToolStripMenuItem.Click += new System.EventHandler(this.ViewHelpClickled);
+            // 
+            // firstTimeSetupToolStripMenuItem
+            // 
+            this.firstTimeSetupToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_settings;
+            this.firstTimeSetupToolStripMenuItem.Name = "firstTimeSetupToolStripMenuItem";
+            this.firstTimeSetupToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
+            this.firstTimeSetupToolStripMenuItem.Text = "First Time Setup ...";
+            this.firstTimeSetupToolStripMenuItem.Click += new System.EventHandler(this.FirstTimeSetupClicked);
             // 
             // toolStripSeparator7
             // 
             this.toolStripSeparator7.Name = "toolStripSeparator7";
-            this.toolStripSeparator7.Size = new System.Drawing.Size(185, 6);
+            this.toolStripSeparator7.Size = new System.Drawing.Size(167, 6);
             // 
             // viewLicenseMenuToolstrip
             // 
             this.viewLicenseMenuToolstrip.Image = global::BuildSync.Client.Properties.Resources.appbar_key;
             this.viewLicenseMenuToolstrip.Name = "viewLicenseMenuToolstrip";
-            this.viewLicenseMenuToolstrip.Size = new System.Drawing.Size(188, 30);
+            this.viewLicenseMenuToolstrip.Size = new System.Drawing.Size(170, 22);
             this.viewLicenseMenuToolstrip.Text = "Licensing ...";
             this.viewLicenseMenuToolstrip.Click += new System.EventHandler(this.ViewLicenseClicked);
             // 
@@ -430,7 +439,7 @@
             // 
             this.aboutToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_question;
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
             this.aboutToolStripMenuItem.Text = "About ...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.AboutClicked);
             // 
@@ -494,31 +503,32 @@
             this.deleteToolStripMenuItem,
             this.toolStripSeparator9,
             this.openInExplorerToolStripMenuItem,
+            this.viewAvailabilityToolStripMenuItem,
             this.toolStripSeparator12,
             this.forceToolStripMenuItem,
             this.settingsToolStripMenuItem});
             this.downloadListContextMenu.Name = "downloadListContextMenu";
-            this.downloadListContextMenu.Size = new System.Drawing.Size(183, 202);
+            this.downloadListContextMenu.Size = new System.Drawing.Size(207, 254);
             this.downloadListContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.DownloadListContextMenuShowing);
             // 
             // addDownloadToolStripMenuItem1
             // 
             this.addDownloadToolStripMenuItem1.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
             this.addDownloadToolStripMenuItem1.Name = "addDownloadToolStripMenuItem1";
-            this.addDownloadToolStripMenuItem1.Size = new System.Drawing.Size(182, 30);
+            this.addDownloadToolStripMenuItem1.Size = new System.Drawing.Size(206, 30);
             this.addDownloadToolStripMenuItem1.Text = "Add Download ...";
             this.addDownloadToolStripMenuItem1.Click += new System.EventHandler(this.AddDownloadClicked);
             // 
             // toolStripSeparator6
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
-            this.toolStripSeparator6.Size = new System.Drawing.Size(179, 6);
+            this.toolStripSeparator6.Size = new System.Drawing.Size(203, 6);
             // 
             // pauseToolStripMenuItem
             // 
             this.pauseToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_control_pause;
             this.pauseToolStripMenuItem.Name = "pauseToolStripMenuItem";
-            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(182, 30);
+            this.pauseToolStripMenuItem.Size = new System.Drawing.Size(206, 30);
             this.pauseToolStripMenuItem.Text = "Pause";
             this.pauseToolStripMenuItem.Click += new System.EventHandler(this.PauseClicked);
             // 
@@ -526,27 +536,27 @@
             // 
             this.deleteToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_delete;
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(182, 30);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(206, 30);
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.DeleteClicked);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(179, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(203, 6);
             // 
-            // openInExplorerToolStripMenuItem
+            // viewAvailabilityToolStripMenuItem
             // 
-            this.openInExplorerToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_folder_open;
-            this.openInExplorerToolStripMenuItem.Name = "openInExplorerToolStripMenuItem";
-            this.openInExplorerToolStripMenuItem.Size = new System.Drawing.Size(182, 30);
-            this.openInExplorerToolStripMenuItem.Text = "Open in Explorer ...";
-            this.openInExplorerToolStripMenuItem.Click += new System.EventHandler(this.OpenInExplorerClicked);
+            this.viewAvailabilityToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_network_server_connecting;
+            this.viewAvailabilityToolStripMenuItem.Name = "viewAvailabilityToolStripMenuItem";
+            this.viewAvailabilityToolStripMenuItem.Size = new System.Drawing.Size(206, 30);
+            this.viewAvailabilityToolStripMenuItem.Text = "View Peer Availability ...";
+            this.viewAvailabilityToolStripMenuItem.Click += new System.EventHandler(this.ViewAvailabilityClicked);
             // 
             // toolStripSeparator12
             // 
             this.toolStripSeparator12.Name = "toolStripSeparator12";
-            this.toolStripSeparator12.Size = new System.Drawing.Size(179, 6);
+            this.toolStripSeparator12.Size = new System.Drawing.Size(203, 6);
             // 
             // forceToolStripMenuItem
             // 
@@ -555,7 +565,7 @@
             this.forceReinstallToolStripMenuItem,
             this.forceRevalidateToolStripMenuItem});
             this.forceToolStripMenuItem.Name = "forceToolStripMenuItem";
-            this.forceToolStripMenuItem.Size = new System.Drawing.Size(182, 30);
+            this.forceToolStripMenuItem.Size = new System.Drawing.Size(206, 30);
             this.forceToolStripMenuItem.Text = "Force ...";
             // 
             // forceRedownloadToolStripMenuItem
@@ -586,7 +596,7 @@
             // 
             this.settingsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_settings;
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(182, 30);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(206, 30);
             this.settingsToolStripMenuItem.Text = "Settings ...";
             this.settingsToolStripMenuItem.Click += new System.EventHandler(this.SettingsClicked);
             // 
@@ -667,13 +677,13 @@
             this.label1.Text = "Update Available";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // firstTimeSetupToolStripMenuItem
+            // openInExplorerToolStripMenuItem
             // 
-            this.firstTimeSetupToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_settings;
-            this.firstTimeSetupToolStripMenuItem.Name = "firstTimeSetupToolStripMenuItem";
-            this.firstTimeSetupToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
-            this.firstTimeSetupToolStripMenuItem.Text = "First Time Setup ...";
-            this.firstTimeSetupToolStripMenuItem.Click += new System.EventHandler(this.FirstTimeSetupClicked);
+            this.openInExplorerToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_folder_open;
+            this.openInExplorerToolStripMenuItem.Name = "openInExplorerToolStripMenuItem";
+            this.openInExplorerToolStripMenuItem.Size = new System.Drawing.Size(206, 30);
+            this.openInExplorerToolStripMenuItem.Text = "Open in Explorer ...";
+            this.openInExplorerToolStripMenuItem.Click += new System.EventHandler(this.OpenInExplorerClicked);
             // 
             // MainForm
             // 
@@ -772,9 +782,10 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator10;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
         private System.Windows.Forms.ToolStripMenuItem routeManagerToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem openInExplorerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem viewAvailabilityToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator12;
         private System.Windows.Forms.ToolStripMenuItem firstTimeSetupToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openInExplorerToolStripMenuItem;
     }
 }
 

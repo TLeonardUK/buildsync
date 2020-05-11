@@ -50,7 +50,22 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        public ManifestBlockListState ManifestBlockState;
+
+        /// <summary>
+        /// 
+        /// </summary>
         public bool Active = true;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool ApplyLocalStates = true;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool UseOuterBorder = true;
 
         /// <summary>
         /// </summary>
@@ -96,27 +111,41 @@ namespace BuildSync.Client.Controls
                 return;
             }
 
-            e.Graphics.FillRectangle(SystemBrushes.Window, 0, 0, Size.Width - 1, Size.Height - 1);
-            ControlPaint.DrawBorder(e.Graphics, new Rectangle(0, 0, Size.Width, Size.Height), SystemColors.ControlLight, ButtonBorderStyle.Solid);
-            //            e.Graphics.DrawRectangle(SystemPens.ControlLight, 0, 0, Size.Width - 1, Size.Height - 1);
+            if (UseOuterBorder)
+            {
+                e.Graphics.FillRectangle(SystemBrushes.Window, 0, 0, Size.Width - 1, Size.Height - 1);
+                ControlPaint.DrawBorder(e.Graphics, new Rectangle(0, 0, Size.Width, Size.Height), SystemColors.ControlLight, ButtonBorderStyle.Solid);
+            }
 
-            if (State == null)
+            long BlockCount = 0;
+            SparseStateArray StateArray = null;
+
+            if (State != null)
+            {
+                ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(State.ActiveManifestId);
+                if (Downloader == null)
+                {
+                    return;
+                }
+                if (Downloader.Manifest == null)
+                {
+                    return;
+                }
+                BlockCount = Downloader.Manifest.BlockCount;
+                StateArray = Downloader.BlockStates;
+            }
+            else if (ManifestBlockState != null)
+            {
+                StateArray = ManifestBlockState.BlockState;
+                BlockCount = StateArray.Size;
+            }
+
+            if (StateArray == null)
             {
                 return;
             }
 
-            ManifestDownloadState Downloader = Program.ManifestDownloadManager.GetDownload(State.ActiveManifestId);
-            if (Downloader == null)
-            {
-                return;
-            }
-
-            if (Downloader.Manifest == null)
-            {
-                return;
-            }
-
-            int OuterPadding = 8;
+            int OuterPadding = UseOuterBorder ? 8 : 0;
 
             int BarX = OuterPadding;
             int BarY = OuterPadding;
@@ -125,12 +154,12 @@ namespace BuildSync.Client.Controls
             
             int MaxCells = BarWidth / 4;
 
-            int CellCount = (int) Downloader.Manifest.BlockCount;
+            int CellCount = (int)BlockCount;
             int CellDivision = 1;
             while (CellCount > MaxCells)
             {
                 CellDivision++;
-                CellCount = ((int) Downloader.Manifest.BlockCount + (CellDivision - 1)) / CellDivision;
+                CellCount = ((int)BlockCount + (CellDivision - 1)) / CellDivision;
             }
 
             // Calculate states.
@@ -138,52 +167,57 @@ namespace BuildSync.Client.Controls
             for (int Cell = 0; Cell < CellCount; Cell++)
             {
                 CellStates[Cell] = CellState.NotDownloaded;
+            }
 
-                int StartBlock = Cell * CellDivision;
-                int EndBlock = StartBlock + (CellDivision - 1);
-
-                // Has already been downloaded?
-                for (int Block = StartBlock; Block <= EndBlock; Block++)
+            if (StateArray.Ranges != null)
+            {
+                foreach (SparseStateArray.Range Range in StateArray.Ranges)
                 {
-                    if (Downloader.BlockStates.Get(Block))
+                    if (Range.State)
                     {
-                        CellStates[Cell] = CellState.Downloaded;
+                        for (int i = Range.Start; i <= Range.End; i++)
+                        {
+                            CellStates[i / CellDivision] = CellState.Downloaded;
+                        }
                     }
                 }
             }
 
-            // Is in download queue.
-            for (int i = 0; i < Program.ManifestDownloadManager.DownloadQueue.Count; i++)
+            if (ApplyLocalStates)
             {
-                ManifestPendingDownloadBlock Item = Program.ManifestDownloadManager.DownloadQueue[i];
-                if (Item.ManifestId == State.ActiveManifestId)
+                // Is in download queue.
+                for (int i = 0; i < Program.ManifestDownloadManager.DownloadQueue.Count; i++)
                 {
-                    int CellIndex = Item.BlockIndex / CellDivision;
-                    if (CellIndex < CellStates.Length)
-                    {
-                        CellStates[CellIndex] = CellState.Downloading;
-                    }
-                }
-            }
-
-            // Grab most recent downloads.
-            lock (Program.ManifestDownloadManager.RecentBlockChanges)
-            {
-                for (int i = 0; i < Program.ManifestDownloadManager.RecentBlockChanges.Count; i++)
-                {
-                    ManifestRecentBlockChange Item = Program.ManifestDownloadManager.RecentBlockChanges[i];
+                    ManifestPendingDownloadBlock Item = Program.ManifestDownloadManager.DownloadQueue[i];
                     if (Item.ManifestId == State.ActiveManifestId)
                     {
                         int CellIndex = Item.BlockIndex / CellDivision;
                         if (CellIndex < CellStates.Length)
                         {
-                            if (Item.Type == ManifestBlockChangeType.Upload)
+                            CellStates[CellIndex] = CellState.Downloading;
+                        }
+                    }
+                }
+
+                // Grab most recent downloads.
+                lock (Program.ManifestDownloadManager.RecentBlockChanges)
+                {
+                    for (int i = 0; i < Program.ManifestDownloadManager.RecentBlockChanges.Count; i++)
+                    {
+                        ManifestRecentBlockChange Item = Program.ManifestDownloadManager.RecentBlockChanges[i];
+                        if (Item.ManifestId == State.ActiveManifestId)
+                        {
+                            int CellIndex = Item.BlockIndex / CellDivision;
+                            if (CellIndex < CellStates.Length)
                             {
-                                CellStates[CellIndex] = CellState.Uploading;
-                            }
-                            else if (Item.Type == ManifestBlockChangeType.Validate)
-                            {
-                                CellStates[CellIndex] = CellState.Validating;
+                                if (Item.Type == ManifestBlockChangeType.Upload)
+                                {
+                                    CellStates[CellIndex] = CellState.Uploading;
+                                }
+                                else if (Item.Type == ManifestBlockChangeType.Validate)
+                                {
+                                    CellStates[CellIndex] = CellState.Validating;
+                                }
                             }
                         }
                     }

@@ -39,6 +39,11 @@ namespace BuildSync.Client.Forms
         private readonly ListViewColumnSorter ColumnSorter = new ListViewColumnSorter();
 
         /// <summary>
+        /// 
+        /// </summary>
+        private Peer ContextMenuPeer = null;
+
+        /// <summary>
         /// </summary>
         private readonly IComparer[] ColumnSorterComparers =
         {
@@ -178,6 +183,43 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnStartClosing(object sender, FormClosingEventArgs e)
         {
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PeerAvailabilityClicked(object sender, EventArgs e)
+        {
+            PeerAvailabilityForm Form = new PeerAvailabilityForm();
+            Form.Peer = ContextMenuPeer; 
+            Form.ShowDialog();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ContextMenuOpening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            PeerSettingsRecord Record = MainListView.SelectedItems.Count > 0 ? MainListView.SelectedItems[0].Tag as PeerSettingsRecord : null;
+
+            availabilityToolStripMenuItem.Enabled = false;
+            ContextMenuPeer = null;
+
+            if (Record != null)
+            {
+                foreach (Peer Peer in Program.NetClient.AllPeers)
+                {
+                    if (Peer.Connection.IsReadyForData && Peer.Connection.Address != null && Peer.Connection.Address.Address.ToString() == Record.Address)
+                    {
+                        availabilityToolStripMenuItem.Enabled = true;
+                        ContextMenuPeer = Peer;
+                    }
+                }
+            }
         }
     }
 }

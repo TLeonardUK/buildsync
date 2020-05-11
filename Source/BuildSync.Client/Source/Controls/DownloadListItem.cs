@@ -707,7 +707,10 @@ namespace BuildSync.Client.Controls
                             LaunchForm Form = new LaunchForm();
                             Form.Downloader = Downloader;
                             Form.DownloadState = State;
-                            Form.ShowDialog();
+                            if (Form.Init())
+                            {
+                                Form.ShowDialog();
+                            }
                             break;
                         }
                         default:

@@ -398,7 +398,7 @@ namespace BuildSync.Core.Manifests
             int Count = 0;
             foreach (BuildLaunchVariable Var in Variables)
             {
-                if (Var.Internal)
+                if (!Var.Internal)
                 {
                     Count++;
                 }

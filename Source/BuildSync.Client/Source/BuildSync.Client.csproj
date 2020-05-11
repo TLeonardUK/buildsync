@@ -232,6 +232,12 @@
     <Compile Include="Controls\DownloadListItem.Designer.cs">
       <DependentUpon>DownloadListItem.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\ManifestAvailabilityPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\ManifestAvailabilityPanel.Designer.cs">
+      <DependentUpon>ManifestAvailabilityPanel.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\Settings\GeneralSettings.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -436,6 +442,18 @@
     <Compile Include="Forms\ManifestsForm.Designer.cs">
       <DependentUpon>ManifestsForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\DownloadAvailabilityForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\DownloadAvailabilityForm.Designer.cs">
+      <DependentUpon>DownloadAvailabilityForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\PeerAvailabilityForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PeerAvailabilityForm.Designer.cs">
+      <DependentUpon>PeerAvailabilityForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\ProgressForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -497,6 +515,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\DownloadListItem.resx">
       <DependentUpon>DownloadListItem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\ManifestAvailabilityPanel.resx">
+      <DependentUpon>ManifestAvailabilityPanel.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\Settings\GeneralSettings.resx">
       <DependentUpon>GeneralSettings.cs</DependentUpon>
@@ -599,6 +620,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ManifestsForm.resx">
       <DependentUpon>ManifestsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\DownloadAvailabilityForm.resx">
+      <DependentUpon>DownloadAvailabilityForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\PeerAvailabilityForm.resx">
+      <DependentUpon>PeerAvailabilityForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ProgressForm.resx">
       <DependentUpon>ProgressForm.cs</DependentUpon>

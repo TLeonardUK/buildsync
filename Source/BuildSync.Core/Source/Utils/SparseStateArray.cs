@@ -442,9 +442,12 @@ namespace BuildSync.Core.Utils
             // This is shit, do it in-place.
             lock (TempUnionArray)
             {
-                int ArrayLength = 0;
-                ToArray(ref TempUnionArray, ref ArrayLength);
-                Other.ToArray(ref TempUnionOtherArray, ref ArrayLength);
+                int Array1Length = 0;
+                int Array2Length = 0;
+                ToArray(ref TempUnionArray, ref Array1Length);
+                Other.ToArray(ref TempUnionOtherArray, ref Array2Length);
+
+                int ArrayLength = Math.Max(Array1Length, Array2Length);
 
                 if (TempUnionResultArray.Length < ArrayLength)
                 {
@@ -453,7 +456,10 @@ namespace BuildSync.Core.Utils
 
                 for (int i = 0; i < ArrayLength; i++)
                 {
-                    TempUnionResultArray[i] = TempUnionArray[i] || TempUnionOtherArray[i];
+                    bool Val1 = i < Array1Length ? TempUnionArray[i] : false;
+                    bool Val2 = i < Array2Length ? TempUnionOtherArray[i] : false;
+
+                    TempUnionResultArray[i] = Val1 | Val2;
                 }
 
                 FromArray(TempUnionResultArray, ArrayLength);

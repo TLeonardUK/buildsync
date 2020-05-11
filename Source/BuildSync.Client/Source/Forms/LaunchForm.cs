@@ -230,6 +230,13 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool Init()
+        { 
             string ConfigFilePath = Path.Combine(Downloader.LocalFolder, "buildsync.json");
             bool IsScript = false;
             if (!File.Exists(ConfigFilePath))
@@ -241,8 +248,7 @@ namespace BuildSync.Client.Forms
             if (!File.Exists(ConfigFilePath))
             {
                 MessageBox.Show("Build has no configured launch settings. Ensure a buildsync.json or buildsync.cs file is added to all builds.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
+                return false;
             }
 
             if (!IsScript)
@@ -250,8 +256,7 @@ namespace BuildSync.Client.Forms
                 if (!SettingsBase.Load(ConfigFilePath, out Settings))
                 {
                     MessageBox.Show("The included buildsync.json file could not be loaded, it may be malformed. Check console output window for details.", "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    Close();
-                    return;
+                    return false;
                 }
             }
             else
@@ -265,8 +270,7 @@ namespace BuildSync.Client.Forms
                 {
                     Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to read file '{0}' due to exception: {1}", ConfigFilePath, Ex.Message);
                     MessageBox.Show("The included buildsync.cs file could not be loaded, it may be malformed. Check console output window for details.", "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    Close();
-                    return;
+                    return false;
                 }
             }
 
@@ -309,19 +313,20 @@ namespace BuildSync.Client.Forms
             catch (InvalidOperationException Ex)
             {
                 MessageBox.Show("Error encountered while evaluating launch settings:\n\n" + Ex.Message, "Malformed Config File", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
-                return;
+                return false;
             }
 
             if (Modes.Count == 0)
             {
                 MessageBox.Show("None of the launch modes are usable.", "Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Close();
+                return false;
             }
-            else if (Modes.Count == 1 && Modes[0].GetNonInternalVariableCount() == 0 && DownloadState.InstallDeviceName == "") 
+            else if (Modes.Count == 1 && Modes[0].GetNonInternalVariableCount() == 0 && !DownloadState.InstallDeviceName.Contains(",")) 
             {
                 // Instant launch, nothing for us to select really.
                 Launch(Modes[0]);
+
+                return false;
             }
             else
             {
@@ -337,6 +342,8 @@ namespace BuildSync.Client.Forms
                 // Select first mode.
                 ModesTreeView.SelectedNode = ModesTreeView.Nodes[0];
             }
+
+            return true;
         }
 
         /// <summary>
