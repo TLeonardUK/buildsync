@@ -50,6 +50,7 @@
             this.availabilityToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.UserImageList = new System.Windows.Forms.ImageList(this.components);
             this.ListUpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.columnHeader14 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.MainContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -69,6 +70,7 @@
             this.columnHeader3,
             this.columnHeader7,
             this.columnHeader8,
+            this.columnHeader14,
             this.columnHeader9,
             this.columnHeader12});
             this.MainListView.ContextMenuStrip = this.MainContextMenu;
@@ -85,7 +87,7 @@
             this.MainListView.HideSelection = false;
             this.MainListView.Location = new System.Drawing.Point(0, 0);
             this.MainListView.Name = "MainListView";
-            this.MainListView.Size = new System.Drawing.Size(1168, 204);
+            this.MainListView.Size = new System.Drawing.Size(1258, 204);
             this.MainListView.SmallImageList = this.UserImageList;
             this.MainListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.MainListView.TabIndex = 0;
@@ -140,13 +142,13 @@
             // 
             // columnHeader7
             // 
-            this.columnHeader7.Text = "Target In-Flight";
-            this.columnHeader7.Width = 90;
+            this.columnHeader7.Text = "Target Requests";
+            this.columnHeader7.Width = 100;
             // 
             // columnHeader8
             // 
-            this.columnHeader8.Text = "Current In-Flight";
-            this.columnHeader8.Width = 90;
+            this.columnHeader8.Text = "Current Requests";
+            this.columnHeader8.Width = 100;
             // 
             // columnHeader9
             // 
@@ -184,10 +186,15 @@
             this.ListUpdateTimer.Interval = 1000;
             this.ListUpdateTimer.Tick += new System.EventHandler(this.ListUpdateTimerTick);
             // 
+            // columnHeader14
+            // 
+            this.columnHeader14.Text = "Queue Size";
+            this.columnHeader14.Width = 100;
+            // 
             // PeersForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(1168, 204);
+            this.ClientSize = new System.Drawing.Size(1258, 204);
             this.Controls.Add(this.MainListView);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.HideOnClose = true;
@@ -226,5 +233,6 @@
         private System.Windows.Forms.ColumnHeader columnHeader13;
         private System.Windows.Forms.ContextMenuStrip MainContextMenu;
         private System.Windows.Forms.ToolStripMenuItem availabilityToolStripMenuItem;
+        private System.Windows.Forms.ColumnHeader columnHeader14;
     }
 }

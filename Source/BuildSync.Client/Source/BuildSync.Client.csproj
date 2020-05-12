@@ -322,6 +322,7 @@
     <Compile Include="Controls\TagTextBox.Designer.cs">
       <DependentUpon>TagTextBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\TagToolstripBuilder.cs" />
     <Compile Include="Forms\AboutForm.cs">
       <SubType>Form</SubType>
     </Compile>

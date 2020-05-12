@@ -217,6 +217,7 @@
     <Compile Include="Networking\Messages\NetMessage_AddTagToClient.cs" />
     <Compile Include="Networking\Messages\NetMessage_BuildUpdated.cs" />
     <Compile Include="Networking\Messages\NetMessage_CreateRoute.cs" />
+    <Compile Include="Networking\Messages\NetMessage_RestartPeerConnections.cs" />
     <Compile Include="Networking\Messages\NetMessage_RenameTag.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteRoute.cs" />
     <Compile Include="Networking\Messages\NetMessage_DeleteTag.cs" />

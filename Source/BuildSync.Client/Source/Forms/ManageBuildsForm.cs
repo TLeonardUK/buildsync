@@ -26,6 +26,7 @@ using BuildSync.Core.Utils;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Users;
 using BuildSync.Core.Tags;
+using BuildSync.Client.Controls;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
@@ -34,22 +35,10 @@ namespace BuildSync.Client.Forms
     /// </summary>
     public partial class ManageBuildsForm : DockContent
     {
-        private class ItemContext
-        {
-            public Tag Tag;
-            public ToolStripMenuItem Parent;
-            public string Path;
-        }
-
         /// <summary>
         /// 
         /// </summary>
-        private List<Tag> Tags = new List<Tag>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private List<ToolStripMenuItem> MenuItems = new List<ToolStripMenuItem>();
+        private TagToolstripBuilder TagBuilder = new TagToolstripBuilder();
 
         /// <summary>
         /// </summary>
@@ -60,8 +49,17 @@ namespace BuildSync.Client.Forms
             downloadFileSystemTree.CanSelectBuildContainers = false;
 
             ValidateState();
+        }
 
-            Program.NetClient.OnTagListRecieved += TagsRecieved;
+        /// <summary>
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnClosed(object sender, FormClosedEventArgs e)
+        {
+            TagBuilder.OnTagClicked -= TagItemClicked;
+            TagBuilder.OnTagsRefreshed -= ValidateState;
+            TagBuilder.Detach();
         }
 
         /// <summary>
@@ -71,7 +69,9 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void FormShown(object sender, EventArgs e)
         {
-            Program.NetClient.RequestTagList();
+            TagBuilder.OnTagClicked += TagItemClicked;
+            TagBuilder.OnTagsRefreshed += ValidateState;
+            TagBuilder.Attach(addTagToolStripMenuItem);
         }
 
         /// <summary>
@@ -81,114 +81,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ContextMenuOpening(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            Program.NetClient.RequestTagList();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Name"></param>
-        /// <returns></returns>
-        private ToolStripMenuItem CreateMenuItem(string Name, Tag tag, List<ToolStripMenuItem> TouchedItems)
-        {
-            ToolStripMenuItem Parent = null;
-
-            string[] Split = Name.Split('/');
-            if (Split.Length > 1)
-            {
-                string ParentName = "";
-                for (int i = 0; i < Split.Length - 1; i++)
-                {
-                    if (ParentName.Length > 0)
-                    {
-                        ParentName += "/";
-                    }
-                    ParentName += Split[i];
-                }
-
-                Parent = CreateMenuItem(ParentName, null, TouchedItems);
-            }
-
-            foreach (ToolStripMenuItem ExistingItem in MenuItems)
-            {
-                if ((ExistingItem.Tag as ItemContext).Path == Name)
-                {
-                    if (tag != null)
-                    {
-                        (ExistingItem.Tag as ItemContext).Tag = tag;
-                    }
-                    TouchedItems.Add(ExistingItem);
-                    return ExistingItem;
-                }
-            }
-
-            ItemContext Context = new ItemContext();
-            Context.Parent = Parent;
-            Context.Path = Name;
-            Context.Tag = tag;
-
-            ToolStripMenuItem Item = new ToolStripMenuItem();
-            Item.Text = Split[Split.Length - 1];
-            Item.Tag = Context;
-            Item.ImageScaling = ToolStripItemImageScaling.None;
-            Item.Click += TagItemClicked;
-            addTagToolStripMenuItem.DropDownItems.Add(Item);
-            
-            if (Parent == null)
-            {
-                addTagToolStripMenuItem.DropDownItems.Add(Item);
-            }
-            else
-            {
-                Parent.DropDownItems.Add(Item);
-            }
-
-            MenuItems.Add(Item);
-            TouchedItems.Add(Item);
-
-            return Item;
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="Users"></param>
-        private void TagsRecieved(List<Tag> InTags)
-        {
-            Tags = InTags;
-
-            List<ToolStripMenuItem> ValidMenuItems = new List<ToolStripMenuItem>();
-
-            // Add each tag.
-            foreach (Tag tag in InTags)
-            {
-                tag.Name = tag.Name.Replace("\\", "/");
-                CreateMenuItem(tag.Name.Replace("\\", "/"), tag, ValidMenuItems);
-            }
-
-            // Remove tags that no longer exist.
-            for (int i = 0; i < MenuItems.Count; i++)
-            {
-                ToolStripMenuItem Menu = MenuItems[i];
-                if (!ValidMenuItems.Contains(Menu))
-                {
-                    ItemContext Context = Menu.Tag as ItemContext;
-
-                    if (Context.Parent == null)
-                    {
-                        addTagToolStripMenuItem.DropDownItems.Remove(Menu);
-                    }
-                    else
-                    {
-                        Context.Parent.DropDownItems.Remove(Menu);
-                    }
-
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "Removing tag menu: {0}", Menu.Text);
-                    MenuItems.RemoveAt(i);
-                    i--;
-                }
-            }
-
-            ValidateState();
+            TagBuilder.Refresh();
         }
 
         /// <summary>
@@ -196,35 +89,21 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void TagItemClicked(object sender, EventArgs e)
+        private void TagItemClicked(Tag Tag, bool Checked)
         {
-            ToolStripMenuItem TagItem = sender as ToolStripMenuItem;
-            if (TagItem == null)
-            {
-                return;
-            }
-
-            ItemContext Context = TagItem.Tag as ItemContext;
-            if (Context == null || Context.Tag == null)
-            {
-                return;
-            }
-
             Guid ManifestId = downloadFileSystemTree.SelectedManifestId;
             if (ManifestId == Guid.Empty)
             {
                 return;
             }
 
-            Guid TagId = Context.Tag.Id;
-
-            if (!TagItem.Checked)
+            if (!Checked)
             {
-                Program.NetClient.AddTagToManifest(ManifestId, TagId);
+                Program.NetClient.AddTagToManifest(ManifestId, Tag.Id);
             }
             else
             {
-                Program.NetClient.RemoveTagFromManifest(ManifestId, TagId);
+                Program.NetClient.RemoveTagFromManifest(ManifestId, Tag.Id);
             }
         }
 
@@ -299,26 +178,12 @@ namespace BuildSync.Client.Forms
             List<Tag> Tags = downloadFileSystemTree.SelectedManifestTags;
             if (Tags != null)
             {
-                foreach (ToolStripMenuItem Item in MenuItems)
+                List<Guid> TagIds = new List<Guid>();
+                foreach (Tag BuildTag in Tags)
                 {
-                    ItemContext Context = Item.Tag as ItemContext;
-                    if (Context == null || Context.Tag == null)
-                    {
-                        continue;
-                    }
-
-                    bool Found = false;
-                    foreach (Tag BuildTag in Tags)
-                    {
-                        if (Context.Tag.Id == BuildTag.Id)
-                        {
-                            Found = true;
-                            break;
-                        }
-                    }
-
-                    Item.Checked = Found;
+                    TagIds.Add(BuildTag.Id);
                 }
+                TagBuilder.SetCheckedTags(TagIds);
             }
         }
 

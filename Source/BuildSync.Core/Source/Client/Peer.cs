@@ -53,6 +53,10 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
+        public const int MaxRequestQueueSize = 150;
+
+        /// <summary>
+        /// </summary>
         public List<ManifestPendingDownloadBlock> ActiveBlockDownloads = new List<ManifestPendingDownloadBlock>();
 
         /// <summary>
@@ -236,6 +240,22 @@ namespace BuildSync.Core.Client
                 if (ManifestState.Id == Block.ManifestId)
                 {
                     return ManifestState.BlockState.Get(Block.BlockIndex);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <returns></returns>
+        public bool HasBlock(Guid ManifestId, int BlockIndex)
+        {
+            foreach (ManifestBlockListState ManifestState in BlockState.States)
+            {
+                if (ManifestState.Id == ManifestId)
+                {
+                    return ManifestState.BlockState.Get(BlockIndex);
                 }
             }
 

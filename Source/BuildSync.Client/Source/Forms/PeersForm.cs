@@ -58,6 +58,7 @@ namespace BuildSync.Client.Forms
             new CaseInsensitiveComparer(), // Last Seen
             new FileSizeStringComparer(), // Target In-Flight
             new FileSizeStringComparer(), // Current In-Flight
+            new CaseInsensitiveComparer(), // Active Requests
             new CaseInsensitiveComparer(), // RTT
             new CaseInsensitiveComparer() // Min RTT
         };
@@ -132,13 +133,23 @@ namespace BuildSync.Client.Forms
 
                 if (Item == null)
                 {
-                    Item = new ListViewItem(new string[13]);
+                    Item = new ListViewItem(new string[14]);
                     Item.Tag = Peer;
                     Item.ImageIndex = 0;
                     Item.StateImageIndex = 0;
                     MainListView.Items.Add(Item);
 
                     MainListView.Sort();
+                }
+
+                Peer RealPeer = null;
+                foreach (Peer CheckPeer in AllPeers)
+                {
+                    if (CheckPeer.Connection.IsReadyForData && CheckPeer.Connection.Address != null && CheckPeer.Connection.Address.Address.ToString() == Peer.Address)
+                    {
+                        RealPeer = CheckPeer;
+                        break;
+                    }
                 }
 
                 Item.Group = ConnectedAddresses.Contains(Peer.Address) ? MainListView.Groups[0] : MainListView.Groups[1];
@@ -154,8 +165,9 @@ namespace BuildSync.Client.Forms
                 Item.SubItems[8].Text = Peer.LastSeen.ToString("dd/MM/yyyy HH:mm");
                 Item.SubItems[9].Text = StringUtils.FormatAsSize((long) Peer.TargetInFlightData);
                 Item.SubItems[10].Text = StringUtils.FormatAsSize((long) Peer.CurrentInFlightData);
-                Item.SubItems[11].Text = string.Format("{0} ms", Peer.Ping);
-                Item.SubItems[12].Text = string.Format("{0} ms", Peer.BestPing);
+                Item.SubItems[11].Text = (RealPeer != null ? RealPeer.BlockRequestQueue.Count : 0).ToString();
+                Item.SubItems[12].Text = string.Format("{0} ms", Peer.Ping);
+                Item.SubItems[13].Text = string.Format("{0} ms", Peer.BestPing);
             }
         }
 

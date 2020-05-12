@@ -342,7 +342,7 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
-        private const int MaxConcurrentPeerRequests = 32;
+        private const int MaxConcurrentPeerRequests = 200;
 
         /// <summary>
         /// </summary>
@@ -491,6 +491,10 @@ namespace BuildSync.Core.Client
         /// </summary>
         private ulong LastRequestManifestTime = TimeUtils.Ticks;
 
+        /// <summary>
+        /// </summary>
+        public const int BlockRequestTimeout = 60 * 1000;
+        
         /// <summary>
         /// 
         /// </summary>
@@ -708,6 +712,7 @@ namespace BuildSync.Core.Client
                 if (ResultType == HandshakeResultType.InvalidVersion)
                 {
                     DisableReconnect = true;
+                    RestartConnections();
                 }
             };
 
@@ -965,7 +970,7 @@ namespace BuildSync.Core.Client
                 LastBlockListUpdateTime = 0;
             }
 
-            if (!InternalConnectionsDisabled)
+            if (!InternalConnectionsDisabled && !DisableReconnect)
             {
                 ConnectToPeers();
             }
@@ -1859,8 +1864,18 @@ namespace BuildSync.Core.Client
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved candidate deletion response.");
 
                 ManifestDownloadManager.PruneManifest(Msg.ManifestId);
-            }            
+            }
 
+            // Server has chosen which manifest we should delete.
+            else if (BaseMessage is NetMessage_RestartPeerConnections)
+            {
+                NetMessage_RestartPeerConnections Msg = BaseMessage as NetMessage_RestartPeerConnections;
+
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved request to restart peer connections.");
+
+                RestartConnections();
+            }
+            
             // Server is sending us a manifest we previously requested.
             else if (BaseMessage is NetMessage_GetManifestResponse)
             {
@@ -1953,7 +1968,7 @@ namespace BuildSync.Core.Client
                         //peer.MarkActiveBlockDownloadAsRecieved(Msg.ManifestId, Msg.BlockIndex);
                     }
 
-                    if (!peer.HasActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex))
+                    if (!peer.HasActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex) && peer.HasBlock(Msg.ManifestId, Msg.BlockIndex))
                     {
                         Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved unexpected block {0} in manifest {1} from {2}", Msg.BlockIndex, Msg.ManifestId.ToString(), Connection.Address.ToString());
 
@@ -2437,14 +2452,52 @@ namespace BuildSync.Core.Client
         /// </summary>
         private void UpdatePeerRequests()
         {
-            int ActiveRequests = ActivePeerRequests + OutstandingBlockSends;
-            while (ActiveRequests < MaxConcurrentPeerRequests)
+            while (true)
             {
+                int ActiveRequests = ActivePeerRequests + OutstandingBlockSends;
+                if (ActiveRequests >= MaxConcurrentPeerRequests)
+                {
+                    break;
+                }
+
                 Peer BestPeer = null;
                 ulong BestPeerElapsed = ulong.MinValue;
 
                 lock (Peers)
                 {
+                    // Remove block requests over limit.
+                    foreach (Peer peer in Peers)
+                    {
+                        PendingBlockRequest Request;
+                        while (peer.BlockRequestQueue.Count > Peer.MaxRequestQueueSize)
+                        {
+                            peer.BlockRequestQueue.TryDequeue(out Request);
+                            Logger.Log(LogLevel.Warning, LogCategory.Main, "Peer over queue size: removed request for block {0} in manifest {1} for peer {2}.", Request.Message.BlockIndex, Request.Message.ManifestId.ToString(), Request.Requester.Address.ToString());
+                        }
+                    }
+                    
+                    // Remove all timed out block requests.
+                    foreach (Peer peer in Peers)
+                    {
+                        while (peer.BlockRequestQueue.Count > 0 && peer.Connection.IsReadyForData)
+                        {
+                            PendingBlockRequest Request;
+                            if (peer.BlockRequestQueue.TryPeek(out Request))
+                            {
+                                ulong Elapsed = TimeUtils.Ticks - Request.QueueTime;
+                                if (Elapsed > BlockRequestTimeout)
+                                {
+                                    peer.BlockRequestQueue.TryDequeue(out Request);
+                                    Logger.Log(LogLevel.Warning, LogCategory.Main, "Peer request timed out: removed request for block {0} in manifest {1} for peer {2}.", Request.Message.BlockIndex, Request.Message.ManifestId.ToString(), Request.Requester.Address.ToString());
+                                }
+                                else;
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
                     // Find peer with the longest time its next block has been queued for.
                     foreach (Peer peer in Peers)
                     {

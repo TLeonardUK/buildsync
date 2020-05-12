@@ -113,6 +113,8 @@ namespace BuildSync.Client.Forms
         /// <param name="Users"></param>
         private void TagsRecieved(List<Tag> InTags)
         {
+            InTags.Sort((Item1, Item2) => -Item1.Name.CompareTo(Item2.Name));
+
             // Add new tags.
             foreach (Tag Tag in InTags)
             {

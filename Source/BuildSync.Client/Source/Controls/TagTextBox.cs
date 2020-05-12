@@ -27,6 +27,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BuildSync.Client.Controls;
 using System.Windows.Forms;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
@@ -39,18 +40,6 @@ namespace BuildSync.Client.Controls
     /// </summary>
     public partial class TagTextBox : UserControl
     {
-        private class ItemContext
-        {
-            public Tag Tag;
-            public ToolStripMenuItem Parent;
-            public string Path;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private List<Tag> BuildTags = new List<Tag>();
-
         /// <summary>
         /// 
         /// </summary>
@@ -76,12 +65,7 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
-        private bool GotTags = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private List<ToolStripMenuItem> MenuItems = new List<ToolStripMenuItem>();
+        private TagToolstripBuilder TagBuilder = new TagToolstripBuilder();
 
         /// <summary>
         /// 
@@ -107,19 +91,16 @@ namespace BuildSync.Client.Controls
         {
             InitializeComponent();
 
-            if (Program.NetClient != null)
-            {
-                Program.NetClient.OnTagListRecieved += TagsRecieved;
-                Program.NetClient.RequestTagList();
-            }
+            TagBuilder.OnTagClicked += TagItemClicked;
+            TagBuilder.OnTagsRefreshed += UpdateState;
+            TagBuilder.Attach(TagContextMenuStrip);
         }
 
         ~TagTextBox()
         {
-            if (Program.NetClient != null)
-            {
-                Program.NetClient.OnTagListRecieved -= TagsRecieved;
-            }
+            TagBuilder.OnTagClicked -= TagItemClicked;
+            TagBuilder.OnTagsRefreshed -= UpdateState;
+            TagBuilder.Detach();
         }
 
         /// <summary>
@@ -137,153 +118,11 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="Name"></param>
-        /// <returns></returns>
-        private ToolStripMenuItem CreateMenuItem(string Name, Tag tag, List<ToolStripMenuItem> TouchedItems)
-        {
-            ToolStripMenuItem Parent = null;
-
-            string[] Split = Name.Split('/');
-            if (Split.Length > 1)
-            {
-                string ParentName = "";
-                for (int i = 0; i < Split.Length - 1; i++)
-                {
-                    if (ParentName.Length > 0)
-                    {
-                        ParentName += "/";
-                    }
-                    ParentName += Split[i];
-                }
-
-                Parent = CreateMenuItem(ParentName, null, TouchedItems);
-            }
-
-            foreach (ToolStripMenuItem ExistingItem in MenuItems)
-            {
-                if ((ExistingItem.Tag as ItemContext).Path == Name)
-                {
-                    if (tag != null)
-                    {
-                        (ExistingItem.Tag as ItemContext).Tag = tag;
-                    }
-                    TouchedItems.Add(ExistingItem);
-                    return ExistingItem;
-                }
-            }
-
-            ItemContext Context = new ItemContext();
-            Context.Parent = Parent;
-            Context.Path = Name;
-            Context.Tag = tag;
-
-            ToolStripMenuItem Item = new ToolStripMenuItem();
-            Item.Text = Split[Split.Length - 1];
-            Item.Tag = Context;
-            Item.ImageScaling = ToolStripItemImageScaling.None;
-            Item.Click += TagItemClicked;
-            TagContextMenuStrip.Items.Add(Item);
-
-            if (Parent == null)
-            {
-                TagContextMenuStrip.Items.Add(Item);
-            }
-            else
-            {
-                Parent.DropDownItems.Add(Item);
-            }
-
-            MenuItems.Add(Item);
-            TouchedItems.Add(Item);
-
-            return Item;
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="Users"></param>
-        private void TagsRecieved(List<Tag> InTags)
-        {
-            BuildTags = InTags;
-            GotTags = true;
-
-            List<ToolStripMenuItem> ValidMenuItems = new List<ToolStripMenuItem>();
-
-            // Add each tag.
-            foreach (Tag tag in InTags)
-            {
-                tag.Name = tag.Name.Replace("\\", "/");
-                CreateMenuItem(tag.Name.Replace("\\", "/"), tag, ValidMenuItems);
-            }
-
-            // Remove tags that no longer exist.
-            for (int i = 0; i < MenuItems.Count; i++)
-            {
-                ToolStripMenuItem Menu = MenuItems[i];
-                if (!ValidMenuItems.Contains(Menu))
-                {
-                    ItemContext Context = Menu.Tag as ItemContext;
-
-                    if (Context.Parent == null)
-                    {
-                        TagContextMenuStrip.Items.Remove(Menu);
-                    }
-                    else
-                    {
-                        Context.Parent.DropDownItems.Remove(Menu);
-                    }
-
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "Removing tag menu: {0}", Menu.Text);
-                    MenuItems.RemoveAt(i);
-                    i--;
-                }
-            }
-
-            // Remove tags that are no longer valid.
-            for (int i = 0; i < TagIdsInternal.Count; i++)
-            {
-                Guid id = TagIdsInternal[i];
-                bool exists = false;
-
-                foreach (Tag tag in InTags)
-                {
-                    if (tag.Id == id)
-                    {
-                        exists = true;
-                        break;
-                    }
-                }
-
-                if (!exists)
-                {
-                    TagIdsInternal.RemoveAt(i);
-                    i--;
-                }
-            }
-
-            UpdateState();
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void TagItemClicked(object sender, EventArgs e)
+        private void TagItemClicked(Tag Tag, bool Checked)
         {
-            ToolStripMenuItem TagItem = sender as ToolStripMenuItem;
-            if (TagItem == null)
-            {
-                return;
-            }
-
-            ItemContext Context = TagItem.Tag as ItemContext;
-            if (Context == null || Context.Tag == null)
-            {
-                return;
-            }
-
-            Guid TagId = Context.Tag.Id;
+            Guid TagId = Tag.Id;
             if (TagIdsInternal.Contains(TagId))
             {
                 TagIdsInternal.Remove(TagId);
@@ -308,11 +147,11 @@ namespace BuildSync.Client.Controls
         public void UpdateState()
         {
             // Add any pending tags.
-            if (GotTags)
+            if (TagBuilder.HasTags)
             {
                 foreach (string name in AddTagNames)
                 {
-                    foreach (Tag Tag in BuildTags)
+                    foreach (Tag Tag in TagBuilder.Tags)
                     {
                         if (Tag.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                         {
@@ -325,11 +164,33 @@ namespace BuildSync.Client.Controls
                 }
 
                 AddTagNames.Clear();
+
+                // Remove any tags that no longer exist.
+                for (int i = 0; i < TagIdsInternal.Count; i++)
+                {
+                    Guid id = TagIdsInternal[i];
+                    bool exists = false;
+
+                    foreach (Tag tag in TagBuilder.Tags)
+                    {
+                        if (tag.Id == id)
+                        {
+                            exists = true;
+                            break;
+                        }
+                    }
+
+                    if (!exists)
+                    {
+                        TagIdsInternal.RemoveAt(i);
+                        i--;
+                    }
+                }
             }
 
             // Update the text.
             string Result = "";
-            foreach (Tag Tag in BuildTags)
+            foreach (Tag Tag in TagBuilder.Tags)
             {
                 if (TagIdsInternal.Contains(Tag.Id))
                 {
@@ -341,6 +202,9 @@ namespace BuildSync.Client.Controls
                 }
             }
             MainTextBox.Text = Result;
+
+            // Set what is checked.
+            TagBuilder.SetCheckedTags(TagIdsInternal);
         }
 
         /// <summary>
@@ -360,14 +224,8 @@ namespace BuildSync.Client.Controls
         /// <param name="e"></param>
         private void ContextMenuStripOpening(object sender, CancelEventArgs e)
         {
-            foreach (ToolStripMenuItem Item in MenuItems)
-            {
-                ItemContext Context = Item.Tag as ItemContext;
-                if (Context != null && Context.Tag != null)
-                {
-                    Item.Checked = TagIdsInternal.Contains(Context.Tag.Id);
-                }
-            }
+            TagBuilder.Refresh();
+            UpdateState();
         }
     }
 }

@@ -154,7 +154,7 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
-        public static long DefaultBlockSize = 256 * 1024;
+        public static long DefaultBlockSize = 512 * 1024;
 
         /// <summary>
         /// 

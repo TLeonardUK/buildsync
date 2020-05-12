@@ -28,6 +28,7 @@ using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Tags;
+using BuildSync.Client.Controls;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace BuildSync.Client.Forms
@@ -36,11 +37,6 @@ namespace BuildSync.Client.Forms
     /// </summary>
     public partial class ManageServerForm : DockContent
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        private List<Tag> Tags = new List<Tag>();
-
         /// <summary>
         /// 
         /// </summary>
@@ -68,6 +64,11 @@ namespace BuildSync.Client.Forms
         };
 
         /// <summary>
+        /// 
+        /// </summary>
+        private TagToolstripBuilder TagBuilder = new TagToolstripBuilder();
+
+        /// <summary>
         /// </summary>
         public ManageServerForm()
         {
@@ -76,8 +77,6 @@ namespace BuildSync.Client.Forms
             WindowUtils.EnableDoubleBuffering(MainListView);
 
             MainListView.ListViewItemSorter = ColumnSorter;
-
-            Program.NetClient.OnTagListRecieved += TagsRecieved;
         }
 
         /// <summary>
@@ -122,6 +121,10 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnClosed(object sender, FormClosedEventArgs e)
         {
+            TagBuilder.OnTagClicked -= TagItemClicked;
+            TagBuilder.OnTagsRefreshed -= ValidateState;
+            TagBuilder.Detach();
+
             Program.NetClient.OnServerStateRecieved -= ServerStateRecieved;
 
             RefreshTimer.Enabled = false;
@@ -138,70 +141,8 @@ namespace BuildSync.Client.Forms
             {
                 SelectedClient = MainListView.SelectedItems[0].Tag as NetMessage_GetServerStateResponse.ClientState;
             }
-            Program.NetClient.RequestTagList();
-        }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="Users"></param>
-        private void TagsRecieved(List<Tag> InTags)
-        {
-            Tags = InTags;
-
-            // Add new tags.
-            foreach (Tag Tag in InTags)
-            {
-                bool Found = false;
-                foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
-                {
-                    if ((Item.Tag as Tag).Id == Tag.Id)
-                    {
-                        Found = true;
-                        break;
-                    }
-                }
-
-                if (!Found)
-                {
-                    ToolStripMenuItem TagItem = new ToolStripMenuItem();
-                    TagItem.Text = Tag.Name;
-                    TagItem.Tag = Tag;
-                    TagItem.ImageScaling = ToolStripItemImageScaling.None;
-                    TagItem.Click += TagItemClicked;
-                    addTagToolStripMenuItem.DropDownItems.Add(TagItem);
-
-                    Logger.Log(LogLevel.Info, LogCategory.Main, "Added tag menu: {0}", Tag.Name);
-                }
-            }
-
-            // Remove old tags.
-            List<ToolStripMenuItem> RemovedItems = new List<ToolStripMenuItem>();
-            foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
-            {
-                bool Found = false;
-
-                foreach (Tag Tag in InTags)
-                {
-                    if ((Item.Tag as Tag).Id == Tag.Id)
-                    {
-                        Found = true;
-                        break;
-                    }
-                }
-
-                if (!Found)
-                {
-                    RemovedItems.Add(Item);
-                }
-            }
-
-            foreach (ToolStripMenuItem Item in RemovedItems)
-            {
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Removing tag menu: {0}", Item.Text);
-                addTagToolStripMenuItem.DropDownItems.Remove(Item);
-            }
-
-            ValidateState();
+            TagBuilder.Refresh();
         }
 
         /// <summary>
@@ -212,13 +153,7 @@ namespace BuildSync.Client.Forms
 
             if (SelectedClient != null)
             { 
-                List<Guid> TagIds = SelectedClient.TagIds;
-
-                foreach (ToolStripMenuItem Item in addTagToolStripMenuItem.DropDownItems)
-                {
-                    Tag MenuTag = (Item.Tag as Tag);
-                    Item.Checked = TagIds.Contains(MenuTag.Id);
-                }
+                TagBuilder.SetCheckedTags(SelectedClient.TagIds);
             }
         }
 
@@ -227,22 +162,14 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void TagItemClicked(object sender, EventArgs e)
+        private void TagItemClicked(Tag Tag, bool Checked)
         {
-            ToolStripMenuItem TagItem = sender as ToolStripMenuItem;
-            if (TagItem == null)
-            {
-                return;
-            }
-
             if (SelectedClient == null)
             {
                 return;
             }
 
-            Tag Tag = TagItem.Tag as Tag;
-
-            if (!TagItem.Checked)
+            if (!Checked)
             {
                 Program.NetClient.AddTagToClient(SelectedClient.Address, Tag.Id);
             }
@@ -251,6 +178,7 @@ namespace BuildSync.Client.Forms
                 Program.NetClient.RemoveTagFromClient(SelectedClient.Address, Tag.Id);
             }
         }
+
         /// <summary>
         /// </summary>
         /// <param name="sender"></param>
@@ -261,7 +189,10 @@ namespace BuildSync.Client.Forms
 
             Program.NetClient.OnServerStateRecieved += ServerStateRecieved;
             Program.NetClient.RequestServerState();
-            Program.NetClient.RequestTagList();
+
+            TagBuilder.OnTagClicked += TagItemClicked;
+            TagBuilder.OnTagsRefreshed += ValidateState;
+            TagBuilder.Attach(addTagToolStripMenuItem);
 
             if (BandwithGraph.Series.Length == 0 || BandwithGraph.Series[0] == null)
             {
@@ -297,7 +228,7 @@ namespace BuildSync.Client.Forms
             }
 
             Program.NetClient.RequestServerState();
-            Program.NetClient.RequestTagList();
+            TagBuilder.Refresh();
         }
 
         /// <summary>
