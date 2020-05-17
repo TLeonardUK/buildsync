@@ -117,7 +117,7 @@ namespace BuildSync.Core.Utils
                                 return Result;
                             }
 
-                            if (FailIfNoMemory)
+                            if (FailIfNoMemory && bucket.TotalAllocated > 32)
                             {
                                 return null;
                             }

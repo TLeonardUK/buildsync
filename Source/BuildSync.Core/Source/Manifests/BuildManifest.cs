@@ -22,6 +22,7 @@
 //#define USE_SPARSE_CHECKSUMS
 
 using System;
+using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -50,6 +51,7 @@ namespace BuildSync.Core.Manifests
     /// <summary>
     /// </summary>
     [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public class BuildManifestFileInfo
     {
         /// <summary>
@@ -77,6 +79,7 @@ namespace BuildSync.Core.Manifests
 
     /// <summary>
     /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack =1)]
     public struct BuildManifestSubBlockInfo
     {
         /// <summary>
@@ -98,11 +101,12 @@ namespace BuildSync.Core.Manifests
 
     /// <summary>
     /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct BuildManifestBlockInfo
     {
         /// <summary>
         /// </summary>
-        public List<BuildManifestSubBlockInfo> SubBlocks;
+        public BuildManifestSubBlockInfo[] SubBlocks;
 
         /// <summary>
         /// </summary>
@@ -223,6 +227,12 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         [NonSerialized] // Serialized seperately, not as part of the manifest as its unique to each computer that deals with the manifest.
         internal BuildManifestMetadata Metadata = new BuildManifestMetadata();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        private ulong LastBlockInfoRequested = 0;
 
         /// <summary>
         /// </summary>
@@ -463,6 +473,8 @@ namespace BuildSync.Core.Manifests
         /// <returns></returns>
         public bool GetBlockData(int Index, string RootPath, AsyncIOQueue IOQueue, byte[] Data, out long DataLength)
         {
+            LazyCacheBlockInfo();
+
             DataLength = 0;
 
             if (Index < 0 || Index >= BlockCount)
@@ -476,7 +488,7 @@ namespace BuildSync.Core.Manifests
             DataLength = Info.TotalSize;
 
             ManualResetEvent CompleteEvent = new ManualResetEvent(false);
-            int QueuedReads = Info.SubBlocks.Count;
+            int QueuedReads = Info.SubBlocks.Length;
 
             bool Success = true;
 
@@ -515,6 +527,8 @@ namespace BuildSync.Core.Manifests
         /// <returns></returns>
         public bool GetBlockInfo(int Index, ref BuildManifestBlockInfo Info)
         {
+            LazyCacheBlockInfo();
+
             if (Index < 0 || Index >= BlockCount)
             {
                 throw new ArgumentOutOfRangeException("Index", "Block index out of range.");
@@ -574,6 +588,8 @@ namespace BuildSync.Core.Manifests
         /// <returns></returns>
         public long GetTotalSizeOfBlocks(SparseStateArray Blocks)
         {
+            LazyCacheBlockInfo();
+
             long Result = 0;
 
             foreach (SparseStateArray.Range Range in Blocks.Ranges)
@@ -656,10 +672,6 @@ namespace BuildSync.Core.Manifests
             if (Manifest != null)
             {
                 Manifest.UpgradeVersion();
-                if (CacheDownloadInfo)
-                {
-                    Manifest.CacheBlockInfo();
-                }
                 Manifest.CacheSizeInfo();
                 if (!CacheDownloadInfo)
                 {
@@ -682,6 +694,8 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public List<int> Validate(string RootPath, RateTracker Tracker, AsyncIOQueue IOQueue, BuildManfiestValidateProgressCallbackHandler Callback = null)
         {
+            LazyCacheBlockInfo();
+
             List<int> FailedBlocks = new List<int>();
 
             int TaskCount = Environment.ProcessorCount;
@@ -750,7 +764,7 @@ namespace BuildSync.Core.Manifests
                             {
                                 Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block {0} failed checksum, block contains following sub-blocks:", BlockIndex);
 
-                                for (int SubBlock = 0; SubBlock < BInfo.SubBlocks.Count; SubBlock++)
+                                for (int SubBlock = 0; SubBlock < BInfo.SubBlocks.Length; SubBlock++)
                                 {
                                     BuildManifestSubBlockInfo SubBInfo = BInfo.SubBlocks[SubBlock];
                                     Logger.Log(LogLevel.Warning, LogCategory.Manifest, "\tfile={0} offset={1} size={2}", SubBInfo.File.Path, SubBInfo.FileOffset, SubBInfo.FileSize);
@@ -835,7 +849,7 @@ namespace BuildSync.Core.Manifests
                 fi++;
 
                 long BlockCount = (Info.Size + (BlockSize - 1)) / BlockSize;
-                long BytesRemaining = (Info.Size % BlockSize) == 0 ? 0 : BlockSize - Info.Size % BlockSize; 
+                long BytesRemaining = (Info.Size % BlockSize) == 0 ? 0 : BlockSize - Info.Size % BlockSize;
 
                 //Console.WriteLine("Block[{0}] {1}", BlockIndex, Info.Path);
 
@@ -851,12 +865,9 @@ namespace BuildSync.Core.Manifests
 
                     Debug.Assert(SubBlock.FileOffset + SubBlock.FileSize <= Info.Size);
 
-                    if (BlockInfo[BlockIndex].SubBlocks == null)
-                    {
-                        BlockInfo[BlockIndex].SubBlocks = new List<BuildManifestSubBlockInfo>();
-                    }
-
-                    BlockInfo[BlockIndex].SubBlocks.Add(SubBlock);
+                    Debug.Assert(BlockInfo[BlockIndex].SubBlocks == null);
+                    BlockInfo[BlockIndex].SubBlocks = new BuildManifestSubBlockInfo[1];
+                    BlockInfo[BlockIndex].SubBlocks[0] = SubBlock;
                     BlockInfo[BlockIndex].TotalSize += SubBlock.FileSize;
 
                     Debug.Assert(BlockInfo[BlockIndex].TotalSize <= BlockSize);
@@ -874,7 +885,7 @@ namespace BuildSync.Core.Manifests
 
                 // Fill remaining space with blocks.
                 Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BlockSize);
-                while (BytesRemaining > 0 && fi < Files.Count && BlockInfo[LastBlockIndex].SubBlocks.Count < BuildManifest.MaxSubBlockCount)
+                while (BytesRemaining > 0 && fi < Files.Count && BlockInfo[LastBlockIndex].SubBlocks.Length < BuildManifest.MaxSubBlockCount)
                 {
                     BuildManifestFileInfo NextInfo = Files[fi];
                     if (NextInfo.Size > BytesRemaining)
@@ -889,7 +900,10 @@ namespace BuildSync.Core.Manifests
                         SubBlock.FileOffset = 0;
                         SubBlock.FileSize = NextInfo.Size;
                         SubBlock.OffsetInBlock = BlockInfo[LastBlockIndex].TotalSize;
-                        BlockInfo[LastBlockIndex].SubBlocks.Add(SubBlock);
+
+                        Array.Resize(ref BlockInfo[LastBlockIndex].SubBlocks, BlockInfo[LastBlockIndex].SubBlocks.Length + 1);
+
+                        BlockInfo[LastBlockIndex].SubBlocks[BlockInfo[LastBlockIndex].SubBlocks.Length - 1] = SubBlock;
                         BlockInfo[LastBlockIndex].TotalSize += SubBlock.FileSize;
 
                         Debug.Assert(BlockInfo[LastBlockIndex].TotalSize <= BlockSize);
@@ -905,6 +919,39 @@ namespace BuildSync.Core.Manifests
                     fi++;
                 }
             }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void LazyCacheBlockInfo()
+        {
+            if (BlockInfo == null || BlockInfo.Length == 0)
+            {
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Lazy caching block information for manifest: {0}", VirtualPath);
+
+                CacheBlockInfo();
+            }
+
+            LastBlockInfoRequested = TimeUtils.Ticks;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void LazyTrimBlockInfo()
+        {
+            if (BlockInfo != null && BlockInfo.Length > 0)
+            {
+                if (TimeUtils.Ticks - LastBlockInfoRequested > 60 * 1000)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Lazy trimming block information for manifest: {0}", VirtualPath);
+
+                    BlockInfo = new BuildManifestBlockInfo[0];
+                    FilesByPath = new Dictionary<string, BuildManifestFileInfo>();
+                }
+            }
+            LastBlockInfoRequested = TimeUtils.Ticks;
         }
     }
 }

@@ -95,5 +95,10 @@ namespace BuildSync.Server
         ///     List of all build routes that have been registered on the server.
         /// </summary>
         public List<Route> Routes { get; set; } = new List<Route>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public LogLevel LoggingLevel { get; set; } = LogLevel.Info;
     }
 }

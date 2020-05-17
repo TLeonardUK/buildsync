@@ -45,7 +45,6 @@ namespace BuildSync.Core.Utils
     /// </remarks>
     public sealed class Crc32Slow : HashAlgorithm
     {
-        public const int BufferSize = 256 * 1024;
         public const uint DefaultPolynomial = 0xedb88320u;
         public const uint DefaultSeed = 0xffffffffu;
         public const int SparseStepInterval = 100;
@@ -110,41 +109,6 @@ namespace BuildSync.Core.Utils
         public static uint ComputeSparse(uint polynomial, uint seed, byte[] buffer, int Length)
         {
             return ~CalculateHash(InitializeTable(polynomial), seed, buffer, 0, Length, Length / SparseStepInterval); 
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="Algo"></param>
-        public byte[] ComputeLargeStreamHash(Stream Stream, RateTracker Tracker, ChecksumProgressEventHandler Callback)
-        {
-            // Buffer size optimized for reading massive files.
-            byte[] buffer = MemoryPool.AllocBuffer(BufferSize);
-            int bytesRead;
-            do
-            {
-                bytesRead = Stream.Read(buffer, 0, BufferSize);
-                if (bytesRead > 0)
-                {
-                    HashCore(buffer, 0, bytesRead);
-
-                    if (Callback != null)
-                    {
-                        Callback?.Invoke(bytesRead);
-                    }
-
-                    if (Tracker != null)
-                    {
-                        Tracker.Out(bytesRead);
-                    }
-                }
-            } while (bytesRead > 0);
-
-            HashValue = HashFinal();
-            byte[] Tmp = (byte[]) HashValue.Clone();
-            Initialize();
-
-            MemoryPool.ReleaseBuffer(buffer);
-            return Tmp;
         }
 
         public override void Initialize()
@@ -224,7 +188,6 @@ namespace BuildSync.Core.Utils
     // Fast implementation of CRC32.
     public sealed class Crc32Fast : Crc32CAlgorithm
     {
-        public const int BufferSize = 256 * 1024;
         private static uint[] defaultTable;
         private uint hash;
         private readonly uint seed;

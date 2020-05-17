@@ -43,6 +43,17 @@ namespace BuildSync.Core.Networking.Messages
         public Guid ManifestId;
 
         /// <summary>
+        ///     How large the senders queue of requests currently is for this client. Used to
+        ///     load balance the amount of requests sent to this peer.
+        /// </summary>
+        public float QueueDepthMs = -1;
+
+        /// <summary>
+        ///     Last queue size changed on client when GetBlock was requested
+        /// </summary>
+        public long QueueSequence = -1;
+
+        /// <summary>
         ///     Buffer containing the blocks data.
         /// </summary>
         public NetCachedArray Data = new NetCachedArray();
@@ -66,6 +77,12 @@ namespace BuildSync.Core.Networking.Messages
         {
             serializer.Serialize(ref ManifestId);
             serializer.Serialize(ref BlockIndex);
+
+            if (serializer.Version >= 100000641)
+            {
+                serializer.Serialize(ref QueueDepthMs);
+                serializer.Serialize(ref QueueSequence);
+            }
 
             // TODO: Modify this so it stores a reference to the deserializing buffer
             // rather than doing a pointless and time consuming copy.

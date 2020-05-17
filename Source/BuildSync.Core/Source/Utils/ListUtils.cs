@@ -72,12 +72,15 @@ namespace BuildSync.Core.Utils
 
             if (orderIndependent)
             {
-                foreach (T val in listA)
+                List<T> Clone = new List<T>(listA);
+                foreach (T val in listB)
                 {
-                    if (!listB.Contains(val))
-                    {
-                        return false;
-                    }
+                    Clone.Remove(val);
+                }
+
+                if (Clone.Count > 0)
+                {
+                    return false;
                 }
             }
             else

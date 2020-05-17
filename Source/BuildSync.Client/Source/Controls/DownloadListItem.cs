@@ -282,17 +282,20 @@ namespace BuildSync.Client.Controls
                     case ManifestDownloadProgressState.InitializeFailed:
                     case ManifestDownloadProgressState.DeltaCopying:
                         {
+                            DowloadingSegment.Text = "Download";
                             DowloadingSegment.Progress = 0.0f;
                             break;
                         }
                     case ManifestDownloadProgressState.DiskError:
                         {
+                            DowloadingSegment.Text = "Download";
                             DowloadingSegment.Progress = Downloader.Progress;
                             DowloadingSegment.Color = ErrorColor;
                             break;
                         }
                     case ManifestDownloadProgressState.Downloading:
                         {
+                            DowloadingSegment.Text = string.Format("{0} / {1}", StringUtils.FormatAsSize(Downloader.BytesTotal - Downloader.BytesRemaining), StringUtils.FormatAsSize(Downloader.BytesTotal)); 
                             DowloadingSegment.Progress = Downloader.Progress;
                             DowloadingSegment.Color = InProgressColor;
                             break;
@@ -303,6 +306,7 @@ namespace BuildSync.Client.Controls
                     case ManifestDownloadProgressState.ValidationFailed:
                     case ManifestDownloadProgressState.InstallFailed:
                         {
+                            DowloadingSegment.Text = "Download";
                             DowloadingSegment.Progress = 1.0f;
                             DowloadingSegment.Color = FinishedColor;
                             break;
@@ -459,11 +463,19 @@ namespace BuildSync.Client.Controls
                         }
                         case ManifestDownloadProgressState.Downloading:
                         {
-                            if (Downloader.BandwidthStats.RateIn == 0)
+                            if (Downloader.BandwidthStats.RateIn == 0 )
                             {
                                 if (Program.NetClient.IsConnected)
                                 {
-                                    Status = "Locating Data";
+                                    int Blocks = Program.NetClient.GetRequestedBlocksForDownload(Downloader.ManifestId);
+                                    if (Blocks > 0)
+                                    {
+                                        Status = string.Format("Slow Download ({0} Blocks)", Blocks);
+                                    }
+                                    else
+                                    {
+                                        Status = "Locating Data";
+                                    }
                                 }
                                 else
                                 {

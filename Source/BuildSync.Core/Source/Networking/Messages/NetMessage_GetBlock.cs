@@ -42,6 +42,11 @@ namespace BuildSync.Core.Networking.Messages
         public Guid ManifestId;
 
         /// <summary>
+        ///     Last queue size sequence for block when sent, will be sent back by response so we can keep queue size changes in sequence.
+        /// </summary>
+        public long QueueSequence = -1;
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
@@ -49,6 +54,11 @@ namespace BuildSync.Core.Networking.Messages
         {
             serializer.Serialize(ref ManifestId);
             serializer.Serialize(ref BlockIndex);
+
+            if (serializer.Version >= 100000641)
+            {
+                serializer.Serialize(ref QueueSequence);
+            }
         }
     }
 }

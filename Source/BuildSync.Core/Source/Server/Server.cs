@@ -142,7 +142,6 @@ namespace BuildSync.Core.Server
             ListenConnection.OnClientConnect += ClientConnected;
             ListenConnection.OnClientDisconnect += ClientDisconnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 32);
             MemoryPool.PreallocateBuffers((int)BuildManifest.DefaultBlockSize, 32);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
         }
@@ -210,13 +209,14 @@ namespace BuildSync.Core.Server
                     // Send user update of all peers that may have data they are after.
                     if (State.RelevantPeerAddressesNeedUpdate)
                     {
+                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "----- Peer Relevant Addresses -----");
+                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer: {0}", State.PeerConnectionAddress == null ? "Unknown" : State.PeerConnectionAddress.ToString());
+
                         List<NetConnection> NewPeers = GetRelevantPeerForBlockState(Clients, Connection);
 
                         // If the new list is different than the old one send it.
                         bool IsDifferent = !NewPeers.IsEqual(State.RelevantPeers);
 
-                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "----- Peer Relevant Addresses -----");
-                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Peer: {0}", State.PeerConnectionAddress == null ? "Unknown" : State.PeerConnectionAddress.ToString());
                         if (NewPeers.Count > 0)
                         {
                             for (int i = 0; i < NewPeers.Count; i++)
@@ -232,6 +232,8 @@ namespace BuildSync.Core.Server
                         // Send it!
                         if (IsDifferent)
                         {
+                            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Sending update as list changed.");
+
                             NetMessage_RelevantPeerListUpdate Msg = new NetMessage_RelevantPeerListUpdate();
                             Msg.PeerAddresses = new List<IPEndPoint>();
                             foreach (NetConnection Address in NewPeers)
@@ -239,6 +241,10 @@ namespace BuildSync.Core.Server
                                 Msg.PeerAddresses.Add((Address.Metadata as ServerConnectedClient).PeerConnectionAddress);
                             }
                             Connection.Send(Msg);
+                        }
+                        else
+                        {
+                            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Not sending update as peer lists are equal.");
                         }
 
                         State.RelevantPeers = NewPeers;
@@ -438,12 +444,27 @@ namespace BuildSync.Core.Server
             ServerConnectedClient ForServerConnectedClient = ForClient.Metadata as ServerConnectedClient;
             if (ForServerConnectedClient.BlockState == null)
             {
+                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "No block state, cannot determine relevent peers.");
                 return Result;
             }
 
             List<Guid> Whitelist = new List<Guid>();
             List<Guid> Blacklist = new List<Guid>();
             RouteRegistry.GetDestinationTags(ForClient.Handshake.TagIds, ref Whitelist, ref Blacklist);
+
+            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "GetRelevantPeerForBlockState: Clients={0}", Clients.Count);
+
+            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Whitelist Tags:");
+            foreach (Guid Id in Whitelist)
+            {
+                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\t{0}", TagRegistry.IdToString(Id));
+            }
+
+            Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Blacklist Tags:");
+            foreach (Guid Id in Blacklist)
+            {
+                Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\t{0}", TagRegistry.IdToString(Id));
+            }
 
             foreach (NetConnection Connection in Clients)
             {
@@ -454,26 +475,32 @@ namespace BuildSync.Core.Server
 
                 if (Connection.Metadata == null)
                 {
+                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Skipping peer, no connection metadata.");
                     continue;
                 }
 
                 ServerConnectedClient ServerConnectedClient = Connection.Metadata as ServerConnectedClient;
-                if (ServerConnectedClient.BlockState == null)
+                if (ServerConnectedClient.PeerConnectionAddress == null)
                 {
+                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Skipping peer, no connection address.");
                     continue;
                 }
 
-                if (ServerConnectedClient.PeerConnectionAddress == null)
+                if (ServerConnectedClient.BlockState == null)
                 {
+                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Skipping Peer {0}, no block state.", ServerConnectedClient.PeerConnectionAddress.ToString());
                     continue;
                 }
 
                 if (RouteRegistry.Routes.Count > 0)
                 {
+                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "Potential Peer {0}.", ServerConnectedClient.PeerConnectionAddress.ToString());
+
                     bool Whitelisted = false;
                     bool Blacklisted = false;
                     foreach (Guid tag in Connection.Handshake.TagIds)
                     {
+                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tTag: {0}", TagRegistry.IdToString(tag));
                         if (Whitelist.Contains(tag))
                         {
                             Whitelisted = true;
@@ -486,17 +513,24 @@ namespace BuildSync.Core.Server
 
                     if (!Whitelisted)
                     {
+                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tPeer {0} is not whitelisted.", ServerConnectedClient.PeerConnectionAddress.ToString());
                         continue;
                     }
                     if (Blacklisted)
                     {
+                        Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tPeer {0} is blacklisted.", ServerConnectedClient.PeerConnectionAddress.ToString());
                         continue;
                     }
                 }
 
                 if (ServerConnectedClient.BlockState.HasAnyBlocksNeeded(ForServerConnectedClient.BlockState))
                 {
+                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tPeer {0} is ok, adding to list.", ServerConnectedClient.PeerConnectionAddress.ToString());
                     Result.Add(Connection);
+                }
+                else
+                {
+                    Logger.Log(LogLevel.Verbose, LogCategory.Peers, "\tPeer {0} does not have any blocks we need.", ServerConnectedClient.PeerConnectionAddress.ToString());
                 }
             }
 

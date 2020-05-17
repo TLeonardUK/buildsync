@@ -81,7 +81,7 @@ namespace BuildSync.Core.Utils
         /// 
         /// </summary>
         /// <returns></returns>
-        public double Get()
+        public double Get(bool PruneDeviations = false)
         {
             double Result = 0;
             lock (Values)
@@ -93,7 +93,7 @@ namespace BuildSync.Core.Utils
                 for (int i = 0; i < Values.Count; i++)
                 {
                     double Drift = Math.Abs(Values[i] - Mean);
-                    if (Drift <= StdDeviation)
+                    if (!PruneDeviations || Drift <= StdDeviation)
                     {
                         Total += Values[i];
                         Samples++;

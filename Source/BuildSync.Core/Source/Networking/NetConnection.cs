@@ -33,6 +33,7 @@ using System.Threading;
 using BuildSync.Core.Networking.Messages;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Routes;
+using BuildSync.Core.Manifests;
 
 namespace BuildSync.Core.Networking
 {
@@ -242,6 +243,27 @@ namespace BuildSync.Core.Networking
         public override void Gather()
         {
             AddSample(NetConnection.FreeSmallMessageBuffers.Count);
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    public class Statistic_ProcessQueue : Statistic
+    {
+        public Statistic_ProcessQueue()
+        {
+            Name = @"Packets\Process Queue";
+            MaxLabel = NetConnection.MaxGenericMessageBuffers.ToString();
+            MaxValue = NetConnection.MaxGenericMessageBuffers;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+
+        public override void Gather()
+        {
+            AddSample(NetConnection.ProcessQueueSize);
         }
     }
 
@@ -472,6 +494,9 @@ namespace BuildSync.Core.Networking
 
         public int MessageVersion = AppVersion.VersionNumber;
 
+        public TcpInfo TcpInfo = new TcpInfo();
+        public int IdealSendBacklog = 0;
+
         private RoutePair RouteInternal = new RoutePair { SourceTagId = Guid.Empty, DestinationTagId = Guid.Empty };
 
         public RoutePair Route
@@ -511,6 +536,7 @@ namespace BuildSync.Core.Networking
         private readonly object SendThreadQueueLock = new object();
 
         private BlockingCollection<MessageQueueEntry> ProcessBufferQueue;
+        internal static int ProcessQueueSize = 0;
         private Thread ProcessThread;
 
         internal static ConcurrentBag<byte[]> FreeSmallMessageBuffers = new ConcurrentBag<byte[]>();
@@ -533,13 +559,13 @@ namespace BuildSync.Core.Networking
         // downloaded from, a couple each should surfice, one for reading and one for processing. This should only become an issue
         // if we have a processing backlog. And in that case I think something else is wrong as all the data should be quick to parse into
         // a seperate NetMessage structure.
-        internal const int MaxRecieveMessageBuffers = 32;
-        internal const int MaxSendMessageBuffers = 32;
-        internal const int MaxGenericMessageBuffers = 64;
-        internal const int MaxSmallMessageBuffers = 2048; // each buffer is 1kb each
+        internal const int MaxRecieveMessageBuffers = 16;
+        internal const int MaxSendMessageBuffers = 16;
+        internal const int MaxGenericMessageBuffers = 32;
+        internal const int MaxSmallMessageBuffers = 1024; // each buffer is 1kb each
 #endif
 
-        internal const int LargeBufferSize = 1 * 1024 * 1024 + 64; // based on 1mb block being most frequent large message + 64 bytes of overhead;
+        internal const int LargeBufferSize = 512 * 1024 + 128; // based on 1mb block being most frequent large message + 64 bytes of overhead;
         internal const int SmallBufferSize = 1024;
 
         private ulong MaxClientsExceededPurgeTime;
@@ -936,6 +962,8 @@ namespace BuildSync.Core.Networking
                 MessageQueueEntry Data;
                 if (ProcessBufferQueue.TryTake(out Data, 1000))
                 {
+                    Interlocked.Decrement(ref ProcessQueueSize);
+
                     if (ProcessMessage(ref Data.Data, Data.BufferSize))
                     {
                         try
@@ -946,7 +974,10 @@ namespace BuildSync.Core.Networking
                             Console.WriteLine("Requeuing: {0}", TmpMsg.Index);
                             */
 
+                            Interlocked.Increment(ref ProcessQueueSize);
                             ProcessBufferQueue.Add(Data);
+
+                            Thread.Sleep(1);
                         }
                         catch (InvalidOperationException)
                         {
@@ -1098,14 +1129,15 @@ namespace BuildSync.Core.Networking
 
             if (!IsListening && IsReadyForData)
             {
-                ulong Elapsed = TimeUtils.Ticks - LastPingSendTime;
+                // TODO: Use socket info now.
+                /*ulong Elapsed = TimeUtils.Ticks - LastPingSendTime;
                 if (Elapsed > PingInterval && !PingOutstanding)
                 {
                     Send(new NetMessage_Ping());
 
                     LastPingSendTime = TimeUtils.Ticks;
                     PingOutstanding = true;
-                }
+                }*/
             }
 
             // Fire off all queued events.
@@ -1116,6 +1148,43 @@ namespace BuildSync.Core.Networking
                     EventQueue.Dequeue().Invoke();
                 }
             }
+
+            // Grab socket information if not listening.
+            if (!IsListening && IsReadyForData)
+            {
+                IdealSendBacklog = SocketUtils.GetIdealSendBacklog(Socket);
+                if (IdealSendBacklog != Socket.SendBufferSize)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Transport, "Adjusting socket {0} send buffer to ISB, {1}", Address.ToString(), StringUtils.FormatAsSize(IdealSendBacklog));
+
+                    Socket.SendBufferSize = IdealSendBacklog;
+                }
+
+                TcpInfo = SocketUtils.GetTcpInfo(Socket);
+                uint RttMs = TcpInfo.RttUs / 1000;
+                if (RttMs > 0)
+                {
+                    Ping.Add(RttMs);
+                }
+                uint MinRttMs = TcpInfo.MinRttUs / 1000;
+                if (MinRttMs > 0)
+                {
+                    BestPing = MinRttMs;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Socket"></param>
+        public void SetupSocket(Socket Socket)
+        {
+            Socket.SendBufferSize = 4 * 1024 * 1024; // TODO: This should be dynamic based on ideal backlog.
+            Socket.SendTimeout = 0;// 30 * 1000;
+            Socket.ReceiveBufferSize = 4 * 1024 * 1024; // This is somewhat based on SCP
+            Socket.ReceiveTimeout = 0;// 30 * 1000;
+            Socket.NoDelay = true;
         }
 
         /// <summary>
@@ -1133,11 +1202,7 @@ namespace BuildSync.Core.Networking
             ListenAddress = new IPEndPoint(WindowUtils.GetLocalIPAddress(), Port);
 
             Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            Socket.SendBufferSize = 128 * 1024;
-            Socket.SendTimeout = 0;// 30 * 1000;
-            Socket.ReceiveBufferSize = 128 * 1024;
-            Socket.ReceiveTimeout = 0;// 30 * 1000;
-            Socket.NoDelay = true;
+            SetupSocket(Socket);
 
             /*try
             {
@@ -1171,10 +1236,7 @@ namespace BuildSync.Core.Networking
                     try
                     {
                         Socket ClientSocket = Socket.EndAccept(Result);
-                        ClientSocket.SendBufferSize = 128 * 1024;
-                        ClientSocket.SendTimeout = 0;// 30 * 1000;
-                        ClientSocket.ReceiveBufferSize = 128 * 1024;
-                        ClientSocket.ReceiveTimeout = 0;// 30 * 1000;
+                        SetupSocket(ClientSocket);
 
                         /*try
                         {
@@ -1273,11 +1335,7 @@ namespace BuildSync.Core.Networking
             try
             {
                 Socket = new Socket(Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                Socket.SendBufferSize = 128 * 1024;
-                Socket.SendTimeout = 0;// 30 * 1000;
-                Socket.ReceiveBufferSize = 128 * 1024;
-                Socket.ReceiveTimeout = 0;// 30 * 1000;
-                Socket.NoDelay = true;
+                SetupSocket(Socket);
 
                 /*try
                 {
@@ -1721,6 +1779,11 @@ namespace BuildSync.Core.Networking
                                 BeginRecievingPayload(MessageBuffer);
                             }
                         }
+                        catch (ObjectDisposedException ex)
+                        {
+                            ReleaseMessageBuffer(MessageBuffer, "BeginRecievingHeader.DisposedException", "Recieve", false);
+                            ShouldDisconnect = true;
+                        }
                         catch (Exception ex)
                         {
                             Logger.Log(LogLevel.Error, LogCategory.Transport, "Failed to recieve header from {0}, with error: {1}", Address.ToString(), ex.Message);
@@ -1785,6 +1848,7 @@ namespace BuildSync.Core.Networking
             // If no payload, we have the full message.
             if (MessageHeaderTempStorage.PayloadSize == 0)
             {
+                Interlocked.Increment(ref ProcessQueueSize);
                 ProcessBufferQueue.Add(new MessageQueueEntry {Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + MessageHeaderTempStorage.PayloadSize});
                 BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayload.RecieveNextHeader", "Recieve", false, true));
             }
@@ -1829,10 +1893,16 @@ namespace BuildSync.Core.Networking
                                     return;
                                 }
 
+                                Interlocked.Increment(ref ProcessQueueSize);
                                 ProcessBufferQueue.Add(new MessageQueueEntry { Data = MessageBuffer, BufferSize = NetMessage.HeaderSize + Offset + Size });
 
                                 BeginRecievingHeader(AllocMessageBuffer("BeginRecievingPayloadWithOffset.RecieveNextHeader", "Recieve", false, true));
                             }
+                        }
+                        catch (ObjectDisposedException ex)
+                        {
+                            ReleaseMessageBuffer(MessageBuffer, "BeginRecievingPayloadWithOffset.DisposedException", "Recieve", false);
+                            QueueDisconnect();
                         }
                         catch (Exception ex)
                         {
@@ -2083,6 +2153,10 @@ namespace BuildSync.Core.Networking
                 {
                     byte[] OldBuffer = Buffer;
                     Buffer = AllocMessageBuffer("ProcessMessage.UpgradeBufferForDecompress", "Recieve", false, false);
+                    if (Buffer.Length < RequiredSize)
+                    {
+                        Array.Resize(ref Buffer, (int)RequiredSize);
+                    }
                     Array.Copy(OldBuffer, 0, Buffer, 0, Size);
                     ReleaseMessageBuffer(OldBuffer, "ProcessMessage.UpgradeBufferForDecompress", "Recieve", false); 
                 }
@@ -2151,7 +2225,9 @@ namespace BuildSync.Core.Networking
                 }
                 else if (Message is NetMessage_Pong)
                 {
-                    NetMessage_Pong Msg = Message as NetMessage_Pong;
+                    // Use connect info now.
+
+                    /*NetMessage_Pong Msg = Message as NetMessage_Pong;
 
                     ulong Now = TimeUtils.Ticks;
                     ulong Timestamp = Msg.Timestamp;
@@ -2165,7 +2241,7 @@ namespace BuildSync.Core.Networking
                     Ping.Add(Elapsed);
 
                     LastPingSendTime = TimeUtils.Ticks;
-                    PingOutstanding = false;
+                    PingOutstanding = false;*/
                 }
                 else if (Message is NetMessage_Handshake)
                 {

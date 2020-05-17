@@ -187,7 +187,7 @@ namespace BuildSync.Core.Downloads
 #if LARGE_DOWNLOAD_QUEUE
         private const int IdealDownloadQueueSizeBytes = 1000 * 1024 * 1024;
 #else
-        private const int IdealDownloadQueueSizeBytes = 200 * 1024 * 1024;
+        private const int IdealDownloadQueueSizeBytes = 256 * 1024 * 1024;
 #endif
 
         /// <summary>
@@ -786,7 +786,10 @@ namespace BuildSync.Core.Downloads
         private void ClearFileCompletedStates(ManifestDownloadState State)
         {
             State.FileCompletedStates.Clear();
-            ClearFileWriteCache(State.LocalFolder);
+            if (State.LocalFolder != "")
+            {
+                ClearFileWriteCache(State.LocalFolder);
+            }
         }
 
         /// <summary>
@@ -1526,7 +1529,7 @@ namespace BuildSync.Core.Downloads
             }
 
             BlockIOState WriteState = new BlockIOState();
-            WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
+            WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Length;
             WriteState.WasSuccess = true;
 
             if (!Data.Resize((int) BlockInfo.TotalSize, (int)State.Manifest.BlockSize, true))
@@ -1537,7 +1540,7 @@ namespace BuildSync.Core.Downloads
 
             byte[] DataBuffer = Data.Data;
 
-            for (int i = 0; i < BlockInfo.SubBlocks.Count; i++)
+            for (int i = 0; i < BlockInfo.SubBlocks.Length; i++)
             {
                 BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
 
@@ -1662,7 +1665,7 @@ namespace BuildSync.Core.Downloads
             }
 
             BlockIOState WriteState = new BlockIOState();
-            WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Count;
+            WriteState.SubBlocksRemaining = BlockInfo.SubBlocks.Length;
             WriteState.WasSuccess = true;
 
 #if CHECKSUM_EACH_BLOCK
@@ -1705,7 +1708,7 @@ namespace BuildSync.Core.Downloads
             }
 #endif
 
-            for (int i = 0; i < BlockInfo.SubBlocks.Count; i++)
+            for (int i = 0; i < BlockInfo.SubBlocks.Length; i++)
             {
                 BuildManifestSubBlockInfo SubBlockInfo = BlockInfo.SubBlocks[i];
 

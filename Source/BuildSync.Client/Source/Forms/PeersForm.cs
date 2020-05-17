@@ -165,7 +165,11 @@ namespace BuildSync.Client.Forms
                 Item.SubItems[8].Text = Peer.LastSeen.ToString("dd/MM/yyyy HH:mm");
                 Item.SubItems[9].Text = StringUtils.FormatAsSize((long) Peer.TargetInFlightData);
                 Item.SubItems[10].Text = StringUtils.FormatAsSize((long) Peer.CurrentInFlightData);
-                Item.SubItems[11].Text = (RealPeer != null ? RealPeer.BlockRequestQueue.Count : 0).ToString();
+                Item.SubItems[11].Text  = string.Format("R:{0} S:{1} M:{2} Q:{3:0.0}", 
+                    (RealPeer != null ? RealPeer.ActiveBlockDownloads.Count : 0).ToString(), 
+                    (RealPeer != null ? RealPeer.BlockRequestQueue.Count : 0).ToString(), 
+                    (RealPeer != null ? RealPeer.MaxInFlightRequests : 0).ToString(),
+                    (RealPeer != null ? RealPeer.QueueDepthMs : 0).ToString());
                 Item.SubItems[12].Text = string.Format("{0} ms", Peer.Ping);
                 Item.SubItems[13].Text = string.Format("{0} ms", Peer.BestPing);
             }

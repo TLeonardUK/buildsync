@@ -483,6 +483,7 @@ namespace BuildSync.Client
             NetClient.TrafficEnabled = AreDownloadsAllowed();
             ManifestDownloadManager.TrafficEnabled = AreDownloadsAllowed();
 
+            BuildRegistry.Poll();
             ScmManager.Poll();
             NetClient.Poll();
             DownloadManager.Poll(NetClient.IsReadyForData);
@@ -752,8 +753,8 @@ namespace BuildSync.Client
                     Record.PeakRateIn = Math.Max(Record.PeakRateIn, Record.AverageRateIn);
                     Record.PeakRateOut = Math.Max(Record.PeakRateOut, Record.AverageRateOut);
 
-                    Record.TargetInFlightData = Peer.GetMaxInFlightData(Core.Client.Client.TargetMillisecondsOfDataInFlight);
-                    Record.CurrentInFlightData = Record.TargetInFlightData - Peer.GetAvailableInFlightData(Core.Client.Client.TargetMillisecondsOfDataInFlight);
+                    Record.TargetInFlightData = Peer.GetMaxInFlightData();
+                    Record.CurrentInFlightData = Record.TargetInFlightData - Peer.GetAvailableInFlightData();
 
                     Record.Ping = (long) Peer.Connection.Ping.Get();
                     Record.BestPing = (long) Peer.Connection.BestPing;

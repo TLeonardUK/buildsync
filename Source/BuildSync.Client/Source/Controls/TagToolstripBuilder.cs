@@ -253,7 +253,14 @@ namespace BuildSync.Client.Controls
 
                     if (Context.Parent == null)
                     {
-                        TagContextMenuStrip.Items.Remove(Menu);
+                        if (TagContextMenuStrip != null)
+                        {
+                            TagContextMenuStrip.Items.Remove(Menu);
+                        }
+                        else
+                        {
+                            TagContextMenuItem.DropDownItems.Remove(Menu);
+                        }
                     }
                     else
                     {

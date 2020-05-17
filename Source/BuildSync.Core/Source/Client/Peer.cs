@@ -53,7 +53,7 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
-        public const int MaxRequestQueueSize = 150;
+        public const int MaxRequestQueueSize = 500;
 
         /// <summary>
         /// </summary>
@@ -80,12 +80,52 @@ namespace BuildSync.Core.Client
         public ConcurrentQueue<PendingBlockRequest> BlockRequestQueue = new ConcurrentQueue<PendingBlockRequest>();
 
         /// <summary>
+        /// 
+        /// </summary>
+        public int MaxInFlightRequests = 1;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int OutstandingReads = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int OutstandingSends = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public float QueueDepthMs = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long LastBlockQueueSequence = 0;
+
+        /// <summary>
         /// </summary>
         public BlockListState BlockState = new BlockListState();
 
         /// <summary>
         /// </summary>
         public NetConnection Connection = new NetConnection();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int RequestQueueDepth = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public RollingAverage AverageRequestFulfillTime = new RollingAverage(20);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public RollingAverage AverageRequestConcurrency = new RollingAverage(20);       
 
         /// <summary>
         /// </summary>
@@ -108,6 +148,16 @@ namespace BuildSync.Core.Client
         public bool WasConnected;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public bool PendingQueueUpdate = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public long QueueSequence = 0;
+
+        /// <summary>
         /// </summary>
         /// <param name="Block"></param>
         public void AddActiveBlockDownload(ManifestPendingDownloadBlock Block)
@@ -123,87 +173,53 @@ namespace BuildSync.Core.Client
         /// </summary>
         /// <param name="TargetMsOfData"></param>
         /// <returns></returns>
-        public long GetAvailableInFlightData(int TargetMsOfData)
+        public long GetAvailableInFlightData()
         {
-            return Math.Max(0, GetMaxInFlightData(TargetMsOfData) - ActiveBlockDownloadSize);
+            return Math.Max(0, GetMaxInFlightData() - ActiveBlockDownloadSize);// Connection.TcpInfo.BytesInFlight);
         }
 
         /// <summary>
         /// </summary>
         /// <param name="TargetMsOfData"></param>
         /// <returns></returns>
-        public long GetMaxInFlightData(int TargetMsOfData)
+        public long GetMaxInFlightData()
         {
-            // Calculate a rough idea for how many bytes we should have in flight at a given time.
-#if false
-            double InBlockRecieveLatency = BlockRecieveLatency.Get();
-            double InAverageBlockSize = AverageBlockSize.Get();
+            return BuildManifest.DefaultBlockSize * MaxInFlightRequests;
+        }
 
-            long MaxInFlightBytes = 0;
-            if (InBlockRecieveLatency < 5 || InAverageBlockSize < 1024)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Depth"></param>
+        public void RecievedNewQueueDepth(float DepthMs, long Sequence)
+        {
+            // When we start requesting data we request a single block at a time.
+            // Each time we recieve a block:
+            //      Get included queue depth value.
+            //          > 1 = We reduce blocks requested by 1.
+            //          < 1 = We increase blocks requested by 1.
+
+            QueueDepthMs = DepthMs;
+            LastBlockQueueSequence = Sequence;
+            PendingQueueUpdate = true;
+
+            /*if (DepthMs > Client.TargetMillisecondsOfDataInFlight)
             {
-                MaxInFlightBytes = BuildManifest.BlockSize * 1;
+                MaxInFlightRequests = Math.Max(1, MaxInFlightRequests - 1);
             }
-            else
+            else if (DepthMs < Client.TargetMillisecondsOfDataInFlight * 0.8f)
             {
-                MaxInFlightBytes = Math.Max(BuildManifest.BlockSize, (long)((TargetMsOfData / InBlockRecieveLatency) * InAverageBlockSize));
-            }
+                MaxInFlightRequests = Math.Min(MaxRequestQueueSize, MaxInFlightRequests + 1);
+            }*/
+        }
 
-            return MaxInFlightBytes;// * 5;
-#elif false
-            // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
-            const double TrendUpwardsFactor = 2;
-
-            double LinkCapacityBytesPerSecond = Connection.BandwidthStats.RateIn / TrendUpwardsFactor; 
-            double LatencySeconds = Connection.BestPing / 1000.0f;
-            if (LatencySeconds == 0)
-            {
-                LatencySeconds = 0.001f;
-            }
-
-            double BandwidthDelayProductBytes = LinkCapacityBytesPerSecond * LatencySeconds;
-            long MaxInFlightBytes = (long)BandwidthDelayProductBytes;
-
-            // Cap to minimum of a couple ofs, so we always have one being sent out and one before processed.
-            MaxInFlightBytes = Math.Max(BuildManifest.BlockSize * 2, MaxInFlightBytes);
-
-            // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
-            MaxInFlightBytes = (long)(MaxInFlightBytes * TrendUpwardsFactor);
-
-            if (TimeUtils.Ticks - LastPrintTime > 1000)
-            {
-                Console.WriteLine("a={0} b={1} bytes={2}", StringUtils.FormatAsTransferRate((long)LinkCapacityBytesPerSecond), LatencySeconds, StringUtils.FormatAsSize(MaxInFlightBytes));
-                LastPrintTime = TimeUtils.Ticks;
-            }
-
-            return MaxInFlightBytes;
-#elif true
-            // Keep at least 1 second of data in flight.
-            double RealTargetMsOfData = Math.Max(TargetMsOfData, Connection.BestPing * 2.0f);
-
-            const double TrendUpwardsFactor = 2.0f;
-            double TargetSecondsOfData = RealTargetMsOfData / 1000.0;
-            long TargetInFlight = (long) (Connection.BandwidthStats.PeakRateIn * TargetSecondsOfData);
-
-            long MaxInFlightBytes = TargetInFlight;
-
-            // Cap to minimum of a couple of 2 blocks, so we always have one being sent out and one before processed.
-            MaxInFlightBytes = Math.Max(BuildManifest.MaxBlockSize * 1, MaxInFlightBytes);
-
-            // Always try to trent towards a higher capacity until we stabalize at our available bandwidth.
-            MaxInFlightBytes = (long) (MaxInFlightBytes * TrendUpwardsFactor);
-
-            // Round to next largest block size.
-            MaxInFlightBytes = (MaxInFlightBytes + (BuildManifest.MaxBlockSize - 1)) / BuildManifest.MaxBlockSize * BuildManifest.MaxBlockSize;
-
-            return MaxInFlightBytes;
-#elif false
-            // Fuck it, this is simpler and causes less edge cases. Worst case we are waiting for a slow peer to return
-            // like 4 * worst case of the above one.
-            return 40 * 1024 * 1024;
-#else
-            return 128 * 1024 * 1024; // Gigabit of data. We limit the actual amount based on our local link speed.
-#endif
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public float GetRequestQueueDepthTime()
+        {
+            return ((float)RequestQueueDepth * (float)AverageRequestFulfillTime.Get()) / (float)Math.Max(AverageRequestConcurrency.Get(), 1); 
         }
 
         /// <summary>

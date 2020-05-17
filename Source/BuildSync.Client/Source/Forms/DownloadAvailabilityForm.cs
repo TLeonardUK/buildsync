@@ -137,6 +137,7 @@ namespace BuildSync.Client.Forms
                 {
                     Controls.Remove(Panel);
                     Panels.Remove(Keys[i]);
+                    Keys = Panels.Keys.ToArray<string>(); 
                     i--;
                 }
             }

@@ -134,6 +134,9 @@ namespace BuildSync.Server
         public static void ApplySettings()
         {
             ProcessUtils.SetLaunchOnStartup("Build Sync - Server", Settings.RunOnStartup);
+
+            // General settings.
+            Logger.MaximumVerbosity = Program.Settings.LoggingLevel;
         }
 
         /// <summary>
@@ -201,6 +204,7 @@ namespace BuildSync.Server
         /// </summary>
         public static void OnPoll()
         {
+            BuildRegistry.Poll();
             NetServer.Poll();
             LicenseMgr.Poll();
 

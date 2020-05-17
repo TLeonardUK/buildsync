@@ -267,6 +267,17 @@ namespace BuildSync.Core.Manifests
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public void Poll()
+        {
+            foreach (BuildManifest Manifest in Manifests)
+            {
+                Manifest.LazyTrimBlockInfo();
+            }
+        }
+
+        /// <summary>
         /// </summary>
         public void PruneManifests()
         {

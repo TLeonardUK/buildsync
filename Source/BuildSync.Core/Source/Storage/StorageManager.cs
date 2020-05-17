@@ -152,24 +152,27 @@ namespace BuildSync.Core.Storage
             // Find all the manifests that exist in deleted folders and queue them up for a move.
             foreach (ManifestDownloadState State in DownloadManager.States.States)
             {
-                string NormalizedStatePath = FileUtils.NormalizePath(State.LocalFolder) + @"\";
-
-                foreach (StorageLocation Location in DeletedLocations)
+                if (State.LocalFolder != "")
                 {
-                    string NormalizedLocationPath = FileUtils.NormalizePath(Location.Path) + @"\";
-                    if (NormalizedStatePath.StartsWith(NormalizedLocationPath))
-                    {
-                        MoveOldDirectories.Add(NormalizedStatePath);
+                    string NormalizedStatePath = FileUtils.NormalizePath(State.LocalFolder) + @"\";
 
-                        string NewPath = "";
-                        if (!AllocateSpace(State.Manifest == null ? 0 : State.Manifest.GetTotalSize(), State.ManifestId, out NewPath))
+                    foreach (StorageLocation Location in DeletedLocations)
+                    {
+                        string NormalizedLocationPath = FileUtils.NormalizePath(Location.Path) + @"\";
+                        if (NormalizedStatePath.StartsWith(NormalizedLocationPath))
                         {
-                            // Delete space requirements :|
-                            MoveNewDirectories.Add("");
-                        }
-                        else
-                        {
-                            MoveNewDirectories.Add(NewPath + @"\");
+                            MoveOldDirectories.Add(NormalizedStatePath);
+
+                            string NewPath = "";
+                            if (!AllocateSpace(State.Manifest == null ? 0 : State.Manifest.GetTotalSize(), State.ManifestId, out NewPath))
+                            {
+                                // Delete space requirements :|
+                                MoveNewDirectories.Add("");
+                            }
+                            else
+                            {
+                                MoveNewDirectories.Add(NewPath + @"\");
+                            }
                         }
                     }
                 }
@@ -236,10 +239,13 @@ namespace BuildSync.Core.Storage
 
             foreach (ManifestDownloadState State in DownloadManager.States.States)
             {
-                string NormalizedStatePath = FileUtils.NormalizePath(State.LocalFolder) + @"\";
-                if (NormalizedStatePath.StartsWith(NormalizedLocationPath))
+                if (State.LocalFolder != "")
                 {
-                    TotalUsage += (State.Manifest == null ? 0 : State.Manifest.GetTotalSize());
+                    string NormalizedStatePath = FileUtils.NormalizePath(State.LocalFolder) + @"\";
+                    if (NormalizedStatePath.StartsWith(NormalizedLocationPath))
+                    {
+                        TotalUsage += (State.Manifest == null ? 0 : State.Manifest.GetTotalSize());
+                    }
                 }
             }
 
@@ -365,7 +371,7 @@ namespace BuildSync.Core.Storage
                         List<ManifestDownloadState> DeletionCandidates = new List<ManifestDownloadState>();
                         foreach (ManifestDownloadState State in DownloadManager.States.States)
                         {
-                            if (!State.Active)
+                            if (!State.Active && State.LocalFolder != "")
                             {
                                 if (State.Manifest != null && !FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder))
                                 {

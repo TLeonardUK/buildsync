@@ -25,8 +25,8 @@ namespace BuildSync.Core.Utils
     /// </summary>
     public class RateTracker
     {
-        private RollingAverageOverTime AverageRecieved = new RollingAverageOverTime(5000);
-        private RollingAverageOverTime AverageSent = new RollingAverageOverTime(5000);
+        private RollingAverageOverTime AverageRecieved = new RollingAverageOverTime(20000);
+        private RollingAverageOverTime AverageSent = new RollingAverageOverTime(20000);
 
         private double BandwidthRecieved;
 

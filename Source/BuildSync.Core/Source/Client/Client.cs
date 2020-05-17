@@ -113,6 +113,7 @@ namespace BuildSync.Core.Client
     /// <param name="Message"></param>
     public delegate void ClientTagsUpdatedByServerHandler();
 
+    /*
     /// <summary>
     /// </summary>
     public class Statistic_CpuUsage : Statistic
@@ -144,6 +145,7 @@ namespace BuildSync.Core.Client
             Series.YAxis.FormatMaxLabelAsSize = true;
         }
     }
+    */
 
     /// <summary>
     /// </summary>
@@ -318,7 +320,7 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
-        public const int TargetMillisecondsOfDataInFlight = 500;
+        public const int TargetMillisecondsOfDataInFlight = 1500;
 
         /// <summary>
         /// </summary>
@@ -494,7 +496,7 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         public const int BlockRequestTimeout = 60 * 1000;
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -503,7 +505,7 @@ namespace BuildSync.Core.Client
         /// <summary>
         ///     List of all client tags id's for the client.
         /// </summary>
-        public List<Guid> TagIds 
+        public List<Guid> TagIds
         {
             get
             {
@@ -674,6 +676,7 @@ namespace BuildSync.Core.Client
             }
         }
 
+        /*
         /// <summary>
         /// 
         /// </summary>
@@ -688,6 +691,7 @@ namespace BuildSync.Core.Client
         /// 
         /// </summary>
         private ulong PerfCounterTimer = 0;
+        */
 
         /// <summary>
         /// 
@@ -720,11 +724,10 @@ namespace BuildSync.Core.Client
 
             ListenConnection.OnClientConnect += PeerConnected;
 
-            MemoryPool.PreallocateBuffers((int)BuildManifest.MaxBlockSize, 64);
             MemoryPool.PreallocateBuffers((int)BuildManifest.DefaultBlockSize, 64);
-            MemoryPool.PreallocateBuffers(Crc32Slow.BufferSize, 128);
             NetConnection.PreallocateBuffers(NetConnection.MaxRecieveMessageBuffers, NetConnection.MaxSendMessageBuffers, NetConnection.MaxGenericMessageBuffers, NetConnection.MaxSmallMessageBuffers);
 
+            /*
             try
             {
                 ProcessCpuCounter = new PerformanceCounter("Process", "% Processor Time", Process.GetCurrentProcess().ProcessName, true);
@@ -734,6 +737,7 @@ namespace BuildSync.Core.Client
             {
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to load performance counters for process: {0}", Process.GetCurrentProcess().ProcessName);
             }
+            */
         }
 
         /// <summary>
@@ -1036,14 +1040,16 @@ namespace BuildSync.Core.Client
                 Statistic.Get<Statistic_BlockListUpdates>().AddSample(BlockListUpdateRate);
                 Statistic.Get<Statistic_DataInFlight>().AddSample(DataInFlight / 1024 / 1024);
                 Statistic.Get<Statistic_BlocksInFlight>().AddSample(BlocksInFlight);
-                Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float) AverageBlockLatency);
-                Statistic.Get<Statistic_AverageBlockSize>().AddSample((float) AverageBlockSize / 1024 / 1024);
+                Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float)AverageBlockLatency);
+                Statistic.Get<Statistic_AverageBlockSize>().AddSample((float)AverageBlockSize / 1024 / 1024);
 
                 Statistic.Get<Statistic_ActiveBlockRequests>().AddSample(ActivePeerRequests);
-                Statistic.Get<Statistic_OutstandingBlockSends>().AddSample(OutstandingBlockSends);                
+                Statistic.Get<Statistic_OutstandingBlockSends>().AddSample(OutstandingBlockSends);
                 Statistic.Get<Statistic_PendingBlockRequests>().AddSample(PendingBlockRequests);
 
                 // Querying perf counter is super expensive, don't do it often.
+                /*
+                // Fuck it, this thing is ridiculous, it uses a ton of memory as well.
                 if (TimeUtils.Ticks - PerfCounterTimer > 1000)
                 {
                     if (ProcessCpuCounter != null)
@@ -1056,6 +1062,7 @@ namespace BuildSync.Core.Client
                     }
                     PerfCounterTimer = TimeUtils.Ticks;
                 }
+                */
 
                 BlockRequestFailureRate = 0;
                 BlockListUpdateRate = 0;
@@ -1260,6 +1267,30 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="Id"></param>
+        /// <returns></returns>
+        public int GetRequestedBlocksForDownload(Guid Id)
+        {
+            int Count = 0;
+            lock (Peers)
+            {
+                foreach (Peer peer in Peers)
+                {
+                    foreach (ManifestPendingDownloadBlock Request in peer.ActiveBlockDownloads)
+                    {
+                        if (Request.ManifestId == Id)
+                        {
+                            Count++;
+                        }
+                    }
+                }
+            }
+            return Count;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         public bool RequestChooseDeletionCandidate(List<Guid> Candidates, ManifestStorageHeuristic Heuristic, List<Guid> PrioritizeKeepingTagIds, List<Guid> PrioritizeDeletingTagIds)
         {
             if (!Connection.IsReadyForData)
@@ -1277,7 +1308,7 @@ namespace BuildSync.Core.Client
 
             return true;
         }
-    
+
         /// <summary>
         /// </summary>
         /// <param name="Path"></param>
@@ -1875,7 +1906,7 @@ namespace BuildSync.Core.Client
 
                 RestartConnections();
             }
-            
+
             // Server is sending us a manifest we previously requested.
             else if (BaseMessage is NetMessage_GetManifestResponse)
             {
@@ -1966,6 +1997,12 @@ namespace BuildSync.Core.Client
                     if (peer != null)
                     {
                         //peer.MarkActiveBlockDownloadAsRecieved(Msg.ManifestId, Msg.BlockIndex);
+                    }
+
+                    // Keep a log of the current queue size.
+                    if (Msg.QueueDepthMs >= 0)
+                    {
+                        peer.RecievedNewQueueDepth(Msg.QueueDepthMs, Msg.QueueSequence);
                     }
 
                     if (!peer.HasActiveBlockDownload(Msg.ManifestId, Msg.BlockIndex) && peer.HasBlock(Msg.ManifestId, Msg.BlockIndex))
@@ -2180,7 +2217,7 @@ namespace BuildSync.Core.Client
             lock (Peers)
             {
                 Peer existingPeer = GetPeerByAddress(ClientConnection.Address);
-                
+
                 Logger.Log(LogLevel.Info, LogCategory.Peers, "Peer connected from {0}.", ClientConnection.Address.ToString());
 
                 Peer newPeer = new Peer();
@@ -2192,7 +2229,7 @@ namespace BuildSync.Core.Client
                 Peers.Add(newPeer);
 
                 if (false)//existingPeer != null)
-                { 
+                {
                     // If we have multiple connections (typically caused because we both try and open a connection at the same time), we need to close one of them.
                     bool bRemoteHasPriority = (newPeer.Connection.Address.Address.Address < existingPeer.Connection.Address.Address.Address);
 
@@ -2387,8 +2424,8 @@ namespace BuildSync.Core.Client
                             continue;
                         }
 
-                        long MaxBandwidth = Peer.GetMaxInFlightData(TargetMillisecondsOfDataInFlight);
-                        long BandwidthAvailable = Peer.GetAvailableInFlightData(TargetMillisecondsOfDataInFlight);
+                        long MaxBandwidth = Peer.GetMaxInFlightData();
+                        long BandwidthAvailable = Peer.GetAvailableInFlightData();
 
                         if (BandwidthAvailable > 0)
                         {
@@ -2424,6 +2461,7 @@ namespace BuildSync.Core.Client
                         NetMessage_GetBlock Msg = new NetMessage_GetBlock();
                         Msg.ManifestId = Item.ManifestId;
                         Msg.BlockIndex = Item.BlockIndex;
+                        Msg.QueueSequence = LeastLoadedPeer.QueueSequence;
                         LeastLoadedPeer.Connection.Send(Msg);
 
                         Item.TimeStarted = TimeUtils.Ticks;
@@ -2444,6 +2482,60 @@ namespace BuildSync.Core.Client
                 if (Peers.Count > 0)
                 {
                     PeerCycleIndex = ++PeerCycleIndex % Peers.Count;
+                }
+            }
+
+            UpdatePeerQueues();
+        }
+
+        private ulong LastPeerQueueUpdate = 0;
+        private const int PeerQueueUpdateInterval = 20; // 50 times a second should be more than enough.
+
+        /// <summary>
+        /// </summary>
+        private void UpdatePeerQueues()
+        {
+            if (TimeUtils.Ticks - LastPeerQueueUpdate < PeerQueueUpdateInterval)
+            {
+                return;
+            }
+
+            LastPeerQueueUpdate = TimeUtils.Ticks;
+
+            lock (Peers)
+            {
+                Peer LowestQueueDepthPeer = null;
+                float LowestQueueDepthDistance = 0.0f;
+
+                foreach (Peer peer in Peers)
+                {
+                    if (!peer.PendingQueueUpdate || peer.LastBlockQueueSequence < peer.QueueSequence)
+                    {
+                        continue;
+                    }
+
+                    float DistanceFromTarget = Math.Abs(peer.QueueDepthMs - TargetMillisecondsOfDataInFlight);
+
+                    if (LowestQueueDepthPeer == null || DistanceFromTarget < LowestQueueDepthDistance)
+                    {
+                        LowestQueueDepthPeer = peer;
+                        LowestQueueDepthDistance = DistanceFromTarget;
+                    }
+                }
+
+                if (LowestQueueDepthPeer != null)
+                {
+                    if (LowestQueueDepthPeer.QueueDepthMs > Client.TargetMillisecondsOfDataInFlight * 1.1f)
+                    {
+                        LowestQueueDepthPeer.MaxInFlightRequests = Math.Max(1, LowestQueueDepthPeer.MaxInFlightRequests - 1);
+                    }
+                    else if (LowestQueueDepthPeer.QueueDepthMs < Client.TargetMillisecondsOfDataInFlight * 0.9f)
+                    {
+                        LowestQueueDepthPeer.MaxInFlightRequests = Math.Min(Peer.MaxRequestQueueSize, LowestQueueDepthPeer.MaxInFlightRequests + 1);
+                    }
+
+                    LowestQueueDepthPeer.PendingQueueUpdate = false;
+                    LowestQueueDepthPeer.QueueSequence++;
                 }
             }
         }
@@ -2526,14 +2618,17 @@ namespace BuildSync.Core.Client
 
                         BestPeer.LastBlockRequestFulfillTime = TimeUtils.Ticks;
                         Interlocked.Increment(ref ActivePeerRequests);
+                        Interlocked.Increment(ref BestPeer.OutstandingReads);
 
                         NetMessage_GetBlockResponse Response = new NetMessage_GetBlockResponse();
                         Response.ManifestId = Request.Message.ManifestId;
                         Response.BlockIndex = Request.Message.BlockIndex;
+                        Response.QueueSequence = Request.Message.QueueSequence;
 
                         BlockAccessCompleteHandler Callback = bSuccess =>
                         {
                             Interlocked.Decrement(ref ActivePeerRequests);
+                            Interlocked.Decrement(ref BestPeer.OutstandingReads);
 
                             lock (DeferredActions)
                             {
@@ -2551,9 +2646,18 @@ namespace BuildSync.Core.Client
 
                                         if (Request.Requester.IsReadyForData)
                                         {
+                                            Response.QueueDepthMs = BestPeer.GetRequestQueueDepthTime();
+
+                                            Interlocked.Increment(ref BestPeer.OutstandingSends);
                                             Interlocked.Increment(ref OutstandingBlockSends);
                                             Request.Requester.Send(Response, (bool success) => { 
-                                                Interlocked.Decrement(ref OutstandingBlockSends); 
+                                                Interlocked.Decrement(ref OutstandingBlockSends);
+                                                Interlocked.Decrement(ref BestPeer.OutstandingSends);
+
+                                                ulong FulfillTime = TimeUtils.Ticks - Request.QueueTime;
+                                                BestPeer.AverageRequestFulfillTime.Add(FulfillTime);
+
+                                                //Console.WriteLine("Fulfill:{0} Concurrency:{1} Depth:{2}", FulfillTime, BestPeer.AverageRequestConcurrency.Get(), BestPeer.RequestQueueDepth);
                                             });
                                         }
 
@@ -2571,6 +2675,7 @@ namespace BuildSync.Core.Client
                         {
                             //Console.WriteLine("[Requeing] BlockIndex={0} Manifest={1}", Request.Message.BlockIndex, Request.Message.ManifestId.ToString());
                             Interlocked.Decrement(ref ActivePeerRequests);
+                            Interlocked.Decrement(ref BestPeer.OutstandingReads);
                             BestPeer.BlockRequestQueue.Enqueue(Request);
                             return;
                         }
@@ -2579,6 +2684,22 @@ namespace BuildSync.Core.Client
                 else
                 {
                     break;
+                }
+            }
+
+            // Update average queue depth.     
+            lock (Peers)
+            {
+                // Remove block requests over limit.
+                foreach (Peer peer in Peers)
+                {
+                    int Concurrency = peer.OutstandingReads + peer.OutstandingSends;
+
+                    peer.RequestQueueDepth = peer.BlockRequestQueue.Count + peer.OutstandingReads + peer.OutstandingSends;
+                    if (Concurrency > 0)
+                    {
+                        peer.AverageRequestConcurrency.Add(Concurrency);
+                    }
                 }
             }
         }

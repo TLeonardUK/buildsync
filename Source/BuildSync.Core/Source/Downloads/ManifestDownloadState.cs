@@ -191,6 +191,22 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
+        [JsonIgnore]
+        public long BytesTotal
+        {
+            get
+            {
+                if (Manifest == null)
+                {
+                    return 0;
+                }
+
+                return Manifest.GetTotalSize();
+            }
+        }
+
+        /// <summary>
+        /// </summary>
         public List<ManifestFileCompletedState> FileCompletedStates { get; set; } = new List<ManifestFileCompletedState>();
 
         /// <summary>

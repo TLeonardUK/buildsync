@@ -346,6 +346,7 @@
     <Compile Include="Utils\SparseStateArray.cs" />
     <Compile Include="Utils\Statistic.cs" />
     <Compile Include="Utils\StringUtils.cs" />
+    <Compile Include="Utils\SocketUtils.cs" />
     <Compile Include="Utils\TimeUtils.cs" />
     <Compile Include="Utils\TreeViewUtils.cs">
       <SubType>Component</SubType>

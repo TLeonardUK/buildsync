@@ -991,8 +991,23 @@ namespace BuildSync.Client.Forms
 
             viewLicenseMenuToolstrip.Enabled = Connected;
 
-            totalUpBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalOut));
-            totalDownBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalIn));
+            if (Program.Settings.BandwidthMaxUp != 0)
+            {
+                totalUpBandwidthLabel.Text = string.Format("{0} of {1} ({2})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut), StringUtils.FormatAsTransferRate(Program.Settings.BandwidthMaxUp), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalOut));
+            }
+            else
+            {
+                totalUpBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateOut), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalOut));
+            }
+
+            if (Program.Settings.BandwidthMaxDown != 0)
+            {
+                totalDownBandwidthLabel.Text = string.Format("{0} of {1} ({2})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn), StringUtils.FormatAsTransferRate(Program.Settings.BandwidthMaxDown), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalIn));
+            }
+            else
+            {
+                totalDownBandwidthLabel.Text = string.Format("{0} ({1})", StringUtils.FormatAsTransferRate(NetConnection.GlobalBandwidthStats.RateIn), StringUtils.FormatAsSize(NetConnection.GlobalBandwidthStats.TotalIn));
+            }
 
             if (AsyncIOQueue.QueuedOut > 0)
             {
