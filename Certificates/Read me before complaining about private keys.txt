@@ -1,0 +1,3 @@
+These are all test files. If licensing support is ever used new keys would be generated.
+
+These being in the repository are not a security problem :)
