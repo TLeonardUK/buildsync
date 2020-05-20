@@ -42,6 +42,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Cursor = System.Windows.Forms.Cursors.Hand;
             this.Name = "TagTextBox";
             this.Size = new System.Drawing.Size(150, 21);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.OnPaint);

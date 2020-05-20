@@ -38,6 +38,16 @@ namespace BuildSync.Core.Networking.Messages
         public Color Color;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public bool Unique;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Guid DecayTagId = Guid.Empty;
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
@@ -47,6 +57,11 @@ namespace BuildSync.Core.Networking.Messages
             if (serializer.Version > 100000655)
             {
                 serializer.Serialize(ref Color);
+            }
+            if (serializer.Version > 100000657)
+            {
+                serializer.Serialize(ref Unique);
+                serializer.Serialize(ref DecayTagId);
             }
         }
     }

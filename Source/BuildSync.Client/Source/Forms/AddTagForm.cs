@@ -22,6 +22,7 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Collections.Generic;
 using BuildSync.Core.Users;
 
 namespace BuildSync.Client.Forms
@@ -39,6 +40,16 @@ namespace BuildSync.Client.Forms
         /// 
         /// </summary>
         public Color TagColor = Color.Red;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool TagUnique = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Guid TagDecayTagId = Guid.Empty;
 
         /// <summary>
         /// 
@@ -72,6 +83,14 @@ namespace BuildSync.Client.Forms
 
             nameTextBox.Text = TagName;
             colorSelector.SelectedColor = TagColor;
+            uniqueCheckBox.Checked = TagUnique;
+            decayTagTextBox.MultipleTags = false;
+            decayTagTextBox.TagIds = new List<Guid>();
+
+            if (TagDecayTagId != Guid.Empty)
+            {
+                decayTagTextBox.TagIds.Add(TagDecayTagId);
+            }
 
             InternalSetting = false;
 
@@ -90,6 +109,8 @@ namespace BuildSync.Client.Forms
             addGroupButton.Enabled = (nameTextBox.Text.Trim().Length > 0);
             TagName = nameTextBox.Text;
             TagColor = colorSelector.SelectedColor;
+            TagUnique = uniqueCheckBox.Checked;
+            TagDecayTagId = decayTagTextBox.TagIds.Count > 0 ? decayTagTextBox.TagIds[0] : Guid.Empty;
         }
 
         /// <summary>
@@ -100,6 +121,9 @@ namespace BuildSync.Client.Forms
         private void StateChanged(object sender, EventArgs e)
         {
             UpdateState();
+
+            decayLabel.Visible = TagUnique;
+            decayTagTextBox.Visible = TagUnique;
         }
     }
 }

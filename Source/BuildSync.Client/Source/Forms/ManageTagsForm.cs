@@ -53,6 +53,9 @@ namespace BuildSync.Client.Forms
 
             public Tag BuildTag;
             public Tag[] BuildTags;
+
+            public string Unique;
+            public Tag[] DecayTags;
         }
 
         /// <summary>
@@ -77,18 +80,32 @@ namespace BuildSync.Client.Forms
             NameColumn.Width = 400;
             MainTreeView.Columns.Add(NameColumn);
             
-               /* ScaledNodeIcon IconControl = new ScaledNodeIcon();
-                IconControl.ParentColumn = NameColumn;
-                IconControl.DataPropertyName = "Icon";
-                IconControl.FixedSize = new Size((int)(MainTreeView.RowHeight * 1.5f), (int)(MainTreeView.RowHeight * 1.5f));
-                IconControl.Offset = new Size(0, 5);
-                MainTreeView.NodeControls.Add(IconControl);*/
-
                 TagListTreeNode TextControl = new TagListTreeNode();
                 TextControl.ParentColumn = NameColumn;
                 TextControl.ShowFullName = true;
                 TextControl.DataPropertyName = "BuildTags";
                 MainTreeView.NodeControls.Add(TextControl);
+            
+            TreeColumn UniqueColumn = new TreeColumn();
+            UniqueColumn.Header = "Is Unique";
+            UniqueColumn.Width = 100;
+            MainTreeView.Columns.Add(UniqueColumn);
+            
+                NodeTextBox UniqueControl = new NodeTextBox();
+                UniqueControl.ParentColumn = UniqueColumn;
+                UniqueControl.DataPropertyName = "Unique";
+                MainTreeView.NodeControls.Add(UniqueControl);
+            
+            TreeColumn DecayColumn = new TreeColumn();
+            DecayColumn.Header = "Decay Into";
+            DecayColumn.Width = 400;
+            MainTreeView.Columns.Add(DecayColumn);
+            
+                TagListTreeNode DecayControl = new TagListTreeNode();
+                DecayControl.ParentColumn = DecayColumn;
+                DecayControl.ShowFullName = true;
+                DecayControl.DataPropertyName = "DecayTags";
+                MainTreeView.NodeControls.Add(DecayControl);
         }
 
         /// <summary>
@@ -135,6 +152,17 @@ namespace BuildSync.Client.Forms
                             Node.BuildTags = new Tag[1];
                             Node.BuildTags[0] = Tag;
                             Node.Name = Tag.Name;
+                            Node.Unique = Tag.Unique ? "True" : "False";
+
+                            if (Tag.DecayTagId != Guid.Empty)
+                            {
+                                Node.DecayTags = new Tag[1];
+                                Node.DecayTags[0] = Program.TagRegistry.GetTagById(Tag.DecayTagId);
+                            }
+                            else
+                            {
+                                Node.DecayTags = new Tag[0];
+                            }
 
                             ForceUpdate = true;
                         }
@@ -150,8 +178,18 @@ namespace BuildSync.Client.Forms
                     Node.BuildTag = Tag;
                     Node.BuildTags = new Tag[1];
                     Node.BuildTags[0] = Tag;
+                    Node.Unique = Tag.Unique ? "True" : "False";
                     Node.Name = Tag.Name;
                     Node.Icon = Resources.appbar_tag;
+                    if (Tag.DecayTagId != Guid.Empty)
+                    {
+                        Node.DecayTags = new Tag[1];
+                        Node.DecayTags[0] = Program.TagRegistry.GetTagById(Tag.DecayTagId);
+                    }
+                    else
+                    {
+                        Node.DecayTags = new Tag[0];
+                    }
                     Model.Nodes.Add(Node);
 
                     ForceUpdate = true;
@@ -242,7 +280,7 @@ namespace BuildSync.Client.Forms
             AddTagForm form = new AddTagForm();
             if (form.ShowDialog(this) == DialogResult.OK)
             {
-                Program.NetClient.CreateTag(form.TagName, form.TagColor);
+                Program.NetClient.CreateTag(form.TagName, form.TagColor, form.TagUnique, form.TagDecayTagId);
                 Program.NetClient.RequestTagList();
             }
         }
@@ -263,11 +301,13 @@ namespace BuildSync.Client.Forms
             AddTagForm form = new AddTagForm();
             form.TagName = Node.BuildTag.Name;
             form.TagColor = Node.BuildTag.Color;
+            form.TagUnique = Node.BuildTag.Unique;
+            form.TagDecayTagId = Node.BuildTag.DecayTagId;
             if (form.ShowDialog(this) == DialogResult.OK)
             {
                 Node.Name = form.TagName;
 
-                Program.NetClient.RenameTag(Node.BuildTag.Id, form.TagName, form.TagColor);
+                Program.NetClient.RenameTag(Node.BuildTag.Id, form.TagName, form.TagColor, form.TagUnique, form.TagDecayTagId);
                 Program.NetClient.RequestTagList();
             }
         }

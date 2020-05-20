@@ -428,6 +428,38 @@ namespace BuildSync.Core.Manifests
                 Manifest.Metadata.TagIds.Add(TagId);
                 StoreMetadata(Manifest);
             }
+
+            if (Tag.Unique)
+            {
+                string ParentPath = VirtualFileSystem.GetParentPath(Manifest.VirtualPath);
+                string NodeName = VirtualFileSystem.GetNodeName(Manifest.VirtualPath);
+
+                List<string> Children = GetVirtualPathChildren(ParentPath);
+
+                Tag DecayTag = TagRegistry.GetTagById(Tag.DecayTagId);
+                
+                foreach (string ChildName in Children)
+                {
+                    if (ChildName == Manifest.VirtualPath)
+                    {
+                        continue;
+                    }
+
+                    BuildManifest ChildManifest = GetManifestByPath(ChildName);
+                    if (ChildManifest != null)
+                    {
+                        if (ChildManifest.Metadata != null && ChildManifest.Metadata.TagIds.Contains(TagId))
+                        {
+                            UntagManifest(ChildManifest.Guid, TagId);
+
+                            if (DecayTag != null)
+                            {
+                                TagManifest(ChildManifest.Guid, DecayTag.Id);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>

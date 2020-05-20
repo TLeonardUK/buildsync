@@ -108,7 +108,7 @@ namespace BuildSync.Client.Controls
 
         public static TagRendererResources GetTagResources(Tag tag, Graphics graphics, bool ShowFullNames)
         {
-            string Key = tag.Id.ToString();
+            string Key = tag == null ? "{Unknown Tag}" : tag.Id.ToString();
             if (ShowFullNames)
             {
                 Key = Key + "_FullName";
@@ -119,7 +119,7 @@ namespace BuildSync.Client.Controls
                 return Resources[Key];
             }
 
-            string tagName = tag.Name;
+            string tagName = tag == null ? "{Unknown Tag}" : tag.Name;
             if (!ShowFullNames)
             {
                 int splitIndex = tagName.LastIndexOf('/');
@@ -129,11 +129,13 @@ namespace BuildSync.Client.Controls
                 }
             }
 
-            Color DesaturatedColor = Drawing.Saturate(tag.Color, 0.5f);
-            Color VerDesaturatedColor = Drawing.Saturate(tag.Color, 0.25f);
+            Color TagColor = tag == null ? Color.Cornsilk : tag.Color;
+
+            Color DesaturatedColor = Drawing.Saturate(TagColor, 0.5f);
+            Color VerDesaturatedColor = Drawing.Saturate(TagColor, 0.25f);
 
             TagRendererResources Res = new TagRendererResources();
-            Res.BackgroundBrush = new SolidBrush(tag.Color);// SystemBrushes.Control;
+            Res.BackgroundBrush = new SolidBrush(TagColor);// SystemBrushes.Control;
             Res.BorderPen = new Pen(DesaturatedColor);
             Res.TextBrush = new SolidBrush(VerDesaturatedColor);
             Res.TagName = tagName;

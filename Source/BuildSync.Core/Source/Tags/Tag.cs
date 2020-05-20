@@ -43,11 +43,36 @@ namespace BuildSync.Core.Tags
         /// <summary>
         /// 
         /// </summary>
-        public Color Color { get; set; } = Color.FromArgb(255, 210, 212, 220);
+        public Color Color
+        {
+            get
+            {
+                return Color.FromArgb(ColorArgb);
+            }
+            set
+            {
+                ColorArgb = value.ToArgb();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int ColorArgb { get; set; } = Color.FromArgb(255, 210, 212, 220).ToArgb();
 
         /// <summary>
         /// </summary>
         public string Name { get; set; } = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool Unique { get; set; } = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Guid DecayTagId { get; set; } = Guid.Empty;
 
         /// <summary>
         /// 
@@ -58,7 +83,9 @@ namespace BuildSync.Core.Tags
         {
             return Id == Other.Id &&
                 Color == Other.Color &&
-                Name == Other.Name;
+                Name == Other.Name &&
+                Unique == Other.Unique &&
+                DecayTagId == Other.DecayTagId;
         }
 
         /// <summary>
@@ -82,6 +109,19 @@ namespace BuildSync.Core.Tags
                 Color Value = Color;
                 serializer.Serialize(ref Value);
                 Color = Value;
+            }
+            if (serializer.Version > 100000657)
+            {
+                {
+                    bool Value = Unique;
+                    serializer.Serialize(ref Value);
+                    Unique = Value;
+                }
+                {
+                    Guid Value = DecayTagId;
+                    serializer.Serialize(ref Value);
+                    DecayTagId = Value;
+                }
             }
         }
     }

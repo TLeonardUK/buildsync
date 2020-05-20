@@ -1546,7 +1546,7 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         /// <param name="Path"></param>
-        public bool CreateTag(string Name, Color TagColor)
+        public bool CreateTag(string Name, Color TagColor, bool Unique, Guid DecayTagId)
         {
             if (!Connection.IsReadyForData)
             {
@@ -1557,6 +1557,8 @@ namespace BuildSync.Core.Client
             NetMessage_CreateTag Msg = new NetMessage_CreateTag();
             Msg.Name = Name;
             Msg.Color = TagColor;
+            Msg.Unique = Unique;
+            Msg.DecayTagId = DecayTagId;
             Connection.Send(Msg);
 
             return true;
@@ -1565,7 +1567,7 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         /// <param name="Path"></param>
-        public bool RenameTag(Guid Id, string Name, Color TagColor)
+        public bool RenameTag(Guid Id, string Name, Color TagColor, bool Unique, Guid DecayTagId)
         {
             if (!Connection.IsReadyForData)
             {
@@ -1577,6 +1579,8 @@ namespace BuildSync.Core.Client
             Msg.Id = Id;
             Msg.Name = Name;
             Msg.Color = TagColor;
+            Msg.Unique = Unique;
+            Msg.DecayTagId = DecayTagId;
             Connection.Send(Msg);
 
             return true;

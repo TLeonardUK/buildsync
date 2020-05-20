@@ -35,6 +35,7 @@ using WeifenLuo.WinFormsUI.Docking;
 using Aga.Controls.Tree;
 using Aga.Controls.Tree.NodeControls;
 using BuildSync.Client.Properties;
+using BuildSync.Client.Controls;
 
 namespace BuildSync.Client.Forms
 {
@@ -54,6 +55,9 @@ namespace BuildSync.Client.Forms
             public string Blacklisted;
             public string BandwidthLimit;
 
+            public Tag[] DestinationTags;
+            public Tag[] SourceTags;
+
             public Route Route;
         }
 
@@ -70,7 +74,8 @@ namespace BuildSync.Client.Forms
             InitializeComponent();
 
             Program.NetClient.OnRouteListRecieved += RoutesRecieved;
-                        
+            Program.NetClient.OnTagListRecieved += TagsRecieved;
+
             Model = new TreeModel();
             MainTreeView.Model = Model;
 
@@ -86,9 +91,10 @@ namespace BuildSync.Client.Forms
                 IconControl.Offset = new Size(0, 5);
                 MainTreeView.NodeControls.Add(IconControl);
 
-                NodeTextBox TextControl = new NodeTextBox();
+                TagListTreeNode TextControl = new TagListTreeNode();
                 TextControl.ParentColumn = SourceColumn;
-                TextControl.DataPropertyName = "Source";
+                TextControl.ShowFullName = true;
+                TextControl.DataPropertyName = "SourceTags";
                 MainTreeView.NodeControls.Add(TextControl);
 
             TreeColumn DestinationColumn = new TreeColumn();
@@ -96,9 +102,10 @@ namespace BuildSync.Client.Forms
             DestinationColumn.Width = 200;
             MainTreeView.Columns.Add(DestinationColumn);
 
-                NodeTextBox DestinationTextControl = new NodeTextBox();
+                TagListTreeNode DestinationTextControl = new TagListTreeNode();
                 DestinationTextControl.ParentColumn = DestinationColumn;
-                DestinationTextControl.DataPropertyName = "Destination";
+                DestinationTextControl.DataPropertyName = "DestinationTags";
+                DestinationTextControl.ShowFullName = true;
                 MainTreeView.NodeControls.Add(DestinationTextControl);
 
             TreeColumn BlacklistedColumn = new TreeColumn();
@@ -145,6 +152,15 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// </summary>
         /// <param name="Users"></param>
+        private void TagsRecieved(List<Tag> Tags)
+        {
+            this.Invalidate();
+            this.Refresh();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Users"></param>
         private void RoutesRecieved(List<Route> InRoutes)
         {
             // Add new tags.
@@ -168,8 +184,12 @@ namespace BuildSync.Client.Forms
                     Model.Nodes.Add(ExistingRoute);
                 }
 
+                ExistingRoute.SourceTags = new Tag[1];
+                ExistingRoute.SourceTags[0] = Program.TagRegistry.GetTagById(Route.SourceTagId);
                 ExistingRoute.Source = Program.TagRegistry.IdToString(Route.SourceTagId);
                 ExistingRoute.Destination = Program.TagRegistry.IdToString(Route.DestinationTagId);
+                ExistingRoute.DestinationTags = new Tag[1];
+                ExistingRoute.DestinationTags[0] = Program.TagRegistry.GetTagById(Route.DestinationTagId);
                 ExistingRoute.Blacklisted = Route.Blacklisted ? "Yes" : "No";
                 ExistingRoute.BandwidthLimit = Route.BandwidthLimit == 0 ? "Unlimited" : StringUtils.FormatAsTransferRate(Route.BandwidthLimit);
                 ExistingRoute.Icon = Resources.appbar_arrow_up_down;
@@ -200,6 +220,9 @@ namespace BuildSync.Client.Forms
             {
                 Model.Nodes.Remove(Node);
             }
+
+            this.Invalidate();
+            this.Refresh();
         }
 
         /// <summary>

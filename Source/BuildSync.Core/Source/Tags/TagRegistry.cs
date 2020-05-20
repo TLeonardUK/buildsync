@@ -151,6 +151,14 @@ namespace BuildSync.Core.Tags
 
             Tags.Remove(Tag);
 
+            foreach (Tag SubTag in Tags)
+            {
+                if (SubTag.DecayTagId == Tag.Id)
+                {
+                    SubTag.DecayTagId = Guid.Empty;
+                }
+            }
+
             TagDeleted?.Invoke(TagId);
 
             TagsUpdated?.Invoke();
@@ -160,7 +168,7 @@ namespace BuildSync.Core.Tags
         /// 
         /// </summary>
         /// <param name="TagId"></param>
-        public void RenameTag(Guid TagId, string Name, Color TagColor)
+        public void RenameTag(Guid TagId, string Name, Color TagColor, bool Unique, Guid DecayTagId)
         {
             Tag Tag = GetTagById(TagId);
             if (Tag == null)
@@ -170,6 +178,8 @@ namespace BuildSync.Core.Tags
 
             Tag.Name = Name;
             Tag.Color = TagColor;
+            Tag.Unique = Unique;
+            Tag.DecayTagId = DecayTagId;
 
             TagsUpdated?.Invoke();
         }
@@ -178,12 +188,14 @@ namespace BuildSync.Core.Tags
         /// 
         /// </summary>
         /// <param name="Name"></param>
-        public Guid CreateTag(string Name, Color TagColor)
+        public Guid CreateTag(string Name, Color TagColor, bool Unique, Guid DecayTagId)
         {
             Tag Tag = new Tag();
             Tag.Id = Guid.NewGuid();
             Tag.Name = Name;
             Tag.Color = TagColor;
+            Tag.Unique = Unique;
+            Tag.DecayTagId = DecayTagId;
 
             Tags.Add(Tag);
 

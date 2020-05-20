@@ -28,11 +28,15 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AddTagForm));
             this.nameTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.addGroupButton = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
+            this.uniqueCheckBox = new System.Windows.Forms.CheckBox();
+            this.decayLabel = new System.Windows.Forms.Label();
+            this.decayTagTextBox = new BuildSync.Client.Controls.TagTextBox();
             this.colorSelector = new BuildSync.Client.Controls.ColorSelector();
             this.SuspendLayout();
             // 
@@ -62,7 +66,7 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(10, 112);
+            this.panel1.Location = new System.Drawing.Point(10, 196);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(380, 1);
@@ -72,7 +76,7 @@
             // 
             this.addGroupButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.addGroupButton.Enabled = false;
-            this.addGroupButton.Location = new System.Drawing.Point(295, 120);
+            this.addGroupButton.Location = new System.Drawing.Point(295, 204);
             this.addGroupButton.Margin = new System.Windows.Forms.Padding(2);
             this.addGroupButton.Name = "addGroupButton";
             this.addGroupButton.Size = new System.Drawing.Size(95, 29);
@@ -91,6 +95,36 @@
             this.label1.TabIndex = 19;
             this.label1.Text = "Color";
             // 
+            // uniqueCheckBox
+            // 
+            this.uniqueCheckBox.AutoSize = true;
+            this.uniqueCheckBox.Location = new System.Drawing.Point(11, 112);
+            this.uniqueCheckBox.Name = "uniqueCheckBox";
+            this.uniqueCheckBox.Size = new System.Drawing.Size(168, 17);
+            this.uniqueCheckBox.TabIndex = 21;
+            this.uniqueCheckBox.Text = "Unique within build container?";
+            this.uniqueCheckBox.UseVisualStyleBackColor = true;
+            this.uniqueCheckBox.CheckedChanged += new System.EventHandler(this.StateChanged);
+            // 
+            // decayLabel
+            // 
+            this.decayLabel.AutoSize = true;
+            this.decayLabel.Location = new System.Drawing.Point(8, 135);
+            this.decayLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.decayLabel.Name = "decayLabel";
+            this.decayLabel.Size = new System.Drawing.Size(185, 13);
+            this.decayLabel.TabIndex = 23;
+            this.decayLabel.Text = "Decay into tag when new tag added?";
+            // 
+            // decayTagTextBox
+            // 
+            this.decayTagTextBox.Location = new System.Drawing.Point(10, 151);
+            this.decayTagTextBox.Name = "decayTagTextBox";
+            this.decayTagTextBox.Size = new System.Drawing.Size(380, 21);
+            this.decayTagTextBox.TabIndex = 22;
+            this.decayTagTextBox.TagIds = ((System.Collections.Generic.List<System.Guid>)(resources.GetObject("decayTagTextBox.TagIds")));
+            this.decayTagTextBox.OnTagsChanged += new System.EventHandler(this.StateChanged);
+            // 
             // colorSelector
             // 
             this.colorSelector.Location = new System.Drawing.Point(11, 78);
@@ -103,7 +137,10 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(402, 158);
+            this.ClientSize = new System.Drawing.Size(402, 242);
+            this.Controls.Add(this.decayLabel);
+            this.Controls.Add(this.decayTagTextBox);
+            this.Controls.Add(this.uniqueCheckBox);
             this.Controls.Add(this.colorSelector);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.nameTextBox);
@@ -128,5 +165,8 @@
         private System.Windows.Forms.Button addGroupButton;
         private System.Windows.Forms.Label label1;
         private Controls.ColorSelector colorSelector;
+        private System.Windows.Forms.CheckBox uniqueCheckBox;
+        private Controls.TagTextBox decayTagTextBox;
+        private System.Windows.Forms.Label decayLabel;
     }
 }
