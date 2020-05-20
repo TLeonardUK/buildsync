@@ -21,10 +21,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using BuildSync.Core.Downloads;
 using WeifenLuo.WinFormsUI.Docking;
+using BuildSync.Client.Forms;
 
 namespace BuildSync.Client.Controls
 {
@@ -42,8 +44,14 @@ namespace BuildSync.Client.Controls
         {
             get
             {
-                foreach (DownloadListItem Ctl in Controls)
+                foreach (Control baseCtl in Controls)
                 {
+                    DownloadListItem Ctl = baseCtl as DownloadListItem;
+                    if (Ctl == null)
+                    {
+                        continue;
+                    }
+
                     Point TopLeft = Ctl.PointToScreen(Point.Empty);
                     Point BottomRight = Ctl.PointToScreen(new Point(Ctl.ClientSize.Width, Ctl.ClientSize.Height));
                     Point CursorPos = Cursor.Position;
@@ -110,8 +118,14 @@ namespace BuildSync.Client.Controls
             }
 
             List<DownloadListItem> ExistingItems = new List<DownloadListItem>();
-            foreach (DownloadListItem Ctl in Controls)
+            foreach (Control baseCtl in Controls)
             {
+                DownloadListItem Ctl = baseCtl as DownloadListItem;
+                if (Ctl == null)
+                {
+                    continue;
+                }
+
                 ExistingItems.Add(Ctl);
             }
 
@@ -120,8 +134,14 @@ namespace BuildSync.Client.Controls
             {
                 bool Exists = false;
 
-                foreach (DownloadListItem Ctl in ExistingItems)
+                foreach (Control baseCtl in Controls)
                 {
+                    DownloadListItem Ctl = baseCtl as DownloadListItem;
+                    if (Ctl == null)
+                    {
+                        continue;
+                    }
+
                     if (Ctl.State == State)
                     {
                         Exists = true;
@@ -160,10 +180,32 @@ namespace BuildSync.Client.Controls
             }
 
             // Update all items.
+            bool DownloadsExist = false;
             foreach (DownloadListItem Ctl in ExistingItems)
             {
                 Ctl.RefreshState();
+                DownloadsExist = true;
             }
+
+            // Add/remote the "add a download?" option when none are configured.
+            if (DownloadsExist && Controls.Contains(EmptyPanel))
+            {
+                Controls.Remove(EmptyPanel);
+            }
+            else if (!DownloadsExist && !Controls.Contains(EmptyPanel))
+            {
+                Controls.Add(EmptyPanel);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void AddDownloadClicked(object sender, EventArgs e)
+        {
+            new AddDownloadForm().ShowDialog(this);
         }
     }
 }

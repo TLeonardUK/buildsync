@@ -70,6 +70,11 @@ namespace BuildSync.Client.Controls
         /// <summary>
         /// 
         /// </summary>
+        private TagRenderer TagRenderer = new TagRenderer();
+
+        /// <summary>
+        /// 
+        /// </summary>
         public List<Guid> TagIds
         {
             get
@@ -94,6 +99,8 @@ namespace BuildSync.Client.Controls
             TagBuilder.OnTagClicked += TagItemClicked;
             TagBuilder.OnTagsRefreshed += UpdateState;
             TagBuilder.Attach(TagContextMenuStrip);
+
+            WindowUtils.EnableDoubleBuffering(this);
         }
 
         ~TagTextBox()
@@ -189,6 +196,7 @@ namespace BuildSync.Client.Controls
             }
 
             // Update the text.
+            /*
             string Result = "";
             foreach (Tag Tag in TagBuilder.Tags)
             {
@@ -202,6 +210,9 @@ namespace BuildSync.Client.Controls
                 }
             }
             MainTextBox.Text = Result;
+            */
+
+            Invalidate();
 
             // Set what is checked.
             TagBuilder.SetCheckedTags(TagIdsInternal);
@@ -226,6 +237,34 @@ namespace BuildSync.Client.Controls
         {
             TagBuilder.Refresh();
             UpdateState();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnPaint(object sender, PaintEventArgs e)
+        {
+            List<Tag> ActiveTags = new List<Tag>();
+
+            foreach (Tag Tag in TagBuilder.Tags)
+            {
+                if (TagIdsInternal.Contains(Tag.Id))
+                {
+                    ActiveTags.Add(Tag);
+                }
+            }
+
+            int Padding = 3;
+
+            Rectangle RealBounds = new Rectangle(e.ClipRectangle.X + Padding, e.ClipRectangle.Y + Padding, e.ClipRectangle.Width - (Padding * 2) - 1, e.ClipRectangle.Height - (Padding * 2) - 1);
+
+            TagRenderer.Tags = ActiveTags.ToArray();
+            TagRenderer.ShowFullName = false;
+            TagRenderer.Draw(RealBounds, e.Graphics);
+
+            e.Graphics.DrawRectangle(SystemPens.ControlDark, e.ClipRectangle.X, e.ClipRectangle.Y, e.ClipRectangle.Width - 1, e.ClipRectangle.Height - 1);
         }
     }
 }

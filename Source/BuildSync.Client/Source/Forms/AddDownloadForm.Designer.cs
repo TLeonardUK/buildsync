@@ -80,7 +80,7 @@
             // 
             this.addDownloadButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.addDownloadButton.Enabled = false;
-            this.addDownloadButton.Location = new System.Drawing.Point(974, 525);
+            this.addDownloadButton.Location = new System.Drawing.Point(1056, 525);
             this.addDownloadButton.Margin = new System.Windows.Forms.Padding(2);
             this.addDownloadButton.Name = "addDownloadButton";
             this.addDownloadButton.Size = new System.Drawing.Size(95, 29);
@@ -97,7 +97,7 @@
             this.panel1.Location = new System.Drawing.Point(10, 514);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1059, 1);
+            this.panel1.Size = new System.Drawing.Size(1141, 1);
             this.panel1.TabIndex = 3;
             // 
             // label3
@@ -448,7 +448,7 @@
             this.splitContainer1.Panel2.Controls.Add(this.label6);
             this.splitContainer1.Panel2.Controls.Add(this.label5);
             this.splitContainer1.Panel2.Controls.Add(this.downloadFileSystemTree);
-            this.splitContainer1.Size = new System.Drawing.Size(1060, 497);
+            this.splitContainer1.Size = new System.Drawing.Size(1142, 497);
             this.splitContainer1.SplitterDistance = 350;
             this.splitContainer1.TabIndex = 30;
             // 
@@ -515,7 +515,7 @@
             this.downloadFileSystemTree.SelectedPath = "";
             this.downloadFileSystemTree.SelectedPathRaw = "";
             this.downloadFileSystemTree.ShowInternal = false;
-            this.downloadFileSystemTree.Size = new System.Drawing.Size(706, 497);
+            this.downloadFileSystemTree.Size = new System.Drawing.Size(788, 497);
             this.downloadFileSystemTree.TabIndex = 13;
             this.downloadFileSystemTree.OnDateUpdated += new System.EventHandler(this.DataStateChanged);
             this.downloadFileSystemTree.OnSelectedNodeChanged += new System.EventHandler(this.DataStateChanged);
@@ -523,7 +523,7 @@
             // AddDownloadForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(1080, 563);
+            this.ClientSize = new System.Drawing.Size(1162, 563);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.addDownloadButton);

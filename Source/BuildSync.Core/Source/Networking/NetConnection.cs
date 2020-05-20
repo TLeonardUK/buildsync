@@ -1152,24 +1152,31 @@ namespace BuildSync.Core.Networking
             // Grab socket information if not listening.
             if (!IsListening && IsReadyForData)
             {
-                IdealSendBacklog = SocketUtils.GetIdealSendBacklog(Socket);
-                if (IdealSendBacklog != Socket.SendBufferSize)
+                try
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Transport, "Adjusting socket {0} send buffer to ISB, {1}", Address.ToString(), StringUtils.FormatAsSize(IdealSendBacklog));
+                    IdealSendBacklog = SocketUtils.GetIdealSendBacklog(Socket);
+                    if (IdealSendBacklog != Socket.SendBufferSize)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Transport, "Adjusting socket {0} send buffer to ISB, {1}", Address.ToString(), StringUtils.FormatAsSize(IdealSendBacklog));
 
-                    Socket.SendBufferSize = IdealSendBacklog;
-                }
+                        Socket.SendBufferSize = IdealSendBacklog;
+                    }
 
-                TcpInfo = SocketUtils.GetTcpInfo(Socket);
-                uint RttMs = TcpInfo.RttUs / 1000;
-                if (RttMs > 0)
-                {
-                    Ping.Add(RttMs);
+                    TcpInfo = SocketUtils.GetTcpInfo(Socket);
+                    uint RttMs = TcpInfo.RttUs / 1000;
+                    if (RttMs > 0)
+                    {
+                        Ping.Add(RttMs);
+                    }
+                    uint MinRttMs = TcpInfo.MinRttUs / 1000;
+                    if (MinRttMs > 0)
+                    {
+                        BestPing = MinRttMs;
+                    }
                 }
-                uint MinRttMs = TcpInfo.MinRttUs / 1000;
-                if (MinRttMs > 0)
+                catch (SocketException Ex)
                 {
-                    BestPing = MinRttMs;
+                    Logger.Log(LogLevel.Warning, LogCategory.Transport, "Failed to get socket info due to exception: {0}", Ex.ToString());
                 }
             }
         }

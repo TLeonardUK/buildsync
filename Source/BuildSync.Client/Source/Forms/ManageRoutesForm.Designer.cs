@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ManageRoutesForm));
             this.MainTreeView = new Aga.Controls.Tree.TreeViewAdv();
             this.downloadListContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -70,7 +71,7 @@
             this.toolStripSeparator9,
             this.deleteToolStripMenuItem});
             this.downloadListContextMenu.Name = "downloadListContextMenu";
-            this.downloadListContextMenu.Size = new System.Drawing.Size(189, 122);
+            this.downloadListContextMenu.Size = new System.Drawing.Size(151, 100);
             // 
             // addTagToolStripMenuItem
             // 
@@ -84,7 +85,7 @@
             // 
             this.editToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_draw_pencil;
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(150, 30);
             this.editToolStripMenuItem.Text = "Edit Route ...";
             this.editToolStripMenuItem.Click += new System.EventHandler(this.EditClicked);
             // 
@@ -114,6 +115,7 @@
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.MainTreeView);
             this.HideOnClose = true;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "ManageRoutesForm";
             this.Text = "Route Manager";
             this.Shown += new System.EventHandler(this.OnShown);

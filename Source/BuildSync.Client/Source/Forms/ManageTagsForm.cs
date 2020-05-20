@@ -34,6 +34,7 @@ using WeifenLuo.WinFormsUI.Docking;
 using Aga.Controls.Tree;
 using Aga.Controls.Tree.NodeControls;
 using BuildSync.Client.Properties;
+using BuildSync.Client.Controls;
 
 namespace BuildSync.Client.Forms
 {
@@ -51,6 +52,7 @@ namespace BuildSync.Client.Forms
             public string Name;
 
             public Tag BuildTag;
+            public Tag[] BuildTags;
         }
 
         /// <summary>
@@ -75,16 +77,17 @@ namespace BuildSync.Client.Forms
             NameColumn.Width = 400;
             MainTreeView.Columns.Add(NameColumn);
             
-                ScaledNodeIcon IconControl = new ScaledNodeIcon();
+               /* ScaledNodeIcon IconControl = new ScaledNodeIcon();
                 IconControl.ParentColumn = NameColumn;
                 IconControl.DataPropertyName = "Icon";
                 IconControl.FixedSize = new Size((int)(MainTreeView.RowHeight * 1.5f), (int)(MainTreeView.RowHeight * 1.5f));
                 IconControl.Offset = new Size(0, 5);
-                MainTreeView.NodeControls.Add(IconControl);
+                MainTreeView.NodeControls.Add(IconControl);*/
 
-                NodeTextBox TextControl = new NodeTextBox();
+                TagListTreeNode TextControl = new TagListTreeNode();
                 TextControl.ParentColumn = NameColumn;
-                TextControl.DataPropertyName = "Name";
+                TextControl.ShowFullName = true;
+                TextControl.DataPropertyName = "BuildTags";
                 MainTreeView.NodeControls.Add(TextControl);
         }
 
@@ -113,6 +116,8 @@ namespace BuildSync.Client.Forms
         /// <param name="Users"></param>
         private void TagsRecieved(List<Tag> InTags)
         {
+            bool ForceUpdate = false;
+
             InTags.Sort((Item1, Item2) => -Item1.Name.CompareTo(Item2.Name));
 
             // Add new tags.
@@ -124,6 +129,16 @@ namespace BuildSync.Client.Forms
                 {
                     if (Node.BuildTag.Id == Tag.Id)
                     {
+                        if (!Node.BuildTag.EqualTo(Tag))
+                        {
+                            Node.BuildTag = Tag;
+                            Node.BuildTags = new Tag[1];
+                            Node.BuildTags[0] = Tag;
+                            Node.Name = Tag.Name;
+
+                            ForceUpdate = true;
+                        }
+
                         Found = true;
                         break;
                     }
@@ -133,9 +148,13 @@ namespace BuildSync.Client.Forms
                 {
                     TagTreeNode Node = new TagTreeNode();
                     Node.BuildTag = Tag;
+                    Node.BuildTags = new Tag[1];
+                    Node.BuildTags[0] = Tag;
                     Node.Name = Tag.Name;
                     Node.Icon = Resources.appbar_tag;
                     Model.Nodes.Add(Node);
+
+                    ForceUpdate = true;
                 }
             }
 
@@ -163,6 +182,14 @@ namespace BuildSync.Client.Forms
             foreach (TagTreeNode Node in RemovedNodes)
             {
                 Model.Nodes.Remove(Node);
+                ForceUpdate = true;
+            }
+
+            if (ForceUpdate)
+            {
+                TagRenderer.InvalidateResources();
+                Invalidate();
+                Refresh();
             }
         }
 
@@ -215,7 +242,7 @@ namespace BuildSync.Client.Forms
             AddTagForm form = new AddTagForm();
             if (form.ShowDialog(this) == DialogResult.OK)
             {
-                Program.NetClient.CreateTag(form.TagName);
+                Program.NetClient.CreateTag(form.TagName, form.TagColor);
                 Program.NetClient.RequestTagList();
             }
         }
@@ -234,12 +261,13 @@ namespace BuildSync.Client.Forms
             }
 
             AddTagForm form = new AddTagForm();
-            form.TagName = Node.Name;
+            form.TagName = Node.BuildTag.Name;
+            form.TagColor = Node.BuildTag.Color;
             if (form.ShowDialog(this) == DialogResult.OK)
             {
                 Node.Name = form.TagName;
 
-                Program.NetClient.RenameTag(Node.BuildTag.Id, form.TagName);
+                Program.NetClient.RenameTag(Node.BuildTag.Id, form.TagName, form.TagColor);
                 Program.NetClient.RequestTagList();
             }
         }

@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Drawing;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
@@ -69,6 +70,21 @@ namespace BuildSync.Core.Networking
             else
             {
                 Writer.Write(Value);
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Value"></param>
+        public void Serialize(ref Color Value)
+        {
+            if (IsLoading)
+            {
+                Value = Color.FromArgb(Reader.ReadInt32());
+            }
+            else
+            {
+                Writer.Write(Value.ToArgb());
             }
         }
 

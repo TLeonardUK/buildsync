@@ -53,6 +53,7 @@ namespace BuildSync.Client.Controls
             public string Availability;
             public Image AvailabilityIcon;
             public string TagsFormatted;
+            public Tag[] Tags;
         }
 
         /// <summary>
@@ -242,7 +243,7 @@ namespace BuildSync.Client.Controls
 
             TreeColumn NameColumn = new TreeColumn();
             NameColumn.Header = "Name";
-            NameColumn.Width = 200;
+            NameColumn.Width = 180;
             MainTreeView.Columns.Add(NameColumn);
             
                 ScaledNodeIcon IconControl = new ScaledNodeIcon();
@@ -259,7 +260,7 @@ namespace BuildSync.Client.Controls
                 
             TreeColumn SizeColumn = new TreeColumn();
             SizeColumn.Header = "Size";
-            SizeColumn.Width = 70;
+            SizeColumn.Width = 65;
             MainTreeView.Columns.Add(SizeColumn);
 
                 NodeTextBox SizeControl = new NodeTextBox();
@@ -269,7 +270,7 @@ namespace BuildSync.Client.Controls
 
             TreeColumn CreatedColumn = new TreeColumn();
             CreatedColumn.Header = "Created";
-            CreatedColumn.Width = 120;
+            CreatedColumn.Width = 110;
             MainTreeView.Columns.Add(CreatedColumn);
 
                 NodeTextBox CreatedControl = new NodeTextBox();
@@ -279,7 +280,7 @@ namespace BuildSync.Client.Controls
 
             TreeColumn AvailabilityColumn = new TreeColumn();
             AvailabilityColumn.Header = "Availability";
-            AvailabilityColumn.Width = 200;
+            AvailabilityColumn.Width = 210;
             MainTreeView.Columns.Add(AvailabilityColumn);
             
                 ScaledNodeIcon AvailabilityIconControl = new ScaledNodeIcon();
@@ -299,9 +300,9 @@ namespace BuildSync.Client.Controls
             TagsColumn.Width = 200;
             MainTreeView.Columns.Add(TagsColumn);
 
-                NodeTextBox TagControl = new NodeTextBox();
+                TagListTreeNode TagControl = new TagListTreeNode();
                 TagControl.ParentColumn = TagsColumn;
-                TagControl.DataPropertyName = "TagsFormatted";
+                TagControl.DataPropertyName = "Tags";
                 MainTreeView.NodeControls.Add(TagControl);
         }
 
@@ -498,6 +499,7 @@ namespace BuildSync.Client.Controls
 
                 if (BuildInfo.Tags != null)
                 {
+                    TrNode.Tags = BuildInfo.Tags;
                     TrNode.TagsFormatted = "";
                     foreach (Tag Tag in BuildInfo.Tags)
                     {

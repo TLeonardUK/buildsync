@@ -29,20 +29,8 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.MainTextBox = new System.Windows.Forms.TextBox();
             this.TagContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.SuspendLayout();
-            // 
-            // MainTextBox
-            // 
-            this.MainTextBox.ContextMenuStrip = this.TagContextMenuStrip;
-            this.MainTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.MainTextBox.Location = new System.Drawing.Point(0, 0);
-            this.MainTextBox.Name = "MainTextBox";
-            this.MainTextBox.ReadOnly = true;
-            this.MainTextBox.Size = new System.Drawing.Size(150, 20);
-            this.MainTextBox.TabIndex = 0;
-            this.MainTextBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.OnClicked);
             // 
             // TagContextMenuStrip
             // 
@@ -54,17 +42,15 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.MainTextBox);
             this.Name = "TagTextBox";
             this.Size = new System.Drawing.Size(150, 21);
+            this.Paint += new System.Windows.Forms.PaintEventHandler(this.OnPaint);
+            this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.OnClicked);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox MainTextBox;
         private System.Windows.Forms.ContextMenuStrip TagContextMenuStrip;
     }
 }

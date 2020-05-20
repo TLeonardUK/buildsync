@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Drawing;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -40,8 +41,25 @@ namespace BuildSync.Core.Tags
         public Guid Id { get; set; } = Guid.Empty;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public Color Color { get; set; } = Color.FromArgb(255, 210, 212, 220);
+
+        /// <summary>
         /// </summary>
         public string Name { get; set; } = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Other"></param>
+        /// <returns></returns>
+        public bool EqualTo(Tag Other)
+        {
+            return Id == Other.Id &&
+                Color == Other.Color &&
+                Name == Other.Name;
+        }
 
         /// <summary>
         /// 
@@ -58,6 +76,12 @@ namespace BuildSync.Core.Tags
                 Guid Value = Id;
                 serializer.Serialize(ref Value);
                 Id = Value;
+            }
+            if (serializer.Version > 100000655)
+            {
+                Color Value = Color;
+                serializer.Serialize(ref Value);
+                Color = Value;
             }
         }
     }

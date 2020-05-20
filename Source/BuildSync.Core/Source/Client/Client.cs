@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Drawing;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
@@ -1545,7 +1546,7 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         /// <param name="Path"></param>
-        public bool CreateTag(string Name)
+        public bool CreateTag(string Name, Color TagColor)
         {
             if (!Connection.IsReadyForData)
             {
@@ -1555,6 +1556,7 @@ namespace BuildSync.Core.Client
 
             NetMessage_CreateTag Msg = new NetMessage_CreateTag();
             Msg.Name = Name;
+            Msg.Color = TagColor;
             Connection.Send(Msg);
 
             return true;
@@ -1563,7 +1565,7 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         /// <param name="Path"></param>
-        public bool RenameTag(Guid Id, string Name)
+        public bool RenameTag(Guid Id, string Name, Color TagColor)
         {
             if (!Connection.IsReadyForData)
             {
@@ -1574,6 +1576,7 @@ namespace BuildSync.Core.Client
             NetMessage_RenameTag Msg = new NetMessage_RenameTag();
             Msg.Id = Id;
             Msg.Name = Name;
+            Msg.Color = TagColor;
             Connection.Send(Msg);
 
             return true;

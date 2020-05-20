@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 using BuildSync.Core.Users;
 
@@ -33,6 +34,16 @@ namespace BuildSync.Client.Forms
         /// 
         /// </summary>
         public string TagName = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public Color TagColor = Color.Red;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool InternalSetting = false;
 
         /// <summary>
         /// </summary>
@@ -57,7 +68,12 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
+            InternalSetting = true;
+
             nameTextBox.Text = TagName;
+            colorSelector.SelectedColor = TagColor;
+
+            InternalSetting = false;
 
             UpdateState();
         }
@@ -66,8 +82,14 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private void UpdateState()
         {
+            if (InternalSetting)
+            {
+                return;
+            }
+
             addGroupButton.Enabled = (nameTextBox.Text.Trim().Length > 0);
             TagName = nameTextBox.Text;
+            TagColor = colorSelector.SelectedColor;
         }
 
         /// <summary>
@@ -75,7 +97,7 @@ namespace BuildSync.Client.Forms
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void NameTextChanged(object sender, EventArgs e)
+        private void StateChanged(object sender, EventArgs e)
         {
             UpdateState();
         }

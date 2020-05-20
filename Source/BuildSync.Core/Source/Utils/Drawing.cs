@@ -19,6 +19,7 @@
   3. This notice may not be removed or altered from any source distribution.
 */
 
+using System;
 using System.Drawing;
 
 namespace BuildSync.Core.Utils
@@ -70,5 +71,31 @@ namespace BuildSync.Core.Utils
         ///     Large size font used to drawing item titles.
         /// </summary>
         public static Font TitleFont = new Font(FontFamily.GenericSansSerif, 11.25f, FontStyle.Regular);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="c"></param>
+        /// <param name="saturation"></param>
+        /// <returns></returns>
+        public static Color Saturate(Color c, double saturation)
+        {
+            Func<double, int> clamp = i => Math.Min(255, Math.Max(0, Convert.ToInt32(i)));
+            return Color.FromArgb(c.A, clamp(c.R * saturation), clamp(c.G * saturation), clamp(c.B * saturation));
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static float ColorDistance(Color c1, Color c2)
+        {
+            int r = c1.R - c2.R;
+            int g = c1.G - c2.G;
+            int b = c1.B - c2.B;
+            return r*r + g*g + b*b;
+        }
     }
 }

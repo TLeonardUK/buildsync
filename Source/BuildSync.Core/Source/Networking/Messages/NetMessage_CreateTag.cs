@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Drawing;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -32,12 +33,21 @@ namespace BuildSync.Core.Networking.Messages
         public string Name;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public Color Color;
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
         protected override void SerializePayload(NetMessageSerializer serializer)
         {
             serializer.Serialize(ref Name);
+            if (serializer.Version > 100000655)
+            {
+                serializer.Serialize(ref Color);
+            }
         }
     }
 }

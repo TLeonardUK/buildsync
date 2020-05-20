@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Drawing;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -63,6 +64,14 @@ namespace BuildSync.Core.Tags
             if (Tags.Count == 0)
             {
                 Tags.Add(new Tag() { Id = Guid.NewGuid(), Name = "Broken" });
+            }
+
+            foreach (Tag tag in Tags)
+            {
+                if (tag.Color.A == 0)
+                {
+                    tag.Color = (new Tag().Color);
+                }
             }
         }
 
@@ -151,7 +160,7 @@ namespace BuildSync.Core.Tags
         /// 
         /// </summary>
         /// <param name="TagId"></param>
-        public void RenameTag(Guid TagId, string Name)
+        public void RenameTag(Guid TagId, string Name, Color TagColor)
         {
             Tag Tag = GetTagById(TagId);
             if (Tag == null)
@@ -160,6 +169,7 @@ namespace BuildSync.Core.Tags
             }
 
             Tag.Name = Name;
+            Tag.Color = TagColor;
 
             TagsUpdated?.Invoke();
         }
@@ -168,11 +178,12 @@ namespace BuildSync.Core.Tags
         /// 
         /// </summary>
         /// <param name="Name"></param>
-        public Guid CreateTag(string Name)
+        public Guid CreateTag(string Name, Color TagColor)
         {
             Tag Tag = new Tag();
             Tag.Id = Guid.NewGuid();
             Tag.Name = Name;
+            Tag.Color = TagColor;
 
             Tags.Add(Tag);
 

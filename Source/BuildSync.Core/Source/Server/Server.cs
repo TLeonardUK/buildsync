@@ -1163,7 +1163,7 @@ namespace BuildSync.Core.Server
                     return;
                 }
 
-                TagRegistry.CreateTag(Msg.Name);
+                TagRegistry.CreateTag(Msg.Name, Msg.Color);
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' created tag '{1}'.", State.Username, Msg.Name);
             }
@@ -1183,7 +1183,7 @@ namespace BuildSync.Core.Server
                     return;
                 }
 
-                TagRegistry.RenameTag(Msg.Id, Msg.Name);
+                TagRegistry.RenameTag(Msg.Id, Msg.Name, Msg.Color);
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' renamed tag '{1}' to '{2}'.", State.Username, Msg.Id.ToString(), Msg.Name);
             }

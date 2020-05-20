@@ -40,6 +40,7 @@ using BuildSync.Core.Utils;
 using BuildSync.Core.Tags;
 using BuildSync.Core.Routes;
 using BuildSync.Core.Storage;
+using BuildSync.Client.Controls;
 using CommandLine;
 
 namespace BuildSync.Client
@@ -571,6 +572,10 @@ namespace BuildSync.Client
 
                 NetClient.RestartConnections();
                 SaveSettings();
+            };
+            NetClient.OnTagListRecieved += (List<Tag> InTags) =>
+            {
+                TagRenderer.InvalidateResources();
             };
             NetClient.OnPermissionsUpdated += () =>
             {

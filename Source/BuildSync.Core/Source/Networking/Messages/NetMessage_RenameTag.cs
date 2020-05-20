@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Drawing;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -37,6 +38,11 @@ namespace BuildSync.Core.Networking.Messages
         public Guid Id;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public Color Color;
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
@@ -44,6 +50,10 @@ namespace BuildSync.Core.Networking.Messages
         {
             serializer.Serialize(ref Name);
             serializer.Serialize(ref Id);
+            if (serializer.Version > 100000655)
+            {
+                serializer.Serialize(ref Color);
+            }
         }
     }
 }

@@ -214,6 +214,12 @@
     <Compile Include="Controls\BlockStatusPanel.Designer.cs">
       <DependentUpon>BlockStatusPanel.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\ColorSelector.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\ColorSelector.Designer.cs">
+      <DependentUpon>ColorSelector.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\DownloadFileSystemTree.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -315,6 +321,9 @@
     </Compile>
     <Compile Include="Controls\Setup\SetupPageControlBase.Designer.cs">
       <DependentUpon>SetupPageControlBase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\TagRenderer.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\TagTextBox.cs">
       <SubType>UserControl</SubType>
@@ -507,6 +516,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\BlockStatusPanel.resx">
       <DependentUpon>BlockStatusPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\ColorSelector.resx">
+      <DependentUpon>ColorSelector.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\DownloadFileSystemTree.resx">
       <DependentUpon>DownloadFileSystemTree.cs</DependentUpon>
