@@ -663,7 +663,7 @@ namespace BuildSync.Core.Downloads
 
                     // Store the amount of time the download is in each state to make
                     // time estimates a bit better.
-                    if (Downloader.State != ManifestDownloadProgressState.Complete && !State.Paused && Downloader.Manifest != null && bHasConnection)
+                    if (Downloader.State != ManifestDownloadProgressState.Complete && !State.Paused && Downloader.Manifest != null && (bHasConnection || Downloader.State != ManifestDownloadProgressState.Downloading))
                     {
                         if (State.PendingDurationHistory == null)
                         {
@@ -843,6 +843,15 @@ namespace BuildSync.Core.Downloads
                         }
                         break;
                     }
+                    case ManifestDownloadProgressState.Installing:
+                    {
+                        Downloader.InstallRateEstimater.SetProgress(Downloader.InstallProgress);
+                        Downloader.InstallRateEstimater.Poll();
+
+                        RawEstimateSeconds = Downloader.InstallRateEstimater.EstimatedSeconds;
+                        RawProgress = Downloader.InstallRateEstimater.EstimatedProgress;
+                        break;
+                    }
                 }
             }
 
@@ -863,9 +872,15 @@ namespace BuildSync.Core.Downloads
             if (SumCount != 0)
             {
                 double Historic = Math.Max(0, (DurationSum / SumCount) - CurrentStateDuration) / 1000.0f;// ((DurationSum / SumCount) * (1.0f - RawProgress)) / 1000.0f;
-                double Combined = (Historic * 0.75f) + (RawEstimateSeconds * 0.25f);
-
-                return (long)Combined;
+                if (Historic == 0.0f)
+                {
+                    return (long)RawEstimateSeconds;
+                }
+                else
+                {
+                    double Combined = (Historic * 0.75f) + (RawEstimateSeconds * 0.25f);
+                    return (long)Combined;
+                }
 
             }
             else

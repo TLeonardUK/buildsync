@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Linq;
 using System.Drawing;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -193,6 +194,34 @@ namespace BuildSync.Core.Networking
             {
                 byte[] GuidBytes = Value.ToByteArray();
                 Writer.BaseStream.Write(GuidBytes, 0, GuidBytes.Length);
+            }
+        }
+
+
+        /// <summary>
+        /// </summary>
+        /// <param name="Value"></param>
+        public void Serialize(ref Dictionary<string, String> Settings)
+        {
+            string[] Keys = Settings.Keys.ToArray();
+
+            int Count = Settings.Count;
+            Serialize(ref Count);
+            for (int i = 0; i < Count; i++)
+            {
+                string Key = "";
+                string Value = "";
+
+                if (!IsLoading)
+                {
+                    Key = Keys[i];
+                    Value = Settings[Key];
+                }
+
+                Serialize(ref Key);
+                Serialize(ref Value);
+
+                Settings[Key] = Value;
             }
         }
 

@@ -367,24 +367,28 @@ namespace BuildSync.Client.Controls
                     case ManifestDownloadProgressState.Validating:
                         {
                             InstallingSegment.Progress = 0.0f;
+                            InstallingSegment.Marquee = false;
                             break;
                         }
                     case ManifestDownloadProgressState.InstallFailed:
                         {
                             InstallingSegment.Progress = 1.0f;
                             InstallingSegment.Color = ErrorColor;
+                            InstallingSegment.Marquee = false;
                             break;
                         }
                     case ManifestDownloadProgressState.Installing:
                         {
-                            InstallingSegment.Progress = 0.5f; // Calculate based on previous runs.
+                            InstallingSegment.Progress = Downloader.InstallProgress;
                             InstallingSegment.Color = InProgressColor;
+                            InstallingSegment.Marquee = Downloader.InstallProgress < 0.0f;
                             break;
                         }
                     case ManifestDownloadProgressState.Complete:
                         {
                             InstallingSegment.Progress = 1.0f;
                             InstallingSegment.Color = FinishedColor;
+                            InstallingSegment.Marquee = false;
                             break;
                         }
                 }
@@ -451,11 +455,11 @@ namespace BuildSync.Client.Controls
                             if (State.DurationHistory.Count > 0)
                             {
                                 long TotalTimeRemaining = Program.DownloadManager.GetEstimatedTimeRemaining(State);
-                                Status = string.Format("S {0}   T {1}", StringUtils.FormatAsDuration(TimeRemaining), StringUtils.FormatAsDuration(TotalTimeRemaining));
+                                Status = string.Format("{0} (Previous {1})", StringUtils.FormatAsDuration(TimeRemaining), StringUtils.FormatAsDuration(TotalTimeRemaining));
                             }
                             else
                             {
-                                Status = string.Format("S {0}", StringUtils.FormatAsDuration(TimeRemaining));
+                                Status = string.Format("{0}", StringUtils.FormatAsDuration(TimeRemaining));
                             }                            
                             StatusColor = StateColoring.Info;
                             BuildInfo = Downloader.Manifest.VirtualPath;

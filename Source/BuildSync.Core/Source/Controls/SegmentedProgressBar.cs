@@ -63,12 +63,22 @@ namespace BuildSync.Core.Controls
             /// <summary>
             /// 
             /// </summary>
+            public bool Marquee = false;
+
+            /// <summary>
+            /// 
+            /// </summary>
             public float Progress = 0.0f;
 
             /// <summary>
             /// 
             /// </summary>
             internal float LerpedProgress = 0.0f;
+
+            /// <summary>
+            /// 
+            /// </summary>
+            internal float MarqueeProgress = 0.0f;
 
             /// <summary>
             /// 
@@ -133,7 +143,20 @@ namespace BuildSync.Core.Controls
             segment.LerpedProgress = (segment.Progress * 0.5f) + (segment.LerpedProgress * 0.5f);
 
             graphics.FillRectangle(SystemBrushes.Control, x, y, width, height);
-            graphics.FillRectangle(segment.CachedFillBrush, x, y, width * segment.LerpedProgress, height);
+
+            if (segment.Marquee)
+            {
+                segment.MarqueeProgress += 5.0f;
+                if (segment.MarqueeProgress >= width - 20)
+                {
+                    segment.MarqueeProgress = 0.0f;
+                }
+                graphics.FillRectangle(segment.CachedFillBrush, x + segment.MarqueeProgress, y, 20, height);
+            }
+            else
+            {
+                graphics.FillRectangle(segment.CachedFillBrush, x, y, width * segment.LerpedProgress, height);
+            }
             graphics.DrawRectangle(SystemPens.ActiveBorder, x, y, width, height);
 
             SizeF TextSize = graphics.MeasureString(segment.Text, segment.CachedFont);

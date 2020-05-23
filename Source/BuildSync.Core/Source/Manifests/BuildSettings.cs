@@ -496,16 +496,28 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
-        public bool Install(string LocalFolder, ref string ResultMessage)
+        public bool Install(string LocalFolder, ref string ResultMessage, ScriptBuildProgressDelegate Callback)
         {
             if (ScriptInstance != null)
             {
                 CopyArgumentsToScript();
-                if (!ScriptInstance.Install(MakeScriptBuild()))
+
+                ScriptBuild Build = MakeScriptBuild();
+                Build.ProgressCallback = Callback;
+
+                if (!ScriptInstance.Install(Build))
                 {
-                    ResultMessage = "Script failed to install, check console output window for details.";
+                    if (Build.ErrorMessage == "")
+                    {
+                        ResultMessage = "Script failed to install, check console output window for details.";
+                    }
+                    else
+                    {
+                        ResultMessage = Build.ErrorMessage;
+                    }
                     return false;
                 }
+
                 return true;
             }
             else
@@ -712,16 +724,6 @@ namespace BuildSync.Core.Manifests
 
             return true;
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ProcessOutputRecieved(object sender, DataReceivedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     [Serializable]
@@ -751,7 +753,7 @@ namespace BuildSync.Core.Manifests
                 try
                 {
                     ScriptOptions Options = ScriptOptions.Default
-                        .WithImports("System", "System.IO", "System.Math", "System.ComponentModel", "System.ComponentModel.DataAnnotations", "BuildSync.Core.Scripting", "BuildSync.Core.Utils")
+                        .WithImports("System", "System.Text.RegularExpressions", "System.IO", "System.Math", "System.ComponentModel", "System.ComponentModel.DataAnnotations", "BuildSync.Core.Scripting", "BuildSync.Core.Utils")
                         .WithReferences("System", "System.Data", "System.Windows.Forms", typeof(ScriptBuild).Assembly.Location)
                         .WithAllowUnsafe(false)
                         .WithOptimizationLevel(OptimizationLevel.Debug);
@@ -770,10 +772,14 @@ namespace BuildSync.Core.Manifests
                             {
                                 if (typeof(ScriptLaunchMode).IsAssignableFrom(Type))
                                 {
-                                    BuildLaunchMode mode = new BuildLaunchMode();
-                                    mode.InitFromScript(Activator.CreateInstance(Type) as ScriptLaunchMode);
+                                    ScriptLaunchMode LaunchMode = Activator.CreateInstance(Type) as ScriptLaunchMode;
+                                    if (LaunchMode.IsAvailable)
+                                    {
+                                        BuildLaunchMode mode = new BuildLaunchMode();
+                                        mode.InitFromScript(LaunchMode);
 
-                                    Result.Add(mode);
+                                        Result.Add(mode);
+                                    }
                                 }
                             }
                         }

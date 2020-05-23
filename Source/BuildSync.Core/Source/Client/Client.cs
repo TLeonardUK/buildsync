@@ -32,6 +32,7 @@ using BuildSync.Core.Licensing;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Networking.Messages.RemoteActions;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Tags;
@@ -113,6 +114,30 @@ namespace BuildSync.Core.Client
     /// <param name="Connection"></param>
     /// <param name="Message"></param>
     public delegate void ClientTagsUpdatedByServerHandler();
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Msg"></param>
+    public delegate void RemoteActionProgressRecievedHandler(NetMessage_RemoteActionProgress Msg);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Msg"></param>
+    public delegate void SolicitRemoteActionRecievedHandler(NetMessage_SolicitRemoteAction Msg);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Msg"></param>
+    public delegate void RequestRemoteActionRecievedHandler(NetMessage_RequestRemoteAction Msg);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Msg"></param>
+    public delegate void CancelRemoteActionRecievedHandler(Guid ActionId);
 
     /*
     /// <summary>
@@ -397,7 +422,7 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
-        private readonly NetConnection Connection = new NetConnection();
+        public readonly NetConnection Connection = new NetConnection();
 
         /// <summary>
         /// </summary>
@@ -439,6 +464,11 @@ namespace BuildSync.Core.Client
         /// 
         /// </summary>
         private int LastManifestStateBlockDirtyCounter;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool AllowRemoteActions = false;
 
         /// <summary>
         /// </summary>
@@ -582,6 +612,22 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         public event ClientTagsUpdatedByServerHandler OnClientTagsUpdatedByServer;
+
+        /// <summary>
+        /// </summary>
+        public event RemoteActionProgressRecievedHandler OnRemoteActionProgressRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event SolicitRemoteActionRecievedHandler OnSolicitRemoteActionRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event RequestRemoteActionRecievedHandler OnRequestRemoteActionRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event CancelRemoteActionRecievedHandler OnCancelRemoteActionRecieved;
 
         /// <summary>
         /// </summary>
@@ -748,7 +794,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to delete, no connection to server?");
                 return false;
             }
 
@@ -766,7 +812,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete user, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to delete user, no connection to server?");
                 return false;
             }
 
@@ -784,7 +830,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete user group, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to delete user group, no connection to server?");
                 return false;
             }
 
@@ -802,7 +848,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create user group, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to create user group, no connection to server?");
                 return false;
             }
 
@@ -820,7 +866,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to remove user group permission, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to remove user group permission, no connection to server?");
                 return false;
             }
 
@@ -840,7 +886,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to add user group permission, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to add user group permission, no connection to server?");
                 return false;
             }
 
@@ -860,7 +906,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to remove user from user group, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to remove user from user group, no connection to server?");
                 return false;
             }
 
@@ -879,7 +925,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to add user to user group, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to add user to user group, no connection to server?");
                 return false;
             }
 
@@ -1137,7 +1183,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to publish, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to publish, no connection to server?");
                 return false;
             }
 
@@ -1158,7 +1204,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to apply license, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to apply license, no connection to server?");
                 return false;
             }
 
@@ -1176,7 +1222,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request builds, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request builds, no connection to server?");
                 return false;
             }
 
@@ -1194,7 +1240,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request builds, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request builds, no connection to server?");
                 return false;
             }
 
@@ -1214,7 +1260,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request license info, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request license info, no connection to server?");
                 return false;
             }
 
@@ -1230,7 +1276,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request manifests, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request manifests, no connection to server?");
                 return false;
             }
 
@@ -1296,7 +1342,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request deletion candidate, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request deletion candidate, no connection to server?");
                 return false;
             }
 
@@ -1317,7 +1363,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request server state, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request server state, no connection to server?");
                 return false;
             }
 
@@ -1334,7 +1380,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request users, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request users, no connection to server?");
                 return false;
             }
 
@@ -1352,7 +1398,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request tags, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request tags, no connection to server?");
                 return false;
             }
 
@@ -1370,7 +1416,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to request routes, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to request routes, no connection to server?");
                 return false;
             }
 
@@ -1387,7 +1433,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete route, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to delete route, no connection to server?");
                 return false;
             }
 
@@ -1405,7 +1451,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create route, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to create route, no connection to server?");
                 return false;
             }
 
@@ -1426,7 +1472,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create route, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to create route, no connection to server?");
                 return false;
             }
 
@@ -1450,7 +1496,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to add tag to manifest, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to add tag to manifest, no connection to server?");
                 return false;
             }
 
@@ -1471,7 +1517,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to remove tag to manifest, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to remove tag to manifest, no connection to server?");
                 return false;
             }
 
@@ -1492,7 +1538,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to add tag to client, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to add tag to client, no connection to server?");
                 return false;
             }
 
@@ -1513,7 +1559,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to remove tag from client, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to remove tag from client, no connection to server?");
                 return false;
             }
 
@@ -1532,7 +1578,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to delete tag, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to delete tag, no connection to server?");
                 return false;
             }
 
@@ -1550,7 +1596,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create tag, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to create tag, no connection to server?");
                 return false;
             }
 
@@ -1571,7 +1617,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to create tag, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to create tag, no connection to server?");
                 return false;
             }
 
@@ -1617,7 +1663,7 @@ namespace BuildSync.Core.Client
         {
             if (!Connection.IsReadyForData)
             {
-                Logger.Log(LogLevel.Warning, LogCategory.Main, "Failed to set max bandwidth, no connection to server?");
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Failed to set max bandwidth, no connection to server?");
                 return false;
             }
 
@@ -1632,12 +1678,14 @@ namespace BuildSync.Core.Client
         /// </summary>
         /// <param name="Hostname"></param>
         /// <param name="Port"></param>
-        public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, BuildManifestRegistry BuildManifest, StorageManager InStorageManager, ManifestDownloadManager DownloadManager, TagRegistry InTagRegistry, RouteRegistry InRouteRegistry)
+        public void Start(string Hostname, int Port, int ListenPortRangeMin, int ListenPortRangeMax, bool InAllowRemoteActions, List<Guid> InTagIds, BuildManifestRegistry BuildManifest, StorageManager InStorageManager, ManifestDownloadManager DownloadManager, TagRegistry InTagRegistry, RouteRegistry InRouteRegistry)
         {
             ServerHostname = Hostname;
             ServerPort = Port;
             PeerListenPortRangeMin = ListenPortRangeMin;
             PeerListenPortRangeMax = ListenPortRangeMax;
+            AllowRemoteActions = InAllowRemoteActions;
+            TagIds = new List<Guid>(InTagIds);
             ManifestRegistry = BuildManifest;
             ManifestDownloadManager = DownloadManager;
             ManifestDownloadManager.OnManifestRequested += Id => { RequestManifest(Id); };
@@ -2195,6 +2243,46 @@ namespace BuildSync.Core.Client
 
                 OnBuildUpdated?.Invoke(Msg.Path, Msg.ManifestId);
             }
+
+            // ------------------------------------------------------------------------------
+            // Remote action progress update
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RemoteActionProgress)
+            {
+                NetMessage_RemoteActionProgress Msg = BaseMessage as NetMessage_RemoteActionProgress;
+
+                OnRemoteActionProgressRecieved?.Invoke(Msg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Server soliciting us for a remote action.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_SolicitRemoteAction)
+            {
+                NetMessage_SolicitRemoteAction Msg = BaseMessage as NetMessage_SolicitRemoteAction;
+
+                OnSolicitRemoteActionRecieved?.Invoke(Msg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Request to start a remote action.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RequestRemoteAction)
+            {
+                NetMessage_RequestRemoteAction Msg = BaseMessage as NetMessage_RequestRemoteAction;
+
+                OnRequestRemoteActionRecieved?.Invoke(Msg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Request to cancel a remote action.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_CancelRemoteAction)
+            {
+                NetMessage_CancelRemoteAction Msg = BaseMessage as NetMessage_CancelRemoteAction;
+
+                OnCancelRemoteActionRecieved?.Invoke(Msg.ActionId);
+            }
         }
 
         /// <summary>
@@ -2299,6 +2387,7 @@ namespace BuildSync.Core.Client
             Msg.DiskUsage = 0;
             Msg.ConnectedPeerCount = 0;
             Msg.Version = AppVersion.VersionString;
+            Msg.AllowRemoteActions = AllowRemoteActions;
 
             lock (Peers)
             {

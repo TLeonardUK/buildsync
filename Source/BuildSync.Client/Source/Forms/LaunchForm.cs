@@ -27,6 +27,7 @@ using System.Windows.Forms;
 using BuildSync.Core.Downloads;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Utils;
+using BuildSync.Core.Scripting;
 
 namespace BuildSync.Client.Forms
 {
@@ -73,10 +74,17 @@ namespace BuildSync.Client.Forms
             string ResultMessage = "";
             bool Success = true;
 
+            ProgressForm form = new ProgressForm();
+
+            ScriptBuildProgressDelegate Callback = (string InState, float InProgress) =>
+            {
+                form.SetProgress(InState, InProgress);
+            };
+
             Task work = Task.Run(
                 () =>
                 {
-                    Success = Mode.Install(Downloader.LocalFolder, ref ResultMessage);
+                    Success = Mode.Install(Downloader.LocalFolder, ref ResultMessage, Callback);
                     if (Success)
                     {
                         Downloader.Installed = true;
@@ -84,7 +92,7 @@ namespace BuildSync.Client.Forms
                 }
             );
 
-            ProgressForm form = new ProgressForm(work);
+            form.Work = work;
             form.ShowDialog();
 
             if (!Success)

@@ -27,6 +27,7 @@ using BuildSync.Core.Licensing;
 using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Networking.Messages;
+using BuildSync.Core.Networking.Messages.RemoteActions;
 using BuildSync.Core.Users;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Tags;
@@ -34,6 +35,30 @@ using BuildSync.Core.Routes;
 
 namespace BuildSync.Core.Server
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Msg"></param>
+    public delegate void RequestRemoteActionRecievedHandler(NetConnection Client, NetMessage_RequestRemoteAction Msg);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Msg"></param>
+    public delegate void CancelRemoteActionRecievedHandler(NetConnection Client, Guid ActionId);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Msg"></param>
+    public delegate void SolicitAcceptRemoteActionRecievedHandler(NetConnection Client, Guid ActionId);
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="Msg"></param>
+    public delegate void RemoteActionProgressRecievedHandler(NetMessage_RemoteActionProgress Msg);
+
     /// <summary>
     /// </summary>
     public class Server
@@ -88,7 +113,7 @@ namespace BuildSync.Core.Server
 
         /// <summary>
         /// </summary>
-        private readonly NetConnection ListenConnection = new NetConnection();
+        public readonly NetConnection ListenConnection = new NetConnection();
 
         /// <summary>
         /// </summary>
@@ -133,6 +158,22 @@ namespace BuildSync.Core.Server
         /// 
         /// </summary>
         private long ActiveGlobalBandwidthLimit = 0;
+
+        /// <summary>
+        /// </summary>
+        public event RequestRemoteActionRecievedHandler OnRequestRemoteActionRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event CancelRemoteActionRecievedHandler OnCancelRemoteActionRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event SolicitAcceptRemoteActionRecievedHandler OnSolicitAcceptRemoteActionRecieved;
+
+        /// <summary>
+        /// </summary>
+        public event RemoteActionProgressRecievedHandler OnRemoteActionProgressRecieved;
 
         /// <summary>
         /// </summary>
@@ -1441,6 +1482,7 @@ namespace BuildSync.Core.Server
                 State.DiskQuota = Msg.DiskQuota;
                 State.Version = Msg.Version;
                 State.VersionNumeric = StringUtils.ConvertSemanticVerisonNumber(State.Version);
+                State.AllowRemoteActions = Msg.AllowRemoteActions;
 
                 Connection.MessageVersion = State.VersionNumeric;
             }
@@ -1615,6 +1657,46 @@ namespace BuildSync.Core.Server
                 }
 
                 Logger.Log(LogLevel.Warning, LogCategory.Main, "User '{0}' untagged client '{1}' with tag '{2}'.", State.Username, Msg.ClientAddress.ToString(), Msg.TagId.ToString());
+            }
+
+            // ------------------------------------------------------------------------------
+            // Request to start a remote action.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RequestRemoteAction)
+            {
+                NetMessage_RequestRemoteAction Msg = BaseMessage as NetMessage_RequestRemoteAction;
+
+                OnRequestRemoteActionRecieved?.Invoke(Connection, Msg);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Request to cancel a remote action.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_CancelRemoteAction)
+            {
+                NetMessage_CancelRemoteAction Msg = BaseMessage as NetMessage_CancelRemoteAction;
+
+                OnCancelRemoteActionRecieved?.Invoke(Connection, Msg.ActionId);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Reply to solicitation for remote action.
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_SolicitAcceptRemoteAction)
+            {
+                NetMessage_SolicitAcceptRemoteAction Msg = BaseMessage as NetMessage_SolicitAcceptRemoteAction;
+
+                OnSolicitAcceptRemoteActionRecieved?.Invoke(Connection, Msg.ActionId);
+            }
+
+            // ------------------------------------------------------------------------------
+            // Remote action progress update
+            // ------------------------------------------------------------------------------
+            else if (BaseMessage is NetMessage_RemoteActionProgress)
+            {
+                NetMessage_RemoteActionProgress Msg = BaseMessage as NetMessage_RemoteActionProgress;
+
+                OnRemoteActionProgressRecieved?.Invoke(Msg);
             }
         }
 

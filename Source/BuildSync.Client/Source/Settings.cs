@@ -308,6 +308,11 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
+        public bool AllowRemoteActions { get; set; } = false;
+       
+        /// <summary>
+        /// 
+        /// </summary>
         public LogLevel LoggingLevel { get; set; } = LogLevel.Info;
 
         /// <summary>
@@ -374,6 +379,16 @@ namespace BuildSync.Client
         /// 
         /// </summary>
         public DateTime ReplicationNewerThanTime { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string RemoteInstallDeviceName { get; set; } = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string RemoteInstallLocation { get; set; } = "workspace0";
 
         /// <summary>
         /// </summary>

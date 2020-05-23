@@ -72,6 +72,11 @@ namespace BuildSync.Core.Networking.Messages
         public string Version = "";
 
         /// <summary>
+        ///     If this client allows remote actions to run on it.
+        /// </summary>
+        public bool AllowRemoteActions = false;
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
@@ -88,6 +93,11 @@ namespace BuildSync.Core.Networking.Messages
             if (serializer.Version >= 100000613)
             {
                 serializer.Serialize(ref DiskQuota);
+            }
+
+            if (serializer.Version >= 100000683)
+            {
+                serializer.Serialize(ref AllowRemoteActions);
             }
         }
     }

@@ -790,6 +790,8 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void DownloadListContextMenuShowing(object sender, CancelEventArgs e)
         {
+            bool Connected = Program.NetClient.IsReadyForData;
+
             ContextMenuDownloadItem = MainDownloadList.SelectedItem;
             if (ContextMenuDownloadItem != null)
             {
@@ -802,7 +804,7 @@ namespace BuildSync.Client.Forms
                 pauseToolStripMenuItem.Text = Downloader != null && Downloader.Paused ? "Resume" : "Pause";
                 pauseToolStripMenuItem.Image = Downloader != null && Downloader.Paused ? Resources.appbar_control_play : Resources.appbar_control_pause;
                 deleteToolStripMenuItem.Enabled = Downloader != null;
-                settingsToolStripMenuItem.Enabled = Downloader != null;
+                settingsToolStripMenuItem.Enabled = Downloader != null && Connected;
                 viewAvailabilityToolStripMenuItem.Enabled = (Downloader != null && Directory.Exists(Downloader.LocalFolder));
             }
             else

@@ -34,6 +34,7 @@ using BuildSync.Core.Manifests;
 using BuildSync.Core.Networking;
 using BuildSync.Core.Utils;
 using BuildSync.Core.Storage;
+using BuildSync.Core.Scripting;
 
 namespace BuildSync.Core.Downloads
 {
@@ -690,9 +691,55 @@ namespace BuildSync.Core.Downloads
         }
 
         /// <summary>
+        /// 
         /// </summary>
         /// <param name="State"></param>
-        private void PerformInstallation(ManifestDownloadState State, string DeviceName)
+        /// <param name="DeviceName"></param>
+        /// <param name="InstallLocation"></param>
+        public bool PerformInstallation(Guid ManifestId, string DeviceName, string InstallLocation, ScriptBuildProgressDelegate Callback)
+        {
+            ManifestDownloadState State = GetDownload(ManifestId);
+            if (State != null)
+            {
+                PerformInstallation(State, DeviceName, InstallLocation, Callback);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <param name="DeviceName"></param>
+        /// <param name="InstallLocation"></param>
+        private void PerformInstallation(ManifestDownloadState State, string DeviceName, string InstallLocation, ScriptBuildProgressDelegate Callback)
+        {
+            if (DeviceName == "")
+            {
+                string Trimmed = "localhost";
+                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", Trimmed, InstallLocation, State.LocalFolder);
+                PerformInstallationInternal(State, Trimmed, InstallLocation, Callback);
+            }
+            else
+            {
+                string[] Devices = DeviceName.Split(',');
+                foreach (string Device in Devices)
+                {
+                    string Trimmed = Device.Trim();
+                    if (Trimmed.Length > 0)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", Trimmed, InstallLocation, State.LocalFolder);
+                        PerformInstallationInternal(State, Trimmed, InstallLocation, Callback);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="State"></param>
+        private void PerformInstallationInternal(ManifestDownloadState State, string DeviceName, string InstallLocation, ScriptBuildProgressDelegate Callback)
         {
             string ConfigFilePath = Path.Combine(State.LocalFolder, "buildsync.json");
             bool IsScript = false;
@@ -737,7 +784,7 @@ namespace BuildSync.Core.Downloads
                 foreach (BuildLaunchMode Mode in Modes)
                 {
                     Mode.AddStringVariable("INSTALL_DEVICE_NAME", DeviceName);
-                    Mode.AddStringVariable("INSTALL_LOCATION", State.InstallLocation);
+                    Mode.AddStringVariable("INSTALL_LOCATION", InstallLocation);
                     Mode.AddStringVariable("BUILD_DIR", State.LocalFolder);
                 }
             }
@@ -750,9 +797,9 @@ namespace BuildSync.Core.Downloads
             foreach (BuildLaunchMode Mode in Modes)
             {
                 string ErrorMessage = "";
-                if (!Mode.Install(State.LocalFolder, ref ErrorMessage))
+                if (!Mode.Install(State.LocalFolder, ref ErrorMessage, Callback))
                 {
-                    throw new Exception("Error encountered while evaluating installing:\n\n" + ErrorMessage);
+                    throw new Exception("Error encountered while installing:\n\n" + ErrorMessage);
                 }
             }
 
@@ -1111,29 +1158,18 @@ namespace BuildSync.Core.Downloads
                             {
                                 try
                                 {
-                                    if (State.InstallDeviceName == "")
+                                    State.InstallProgress = -1.0f;
+                                    ScriptBuildProgressDelegate Callback = (string InState, float InProgress) =>
                                     {
-                                        string Trimmed = "localhost";
-                                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", Trimmed, State.InstallLocation, State.LocalFolder);
-                                        PerformInstallation(State, Trimmed);
-                                    }
-                                    else
-                                    {
-                                        string[] Devices = State.InstallDeviceName.Split(',');
-                                        foreach (string Device in Devices)
-                                        {
-                                            string Trimmed = Device.Trim();
-                                            if (Trimmed.Length > 0)
-                                            {
-                                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Installing on device {0}, to location {1}, build directory: {2}", Trimmed, State.InstallLocation, State.LocalFolder);
-                                                PerformInstallation(State, Trimmed);
-                                            }
-                                        }
-                                    }
+                                        State.InstallProgress = InProgress;
+                                    };
+
+                                    PerformInstallation(State, State.InstallDeviceName, State.InstallLocation, Callback);
                                 }
                                 catch (Exception Ex)
                                 {
                                     Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to install with error: {0}", Ex.Message);
+                                    InstallFailed = true;
                                 }
                                 finally
                                 {

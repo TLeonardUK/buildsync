@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -104,6 +105,11 @@ namespace BuildSync.Client
         public static Core.Client.Client NetClient;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public static RemoteActionClient RemoteActionClient;
+
+        /// <summary>
         /// </summary>
         public static bool RespondingToIpc;
 
@@ -176,13 +182,15 @@ namespace BuildSync.Client
                     NetClient.ServerPort != Settings.ServerPort ||
                     NetClient.PeerListenPortRangeMin != Settings.ClientPortRangeMin ||
                     NetClient.PeerListenPortRangeMax != Settings.ClientPortRangeMax ||
-                    !NetClient.TagIds.IsEqual(Settings.TagIds))
+                    !NetClient.TagIds.IsEqual(Settings.TagIds) ||
+                    NetClient.AllowRemoteActions != Settings.AllowRemoteActions)
                 {
                     NetClient.ServerHostname = Settings.ServerHostname;
                     NetClient.ServerPort = Settings.ServerPort;
                     NetClient.PeerListenPortRangeMin = Settings.ClientPortRangeMin;
                     NetClient.PeerListenPortRangeMax = Settings.ClientPortRangeMax;
                     NetClient.TagIds = new List<Guid>(Settings.TagIds);
+                    NetClient.AllowRemoteActions = Settings.AllowRemoteActions;
 
                     NetClient.RestartConnections();
                     SaveSettings();
@@ -490,6 +498,7 @@ namespace BuildSync.Client
             DownloadManager.Poll(NetClient.IsReadyForData);
             ManifestDownloadManager.Poll();
             StorageManager.Poll();
+            RemoteActionClient.Poll();
 
             // Update save data if download states have changed recently.
             if (TimeUtils.Ticks - LastSettingsSaveTime > MinimumTimeBetweenSettingsSaves || ForceSaveSettingsPending)
@@ -538,6 +547,7 @@ namespace BuildSync.Client
             InitSettings();
 
             NetClient = new Core.Client.Client();
+            RemoteActionClient = new RemoteActionClient(NetClient, ManifestDownloadManager);
 
             TagRegistry = new TagRegistry();
             RouteRegistry = new RouteRegistry(null, TagRegistry);
@@ -554,6 +564,8 @@ namespace BuildSync.Client
                 Settings.ServerPort,
                 Settings.ClientPortRangeMin,
                 Settings.ClientPortRangeMax,
+                Settings.AllowRemoteActions,
+                Settings.TagIds,
                 BuildRegistry,
                 StorageManager,
                 ManifestDownloadManager,

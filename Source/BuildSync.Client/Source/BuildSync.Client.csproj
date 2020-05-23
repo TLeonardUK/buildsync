@@ -494,6 +494,12 @@
     <Compile Include="Forms\PublishBuildForm.Designer.cs">
       <DependentUpon>PublishBuildForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\RemoteInstallForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RemoteInstallForm.Designer.cs">
+      <DependentUpon>RemoteInstallForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\SetupForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -655,6 +661,9 @@
     <EmbeddedResource Include="Forms\PublishBuildForm.resx">
       <DependentUpon>PublishBuildForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RemoteInstallForm.resx">
+      <DependentUpon>RemoteInstallForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\SetupForm.resx">
       <DependentUpon>SetupForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -738,6 +747,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.network.png" />
     <None Include="Resources\appbar.draw.pencil.png" />
     <None Include="Resources\appbar.transit.connection.png" />
     <None Include="Resources\appbar.network.home.png" />

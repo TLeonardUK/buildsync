@@ -58,6 +58,11 @@ namespace BuildSync.Server
         public static BuildManifestRegistry BuildRegistry;
 
         /// <summary>
+        /// 
+        /// </summary>
+        public static RemoteActionServer RemoteActionServer;
+
+        /// <summary>
         /// </summary>
         public static bool InCommandLineMode = false;
 
@@ -207,6 +212,7 @@ namespace BuildSync.Server
             BuildRegistry.Poll();
             NetServer.Poll();
             LicenseMgr.Poll();
+            RemoteActionServer.Poll();
 
             NetServer.MaxConnectedClients = LicenseMgr.ActiveLicense.MaxSeats;
             Settings.MaxBandwidth = NetServer.BandwidthLimit;
@@ -278,6 +284,8 @@ namespace BuildSync.Server
             NetServer = new Core.Server.Server();
             NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager, LicenseMgr, TagRegistry, RouteRegistry);
             NetServer.BandwidthLimit = Settings.MaxBandwidth;
+
+            RemoteActionServer = new RemoteActionServer(NetServer);
         }
 
         /// <summary>

@@ -37,14 +37,15 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        private readonly Task Work;
+        public Task Work;
 
         /// <summary>
         /// </summary>
-        public ProgressForm(Task task)
+        public ProgressForm()
         {
-            Work = task;
             InitializeComponent();
+
+            SetProgress("Installing ...", 0);
         }
 
         /// <summary>
@@ -58,7 +59,10 @@ namespace BuildSync.Client.Forms
             Invoke(
                 (MethodInvoker) (() =>
                 {
-                    TaskProgressLabel.Text = Message;
+                    if (Message != "")
+                    {
+                        TaskProgressLabel.Text = Message;
+                    }
                     TaskProgressBar.Value = (int) (Progress * 100);
                 })
             );
@@ -91,9 +95,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void UpdateTimerTick(object sender, EventArgs e)
         {
-            SetProgress("Installing ...", 0);
-
-            if (Work.IsCompleted)
+            if (Work != null && Work.IsCompleted)
             {
                 UpdateTimer.Enabled = false;
                 Finished = true;

@@ -115,6 +115,11 @@ namespace BuildSync.Core.Server
         /// 
         /// </summary>
         public int VersionNumeric = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool AllowRemoteActions = false;
     }
 
 }

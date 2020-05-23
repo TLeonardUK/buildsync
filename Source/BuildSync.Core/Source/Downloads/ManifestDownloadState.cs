@@ -287,5 +287,15 @@ namespace BuildSync.Core.Downloads
         /// </summary>
         [JsonIgnore]
         public float ValidateProgress { get; internal set; }
+
+        /// <summary>
+        /// </summary>
+        [JsonIgnore]
+        public float InstallProgress { get; internal set; } = -1.0f;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public InstallRateEstimater InstallRateEstimater = new InstallRateEstimater();
     }
 }

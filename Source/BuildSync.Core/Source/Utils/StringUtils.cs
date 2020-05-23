@@ -24,6 +24,64 @@ using System;
 namespace BuildSync.Core.Utils
 {
     /// <summary>
+    /// 
+    /// </summary>
+    public class LineBuilder
+    {
+        private string UnparsedInput = "";
+        private bool Ended = false;
+
+        public string Seperator = "\n";
+
+        public string GetUnparsed()
+        {
+            return UnparsedInput;
+        }
+
+        public void Add(string Input)
+        {
+            UnparsedInput += Input;
+        }
+
+        public string Read()
+        {
+            int LineEnd = UnparsedInput.IndexOf(Seperator);
+            if (LineEnd < 0)
+            {
+                if (Ended && UnparsedInput.Length > 0)
+                {
+                    string Value = UnparsedInput;
+                    UnparsedInput = "";
+                    return Value;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            string Line = UnparsedInput.Substring(0, LineEnd);
+            if (Seperator == "\n")
+            {
+                Line = Line.Trim('\r');
+            }
+
+            UnparsedInput = UnparsedInput.Substring(LineEnd + 1);
+            if (Seperator == "\n")
+            {
+                UnparsedInput = UnparsedInput.Trim('\r');
+            }
+
+            return Line;
+        }
+
+        public void End()
+        {
+            Ended = true;
+        }
+    }
+
+    /// <summary>
     /// </summary>
     public static class StringUtils
     {

@@ -164,6 +164,19 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RemoteInstallClicked(object sender, EventArgs e)
+        {
+            RemoteInstallForm Form = new RemoteInstallForm();
+            Form.ManifestId = downloadFileSystemTree.SelectedManifestId;
+            Form.ManifestPath = downloadFileSystemTree.SelectedPath;
+            Form.ShowDialog(this);
+        }
+
+        /// <summary>
         /// </summary>
         private void ValidateState()
         {
@@ -174,6 +187,7 @@ namespace BuildSync.Client.Forms
             addDownloadToolStripMenuItem1.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId == Guid.Empty);
             addTagToolStripMenuItem.Enabled = CanTag && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
             downloadToolStripMenuItem.Enabled = (downloadFileSystemTree.SelectedManifestId != Guid.Empty || downloadFileSystemTree.IsSelectedBuildContainer);
+            remoteInstallToolStripMenuItem.Enabled = (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
 
             List<Tag> Tags = downloadFileSystemTree.SelectedManifestTags;
             if (Tags != null)

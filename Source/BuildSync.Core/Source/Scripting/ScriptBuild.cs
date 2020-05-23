@@ -28,6 +28,13 @@ using System.Threading.Tasks;
 namespace BuildSync.Core.Scripting
 {
     /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="State"></param>
+    /// <param name="Progress"></param>
+    public delegate void ScriptBuildProgressDelegate(string State, float Progress);
+
+    /// <summary>
     ///     Represents a the properties of a downloaded build that is exposed to build scripts.
     /// </summary>
     public class ScriptBuild
@@ -46,5 +53,34 @@ namespace BuildSync.Core.Scripting
         ///     User defined location or workspace name that build should be installed to.
         /// </summary>
         public string InstallLocation = "";
+
+        /// <summary>
+        ///     Delegate to call to provide the progress of a specific process happening to this build.
+        /// </summary>
+        public ScriptBuildProgressDelegate ProgressCallback;
+
+        /// <summary>
+        ///     Error message describing while action failed.
+        /// </summary>
+        public string ErrorMessage = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
+        /// <param name="Progress"></param>
+        public void ReportProgress(string State, float Progress)
+        {
+            ProgressCallback?.Invoke(State, Progress);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Message"></param>
+        public void ReportError(string Message)
+        {
+            ErrorMessage = Message;
+        }
     }
 }

@@ -149,12 +149,15 @@
     <Reference Include="p4api.net, Version=2019.3.189.3442, Culture=neutral, PublicKeyToken=f6b9b9d036c873e1, processorArchitecture=x86">
       <HintPath>..\..\packages\p4api.net.x86.2019.3.189.3442\lib\net40\p4api.net.dll</HintPath>
     </Reference>
+    <Reference Include="SharpCompress, Version=0.25.0.0, Culture=neutral, PublicKeyToken=afb0a02973931d96, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\SharpCompress.0.25.0\lib\net46\SharpCompress.dll</HintPath>
+    </Reference>
     <Reference Include="Snappy.NET, Version=1.1.1.8, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Snappy.NET.1.1.1.8\lib\net45\Snappy.NET.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Buffers.4.5.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
+      <HintPath>..\..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
     </Reference>
     <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Collections.Immutable.1.5.0\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
@@ -164,7 +167,7 @@
     <Reference Include="System.DirectoryServices.AccountManagement" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Memory.4.5.3\lib\netstandard2.0\System.Memory.dll</HintPath>
+      <HintPath>..\..\packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
     </Reference>
     <Reference Include="System.Numerics" />
     <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -176,8 +179,8 @@
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.6.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe.4.7.0\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
-    <Reference Include="System.Text.Encoding.CodePages, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Text.Encoding.CodePages.4.5.1\lib\net461\System.Text.Encoding.CodePages.dll</HintPath>
+    <Reference Include="System.Text.Encoding.CodePages, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Text.Encoding.CodePages.4.7.0\lib\net461\System.Text.Encoding.CodePages.dll</HintPath>
     </Reference>
     <Reference Include="System.Text.Encodings.Web, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\..\packages\System.Text.Encodings.Web.4.7.0\lib\netstandard2.0\System.Text.Encodings.Web.dll</HintPath>
@@ -202,6 +205,7 @@
   <ItemGroup>
     <Compile Include="Client\Client.cs" />
     <Compile Include="Client\Peer.cs" />
+    <Compile Include="Client\RemoteActionClient.cs" />
     <Compile Include="Controls\SegmentedProgressBar.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -214,6 +218,11 @@
     <Compile Include="Controls\SizeTextBox.Designer.cs">
       <DependentUpon>SizeTextBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="Networking\Messages\RemoteActions\NetMessage_SolicitAcceptRemoteAction.cs" />
+    <Compile Include="Networking\Messages\RemoteActions\NetMessage_SolicitRemoteAction.cs" />
+    <Compile Include="Networking\Messages\RemoteActions\NetMessage_RemoteActionProgress.cs" />
+    <Compile Include="Networking\Messages\RemoteActions\NetMessage_CancelRemoteAction.cs" />
+    <Compile Include="Networking\Messages\RemoteActions\NetMessage_RequestRemoteAction.cs" />
     <Compile Include="Networking\Messages\NetMessage_AddTagToClient.cs" />
     <Compile Include="Networking\Messages\NetMessage_BuildUpdated.cs" />
     <Compile Include="Networking\Messages\NetMessage_CreateRoute.cs" />
@@ -244,6 +253,7 @@
     <Compile Include="Networking\NetDiscoveryServer.cs" />
     <Compile Include="Routes\Route.cs" />
     <Compile Include="Routes\RouteRegistry.cs" />
+    <Compile Include="Server\RemoteActionServer.cs" />
     <Compile Include="Server\Server.cs" />
     <Compile Include="Controls\Graph\GraphAxis.cs" />
     <Compile Include="Controls\Graph\GraphControl.cs">
@@ -317,6 +327,8 @@
     <Compile Include="Users\UserPermission.cs" />
     <Compile Include="Utils\DomainUtils.cs" />
     <Compile Include="Utils\FileCopyEx.cs" />
+    <Compile Include="Utils\InstallRateEstimater.cs" />
+    <Compile Include="Utils\ProgressParser.cs" />
     <Compile Include="Utils\RollingAverageOverTime.cs" />
     <Compile Include="Utils\Sha1.cs" />
     <Compile Include="Users\UserManager.cs" />
@@ -357,6 +369,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <Content Include="Libraries\7zip\7za.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libraries\7zip\7za.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libraries\7zip\7zxa.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

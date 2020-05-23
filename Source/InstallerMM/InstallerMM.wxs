@@ -3,11 +3,14 @@
   <?define ComponentRules="OneToOne"?>
   <!-- SourceDir instructs IsWiX the location of the directory that contains files for this merge module -->
   <?define SourceDir="..\..\Build\Deploy"?>
-  <Module Id="BuildSync" Language="1033" Version="1.0.0.657">
+  <Module Id="BuildSync" Language="1033" Version="1.0.0.687">
     <Package Id="2bfad680-e708-481c-9cd4-f285482e7ace" Manufacturer="Tim Leonard" InstallerVersion="200" Description="Tool for distributing application builds" />
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="DesktopFolder" />
       <Directory Id="MergeRedirectFolder">
+        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA334D" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb75E">
+          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA334D" Source="$(var.SourceDir)\Aga.Controls.dll" KeyPath="yes" />
+        </Component>
         <Component Id="owcFEEF4EC13D5829AA1F4B665E68798E5C" Guid="3c9b1fb9-0ed3-e2da-167a-aeff34952dfa">
           <File Id="owfFEEF4EC13D5829AA1F4B665E68798E5C" Source="$(var.SourceDir)\BuildSync.Client.Cmd.exe" KeyPath="yes" />
         </Component>
@@ -40,32 +43,20 @@
         <Component Id="owc8E6D480EBF8E2E304795EDCB349DD37B" Guid="2eb1c63e-1243-a985-cfe2-559525145a92">
           <File Id="owf8E6D480EBF8E2E304795EDCB349DD37B" Source="$(var.SourceDir)\BuildSync.Server.exe.config" KeyPath="yes" />
         </Component>
-        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA334D" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb75E">
-          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA334D" Source="$(var.SourceDir)\Aga.Controls.dll" KeyPath="yes" />
-        </Component>                    
-        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA331E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb71d">
-          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA331E" Source="$(var.SourceDir)\Crc32C.NET.dll" KeyPath="yes" />
-        </Component>
-        <Component Id="owcCC0B5763E5D746D67336096F2BA79D1F" Guid="b369ef03-816b-f2b9-8776-5a4261f85415">
-          <File Id="owfCC0B5763E5D746D67336096F2BA79D1F" Source="$(var.SourceDir)\Crc32C.NET.xml" KeyPath="yes" />
-        </Component>          
-        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA332E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb72d">
-          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA332E" Source="$(var.SourceDir)\Snappy.NET.dll" KeyPath="yes" />
-        </Component>
-        <Component Id="owcCC0B5763E5D746D67336096F2BA79D2F" Guid="b369ef03-816b-f2b9-8776-5a4261f85425">
-          <File Id="owfCC0B5763E5D746D67336096F2BA79D2F" Source="$(var.SourceDir)\Snappy.NET.xml" KeyPath="yes" />
-        </Component>          
         <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA334E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb75d">
           <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA334E" Source="$(var.SourceDir)\CommandLine.dll" KeyPath="yes" />
         </Component>
         <Component Id="owcCC0B5763E5D746D67336096F2BA79DAF" Guid="b369ef03-816b-f2b9-8776-5a4261f854e5">
           <File Id="owfCC0B5763E5D746D67336096F2BA79DAF" Source="$(var.SourceDir)\CommandLine.xml" KeyPath="yes" />
         </Component>
+        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA331E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb71d">
+          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA331E" Source="$(var.SourceDir)\Crc32C.NET.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owcCC0B5763E5D746D67336096F2BA79D1F" Guid="b369ef03-816b-f2b9-8776-5a4261f85415">
+          <File Id="owfCC0B5763E5D746D67336096F2BA79D1F" Source="$(var.SourceDir)\Crc32C.NET.xml" KeyPath="yes" />
+        </Component>
         <Component Id="owcF06498D8F3D12EBEB0A2F60F5A025866" Guid="b86a3853-ad9d-7880-e66f-c889a1f6936b">
           <File Id="owfF06498D8F3D12EBEB0A2F60F5A025866" Source="$(var.SourceDir)\Microsoft.Bcl.AsyncInterfaces.dll" KeyPath="yes" />
-        </Component>
-		<Component Id="owcF06498D8F3D12EBEB0A2F60F5A025836" Guid="b86a3853-ad9d-7880-e66f-c889a1f6933b">
-          <File Id="owfF06498D8F3D12EBEB0A2F60F5A025836" Source="$(var.SourceDir)\Microsoft.Deployment.WindowsInstaller.dll" KeyPath="yes" />
         </Component>
         <Component Id="owcF03BAA7D34C5BF86184D75575A3A607E" Guid="3d43fdd9-068f-f4da-58bb-df2d7ad213b8">
           <File Id="owfF03BAA7D34C5BF86184D75575A3A607E" Source="$(var.SourceDir)\Microsoft.Bcl.AsyncInterfaces.xml" KeyPath="yes" />
@@ -94,6 +85,9 @@
         <Component Id="owc94DA77F698D0255B6EBC241EBB094758" Guid="da5c31e1-cc50-819b-bff5-c7777c042c25">
           <File Id="owf94DA77F698D0255B6EBC241EBB094758" Source="$(var.SourceDir)\Microsoft.CodeAnalysis.xml" KeyPath="yes" />
         </Component>
+        <Component Id="owcF06498D8F3D12EBEB0A2F60F5A025836" Guid="b86a3853-ad9d-7880-e66f-c889a1f6933b">
+          <File Id="owfF06498D8F3D12EBEB0A2F60F5A025836" Source="$(var.SourceDir)\Microsoft.Deployment.WindowsInstaller.dll" KeyPath="yes" />
+        </Component>
         <Component Id="owc0A68ED0C7DF765A52CE9757CA28D897C" Guid="035aa5d3-33dc-f3c7-267b-cbe441df6198">
           <File Id="owf0A68ED0C7DF765A52CE9757CA28D897C" Source="$(var.SourceDir)\Microsoft.WindowsAPICodePack.dll" KeyPath="yes" />
         </Component>
@@ -117,6 +111,15 @@
         </Component>
         <Component Id="owc73A49B67EFECE681DDA4E470246C2D32" Guid="762e6f4e-cc16-3cfd-9f8b-62910bbd6a43">
           <File Id="owf73A49B67EFECE681DDA4E470246C2D32" Source="$(var.SourceDir)\p4bridge.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA333E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb73d">
+          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA333E" Source="$(var.SourceDir)\SharpCompress.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owcE73C3D776906E1A4FB0ACF4EC9AA332E" Guid="ccc64beb-acb8-c98a-8f8c-0661a74cb72d">
+          <File Id="owfE73C3D776906E1A4FB0ACF4EC9AA332E" Source="$(var.SourceDir)\Snappy.NET.dll" KeyPath="yes" />
+        </Component>
+        <Component Id="owcCC0B5763E5D746D67336096F2BA79D2F" Guid="b369ef03-816b-f2b9-8776-5a4261f85425">
+          <File Id="owfCC0B5763E5D746D67336096F2BA79D2F" Source="$(var.SourceDir)\Snappy.NET.xml" KeyPath="yes" />
         </Component>
         <Component Id="owc266C4DEC591C8A54CCC1D3C61FC512AA" Guid="2224179c-4d85-88a2-23e2-bc0c27cadd0e">
           <File Id="owf266C4DEC591C8A54CCC1D3C61FC512AA" Source="$(var.SourceDir)\System.Buffers.dll" KeyPath="yes" />
@@ -292,6 +295,19 @@
           <Component Id="owc49136EC48B42F29310D5FAB96EB39C77" Guid="7d59fb12-e36d-3b98-1b54-8182dc102913">
             <File Id="owf49136EC48B42F29310D5FAB96EB39C77" Source="$(var.SourceDir)\ko\Microsoft.CodeAnalysis.Scripting.resources.dll" KeyPath="yes" />
           </Component>
+        </Directory>
+        <Directory Id="owdBA7CE54BBE3BCDA358937391CFBBFE6B" Name="Libraries">
+          <Directory Id="owd250F2E25A964B3211205F94BAEF4E13F" Name="7zip">
+            <Component Id="owcF7919D093158F892E38F3D2965546074" Guid="50731126-25c9-6b0d-97a6-2265afe2f27f">
+              <File Id="owfF7919D093158F892E38F3D2965546074" Source="$(var.SourceDir)\Libraries\7zip\7za.dll" KeyPath="yes" />
+            </Component>
+            <Component Id="owcAD352CF41DF46334F0FC5CAF7A3DE7CC" Guid="45cdf519-0788-f68d-aa68-43f47afb170f">
+              <File Id="owfAD352CF41DF46334F0FC5CAF7A3DE7CC" Source="$(var.SourceDir)\Libraries\7zip\7za.exe" KeyPath="yes" />
+            </Component>
+            <Component Id="owc312C55B15A0C78E29503B3B39EA55C94" Guid="d4382ee3-1a4c-6bdf-0f42-adaf5350f5b5">
+              <File Id="owf312C55B15A0C78E29503B3B39EA55C94" Source="$(var.SourceDir)\Libraries\7zip\7zxa.dll" KeyPath="yes" />
+            </Component>
+          </Directory>
         </Directory>
         <Directory Id="owdC3B37D0EB36BEDA1B06A324A062DC94D" Name="pl">
           <Component Id="owc4D2D720AD4B25046F5C3A8337C58558F" Guid="f9f595eb-39b5-e326-d983-3aca9a6bb500">
