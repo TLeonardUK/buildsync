@@ -107,6 +107,11 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
+        public string MachineName { get; set; } = "Unknown Host";
+
+        /// <summary>
+        /// 
+        /// </summary>
         public float AverageRateIn { get; set; } = 0;
 
         /// <summary>
@@ -199,7 +204,7 @@ namespace BuildSync.Client
         /// <summary>
         /// 
         /// </summary>
-        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.Oldest;
+        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.OldestInLargestContainer;
 
         /// <summary>
         /// 

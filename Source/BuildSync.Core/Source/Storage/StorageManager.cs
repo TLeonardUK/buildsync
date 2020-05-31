@@ -89,7 +89,7 @@ namespace BuildSync.Core.Storage
 
         /// <summary>
         /// </summary>
-        private readonly List<string> PendingOrphanCleanups = new List<string>();
+        private readonly List<string> PendingDirectoryCleanups = new List<string>();
 
         /// <summary>
         /// </summary>
@@ -352,51 +352,145 @@ namespace BuildSync.Core.Storage
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public void ResetPruneTimeout()
+        {
+            TimeSinceLastPruneRequest = 0;
+        }
+
+        /// <summary>
         /// </summary>
         public void PruneDiskSpace()
         {
-            if (TimeUtils.Ticks - TimeSinceLastPruneRequest < 3000)
+            if (TimeUtils.Ticks - TimeSinceLastPruneRequest < 60 * 1000)
+            {
+                return;
+            }
+
+            if (PendingDirectoryCleanups.Count > 0)
+            {
+                return;
+            }
+
+            if (CleanUpOrphanBuilds())
+            {
+                return;
+            }
+
+            if (DeleteIncompleteBuilds())
             {
                 return;
             }
 
             foreach (StorageLocation Location in Locations)
             {
+                string NormalizedLocationPath = FileUtils.NormalizePath(Location.Path);
+
                 long UsedSpace = GetLocationDiskUsage(Location);
-                if (UsedSpace > Location.MaxSize) // Throttle send rate to give server time to respond.
+                long FreeSpace = GetLocationFreeSpace(Location, true);
+
+                if (FreeSpace < Location.MinimumSpaceOnDrive || UsedSpace > Location.MaxSize) 
                 {
-                    if (!CleanUpOrphanBuilds())
+                    // Select manifests for deletion in this location.
+                    List<ManifestDownloadState> DeletionCandidates = new List<ManifestDownloadState>();
+                    foreach (ManifestDownloadState State in DownloadManager.States.States)
                     {
-                        // Select manifests for deletion.
-                        List<ManifestDownloadState> DeletionCandidates = new List<ManifestDownloadState>();
-                        foreach (ManifestDownloadState State in DownloadManager.States.States)
+                        // This download is currently being worked on, don't try and clean it up.
+                        if (DownloadManager.IsDownloadBlocked(State.ManifestId))
                         {
-                            if (!State.Active && State.LocalFolder != "")
-                            {
-                                if (State.Manifest != null && !FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder))
-                                {
-                                    DeletionCandidates.Add(State);
-                                }
-                            }
-                        }
-                        if (DeletionCandidates.Count > 0)
-                        {
-                            DeletionCandidates.Sort((Item1, Item2) => Item1.LastActive.CompareTo(Item2.LastActive));
-
-                            // Request the server to select the next candidate for deletion.
-                            List<Guid> DeletionCandidatesIds = new List<Guid>();
-                            foreach (ManifestDownloadState State in DeletionCandidates)
-                            {
-                                DeletionCandidatesIds.Add(State.ManifestId);
-                            }
-
-                            OnRequestChooseDeletionCandidate?.Invoke(DeletionCandidatesIds, StorageHeuristic, StoragePrioritizeKeepingBuildTagIds, StoragePrioritizeDeletingBuildTagIds);
+                            continue;
                         }
 
-                        TimeSinceLastPruneRequest = TimeUtils.Ticks;
+                        // Not part of this storage location.
+                        if (!FileUtils.NormalizePath(State.LocalFolder).StartsWith(NormalizedLocationPath))
+                        {
+                            continue;
+                        }
+
+                        // Active or no local folder allocated yet.
+                        if (State.Active || State.LocalFolder == "")
+                        {
+                            continue;
+                        }
+
+                        // No manifest yet.
+                        if (State.Manifest == null)
+                        {
+                            continue;
+                        }
+
+                        // Something is active in the directory.
+                        if (FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder))
+                        {
+                            continue;
+                        }
+
+                        DeletionCandidates.Add(State);
+                    }
+
+                    if (DeletionCandidates.Count > 0)
+                    {
+                        DeletionCandidates.Sort((Item1, Item2) => Item1.LastActive.CompareTo(Item2.LastActive));
+
+                        // Request the server to select the next candidate for deletion.
+                        List<Guid> DeletionCandidatesIds = new List<Guid>();
+                        foreach (ManifestDownloadState State in DeletionCandidates)
+                        {
+                            DeletionCandidatesIds.Add(State.ManifestId);
+                        }
+
+                        OnRequestChooseDeletionCandidate?.Invoke(DeletionCandidatesIds, StorageHeuristic, StoragePrioritizeKeepingBuildTagIds, StoragePrioritizeDeletingBuildTagIds);
+                    }
+
+                    TimeSinceLastPruneRequest = TimeUtils.Ticks;
+                }
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        public bool DeleteIncompleteBuilds()
+        {
+            foreach (ManifestDownloadState State in DownloadManager.States.States)
+            {
+                // This download is currently being worked on, don't try and clean it up.
+                if (DownloadManager.IsDownloadBlocked(State.ManifestId))
+                {
+                    continue;
+                }
+
+                // Active or no local folder allocated yet.
+                if (State.Active || State.LocalFolder == "")
+                {
+                    continue;
+                }
+
+                // Download complete, don't touch.
+                if (State.BlockStates.AreAllSet(true))
+                {
+                    continue;
+                }
+
+                // Something is active in the directory.
+                if (FileUtils.AnyRunningProcessesInDirectory(State.LocalFolder))
+                {
+                    continue;
+                }
+
+                lock (PendingDirectoryCleanups)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Deleting directory as incomplete and no longer active: {0}", State.LocalFolder);
+                    if (!PendingDirectoryCleanups.Contains(State.LocalFolder))
+                    {
+                        PendingDirectoryCleanups.Add(State.LocalFolder);
+                        DownloadManager.PruneManifest(State.ManifestId, bSuccess => { PendingDirectoryCleanups.Remove(State.LocalFolder); });
+                        return true;
                     }
                 }
             }
+
+            return false;
         }
 
         /// <summary>
@@ -427,13 +521,13 @@ namespace BuildSync.Core.Storage
                             BuildManifest Manifest = ManifestRegistry.GetManifestById(ManifestId);
                             if (Manifest == null)
                             {
-                                lock (PendingOrphanCleanups)
+                                lock (PendingDirectoryCleanups)
                                 {
                                     Logger.Log(LogLevel.Info, LogCategory.Manifest, "Deleting directory in storage folder that appears to have no matching manifest (probably a previous failed delete): {0}", Dir);
-                                    if (!PendingOrphanCleanups.Contains(Dir))
+                                    if (!PendingDirectoryCleanups.Contains(Dir))
                                     {
-                                        PendingOrphanCleanups.Add(Dir);
-                                        IOQueue.DeleteDir(Dir, bSuccess => { PendingOrphanCleanups.Remove(Dir); });
+                                        PendingDirectoryCleanups.Add(Dir);
+                                        IOQueue.DeleteDir(Dir, bSuccess => { PendingDirectoryCleanups.Remove(Dir); });
                                         Result = true;
                                     }
                                 }

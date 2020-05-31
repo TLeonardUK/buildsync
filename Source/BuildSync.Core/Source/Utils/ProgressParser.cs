@@ -20,6 +20,7 @@
 */
 
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Linq;
@@ -228,7 +229,14 @@ namespace BuildSync.Core.Utils
                         switch (Match.Type)
                         {
                             case ProgressMatchType.CurrentFile: int.TryParse(Value, out CurrentFile); break;
-                            case ProgressMatchType.CurrentFileName: CurrentFileName = Value; break;
+                            case ProgressMatchType.CurrentFileName:
+                                {
+                                    if (Value.IndexOfAny(Path.GetInvalidPathChars()) < 0 && Value != CurrentFileName)
+                                    {
+                                        CurrentFileName = Value;
+                                    }
+                                    break;
+                                }
                             case ProgressMatchType.FileCount: int.TryParse(Value, out FileCount); break;
                             case ProgressMatchType.FileProgress: float.TryParse(Value, out FileProgress); break;
                             case ProgressMatchType.Progress: float.TryParse(Value, out Progress); ProgressExplicitlySet = true;  break;

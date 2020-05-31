@@ -94,6 +94,7 @@ namespace BuildSync.Core.Scripting
                 StartInfo.CreateNoWindow = true;
 
                 Process.Start(StartInfo);
+                // Should we add this to childprocesstracker? not sure.
             }
             catch (Exception Ex)
             {
@@ -127,6 +128,8 @@ namespace BuildSync.Core.Scripting
                 StartInfo.CreateNoWindow = true;
 
                 Process process = Process.Start(StartInfo);
+                ChildProcessTracker.AddProcess(process);
+
                 /*process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e) 
                 {
                     OutputLineBuilder.Add(e.Data);

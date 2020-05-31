@@ -303,9 +303,29 @@ namespace BuildSync.Client.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap appbar_folder {
+            get {
+                object obj = ResourceManager.GetObject("appbar_folder", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap appbar_folder_open {
             get {
                 object obj = ResourceManager.GetObject("appbar_folder_open", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_folder_open2 {
+            get {
+                object obj = ResourceManager.GetObject("appbar_folder_open2", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -326,6 +346,16 @@ namespace BuildSync.Client.Properties {
         internal static System.Drawing.Bitmap appbar_folder_star {
             get {
                 object obj = ResourceManager.GetObject("appbar_folder_star", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_folder2 {
+            get {
+                object obj = ResourceManager.GetObject("appbar_folder2", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -406,6 +436,56 @@ namespace BuildSync.Client.Properties {
         internal static System.Drawing.Bitmap appbar_network_server_connecting {
             get {
                 object obj = ResourceManager.GetObject("appbar.network.server.connecting", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_page {
+            get {
+                object obj = ResourceManager.GetObject("appbar_page", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_page_add {
+            get {
+                object obj = ResourceManager.GetObject("appbar_page_add", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_page_delete {
+            get {
+                object obj = ResourceManager.GetObject("appbar_page_delete", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_page_edit {
+            get {
+                object obj = ResourceManager.GetObject("appbar_page_edit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap appbar_page_search {
+            get {
+                object obj = ResourceManager.GetObject("appbar.page.search", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

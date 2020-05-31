@@ -177,17 +177,46 @@ namespace BuildSync.Client.Forms
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DiffBuildsClicked(object sender, EventArgs e)
+        {
+            DiffManifestForm Form = new DiffManifestForm();
+            Form.SourceManifestId = downloadFileSystemTree.SelectedManifestIds[0];
+            Form.DestinationManifestId = downloadFileSystemTree.SelectedManifestIds[1];
+            Form.ShowDialog(this);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>d
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ExampleBuildClicked(object sender, EventArgs e)
+        {
+            ExamineManifestForm Form = new ExamineManifestForm();
+            Form.ManifestId = downloadFileSystemTree.SelectedManifestIds[0];
+            Form.ShowDialog(this);
+        }
+
+        /// <summary>
         /// </summary>
         private void ValidateState()
         {
             bool CanManage = Program.NetClient.Permissions.HasPermission(UserPermissionType.Write, "", false, true);
             bool CanTag = Program.NetClient.Permissions.HasPermission(UserPermissionType.TagBuilds, "", false, true);
 
+            int SelectedManifestCount = downloadFileSystemTree.SelectedManifestIds.Count;
+
             deleteToolStripMenuItem.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
             addDownloadToolStripMenuItem1.Enabled = CanManage && (downloadFileSystemTree.SelectedManifestId == Guid.Empty);
             addTagToolStripMenuItem.Enabled = CanTag && (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
             downloadToolStripMenuItem.Enabled = (downloadFileSystemTree.SelectedManifestId != Guid.Empty || downloadFileSystemTree.IsSelectedBuildContainer);
             remoteInstallToolStripMenuItem.Enabled = (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
+            diffManifestsToolStripMenuItem.Enabled = (SelectedManifestCount == 2);
+            examineBuildToolStripMenuItem.Enabled = (downloadFileSystemTree.SelectedManifestId != Guid.Empty);
 
             List<Tag> Tags = downloadFileSystemTree.SelectedManifestTags;
             if (Tags != null)

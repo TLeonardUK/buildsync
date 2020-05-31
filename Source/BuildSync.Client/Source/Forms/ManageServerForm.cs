@@ -75,6 +75,7 @@ namespace BuildSync.Client.Forms
             InitializeComponent();
 
             WindowUtils.EnableDoubleBuffering(MainListView);
+            WindowUtils.EnableDoubleBuffering(InstallsListView);
 
             MainListView.ListViewItemSorter = ColumnSorter;
         }
@@ -238,6 +239,8 @@ namespace BuildSync.Client.Forms
         {
             MaxBandwidthBox.Value = Msg.BandwidthLimit;
 
+            // Client States
+
             // Add new items.
             foreach (NetMessage_GetServerStateResponse.ClientState State in Msg.ClientStates)
             {
@@ -272,7 +275,7 @@ namespace BuildSync.Client.Forms
                     if ((Item.Tag as NetMessage_GetServerStateResponse.ClientState).Address == State.Address)
                     {
                         Item.SubItems[0].Text = State.Username;
-                        Item.SubItems[1].Text = HostnameCache.GetHostname(State.Address);
+                        Item.SubItems[1].Text = State.MachineName;
                         Item.SubItems[2].Text = Program.TagRegistry.IdsToString(State.TagIds);
                         Item.SubItems[3].Text = StringUtils.FormatAsTransferRate(State.DownloadRate);
                         Item.SubItems[4].Text = StringUtils.FormatAsTransferRate(State.UploadRate);
@@ -296,13 +299,66 @@ namespace BuildSync.Client.Forms
                 }
             }
 
+            // Remote Installs
+
+            // Add new items.
+            foreach (NetMessage_GetServerStateResponse.RemoteInstallState State in Msg.InstallStates)
+            {
+                bool Exists = false;
+                foreach (ListViewItem Item in InstallsListView.Items)
+                {
+                    if ((Item.Tag as NetMessage_GetServerStateResponse.RemoteInstallState).Id == State.Id)
+                    {
+                        Exists = true;
+                        break;
+                    }
+                }
+
+                if (!Exists)
+                {
+                    ListViewItem Item = new ListViewItem(new string[5]);
+                    Item.Tag = State;
+                    Item.ImageIndex = 0;
+
+                    InstallsListView.Items.Add(Item);
+                }
+            }
+
+            // Remove old items or update existing updates.
+            for (int i = 0; i < InstallsListView.Items.Count; i++)
+            {
+                ListViewItem Item = InstallsListView.Items[i];
+
+                bool Exists = false;
+                foreach (NetMessage_GetServerStateResponse.RemoteInstallState State in Msg.InstallStates)
+                {
+                    if ((Item.Tag as NetMessage_GetServerStateResponse.RemoteInstallState).Id == State.Id)
+                    {
+                        Item.SubItems[0].Text = State.Type.ToString();
+                        Item.SubItems[1].Text = State.Requester;
+                        Item.SubItems[2].Text = State.AssignedTo;
+                        Item.SubItems[3].Text = (int)(State.Progress * 100.0f) + "%";
+                        Item.SubItems[4].Text = State.ProgressText;
+                        Item.Tag = State;
+
+                        Exists = true;
+                        break;
+                    }
+                }
+
+                if (!Exists)
+                {
+                    InstallsListView.Items.Remove(Item);
+                    i--;
+                }
+            }
+
             // Update total bandwidth.
             long TotalBandwidth = 0;
             foreach (NetMessage_GetServerStateResponse.ClientState State in Msg.ClientStates)
             {
                 TotalBandwidth += State.DownloadRate;
             }
-
             BandwithGraph.Series[0].AddDataPoint(Environment.TickCount / 1000.0f, TotalBandwidth);
         }
     }

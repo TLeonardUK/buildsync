@@ -196,6 +196,7 @@ namespace BuildSync.Client.Controls
             {
                 Controls.Add(EmptyPanel);
             }
+            AddDownloadButton.Enabled = (Program.NetClient.IsConnected);
         }
 
         /// <summary>

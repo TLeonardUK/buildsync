@@ -77,6 +77,8 @@ namespace BuildSync.Core.Server
         struct ManifestDeletionCandidate
         {
             public Guid Id;
+            public string Path;
+            public string ParentPath;
             public DateTime LastSeen;
             public DateTime CreateTime;
             public int NumberOfPeersWithFullBuild;
@@ -106,6 +108,11 @@ namespace BuildSync.Core.Server
         /// <summary>
         /// </summary>
         private TagRegistry TagRegistry;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private RemoteActionServer RemoteActionServer;
 
         /// <summary>
         /// </summary>
@@ -427,13 +434,14 @@ namespace BuildSync.Core.Server
         /// </summary>
         /// <param name="Hostname"></param>
         /// <param name="Port"></param>
-        public void Start(int Port, BuildManifestRegistry BuildManifest, UserManager InUserManager, LicenseManager InLicenseManager, TagRegistry InTagRegistry, RouteRegistry InRouteRegistry)
+        public void Start(int Port, BuildManifestRegistry BuildManifest, UserManager InUserManager, LicenseManager InLicenseManager, TagRegistry InTagRegistry, RouteRegistry InRouteRegistry, RemoteActionServer InRemoteActionServer)
         {
             ServerPort = Port;
             Started = true;
             ManifestRegistry = BuildManifest;
             TagRegistry = InTagRegistry;
             RouteRegistry = InRouteRegistry;
+            RemoteActionServer = InRemoteActionServer;
 
             LicenseManager = InLicenseManager;
 
@@ -836,6 +844,12 @@ namespace BuildSync.Core.Server
                     State.PermissionsNeedUpdate = true;
                 }
 
+                if (State.MachineName != Connection.Handshake.MachineName)
+                {
+                    State.MachineName = Connection.Handshake.MachineName;
+                    State.PermissionsNeedUpdate = true;
+                }
+
                 // Dirty all peer states to force an address update (todo: this is shit we should only update relevant peers).
                 List<NetConnection> Clients = ListenConnection.AllClients;
                 foreach (NetConnection ClientConnection in Clients)
@@ -847,8 +861,7 @@ namespace BuildSync.Core.Server
                     }
                 }
 
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Clients username was updated to: " + State.Username);
-                Logger.Log(LogLevel.Info, LogCategory.Main, "Clients connection address was updated to: " + State.PeerConnectionAddress);
+                Logger.Log(LogLevel.Info, LogCategory.Main, "Connection Info: Username=" + State.Username + " Hostname="+State.MachineName + " Address="+ State.PeerConnectionAddress);
             }
 
             // ------------------------------------------------------------------------------
@@ -1445,6 +1458,7 @@ namespace BuildSync.Core.Server
                         {
                             NetMessage_GetServerStateResponse.ClientState NewState = new NetMessage_GetServerStateResponse.ClientState();
                             NewState.Username = Sub.Username;
+                            NewState.MachineName = Sub.MachineName;
                             NewState.Address = Sub.PeerConnectionAddress.Address.ToString();
                             NewState.DownloadRate = Sub.DownloadRate;
                             NewState.UploadRate = Sub.UploadRate;
@@ -1459,6 +1473,18 @@ namespace BuildSync.Core.Server
                             ResponseMsg.ClientStates.Add(NewState);
                         }
                     }
+                }
+
+                foreach (RemoteActionServerState Action in RemoteActionServer.States)
+                {
+                    NetMessage_GetServerStateResponse.RemoteInstallState NewState = new NetMessage_GetServerStateResponse.RemoteInstallState();
+                    NewState.Requester = Action.ForClient.Handshake.MachineName;
+                    NewState.AssignedTo = Action.AllocatedClient == null ? "Pending" : Action.AllocatedClient.Handshake.MachineName;
+                    NewState.Progress = Action.Progress;
+                    NewState.ProgressText = Action.ProgressText;
+                    NewState.Id = Action.Id;
+
+                    ResponseMsg.InstallStates.Add(NewState);
                 }
 
                 Connection.Send(ResponseMsg);
@@ -1523,6 +1549,8 @@ namespace BuildSync.Core.Server
 
                     ManifestDeletionCandidate Candidate;
                     Candidate.Id = Id;
+                    Candidate.Path = Manifest != null ? Manifest.VirtualPath : "";
+                    Candidate.ParentPath = VirtualFileSystem.GetParentPath(Candidate.Path);
                     Candidate.LastSeen = ManifestRegistry.GetLastSeenTime(Id); // This is always going to basically be this timestamp ... how is this helpful? 
                     Candidate.CreateTime = Manifest != null ? Manifest.CreateTime : DateTime.UtcNow;
                     Candidate.NumberOfPeersWithFullBuild = Math.Max(0, GetPeerCountForManifest(Id) - 1); // Don't take our peer into account.
@@ -1732,6 +1760,50 @@ namespace BuildSync.Core.Server
                                 return -Item1.NumberOfPeersWithFullBuild.CompareTo(Item2.NumberOfPeersWithFullBuild);
                             }
                         });
+
+                        break;
+                    }
+                case ManifestStorageHeuristic.OldestInLargestContainer:
+                    {
+                        Dictionary<string, List<ManifestDeletionCandidate>> PoolTables = new Dictionary<string, List<ManifestDeletionCandidate>>();
+
+                        foreach (ManifestDeletionCandidate Item in Candidates)
+                        {
+                            if (!PoolTables.ContainsKey(Item.ParentPath))
+                            {
+                                PoolTables.Add(Item.ParentPath, new List<ManifestDeletionCandidate>());
+                            }
+                            PoolTables[Item.ParentPath].Add(Item);
+                        }
+
+                        // Sort each list by time.
+                        List<List<ManifestDeletionCandidate>> Pools = new List<List<ManifestDeletionCandidate>>();
+
+                        foreach (var Pair in PoolTables)
+                        {
+                            Pair.Value.Sort((Item1, Item2) =>
+                            {
+                                return Item1.CreateTime.CompareTo(Item2.CreateTime);
+                            });
+
+                            Pools.Add(Pair.Value);
+                        }
+
+                        // Sort each pools from largest to smallest.
+                        Pools.Sort((Item1, Item2) => 
+                        {
+                            return Item2.Count.CompareTo(Item1.Count);
+                        });
+
+                        // Generate candidate list.
+                        Candidates.Clear();
+                        foreach (var Pool in Pools)
+                        {
+                            foreach (var Candidate in Pool)
+                            {
+                                Pool.Add(Candidate);
+                            }
+                        }
 
                         break;
                     }

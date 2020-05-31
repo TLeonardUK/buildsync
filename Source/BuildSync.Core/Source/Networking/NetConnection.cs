@@ -1379,6 +1379,7 @@ namespace BuildSync.Core.Networking
                             // Send handshake.
                             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
                             HandshakeMsg.Username = Environment.UserDomainName + "\\" + Environment.UserName;
+                            HandshakeMsg.MachineName = Environment.MachineName;
                             HandshakeMsg.Version = AppVersion.ProtocolVersion;
                             HandshakeMsg.TagIds = LocalTagIds;
                             Send(HandshakeMsg);
@@ -1730,6 +1731,7 @@ namespace BuildSync.Core.Networking
             // Send handshake to client.
             NetMessage_Handshake HandshakeMsg = new NetMessage_Handshake();
             HandshakeMsg.Username = Environment.UserDomainName + "\\" + Environment.UserName;
+            HandshakeMsg.MachineName = Environment.MachineName;
             HandshakeMsg.Version = AppVersion.ProtocolVersion;
             HandshakeMsg.TagIds = LocalTagIds;
             Send(HandshakeMsg);

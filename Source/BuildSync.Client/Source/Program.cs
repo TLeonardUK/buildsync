@@ -223,6 +223,11 @@ namespace BuildSync.Client
                 SaveSettings();
             }
 
+            if (StorageManager != null)
+            {
+                StorageManager.ResetPruneTimeout();
+            }
+
             // Add SCM Providers.
             Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply SCM Providers");
             foreach (ScmWorkspaceSettings ScmSettings in Settings.ScmWorkspaces)
@@ -755,6 +760,7 @@ namespace BuildSync.Client
                     long TotalOut = Peer.Connection.BandwidthStats.TotalOut;
 
                     Record.Username = Peer.Connection.Handshake != null ? Peer.Connection.Handshake.Username : "";
+                    Record.MachineName = Peer.Connection.Handshake != null ? Peer.Connection.Handshake.MachineName : "";
 
                     Record.LastSeen = DateTime.Now;
 

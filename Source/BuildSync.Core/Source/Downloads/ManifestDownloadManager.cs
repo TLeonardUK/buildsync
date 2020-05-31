@@ -1485,7 +1485,7 @@ namespace BuildSync.Core.Downloads
         /// 
         /// </summary>
         /// <param name="Id"></param>
-        public void PruneManifest(Guid Id)
+        public void PruneManifest(Guid Id, IOCompleteCallbackHandler CompleteCallback = null)
         {
             foreach (ManifestDownloadState State in StateCollection.States)
             {
@@ -1498,14 +1498,16 @@ namespace BuildSync.Core.Downloads
                     StateDirtyCount++;
 
                     // Ask IO queue to delete the folder.
-                    IOQueue.DeleteDir(State.LocalFolder, null);
+                    IOQueue.DeleteDir(State.LocalFolder, CompleteCallback);
 
                     // Remove the manifest from the registry.
                     ManifestRegistry.UnregisterManifest(State.ManifestId);
 
-                    break;
+                    return;
                 }
             }
+
+            CompleteCallback(false);
         }
 
         /// <summary>

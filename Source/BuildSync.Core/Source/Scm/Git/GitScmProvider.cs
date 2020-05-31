@@ -185,6 +185,7 @@ namespace BuildSync.Core.Scm.Git
             StartInfo.CreateNoWindow = true;
 
             Process process = Process.Start(StartInfo);
+            ChildProcessTracker.AddProcess(process);
 
             string Output = "";
 

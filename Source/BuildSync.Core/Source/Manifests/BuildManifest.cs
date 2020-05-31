@@ -69,17 +69,17 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// </summary>
         [NonSerialized]
-        internal int FirstBlockIndex;
+        public int FirstBlockIndex;
 
         /// <summary>
         /// </summary>
         [NonSerialized]
-        internal int LastBlockIndex;
+        public int LastBlockIndex;
     }
 
     /// <summary>
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, Pack =1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct BuildManifestSubBlockInfo
     {
         /// <summary>
@@ -134,7 +134,7 @@ namespace BuildSync.Core.Manifests
         /// <returns></returns>
         public static BuildManifestMetadata ReadFromFile(string FilePath)
         {
-            return FileUtils.ReadFromBinaryFile<BuildManifestMetadata>(FilePath);            
+            return FileUtils.ReadFromBinaryFile<BuildManifestMetadata>(FilePath);
         }
 
         /// <summary>
@@ -145,6 +145,26 @@ namespace BuildSync.Core.Manifests
         {
             FileUtils.WriteToBinaryFile(FilePath, this);
         }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public enum BuildManifestFileDiffType
+    {
+        Added,
+        Removed,
+        Modified,
+        Unchanged
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class BuildManifestFileDiff
+    {
+        public BuildManifestFileInfo FileInfo;
+        public BuildManifestFileDiffType Type;
     }
 
     /// <summary>
@@ -430,6 +450,78 @@ namespace BuildSync.Core.Manifests
             }
 
             return Manifest;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public List<BuildManifestFileDiff> Diff(BuildManifest Other)
+        {
+            LazyCacheBlockInfo();
+            if (Other != null)
+            {
+                Other.LazyCacheBlockInfo();
+            }
+
+            List<BuildManifestFileDiff> Result = new List<BuildManifestFileDiff>();
+
+            if (Other == null)
+            {
+                foreach (BuildManifestFileInfo FileInfo in Files)
+                {
+                    BuildManifestFileDiff FileDiff = new BuildManifestFileDiff();
+                    FileDiff.Type = BuildManifestFileDiffType.Unchanged;
+                    FileDiff.FileInfo = FileInfo;
+                    Result.Add(FileDiff);
+                }
+            }
+            else
+            {
+                // Get removed files.
+                foreach (BuildManifestFileInfo FileInfo in Files)
+                {
+                    BuildManifestFileDiff FileDiff = new BuildManifestFileDiff();
+
+                    BuildManifestFileInfo OtherFileInfo = Other.GetFileInfo(FileInfo.Path);
+                    if (OtherFileInfo == null)
+                    {
+                        FileDiff.FileInfo = FileInfo;
+                        FileDiff.Type = BuildManifestFileDiffType.Removed;
+
+                        Result.Add(FileDiff);
+                    }
+                }
+
+                // Get added/modified files.
+                foreach (BuildManifestFileInfo OtherFileInfo in Other.Files)
+                {
+                    BuildManifestFileDiff FileDiff = new BuildManifestFileDiff();
+                    FileDiff.FileInfo = OtherFileInfo;
+
+                    BuildManifestFileInfo FileInfo = GetFileInfo(OtherFileInfo.Path);
+                    if (FileInfo == null)
+                    {
+                        FileDiff.Type = BuildManifestFileDiffType.Added;
+                    }
+                    else
+                    {
+                        if (FileInfo.Checksum == OtherFileInfo.Checksum &&
+                            FileInfo.Size == OtherFileInfo.Size)
+                        {
+                            FileDiff.Type = BuildManifestFileDiffType.Unchanged;
+                        }
+                        else
+                        {
+                            FileDiff.Type = BuildManifestFileDiffType.Modified;
+                        }
+                    }
+
+                    Result.Add(FileDiff);
+                }
+            }
+
+            return Result;
         }
 
         /// <summary>
@@ -931,6 +1023,7 @@ namespace BuildSync.Core.Manifests
                 Logger.Log(LogLevel.Info, LogCategory.Manifest, "Lazy caching block information for manifest: {0}", VirtualPath);
 
                 CacheBlockInfo();
+                CacheSizeInfo();
             }
 
             LastBlockInfoRequested = TimeUtils.Ticks;

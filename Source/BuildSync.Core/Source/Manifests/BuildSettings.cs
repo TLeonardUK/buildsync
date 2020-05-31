@@ -622,6 +622,7 @@ namespace BuildSync.Core.Manifests
                     StartInfo.CreateNoWindow = true;
 
                     Process process = Process.Start(StartInfo);
+                    ChildProcessTracker.AddProcess(process);
                     //process.WaitForExit();
 
                     /*process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
@@ -700,6 +701,7 @@ namespace BuildSync.Core.Manifests
                 StartInfo.CreateNoWindow = true;
 
                 Process process = Process.Start(StartInfo);
+                ChildProcessTracker.AddProcess(process);
 
                 process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs e) { Logger.Log(LogLevel.Info, LogCategory.Main, "{0}", e.Data); };
 

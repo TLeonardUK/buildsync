@@ -1950,6 +1950,8 @@ namespace BuildSync.Core.Client
                 Logger.Log(LogLevel.Info, LogCategory.Main, "Recieved candidate deletion response.");
 
                 ManifestDownloadManager.PruneManifest(Msg.ManifestId);
+
+                StorageManager.ResetPruneTimeout();
             }
 
             // Server has chosen which manifest we should delete.
@@ -2097,7 +2099,7 @@ namespace BuildSync.Core.Client
                     //Console.WriteLine("[Recieved] BlockIndex={0} Manifest={1}", Msg.BlockIndex, Msg.ManifestId.ToString());
                     if (!ManifestDownloadManager.SetBlockData(Msg.ManifestId, Msg.BlockIndex, Msg.Data, Callback))
                     {
-                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved invalid block data from: {0}", HostnameCache.GetHostname(Connection.Address.Address.ToString()));
+                        Logger.Log(LogLevel.Warning, LogCategory.Main, "Recieved invalid block data from: {0}", Connection.Handshake.MachineName);
                     }
                 }
             }

@@ -44,6 +44,11 @@ namespace BuildSync.Core.Networking.Messages
         public string Username = "";
 
         /// <summary>
+        ///     Name of the machine.
+        /// </summary>
+        public string MachineName = "";
+
+        /// <summary>
         ///     Serializes the payload of this message to a memory buffer.
         /// </summary>
         /// <param name="serializer">Serializer to read/write payload to.</param>
@@ -70,6 +75,11 @@ namespace BuildSync.Core.Networking.Messages
             if (serializer.Version > 100000584)
             {
                 serializer.Serialize(ref Username);
+            }
+
+            if (serializer.Version >= 100000690 && Version >= 10)
+            {
+                serializer.Serialize(ref MachineName);
             }
         }
     }

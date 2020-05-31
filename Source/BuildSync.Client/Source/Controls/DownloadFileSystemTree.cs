@@ -119,6 +119,26 @@ namespace BuildSync.Client.Controls
         }
 
         /// <summary>
+        /// </summary>
+        public List<Guid> SelectedManifestIds
+        {
+            get
+            {
+                List<Guid> Result = new List<Guid>();
+                foreach (TreeNodeAdv SelectedNode in MainTreeView.SelectedNodes)
+                {
+                    DownloadFileSystemTreeNode Metadata = SelectedNode.Tag as DownloadFileSystemTreeNode;
+                    if (Metadata != null)
+                    {
+                        Result.Add(Metadata.ManifestId);
+                    }
+                }
+
+                return Result;
+            }
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         public List<Tag> SelectedManifestTags

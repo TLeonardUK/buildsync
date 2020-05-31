@@ -577,10 +577,12 @@ namespace BuildSync.Core.Downloads
             {
                 Logger.Log(LogLevel.Info, LogCategory.Download, "Requesting update on published builds.");
 
-                OnRequestReplicatedBuilds?.Invoke(ReplicateSelectTags, ReplicateIgnoreTags, ReplicationNewerThanTime);
+                DateTime OldTimestamp = ReplicationNewerThanTime;
 
                 ReplicationNewerThanTime = DateTime.UtcNow;
                 LastReplicationRequestTime = TimeUtils.Ticks;
+
+                OnRequestReplicatedBuilds?.Invoke(ReplicateSelectTags, ReplicateIgnoreTags, OldTimestamp);
             }        
         }
 

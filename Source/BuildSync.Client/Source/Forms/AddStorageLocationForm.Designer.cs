@@ -33,8 +33,10 @@
             this.label3 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.AddButton = new System.Windows.Forms.Button();
-            this.MaxSizeTextBox = new BuildSync.Core.Controls.SizeTextBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.MinSizeSizeTextBox = new BuildSync.Core.Controls.SizeTextBox();
+            this.MaxSizeTextBox = new BuildSync.Core.Controls.SizeTextBox();
             this.SuspendLayout();
             // 
             // LocalFolderBrowseButton
@@ -76,7 +78,7 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.panel1.Location = new System.Drawing.Point(9, 120);
+            this.panel1.Location = new System.Drawing.Point(9, 163);
             this.panel1.Margin = new System.Windows.Forms.Padding(2);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(523, 1);
@@ -86,7 +88,7 @@
             // 
             this.AddButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.AddButton.Enabled = false;
-            this.AddButton.Location = new System.Drawing.Point(396, 132);
+            this.AddButton.Location = new System.Drawing.Point(396, 175);
             this.AddButton.Margin = new System.Windows.Forms.Padding(2);
             this.AddButton.Name = "AddButton";
             this.AddButton.Size = new System.Drawing.Size(135, 29);
@@ -94,16 +96,6 @@
             this.AddButton.Text = "OK";
             this.AddButton.UseVisualStyleBackColor = true;
             this.AddButton.Click += new System.EventHandler(this.AddClicked);
-            // 
-            // MaxSizeTextBox
-            // 
-            this.MaxSizeTextBox.DisplayAsTransferRate = false;
-            this.MaxSizeTextBox.Location = new System.Drawing.Point(9, 79);
-            this.MaxSizeTextBox.Name = "MaxSizeTextBox";
-            this.MaxSizeTextBox.Size = new System.Drawing.Size(522, 26);
-            this.MaxSizeTextBox.TabIndex = 32;
-            this.MaxSizeTextBox.Value = ((long)(0));
-            this.MaxSizeTextBox.OnValueChanged += new System.EventHandler(this.DataStateChanged);
             // 
             // label1
             // 
@@ -115,11 +107,43 @@
             this.label1.TabIndex = 33;
             this.label1.Text = "Maximum Size (0 for unlimited)";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(8, 113);
+            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(143, 13);
+            this.label2.TabIndex = 35;
+            this.label2.Text = "Minimum Space To Preserve";
+            // 
+            // MinSizeSizeTextBox
+            // 
+            this.MinSizeSizeTextBox.DisplayAsTransferRate = false;
+            this.MinSizeSizeTextBox.Location = new System.Drawing.Point(9, 129);
+            this.MinSizeSizeTextBox.Name = "MinSizeSizeTextBox";
+            this.MinSizeSizeTextBox.Size = new System.Drawing.Size(522, 26);
+            this.MinSizeSizeTextBox.TabIndex = 34;
+            this.MinSizeSizeTextBox.Value = ((long)(0));
+            this.MinSizeSizeTextBox.OnValueChanged += new System.EventHandler(this.DataStateChanged);
+            // 
+            // MaxSizeTextBox
+            // 
+            this.MaxSizeTextBox.DisplayAsTransferRate = false;
+            this.MaxSizeTextBox.Location = new System.Drawing.Point(9, 79);
+            this.MaxSizeTextBox.Name = "MaxSizeTextBox";
+            this.MaxSizeTextBox.Size = new System.Drawing.Size(522, 26);
+            this.MaxSizeTextBox.TabIndex = 32;
+            this.MaxSizeTextBox.Value = ((long)(0));
+            this.MaxSizeTextBox.OnValueChanged += new System.EventHandler(this.DataStateChanged);
+            // 
             // AddStorageLocationForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(543, 173);
+            this.ClientSize = new System.Drawing.Size(543, 216);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.MinSizeSizeTextBox);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.MaxSizeTextBox);
             this.Controls.Add(this.LocalFolderBrowseButton);
@@ -150,5 +174,7 @@
         private System.Windows.Forms.Button AddButton;
         private Core.Controls.SizeTextBox MaxSizeTextBox;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label2;
+        private Core.Controls.SizeTextBox MinSizeSizeTextBox;
     }
 }

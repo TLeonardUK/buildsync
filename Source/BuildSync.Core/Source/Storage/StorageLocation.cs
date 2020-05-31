@@ -39,5 +39,9 @@ namespace BuildSync.Core.Storage
         /// <summary>
         /// </summary>
         public long MaxSize { get; set; } = 512L * 1024L * 1024L * 1024L;
+
+        /// <summary>
+        /// </summary>
+        public long MinimumSpaceOnDrive { get; set; } = 0L * 1024L * 1024L * 1024L;
     }
 }

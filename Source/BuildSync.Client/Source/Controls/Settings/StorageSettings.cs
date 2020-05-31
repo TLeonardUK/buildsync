@@ -81,6 +81,7 @@ namespace BuildSync.Client.Controls.Settings
                         Settings.Path,
                         StringUtils.FormatAsSize(Program.StorageManager.GetLocationDiskUsage(Settings)),
                         StringUtils.FormatAsSize(Settings.MaxSize),
+                        StringUtils.FormatAsSize(Settings.MinimumSpaceOnDrive),
                     }
                 );
                 Item.ImageIndex = 4;

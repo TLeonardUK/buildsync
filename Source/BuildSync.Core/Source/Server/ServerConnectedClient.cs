@@ -109,6 +109,11 @@ namespace BuildSync.Core.Server
         /// <summary>
         /// 
         /// </summary>
+        public string MachineName = "";
+
+        /// <summary>
+        /// 
+        /// </summary>
         public string Version = "";
 
         /// <summary>

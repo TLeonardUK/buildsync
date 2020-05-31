@@ -38,6 +38,9 @@
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.downloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.remoteInstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.diffManifestsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.examineBuildToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.downloadFileSystemTree = new BuildSync.Client.Controls.DownloadFileSystemTree();
@@ -66,17 +69,20 @@
             this.toolStripSeparator6,
             this.downloadToolStripMenuItem,
             this.remoteInstallToolStripMenuItem,
+            this.toolStripSeparator1,
+            this.diffManifestsToolStripMenuItem,
+            this.examineBuildToolStripMenuItem,
             this.toolStripSeparator9,
             this.deleteToolStripMenuItem});
             this.downloadListContextMenu.Name = "downloadListContextMenu";
-            this.downloadListContextMenu.Size = new System.Drawing.Size(170, 166);
+            this.downloadListContextMenu.Size = new System.Drawing.Size(189, 254);
             this.downloadListContextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuOpening);
             // 
             // addDownloadToolStripMenuItem1
             // 
             this.addDownloadToolStripMenuItem1.Image = global::BuildSync.Client.Properties.Resources.appbar_add;
             this.addDownloadToolStripMenuItem1.Name = "addDownloadToolStripMenuItem1";
-            this.addDownloadToolStripMenuItem1.Size = new System.Drawing.Size(169, 30);
+            this.addDownloadToolStripMenuItem1.Size = new System.Drawing.Size(188, 30);
             this.addDownloadToolStripMenuItem1.Text = "Add Build ...";
             this.addDownloadToolStripMenuItem1.Click += new System.EventHandler(this.AddBuildClicked);
             // 
@@ -84,19 +90,19 @@
             // 
             this.addTagToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_tag;
             this.addTagToolStripMenuItem.Name = "addTagToolStripMenuItem";
-            this.addTagToolStripMenuItem.Size = new System.Drawing.Size(169, 30);
+            this.addTagToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
             this.addTagToolStripMenuItem.Text = "Toggle Tag ...";
             // 
             // toolStripSeparator6
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
-            this.toolStripSeparator6.Size = new System.Drawing.Size(166, 6);
+            this.toolStripSeparator6.Size = new System.Drawing.Size(185, 6);
             // 
             // downloadToolStripMenuItem
             // 
             this.downloadToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_download;
             this.downloadToolStripMenuItem.Name = "downloadToolStripMenuItem";
-            this.downloadToolStripMenuItem.Size = new System.Drawing.Size(169, 30);
+            this.downloadToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
             this.downloadToolStripMenuItem.Text = "Download ...";
             this.downloadToolStripMenuItem.Click += new System.EventHandler(this.DownloadClicked);
             // 
@@ -104,20 +110,41 @@
             // 
             this.remoteInstallToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_network_server_connecting;
             this.remoteInstallToolStripMenuItem.Name = "remoteInstallToolStripMenuItem";
-            this.remoteInstallToolStripMenuItem.Size = new System.Drawing.Size(169, 30);
+            this.remoteInstallToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
             this.remoteInstallToolStripMenuItem.Text = "Remote Install ...";
             this.remoteInstallToolStripMenuItem.Click += new System.EventHandler(this.RemoteInstallClicked);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(185, 6);
+            // 
+            // diffManifestsToolStripMenuItem
+            // 
+            this.diffManifestsToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_page_search;
+            this.diffManifestsToolStripMenuItem.Name = "diffManifestsToolStripMenuItem";
+            this.diffManifestsToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.diffManifestsToolStripMenuItem.Text = "Diff Manifests ...";
+            this.diffManifestsToolStripMenuItem.Click += new System.EventHandler(this.DiffBuildsClicked);
+            // 
+            // examineBuildToolStripMenuItem
+            // 
+            this.examineBuildToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_folder_open;
+            this.examineBuildToolStripMenuItem.Name = "examineBuildToolStripMenuItem";
+            this.examineBuildToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
+            this.examineBuildToolStripMenuItem.Text = "Examine Manifest ...";
+            this.examineBuildToolStripMenuItem.Click += new System.EventHandler(this.ExampleBuildClicked);
             // 
             // toolStripSeparator9
             // 
             this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(166, 6);
+            this.toolStripSeparator9.Size = new System.Drawing.Size(185, 6);
             // 
             // deleteToolStripMenuItem
             // 
             this.deleteToolStripMenuItem.Image = global::BuildSync.Client.Properties.Resources.appbar_delete;
             this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(169, 30);
+            this.deleteToolStripMenuItem.Size = new System.Drawing.Size(188, 30);
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.RemoveBuildClicked);
             // 
@@ -172,5 +199,8 @@
         private System.Windows.Forms.ToolStripMenuItem downloadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addTagToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem remoteInstallToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem diffManifestsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem examineBuildToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
     }
 }

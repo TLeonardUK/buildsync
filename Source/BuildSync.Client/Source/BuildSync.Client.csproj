@@ -220,6 +220,12 @@
     <Compile Include="Controls\ColorSelector.Designer.cs">
       <DependentUpon>ColorSelector.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\ManifestDeltaTree.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\ManifestDeltaTree.Designer.cs">
+      <DependentUpon>ManifestDeltaTree.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\DownloadFileSystemTree.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -392,6 +398,12 @@
     <Compile Include="Forms\ConsoleForm.Designer.cs">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\ExamineManifestForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ExamineManifestForm.Designer.cs">
+      <DependentUpon>ExamineManifestForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\FindServerForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -457,6 +469,12 @@
     </Compile>
     <Compile Include="Forms\DownloadAvailabilityForm.Designer.cs">
       <DependentUpon>DownloadAvailabilityForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\DiffManifestForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\DiffManifestForm.Designer.cs">
+      <DependentUpon>DiffManifestForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\PeerAvailabilityForm.cs">
       <SubType>Form</SubType>
@@ -525,6 +543,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\ColorSelector.resx">
       <DependentUpon>ColorSelector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Controls\ManifestDeltaTree.resx">
+      <DependentUpon>ManifestDeltaTree.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\DownloadFileSystemTree.resx">
       <DependentUpon>DownloadFileSystemTree.cs</DependentUpon>
@@ -610,6 +631,9 @@
     <EmbeddedResource Include="Forms\ConsoleForm.resx">
       <DependentUpon>ConsoleForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ExamineManifestForm.resx">
+      <DependentUpon>ExamineManifestForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\FindServerForm.resx">
       <DependentUpon>FindServerForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -642,6 +666,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\DownloadAvailabilityForm.resx">
       <DependentUpon>DownloadAvailabilityForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\DiffManifestForm.resx">
+      <DependentUpon>DiffManifestForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\PeerAvailabilityForm.resx">
       <DependentUpon>PeerAvailabilityForm.cs</DependentUpon>
@@ -747,6 +774,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppIcon.ico" />
+    <None Include="Resources\appbar.folder.open1.png" />
+    <None Include="Resources\appbar.page.png" />
+    <None Include="Resources\appbar.page.edit.png" />
+    <None Include="Resources\appbar.page.delete.png" />
+    <None Include="Resources\appbar.page.add.png" />
+    <None Include="Resources\appbar.page.search.png" />
     <None Include="Resources\appbar.network.png" />
     <None Include="Resources\appbar.draw.pencil.png" />
     <None Include="Resources\appbar.transit.connection.png" />

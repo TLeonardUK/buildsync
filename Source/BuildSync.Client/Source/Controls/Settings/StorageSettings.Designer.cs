@@ -54,6 +54,7 @@
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.locationListContextMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
@@ -62,6 +63,7 @@
             // 
             // deprioritizeTagsTextBox
             // 
+            this.deprioritizeTagsTextBox.Cursor = System.Windows.Forms.Cursors.Hand;
             this.deprioritizeTagsTextBox.Location = new System.Drawing.Point(54, 164);
             this.deprioritizeTagsTextBox.Name = "deprioritizeTagsTextBox";
             this.deprioritizeTagsTextBox.Size = new System.Drawing.Size(337, 21);
@@ -80,6 +82,7 @@
             // 
             // prioritizeTagsTextBox
             // 
+            this.prioritizeTagsTextBox.Cursor = System.Windows.Forms.Cursors.Hand;
             this.prioritizeTagsTextBox.Location = new System.Drawing.Point(54, 103);
             this.prioritizeTagsTextBox.Name = "prioritizeTagsTextBox";
             this.prioritizeTagsTextBox.Size = new System.Drawing.Size(337, 21);
@@ -141,7 +144,8 @@
             this.storageLocationList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader5,
             this.columnHeader1,
-            this.columnHeader6});
+            this.columnHeader6,
+            this.columnHeader2});
             this.storageLocationList.ContextMenuStrip = this.locationListContextMenu;
             this.storageLocationList.FullRowSelect = true;
             listViewGroup1.Header = "Perforce";
@@ -167,7 +171,7 @@
             // columnHeader5
             // 
             this.columnHeader5.Text = "Location";
-            this.columnHeader5.Width = 320;
+            this.columnHeader5.Width = 235;
             // 
             // columnHeader1
             // 
@@ -278,6 +282,11 @@
             this.pictureBox1.TabIndex = 44;
             this.pictureBox1.TabStop = false;
             // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "Min Size";
+            this.columnHeader2.Width = 80;
+            // 
             // StorageSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -329,5 +338,6 @@
         private System.Windows.Forms.ToolStripMenuItem deleteLocationToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ToolStripMenuItem editLocationToolStripMenuItem;
+        private System.Windows.Forms.ColumnHeader columnHeader2;
     }
 }

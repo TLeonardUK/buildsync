@@ -196,6 +196,13 @@ namespace BuildSync.Core.Utils
         /// <returns></returns>
         public static string FormatAsSize(long RateBytes)
         {
+            bool Negative = false;
+            if (RateBytes < 0)
+            {
+                Negative = true;
+                RateBytes = -RateBytes;
+            }
+
             double Result = RateBytes;
             int PrefixIndex = 0;
             while (Result > 1024 && PrefixIndex < SizePrefixes.Length - 1)
@@ -204,7 +211,7 @@ namespace BuildSync.Core.Utils
                 PrefixIndex++;
             }
 
-            return string.Format("{0:0.0} {1}", Result, SizePrefixes[PrefixIndex]);
+            return string.Format("{0:0.0} {1}", Negative ? -Result : Result, SizePrefixes[PrefixIndex]);
         }
 
         /// <summary>

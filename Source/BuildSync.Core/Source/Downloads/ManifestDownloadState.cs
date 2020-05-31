@@ -63,7 +63,10 @@ namespace BuildSync.Core.Downloads
         LeastAvailable,
 
         [Description("Oldest")]
-        Oldest
+        Oldest,
+
+        [Description("Oldest In Largest Container")]
+        OldestInLargestContainer,
     }
 
     /// <summary>

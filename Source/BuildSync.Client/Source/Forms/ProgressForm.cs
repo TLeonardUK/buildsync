@@ -44,8 +44,6 @@ namespace BuildSync.Client.Forms
         public ProgressForm()
         {
             InitializeComponent();
-
-            SetProgress("Installing ...", 0);
         }
 
         /// <summary>
@@ -87,6 +85,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void FormLoaded(object sender, EventArgs e)
         {
+            SetProgress("Installing ...", 0);
         }
 
         /// <summary>

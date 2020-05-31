@@ -55,6 +55,7 @@ namespace BuildSync.Client.Forms
             {
                 LocalFolderTextBox.Text = value.Path;
                 MaxSizeTextBox.Value = value.MaxSize;
+                MinSizeSizeTextBox.Value = value.MinimumSpaceOnDrive;
                 InternalSettings = value;
                 Editing = true;
             }
@@ -77,6 +78,7 @@ namespace BuildSync.Client.Forms
         {
             Settings.Path = LocalFolderTextBox.Text.Trim();
             Settings.MaxSize = MaxSizeTextBox.Value;
+            Settings.MinimumSpaceOnDrive = MinSizeSizeTextBox.Value;
 
             // Check no other workspaces exist with same local folder.
             if (!Editing)
@@ -135,8 +137,7 @@ namespace BuildSync.Client.Forms
         /// </summary>
         private void ValidateState()
         {
-            AddButton.Enabled = MaxSizeTextBox.Value > 0 &&
-                                Directory.Exists(LocalFolderTextBox.Text);
+            AddButton.Enabled = Directory.Exists(LocalFolderTextBox.Text);
         }
     }
 }

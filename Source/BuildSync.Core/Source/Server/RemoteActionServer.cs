@@ -83,9 +83,9 @@ namespace BuildSync.Core.Server
         /// <summary>
         /// 
         /// </summary>
-        private List<RemoteActionServerState> States = new List<RemoteActionServerState>();
-
+        public List<RemoteActionServerState> States { get; internal set; } = new List<RemoteActionServerState>();
         private Random SolicitSelectionRandom = new Random(Environment.TickCount);
+
 
         /// <summary>
         /// 
@@ -189,6 +189,17 @@ namespace BuildSync.Core.Server
                         State.Failed = true;
                         State.Dirty = true;
                     }
+
+                    // Client who was allocated this action has disconnected, so abort.
+                    else if (!State.AllocatedClient.IsConnected)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "Remote action '{0}' failed as allocated client disconnected.", State.Id.ToString());
+
+                        State.ResultMessage = "Remote client unexpected disconnected.";
+                        State.Completed = true;
+                        State.Failed = true;
+                        State.Dirty = true;
+                    }
                 }
 
                 // Otherwise send out a solicitation to perform action.
@@ -200,17 +211,6 @@ namespace BuildSync.Core.Server
                         Logger.Log(LogLevel.Info, LogCategory.Main, "Remote action '{0}' failed as requesting client disconnected.", State.Id.ToString());
 
                         State.ResultMessage = "Requesting client unexpected disconnected.";
-                        State.Completed = true;
-                        State.Failed = true;
-                        State.Dirty = true;
-                    }
-
-                    // Client who was allocated this action has disconnected, so abort.
-                    else if (State.AllocatedClient != null && !State.AllocatedClient.IsConnected)
-                    {
-                        Logger.Log(LogLevel.Info, LogCategory.Main, "Remote action '{0}' failed as allocated client disconnected.", State.Id.ToString());
-
-                        State.ResultMessage = "Remote client unexpected disconnected.";
                         State.Completed = true;
                         State.Failed = true;
                         State.Dirty = true;

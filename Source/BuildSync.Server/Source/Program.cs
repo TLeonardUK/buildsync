@@ -282,10 +282,10 @@ namespace BuildSync.Server
             };
 
             NetServer = new Core.Server.Server();
-            NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager, LicenseMgr, TagRegistry, RouteRegistry);
-            NetServer.BandwidthLimit = Settings.MaxBandwidth;
-
             RemoteActionServer = new RemoteActionServer(NetServer);
+
+            NetServer.Start(Settings.ServerPort, BuildRegistry, UserManager, LicenseMgr, TagRegistry, RouteRegistry, RemoteActionServer);
+            NetServer.BandwidthLimit = Settings.MaxBandwidth;
         }
 
         /// <summary>

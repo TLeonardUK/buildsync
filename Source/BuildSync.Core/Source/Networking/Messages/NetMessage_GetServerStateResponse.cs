@@ -21,6 +21,8 @@
 
 using System;
 using System.Collections.Generic;
+using BuildSync.Core.Networking.Messages.RemoteActions;
+using BuildSync.Core.Client;
 
 namespace BuildSync.Core.Networking.Messages
 {
@@ -43,7 +45,21 @@ namespace BuildSync.Core.Networking.Messages
             public long UploadRate;
             public string Version;
             public string Username;
+            public string MachineName;
             public List<Guid> TagIds = new List<Guid>();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public class RemoteInstallState
+        {
+            public Guid Id;
+            public RemoteActionType Type;
+            public string Requester;
+            public string AssignedTo;
+            public float Progress;
+            public string ProgressText;
         }
 
         /// <summary>
@@ -53,6 +69,10 @@ namespace BuildSync.Core.Networking.Messages
         /// <summary>
         /// </summary>
         public List<ClientState> ClientStates = new List<ClientState>();
+
+        /// <summary>
+        /// </summary>
+        public List<RemoteInstallState> InstallStates = new List<RemoteInstallState>();
 
         /// <summary>
         /// 
@@ -80,6 +100,10 @@ namespace BuildSync.Core.Networking.Messages
                 if (serializer.Version > 100000584)
                 {
                     serializer.Serialize(ref ClientStates[i].Username);
+                }
+                if (serializer.Version >= 100000690)
+                {
+                    serializer.Serialize(ref ClientStates[i].MachineName);
                 }
 
                 serializer.Serialize(ref ClientStates[i].Address);
@@ -109,6 +133,27 @@ namespace BuildSync.Core.Networking.Messages
                     Guid id = ClientStates[i].TagIds[j];
                     serializer.Serialize(ref id);
                     ClientStates[i].TagIds[j] = id;
+                }
+            }
+
+            if (serializer.Version > 100000689)
+            {
+                Count = InstallStates.Count;
+                serializer.Serialize(ref Count);
+
+                for (int i = 0; i < Count; i++)
+                {
+                    if (serializer.IsLoading)
+                    {
+                        InstallStates.Add(new RemoteInstallState());
+                    }
+
+                    serializer.SerializeEnum(ref InstallStates[i].Type);
+                    serializer.Serialize(ref InstallStates[i].Requester);
+                    serializer.Serialize(ref InstallStates[i].AssignedTo);
+                    serializer.Serialize(ref InstallStates[i].Progress);
+                    serializer.Serialize(ref InstallStates[i].ProgressText);
+                    serializer.Serialize(ref InstallStates[i].Id);
                 }
             }
         }

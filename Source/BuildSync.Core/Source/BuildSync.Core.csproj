@@ -364,6 +364,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Utils\VirtualFileSystem.cs" />
+    <Compile Include="Utils\WindowsJobs.cs" />
     <Compile Include="Utils\WindowUtils.cs" />
     <Compile Include="Version.cs" />
   </ItemGroup>
