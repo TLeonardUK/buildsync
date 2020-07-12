@@ -250,11 +250,13 @@ namespace BuildSync.Client.Controls
                     case ManifestDownloadProgressState.InitializeFailed:
                         {
                             CopyingSegment.Progress = 0.0f;
+                            CopyingSegment.Marquee = false;
                             break;
                         }
                     case ManifestDownloadProgressState.DeltaCopying:
                         {
                             CopyingSegment.Progress = Downloader.DeltaCopyProgress;
+                            CopyingSegment.Marquee = (Downloader.DeltaCopyProgress <= 0.01f);
                             CopyingSegment.Color = InProgressColor;
                             break;
                         }
@@ -266,6 +268,7 @@ namespace BuildSync.Client.Controls
                     case ManifestDownloadProgressState.InstallFailed:
                         {
                             CopyingSegment.Progress = 1.0f;
+                            CopyingSegment.Marquee = false;
                             CopyingSegment.Color = FinishedColor;
                             break;
                         }
@@ -452,7 +455,7 @@ namespace BuildSync.Client.Controls
                         case ManifestDownloadProgressState.Installing:
                         {
                             long TimeRemaining = Program.DownloadManager.GetEstimatedTimeRemainingForState(State, Downloader.State);
-                            if (State.DurationHistory.Count > 0)
+                            /*if (State.DurationHistory.Count > 0)
                             {
                                 long TotalTimeRemaining = Program.DownloadManager.GetEstimatedTimeRemaining(State);
                                 Status = string.Format("{0} (Previous {1})", StringUtils.FormatAsDuration(TimeRemaining), StringUtils.FormatAsDuration(TotalTimeRemaining));
@@ -460,7 +463,10 @@ namespace BuildSync.Client.Controls
                             else
                             {
                                 Status = string.Format("{0}", StringUtils.FormatAsDuration(TimeRemaining));
-                            }                            
+                            }*/
+
+                            Status = string.Format("{0}", StringUtils.FormatAsTextDuration(TimeRemaining));
+
                             StatusColor = StateColoring.Info;
                             BuildInfo = Downloader.Manifest.VirtualPath;
                             break;
@@ -490,7 +496,7 @@ namespace BuildSync.Client.Controls
                             else
                             {
                                 long TimeRemaining = Program.DownloadManager.GetEstimatedTimeRemainingForState(State, Downloader.State);
-                                if (State.DurationHistory.Count > 0)
+                                /*if (State.DurationHistory.Count > 0)
                                 {
                                     long TotalTimeRemaining = Program.DownloadManager.GetEstimatedTimeRemaining(State);
                                     Status = string.Format("{0} (Previous {1})", StringUtils.FormatAsDuration(TimeRemaining), StringUtils.FormatAsDuration(TotalTimeRemaining));
@@ -498,7 +504,9 @@ namespace BuildSync.Client.Controls
                                 else
                                 {
                                     Status = string.Format("{0}", StringUtils.FormatAsDuration(TimeRemaining));
-                                }
+                                }*/
+                                
+                                Status = string.Format("{0}", StringUtils.FormatAsTextDuration(TimeRemaining));
                             }
 
                             BuildInfo = Downloader.Manifest.VirtualPath;
@@ -720,12 +728,14 @@ namespace BuildSync.Client.Controls
                     {
                         case ManifestDownloadProgressState.Complete:
                         {
-                            LaunchForm Form = new LaunchForm();
-                            Form.Downloader = Downloader;
-                            Form.DownloadState = State;
-                            if (Form.Init())
+                            using (LaunchForm Form = new LaunchForm())
                             {
-                                Form.ShowDialog();
+                                Form.Downloader = Downloader;
+                                Form.DownloadState = State;
+                                if (Form.Init())
+                                {
+                                    Form.ShowDialog();
+                                }
                             }
                             break;
                         }
@@ -749,9 +759,11 @@ namespace BuildSync.Client.Controls
         /// <param name="e"></param>
         private void SettingsClicked(object sender, EventArgs e)
         {
-            AddDownloadForm Dialog = new AddDownloadForm();
-            Dialog.EditState = State;
-            Dialog.ShowDialog(this);
+            using (AddDownloadForm Dialog = new AddDownloadForm())
+            {
+                Dialog.EditState = State;
+                Dialog.ShowDialog(this);
+            }
         }
     }
 }

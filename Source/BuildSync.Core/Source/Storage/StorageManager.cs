@@ -47,7 +47,7 @@ namespace BuildSync.Core.Storage
 
         /// <summary>
         /// </summary>
-        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.LeastAvailable;
+        public ManifestStorageHeuristic StorageHeuristic { get; set; } = ManifestStorageHeuristic.OldestInLargestContainer;
 
         /// <summary>
         ///     List of all tag id's to prioritize keeping when deleting builds for space.
@@ -102,13 +102,16 @@ namespace BuildSync.Core.Storage
         /// <summary>
         /// 
         /// </summary>
-        public StorageManager(List<StorageLocation> InLocations, ManifestDownloadManager InDownloadManager, BuildManifestRegistry Registry, AsyncIOQueue InIOQueue)
+        public StorageManager(List<StorageLocation> InLocations, ManifestDownloadManager InDownloadManager, BuildManifestRegistry Registry, AsyncIOQueue InIOQueue, ManifestStorageHeuristic Heuristic, List<Guid> KeepBuilds, List<Guid> DeleteBuilds)
         {
             IOQueue = InIOQueue;
             ManifestRegistry = Registry;
             DownloadManager = InDownloadManager;
             Locations = InLocations;
             StoredLocations = new List<StorageLocation>(Locations);
+            StorageHeuristic = Heuristic;
+            StoragePrioritizeKeepingBuildTagIds = KeepBuilds;
+            StoragePrioritizeDeletingBuildTagIds = DeleteBuilds;
         }
 
         /// <summary>
@@ -402,6 +405,12 @@ namespace BuildSync.Core.Storage
                             continue;
                         }
 
+                        // Not even got an allocated folder yet.
+                        if (State.LocalFolder == "")
+                        {
+                            continue;
+                        }
+
                         // Not part of this storage location.
                         if (!FileUtils.NormalizePath(State.LocalFolder).StartsWith(NormalizedLocationPath))
                         {
@@ -523,9 +532,9 @@ namespace BuildSync.Core.Storage
                             {
                                 lock (PendingDirectoryCleanups)
                                 {
-                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Deleting directory in storage folder that appears to have no matching manifest (probably a previous failed delete): {0}", Dir);
                                     if (!PendingDirectoryCleanups.Contains(Dir))
                                     {
+                                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Deleting directory in storage folder that appears to have no matching manifest (probably a previous failed delete): {0}", Dir);
                                         PendingDirectoryCleanups.Add(Dir);
                                         IOQueue.DeleteDir(Dir, bSuccess => { PendingDirectoryCleanups.Remove(Dir); });
                                         Result = true;

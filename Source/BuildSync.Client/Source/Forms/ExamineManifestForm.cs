@@ -140,5 +140,14 @@ namespace BuildSync.Client.Forms
                 checksumLabel.Text = Diff.FileInfo.Checksum;
             }
         }
+
+        private void ExamineManifestForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+        }
+
+        private void ExamineManifestForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+
+        }
     }
 }

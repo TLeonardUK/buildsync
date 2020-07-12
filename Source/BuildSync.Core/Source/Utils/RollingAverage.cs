@@ -86,7 +86,7 @@ namespace BuildSync.Core.Utils
             double Result = 0;
             lock (Values)
             {
-                double StdDeviation = GetStandardDeviation() / 2;
+                double StdDeviation = GetStandardDeviation();// / 2;
                 double Mean = GetStdDevMean();
                 double Total = 0;
                 int Samples = 0;

@@ -314,7 +314,12 @@ namespace BuildSync.Client
         /// 
         /// </summary>
         public bool AllowRemoteActions { get; set; } = false;
-       
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool AutoInstallUpdates { get; set; } = false;
+
         /// <summary>
         /// 
         /// </summary>

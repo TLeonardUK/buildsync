@@ -329,36 +329,6 @@ namespace BuildSync.Core.Downloads
         private readonly List<ManifestDownloadQueue> ManifestQueues = new List<ManifestDownloadQueue>();
 
         /// <summary>
-        /// 
-        /// </summary>
-        private bool StateWaitingForFinalize = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private List<int> ValidateFailedBlocks = new List<int>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        Dictionary<BuildManifestFileInfo, string> DeltaCopyFilesToCopy = new Dictionary<BuildManifestFileInfo, string>();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool InitializeFailed = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool InstallFailed = false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        private bool DeltaCopyFailed = false;
-
-        /// <summary>
         /// </summary>
         public void RecordBlockChange(Guid ManifestId, int BlockIndex, ManifestBlockChangeType Type)
         {
@@ -517,7 +487,7 @@ namespace BuildSync.Core.Downloads
             State.BlockStates.Resize((int) Manifest.BlockCount);
             State.BlockStates.SetAll(Available);
 
-            StoreFileCompletedStates(State);
+            //StoreFileCompletedStates(State);
 
             Logger.Log(LogLevel.Info, LogCategory.Manifest, "Added local download of manifest: {0}", Manifest.Guid.ToString());
             StateCollection.States.Add(State);
@@ -581,7 +551,7 @@ namespace BuildSync.Core.Downloads
             State.BlockStates.SetAll(false);
             State.State = ManifestDownloadProgressState.RetrievingManifest;
 
-            ClearFileCompletedStates(State);
+            //ClearFileCompletedStates(State);
 
             StateDirtyCount++;
         }
@@ -809,6 +779,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// </summary>
         /// <param name="State"></param>
+        /*
         private void StoreFileCompletedStates(ManifestDownloadState State)
         {
             // Store timestamps of files so we can determine if someone has modified the files after our validation.
@@ -826,10 +797,12 @@ namespace BuildSync.Core.Downloads
                 }
             }
         }
+        */
 
         /// <summary>
         /// </summary>
         /// <param name="State"></param>
+        /*
         private void ClearFileCompletedStates(ManifestDownloadState State)
         {
             State.FileCompletedStates.Clear();
@@ -838,6 +811,7 @@ namespace BuildSync.Core.Downloads
                 ClearFileWriteCache(State.LocalFolder);
             }
         }
+        */
 
         /// <summary>
         /// </summary>
@@ -895,9 +869,9 @@ namespace BuildSync.Core.Downloads
                             ChangeState(State, ManifestDownloadProgressState.DiskError, true);
                         }
                     }
-                    else if (StateWaitingForFinalize)
+                    else if (State.StateWaitingForFinalize)
                     {
-                        if (InitializeFailed)
+                        if (State.InitializeFailed)
                         {
                             ChangeState(State, ManifestDownloadProgressState.InitializeFailed, true);
                         }
@@ -908,7 +882,7 @@ namespace BuildSync.Core.Downloads
                     }
                     else if (State.InitializeTask == null)
                     {
-                        InitializeFailed = false;
+                        State.InitializeFailed = false;
                         State.InitializeTask = Task.Run(
                             () =>
                             {
@@ -931,12 +905,12 @@ namespace BuildSync.Core.Downloads
                                 catch (Exception Ex)
                                 {
                                     Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to intialize directory with error: {0}", Ex.Message);
-                                    InitializeFailed = true;
+                                    State.InitializeFailed = true;
                                 }
                                 finally
                                 {
-                                    State.InitializeTask = null; 
-                                    StateWaitingForFinalize = true;
+                                    State.InitializeTask = null;
+                                    State.StateWaitingForFinalize = true;
                                 }
                             }
                         );
@@ -956,14 +930,14 @@ namespace BuildSync.Core.Downloads
                 // Finding any manifests with files containing the same checksum. If found, copy over and mark blocks as available.
                 case ManifestDownloadProgressState.DeltaCopying:
                 {
-                    if (StateWaitingForFinalize)
+                    if (State.StateWaitingForFinalize)
                     {
-                        if (!DeltaCopyFailed)
+                        if (!State.DeltaCopyFailed)
                         {
                             // All blocks that purely contain these files should be marked as downloaded.
                             long TotalBytesSaved = 0;
 
-                            foreach (var Pair in DeltaCopyFilesToCopy)
+                            foreach (var Pair in State.DeltaCopyFilesToCopy)
                             {
                                 BuildManifestFileInfo DstInfo = Pair.Key;
                                 for (int i = DstInfo.FirstBlockIndex; i <= DstInfo.LastBlockIndex; i++)
@@ -1006,81 +980,53 @@ namespace BuildSync.Core.Downloads
                     {
                         Logger.Log(LogLevel.Info, LogCategory.Manifest, "Finding existing files: {0}", State.LocalFolder);
 
-                        Dictionary<string, string> ExistingFiles = new Dictionary<string, string>();
-                        Dictionary<string, string> WantedFiles = new Dictionary<string, string>();
-
-                        foreach (BuildManifestFileInfo File in State.Manifest.Files)
-                        {
-                            if (File.Checksum.Length > 32) // Make sure we aren't using CRC for this.
-                            {
-                                WantedFiles.Add(File.Path, "");
-                            }
-                        }
-
+                        Dictionary<string, Tuple<ManifestDownloadState, BuildManifestFileInfo>> FileInfoByHash = new Dictionary<string, Tuple<ManifestDownloadState, BuildManifestFileInfo>>();
                         foreach (ManifestDownloadState OtherState in StateCollection.States)
                         {
                             if (OtherState.Manifest != null && State != OtherState && OtherState.State == ManifestDownloadProgressState.Complete)
                             {
-                                foreach (BuildManifestFileInfo File in OtherState.Manifest.Files)
+                                foreach (BuildManifestFileInfo File in OtherState.Manifest.GetFiles())
                                 {
-                                    if (File.Checksum.Length > 32 && !ExistingFiles.ContainsKey(File.Checksum) && WantedFiles.ContainsKey(File.Path)) // Make sure we aren't using CRC for this.
+                                    if (File.Checksum.Length > 32 && !FileInfoByHash.ContainsKey(File.Checksum)) // Make sure we aren't using CRC for this.
                                     {
-                                        string LocalFile = Path.Combine(OtherState.LocalFolder, File.Path);
-                                        bool IsValid = false;
-
-                                        if (System.IO.File.Exists(LocalFile))
-                                        {
-                                            // Ensure file has not been changed.
-                                            lock (OtherState.FileCompletedStates)
-                                            {
-                                                foreach (ManifestFileCompletedState CompletedState in OtherState.FileCompletedStates)
-                                                {
-                                                    if (File.Path == CompletedState.Path)
-                                                    {
-                                                        if (GetFileLastWriteTime(LocalFile) == CompletedState.ModifiedTimestampOnCompleted)
-                                                        {
-                                                            IsValid = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        if (IsValid)
-                                        {
-                                            ExistingFiles.Add(File.Checksum, LocalFile);
-                                        }
+                                        FileInfoByHash.Add(File.Checksum, new Tuple<ManifestDownloadState, BuildManifestFileInfo>(OtherState, File));
                                     }
-                                }
+                                }                                
                             }
                         }
-
-                        DeltaCopyFilesToCopy = new Dictionary<BuildManifestFileInfo, string>();
-                        long TotalSize = 0;
-                            
-                        foreach (BuildManifestFileInfo File in State.Manifest.Files)
-                        {
-                            if (File.Checksum.Length > 32 && ExistingFiles.ContainsKey(File.Checksum)) // Make sure we aren't using CRC for this.
-                            {
-                                DeltaCopyFilesToCopy.Add(File, ExistingFiles[File.Checksum]);
-                                TotalSize += File.Size;
-                            }
-                        }
-                            
-                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Found {0} pre-existing files.", DeltaCopyFilesToCopy.Count);
 
                         State.DeltaCopyTask = Task.Run(
                             () =>
                             {
+                                State.DeltaCopyFilesToCopy = new Dictionary<BuildManifestFileInfo, string>();
+                                long TotalSize = 0;
+
+                                foreach (BuildManifestFileInfo File in State.Manifest.GetFiles())
+                                {
+                                    if (File.Checksum.Length > 32 && FileInfoByHash.ContainsKey(File.Checksum)) // Make sure we aren't using CRC for this.
+                                    {
+                                        Tuple<ManifestDownloadState, BuildManifestFileInfo> Info = FileInfoByHash[File.Checksum];
+                                        string LocalFile = Path.Combine(Info.Item1.LocalFolder, Info.Item2.Path);
+                                        if (FileUtils.FileExistsFast(LocalFile))
+                                        {
+                                            State.DeltaCopyFilesToCopy.Add(File, LocalFile);
+                                            TotalSize += File.Size;
+                                        }
+                                    }
+                                }
+
+                                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Found {0} pre-existing files.", State.DeltaCopyFilesToCopy.Count);
+
                                 IOQueue.CloseAllStreamsInDirectory(State.LocalFolder);
 
-                                DeltaCopyFailed = false;
+                                State.DeltaCopyFailed = false;
+
+                                // TODO: this doesn't seem to use the hdd as well as it could ...
 
                                 try
                                 {
                                     long BytesCopied = 0;
-                                    foreach (var Pair in DeltaCopyFilesToCopy)
+                                    foreach (var Pair in State.DeltaCopyFilesToCopy)
                                     {
                                         if (State.Paused)
                                         {
@@ -1122,13 +1068,13 @@ namespace BuildSync.Core.Downloads
                                 }
                                 catch (Exception Ex)
                                 {
-                                    DeltaCopyFailed = true;
+                                    State.DeltaCopyFailed = true;
                                     Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to delta copy with error: {0}", Ex.Message);
                                 }
                                 finally
                                 {
                                     State.DeltaCopyTask = null;
-                                    StateWaitingForFinalize = true;
+                                    State.StateWaitingForFinalize = true;
                                 }
                             }
                         );
@@ -1140,9 +1086,9 @@ namespace BuildSync.Core.Downloads
                 // Installing all launch modes on device.
                 case ManifestDownloadProgressState.Installing:
                 {
-                    if (StateWaitingForFinalize)
+                    if (State.StateWaitingForFinalize)
                     {
-                        if (InstallFailed)
+                        if (State.InstallFailed)
                         {
                             ChangeState(State, ManifestDownloadProgressState.InstallFailed, true);
                         }
@@ -1169,12 +1115,12 @@ namespace BuildSync.Core.Downloads
                                 catch (Exception Ex)
                                 {
                                     Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to install with error: {0}", Ex.Message);
-                                    InstallFailed = true;
+                                    State.InstallFailed = true;
                                 }
                                 finally
                                 {
                                     State.InstallTask = null;
-                                    StateWaitingForFinalize = true;
+                                    State.StateWaitingForFinalize = true;
                                 }
                             }
                         );
@@ -1215,7 +1161,7 @@ namespace BuildSync.Core.Downloads
                                 ChangeState(State, ManifestDownloadProgressState.Complete);
                             }
 
-                            StoreFileCompletedStates(State);
+                            //StoreFileCompletedStates(State);
                         }
                         else
                         {
@@ -1249,9 +1195,9 @@ namespace BuildSync.Core.Downloads
                 // Check all the file checksums match, if any fail, requeue all their blocks.
                 case ManifestDownloadProgressState.Validating:
                 {
-                    if (StateWaitingForFinalize)
+                    if (State.StateWaitingForFinalize)
                     {
-                        if (ValidateFailedBlocks.Count == 0)
+                        if (State.ValidateFailedBlocks.Count == 0)
                         {
                             if (State.InstallOnComplete)
                             {
@@ -1262,11 +1208,11 @@ namespace BuildSync.Core.Downloads
                                 ChangeState(State, ManifestDownloadProgressState.Complete);
                             }
 
-                            StoreFileCompletedStates(State);
+                            //StoreFileCompletedStates(State);
                         }
                         else
                         {
-                            foreach (int Block in ValidateFailedBlocks)
+                            foreach (int Block in State.ValidateFailedBlocks)
                             {
                                 MarkBlockAsUnavailable(State.ManifestId, Block);
                                 //MarkFileAsUnavailable(State.ManifestId, File);
@@ -1290,13 +1236,13 @@ namespace BuildSync.Core.Downloads
                             {
                                 IOQueue.CloseAllStreamsInDirectory(State.LocalFolder);
 
-                                ValidateFailedBlocks.Clear();
+                                State.ValidateFailedBlocks.Clear();
 
                                 try
                                 {
                                     Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validating directory: {0}", State.LocalFolder);
                                     State.ValidateRateStats.Reset();
-                                    ValidateFailedBlocks = State.Manifest.Validate(
+                                    State.ValidateFailedBlocks = State.Manifest.Validate(
                                         State.LocalFolder, State.ValidateRateStats, IOQueue, (BytesRead, TotalBytes, ManifestId, BlockIndex) =>
                                         {
                                             State.ValidateProgress = BytesRead / (float) TotalBytes;
@@ -1306,7 +1252,7 @@ namespace BuildSync.Core.Downloads
                                             return !State.Paused;
                                         }
                                     );
-                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validation finished, {0} blocks failed.", ValidateFailedBlocks.Count);
+                                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Validation finished, {0} blocks failed.", State.ValidateFailedBlocks.Count);
                                 }
                                 catch (Exception Ex)
                                 {
@@ -1314,13 +1260,13 @@ namespace BuildSync.Core.Downloads
 
                                     for (int i = 0; i < State.Manifest.BlockCount; i++)
                                     {
-                                        ValidateFailedBlocks.Add(i);
+                                        State.ValidateFailedBlocks.Add(i);
                                     }
                                 }
                                 finally
                                 {
                                     State.ValidationTask = null;
-                                    StateWaitingForFinalize = true;
+                                    State.StateWaitingForFinalize = true;
                                 }
                             }
                         );
@@ -1409,7 +1355,7 @@ namespace BuildSync.Core.Downloads
         {
             State.State = NewState;
             State.DiskError = false;
-            StateWaitingForFinalize = false;
+            State.StateWaitingForFinalize = false;
             StateDirtyCount++;
 
             if (IsError)
@@ -1421,7 +1367,7 @@ namespace BuildSync.Core.Downloads
             if (NewState != ManifestDownloadProgressState.Complete)
             {
                 State.Installed = false;
-                ClearFileCompletedStates(State);
+                //ClearFileCompletedStates(State);
             }
         }
 
@@ -1596,7 +1542,7 @@ namespace BuildSync.Core.Downloads
                         }
 
                         // Check file has not been modified since completed.
-                        lock (State.FileCompletedStates)
+                        /*lock (State.FileCompletedStates)
                         {
                             foreach (ManifestFileCompletedState CompletedState in State.FileCompletedStates)
                             {
@@ -1609,13 +1555,13 @@ namespace BuildSync.Core.Downloads
                                     }
                                 }
                             }
-                        }
+                        }*/
 
                         if (Interlocked.Decrement(ref WriteState.SubBlocksRemaining) == 0)
                         {
                             // Checksum block to make sure nobody has balls it up.
 #if CHECKSUM_EACH_BLOCK
-                            if (State.Manifest.BlockChecksums != null)
+                            if (State.Manifest.HasBlockChecksums())
                             {                            
                                 uint Checksum = 0;
                                 if (State.Manifest.Version >= 2)
@@ -1628,7 +1574,7 @@ namespace BuildSync.Core.Downloads
                                 }
 
                                 //uint Checksum = Crc32.Compute(DataBuffer, (int)BlockInfo.TotalSize);
-                                uint ExpectedChecksum = State.Manifest.BlockChecksums[BlockIndex];
+                                uint ExpectedChecksum = State.Manifest.GetBlockChecksum(BlockIndex);
                                 if (Checksum != ExpectedChecksum)
                                 {
                                     Logger.Log(LogLevel.Info, LogCategory.Manifest, "Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to get block data.", BlockIndex, ManifestId.ToString(), Checksum, ExpectedChecksum);
@@ -1707,7 +1653,7 @@ namespace BuildSync.Core.Downloads
             WriteState.WasSuccess = true;
 
 #if CHECKSUM_EACH_BLOCK
-            if (State.Manifest.BlockChecksums != null)
+            if (State.Manifest.HasBlockChecksums())
             {                                        
                 uint Checksum = 0;
                 if (State.Manifest.Version >= 2)
@@ -1720,9 +1666,9 @@ namespace BuildSync.Core.Downloads
                 }
 
                 //uint Checksum = Crc32.Compute(Data.Data, (int)Data.Length);
-                if (Checksum != State.Manifest.BlockChecksums[BlockIndex])
+                if (Checksum != State.Manifest.GetBlockChecksum(BlockIndex))
                 {
-                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "FAILED: Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to set block data.", BlockIndex, ManifestId.ToString(), State.Manifest.BlockChecksums[BlockIndex], Checksum);
+                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "FAILED: Block index {0} in manifest {1} failed checksum (got {2} expected {3}), failed to set block data.", BlockIndex, ManifestId.ToString(), State.Manifest.GetBlockChecksum(BlockIndex), Checksum);
                     WriteState.WasSuccess = false;
                     Callback?.Invoke(WriteState.WasSuccess);
                     return false;

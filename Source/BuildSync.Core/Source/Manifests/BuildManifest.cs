@@ -126,7 +126,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public DateTime ModifiedTime = DateTime.UtcNow;
+        public DateTime ModifiedTime = new DateTime(0);
 
         /// <summary>
         /// </summary>
@@ -202,11 +202,11 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
-        public uint[] BlockChecksums;
+        private uint[] BlockChecksums;
 
         /// <summary>
         /// </summary>
-        public uint[] SparseBlockChecksums;
+        private uint[] SparseBlockChecksums;
 
         /// <summary>
         /// </summary>
@@ -214,11 +214,11 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
-        public DateTime CreateTime = DateTime.UtcNow;
+        public DateTime CreateTime = new DateTime(0);
 
         /// <summary>
         /// </summary>
-        public List<BuildManifestFileInfo> Files = new List<BuildManifestFileInfo>();
+        private List<BuildManifestFileInfo> Files = new List<BuildManifestFileInfo>();
 
         /// <summary>
         /// </summary>
@@ -249,10 +249,57 @@ namespace BuildSync.Core.Manifests
         internal BuildManifestMetadata Metadata = new BuildManifestMetadata();
 
         /// <summary>
+        /// </summary>
+        [NonSerialized]
+        private string OriginalFilePath = "";
+
+        /// <summary>
         /// 
         /// </summary>
         [NonSerialized]
         private ulong LastBlockInfoRequested = 0;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        private bool BlockInfoLocked = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        private object BlockInfoCacheLock = new object();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public uint GetBlockChecksum(int BlockIndex)
+        {
+            LazyCacheBlockInfo();
+            return BlockChecksums[BlockIndex];
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public bool HasBlockChecksums()
+        {
+            LazyCacheBlockInfo();
+            return BlockChecksums != null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public List<BuildManifestFileInfo> GetFiles()
+        {
+            LazyCacheBlockInfo();
+            return Files;
+        }
 
         /// <summary>
         /// </summary>
@@ -319,6 +366,7 @@ namespace BuildSync.Core.Manifests
             Manifest.VirtualPath = VirtualPath;
             Manifest.BlockCount = BlockIndex;
             Manifest.BlockChecksums = new uint[Manifest.BlockCount];
+            Manifest.CreateTime = DateTime.UtcNow;
 #if USE_SPARSE_CHECKSUMS
             Manifest.SparseBlockChecksums = new uint[Manifest.BlockCount];
 #else
@@ -534,6 +582,11 @@ namespace BuildSync.Core.Manifests
             {
                 BlockSize = 1 * 1024 * 1024;
             }
+
+            if (BlockInfoCacheLock == null)
+            {
+                BlockInfoCacheLock = new object();
+            }
         }
 
         /// <summary>
@@ -557,6 +610,43 @@ namespace BuildSync.Core.Manifests
             }
 
             return Manifest;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="FilePath"></param>
+        /// <returns></returns>
+        public static BuildManifest ReadFromFile(string FilePath)
+        {
+            BuildManifest Manifest = FileUtils.ReadFromBinaryFile<BuildManifest>(FilePath);
+            if (Manifest != null)
+            {
+                Manifest.OriginalFilePath = FilePath;
+                Manifest.UpgradeVersion();
+                Manifest.CacheSizeInfo();
+                Manifest.TrimBlockInfo();
+            }
+
+            return Manifest;
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <returns></returns>
+        public byte[] ToByteArray()
+        {
+            return FileUtils.WriteToArray(this);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="FilePath"></param>
+        /// <returns></returns>
+        public void WriteToFile(string FilePath)
+        {
+            OriginalFilePath = FilePath;
+
+            FileUtils.WriteToBinaryFile(FilePath, this);
         }
 
         /// <summary>
@@ -636,6 +726,8 @@ namespace BuildSync.Core.Manifests
         /// <returns></returns>
         public List<int> GetFileBlocks(string Path)
         {
+            LazyCacheBlockInfo();
+
             List<int> Result = new List<int>();
 
             BuildManifestFileInfo FileInfo = GetFileInfo(Path);
@@ -656,7 +748,7 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         /// <param name="Path"></param>
         /// <returns></returns>
-        public BuildManifestFileInfo GetFileInfo(string Path)
+        private BuildManifestFileInfo GetFileInfo(string Path)
         {
             if (FilesByPath.ContainsKey(Path))
             {
@@ -702,84 +794,67 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         public void InitializeDirectory(string RootPath, AsyncIOQueue IOQueue, bool AllocateFiles, BuildManfiestInitProgressCallbackHandler Callback = null)
         {
-            const int WriteChunkSize = 16 * 1024 * 1024;
-            byte[] ChunkArray = new byte[WriteChunkSize];
-            byte[] ChunkPattern = {0xDE, 0xAD, 0xBE, 0xEF};
+            LazyCacheBlockInfo();
 
-            for (int i = 0; i < WriteChunkSize; i++)
+            try
             {
-                ChunkArray[i] = ChunkPattern[i % ChunkPattern.Length];
-            }
+                LockBlockInfo();
 
-            long TotalBytes = 0;
-            foreach (BuildManifestFileInfo FileInfo in Files)
-            {
-                TotalBytes += FileInfo.Size;
-            }
+                const int WriteChunkSize = 16 * 1024 * 1024;
+                byte[] ChunkArray = new byte[WriteChunkSize];
+                byte[] ChunkPattern = { 0xDE, 0xAD, 0xBE, 0xEF };
 
-            long BytesWritten = 0;
-            foreach (BuildManifestFileInfo FileInfo in Files)
-            {
-                string FilePath = Path.Combine(RootPath, FileInfo.Path);
-                string FileDir = Path.GetDirectoryName(FilePath);
-                if (!Directory.Exists(FileDir))
+                for (int i = 0; i < WriteChunkSize; i++)
                 {
-                    Directory.CreateDirectory(FileDir);
+                    ChunkArray[i] = ChunkPattern[i % ChunkPattern.Length];
                 }
 
-                if (AllocateFiles)
+                long TotalBytes = 0;
+                foreach (BuildManifestFileInfo FileInfo in Files)
                 {
-                    using (FileStream Stream = File.OpenWrite(FilePath))
+                    TotalBytes += FileInfo.Size;
+                }
+
+                long BytesWritten = 0;
+                foreach (BuildManifestFileInfo FileInfo in Files)
+                {
+                    string FilePath = Path.Combine(RootPath, FileInfo.Path);
+                    string FileDir = Path.GetDirectoryName(FilePath);
+                    if (!Directory.Exists(FileDir))
                     {
-                        long BytesRemaining = FileInfo.Size;
-                        while (BytesRemaining > 0)
+                        Directory.CreateDirectory(FileDir);
+                    }
+
+                    if (AllocateFiles)
+                    {
+                        using (FileStream Stream = File.OpenWrite(FilePath))
                         {
-                            long Size = Math.Min(BytesRemaining, WriteChunkSize);
-                            Stream.Write(ChunkArray, 0, (int) Size);
-                            BytesWritten += Size;
-                            BytesRemaining -= Size;
-
-                            AsyncIOQueue.GlobalBandwidthStats.In(Size);
-
-                            if (Callback != null)
+                            long BytesRemaining = FileInfo.Size;
+                            while (BytesRemaining > 0)
                             {
-                                if (!Callback.Invoke(BytesWritten, TotalBytes))
+                                long Size = Math.Min(BytesRemaining, WriteChunkSize);
+                                Stream.Write(ChunkArray, 0, (int)Size);
+                                BytesWritten += Size;
+                                BytesRemaining -= Size;
+
+                                AsyncIOQueue.GlobalBandwidthStats.In(Size);
+
+                                if (Callback != null)
                                 {
-                                    return;
+                                    if (!Callback.Invoke(BytesWritten, TotalBytes))
+                                    {
+                                        return;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="FilePath"></param>
-        /// <returns></returns>
-        public static BuildManifest ReadFromFile(string FilePath, bool CacheDownloadInfo)
-        {
-            BuildManifest Manifest = FileUtils.ReadFromBinaryFile<BuildManifest>(FilePath);
-            if (Manifest != null)
+            finally
             {
-                Manifest.UpgradeVersion();
-                Manifest.CacheSizeInfo();
-                if (!CacheDownloadInfo)
-                {
-                    Manifest.TrimBlockInfo();
-                }
+                UnlockBlockInfo();
             }
-
-            return Manifest;
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <returns></returns>
-        public byte[] ToByteArray()
-        {
-            return FileUtils.WriteToArray(this);
         }
 
         /// <summary>
@@ -790,110 +865,134 @@ namespace BuildSync.Core.Manifests
 
             List<int> FailedBlocks = new List<int>();
 
-            int TaskCount = Environment.ProcessorCount;
-            Task[] FileTasks = new Task[TaskCount];
-            int BlockCounter = 0;
-
-            long BytesValidated = 0;
-            bool Aborted = false;
-
-            // Check the size of each file.
-            for (int i = 0; i < Files.Count; i++)
+            try
             {
-                BuildManifestFileInfo FileInfo = Files[i];
-                string FilePath = Path.Combine(RootPath, FileInfo.Path);
-                string DirPath = Path.GetDirectoryName(FilePath);
+                LockBlockInfo();
 
-                if (!Directory.Exists(DirPath))
-                {
-                    Directory.CreateDirectory(DirPath);
-                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Expected directory {0} does not exist, creating.", DirPath);
-                }
+                int TaskCount = Environment.ProcessorCount;
+                Task[] FileTasks = new Task[TaskCount];
+                int BlockCounter = 0;
 
-                FileInfo Info = new FileInfo(FilePath);
-                if (!Info.Exists || Info.Length != FileInfo.Size)
+                long BytesValidated = 0;
+                bool Aborted = false;
+
+                // Check the size of each file.
+                for (int i = 0; i < Files.Count; i++)
                 {
-                    using (FileStream Stream = new FileStream(FilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
+                    BuildManifestFileInfo FileInfo = Files[i];
+                    string FilePath = Path.Combine(RootPath, FileInfo.Path);
+                    string DirPath = Path.GetDirectoryName(FilePath);
+
+                    if (!Directory.Exists(DirPath))
                     {
-                        Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File {0} is not of expected length {1} (is {2}) settting length.", FilePath, FileInfo.Size, Info.Length);
-                        Stream.SetLength(FileInfo.Size);
+                        Directory.CreateDirectory(DirPath);
+                        Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Expected directory {0} does not exist, creating.", DirPath);
+                    }
+
+                    FileInfo Info = new FileInfo(FilePath);
+                    if (!Info.Exists || Info.Length != FileInfo.Size)
+                    {
+                        using (FileStream Stream = new FileStream(FilePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
+                        {
+                            Logger.Log(LogLevel.Warning, LogCategory.Manifest, "File {0} is not of expected length {1} (is {2}) settting length.", FilePath, FileInfo.Size, Info.Length);
+                            Stream.SetLength(FileInfo.Size);
+                        }
                     }
                 }
-            }
 
-            // Check each individual block of data for validity.
-            for (int i = 0; i < TaskCount; i++)
-            {
-                FileTasks[i] = Task.Run(
-                    () =>
-                    {
-                        byte[] Buffer = new byte[BlockSize];
-
-                        while (!Aborted)
+                // Check each individual block of data for validity.
+                for (int i = 0; i < TaskCount; i++)
+                {
+                    FileTasks[i] = Task.Run(
+                        () =>
                         {
-                            int BlockIndex = Interlocked.Increment(ref BlockCounter) - 1;
-                            if (BlockIndex >= BlockCount)
+                            byte[] Buffer = new byte[BlockSize];
+
+                            while (!Aborted)
                             {
-                                break;
-                            }
-
-                            BuildManifestBlockInfo BInfo = BlockInfo[BlockIndex];
-
-                            long BufferLength = 0;
-                            bool Success = GetBlockData(BlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
-
-                            uint Checksum = 0;
-                            if (Version >= 2)
-                            {
-                                Checksum = Crc32Fast.Compute(Buffer, 0, (int)BufferLength);
-                            }
-                            else
-                            {
-                                Checksum = Crc32Slow.Compute(Buffer, (int)BufferLength);
-                            }
-
-                            if (!Success || BlockChecksums[BlockIndex] != Checksum)
-                            {
-                                Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block {0} failed checksum, block contains following sub-blocks:", BlockIndex);
-
-                                for (int SubBlock = 0; SubBlock < BInfo.SubBlocks.Length; SubBlock++)
+                                int BlockIndex = Interlocked.Increment(ref BlockCounter) - 1;
+                                if (BlockIndex >= BlockCount)
                                 {
-                                    BuildManifestSubBlockInfo SubBInfo = BInfo.SubBlocks[SubBlock];
-                                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "\tfile={0} offset={1} size={2}", SubBInfo.File.Path, SubBInfo.FileOffset, SubBInfo.FileSize);
+                                    break;
                                 }
 
-                                lock (FailedBlocks)
+                                BuildManifestBlockInfo BInfo = BlockInfo[BlockIndex];
+
+                                long BufferLength = 0;
+                                bool Success = GetBlockData(BlockIndex, RootPath, IOQueue, Buffer, out BufferLength);
+
+                                uint Checksum = 0;
+                                if (Version >= 2)
                                 {
-                                    FailedBlocks.Add(BlockIndex);
+                                    Checksum = Crc32Fast.Compute(Buffer, 0, (int)BufferLength);
                                 }
-                            }
-
-                            Interlocked.Add(ref BytesValidated, BInfo.TotalSize);
-
-                            if (Callback != null)
-                            {
-                                if (!Callback.Invoke(BytesValidated, TotalSize, Guid, BlockIndex))
+                                else
                                 {
-                                    Aborted = true;
+                                    Checksum = Crc32Slow.Compute(Buffer, (int)BufferLength);
+                                }
+
+                                if (!Success || BlockChecksums[BlockIndex] != Checksum)
+                                {
+                                    Logger.Log(LogLevel.Warning, LogCategory.Manifest, "Block {0} failed checksum, block contains following sub-blocks:", BlockIndex);
+
+                                    for (int SubBlock = 0; SubBlock < BInfo.SubBlocks.Length; SubBlock++)
+                                    {
+                                        BuildManifestSubBlockInfo SubBInfo = BInfo.SubBlocks[SubBlock];
+                                        Logger.Log(LogLevel.Warning, LogCategory.Manifest, "\tfile={0} offset={1} size={2}", SubBInfo.File.Path, SubBInfo.FileOffset, SubBInfo.FileSize);
+                                    }
+
+                                    lock (FailedBlocks)
+                                    {
+                                        FailedBlocks.Add(BlockIndex);
+                                    }
+                                }
+
+                                Interlocked.Add(ref BytesValidated, BInfo.TotalSize);
+
+                                if (Callback != null)
+                                {
+                                    if (!Callback.Invoke(BytesValidated, TotalSize, Guid, BlockIndex))
+                                    {
+                                        Aborted = true;
+                                    }
                                 }
                             }
                         }
-                    }
-                );
-            }
+                    );
+                }
 
-            Task.WaitAll(FileTasks);
+                Task.WaitAll(FileTasks);
+            }
+            finally
+            {
+                UnlockBlockInfo();
+            }
 
             return FailedBlocks;
         }
 
         /// <summary>
+        /// 
         /// </summary>
-        /// <param name="FilePath"></param>
-        /// <returns></returns>
-        public void WriteToFile(string FilePath)
+        private void LockBlockInfo()
         {
-            FileUtils.WriteToBinaryFile(FilePath, this);
+            BlockInfoLocked = true;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private void UnlockBlockInfo()
+        {
+            BlockInfoLocked = false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        internal void Poll()
+        {
+            LazyTrimBlockInfo();
         }
 
         /// <summary>
@@ -918,15 +1017,34 @@ namespace BuildSync.Core.Manifests
         /// </summary>
         private void TrimBlockInfo()
         {
-            BlockChecksums = null;
-            SparseBlockChecksums = null;
-            Files = null;
+            BlockChecksums = new uint[0];
+            SparseBlockChecksums = new uint[0];
+            Files = new List<BuildManifestFileInfo>();
+            BlockInfo = new BuildManifestBlockInfo[0];
+            FilesByPath = new Dictionary<string, BuildManifestFileInfo>();
+
+            GC.Collect();
         }
 
         /// <summary>
         /// </summary>
         private void CacheBlockInfo()
         {
+            // Reload content from disk cache.
+            if (OriginalFilePath != "" && Files.Count == 0)
+            {
+                BuildManifest Manifest = FileUtils.ReadFromBinaryFile<BuildManifest>(OriginalFilePath);
+                if (Manifest == null)
+                {
+                    Logger.Log(LogLevel.Error, LogCategory.Manifest, "Failed to reload trimmed block information from manifest, this may cause crashes if the data is unavailable: {0}", OriginalFilePath);
+                    return;
+                }
+
+                BlockChecksums = Manifest.BlockChecksums;
+                SparseBlockChecksums = Manifest.SparseBlockChecksums;
+                Files = Manifest.Files;
+            }
+
             // Store block information.
             BlockInfo = new BuildManifestBlockInfo[BlockCount];
             FilesByPath = new Dictionary<string, BuildManifestFileInfo>();
@@ -1016,35 +1134,39 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// 
         /// </summary>
-        public void LazyCacheBlockInfo()
+        private void LazyCacheBlockInfo()
         {
-            if (BlockInfo == null || BlockInfo.Length == 0)
+            lock (BlockInfoCacheLock)
             {
-                Logger.Log(LogLevel.Info, LogCategory.Manifest, "Lazy caching block information for manifest: {0}", VirtualPath);
+                LastBlockInfoRequested = TimeUtils.Ticks;
 
-                CacheBlockInfo();
-                CacheSizeInfo();
+                if (BlockInfo == null || BlockInfo.Length == 0)
+                {
+                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Lazy caching block information for manifest: {0}", VirtualPath);
+
+                    CacheBlockInfo();
+                    CacheSizeInfo();
+                }
             }
-
-            LastBlockInfoRequested = TimeUtils.Ticks;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        public void LazyTrimBlockInfo()
+        private void LazyTrimBlockInfo()
         {
-            if (BlockInfo != null && BlockInfo.Length > 0)
+            lock (BlockInfoCacheLock)
             {
-                if (TimeUtils.Ticks - LastBlockInfoRequested > 60 * 1000)
+                if (!BlockInfoLocked && BlockInfo != null && BlockInfo.Length > 0)
                 {
-                    Logger.Log(LogLevel.Info, LogCategory.Manifest, "Lazy trimming block information for manifest: {0}", VirtualPath);
+                    if (TimeUtils.Ticks - LastBlockInfoRequested >= 30 * 1000)
+                    {
+                        Logger.Log(LogLevel.Info, LogCategory.Manifest, "Lazy trimming block information for manifest: {0}", VirtualPath);
 
-                    BlockInfo = new BuildManifestBlockInfo[0];
-                    FilesByPath = new Dictionary<string, BuildManifestFileInfo>();
+                        TrimBlockInfo();
+                    }
                 }
             }
-            LastBlockInfoRequested = TimeUtils.Ticks;
         }
     }
 }

@@ -57,7 +57,7 @@ namespace BuildSync.Client.Forms
         /// <summary>
         /// 
         /// </summary>
-        private InstallRateEstimater InstallRate = new InstallRateEstimater();
+        private ProgressRateEstimater InstallRate = new ProgressRateEstimater();
 
         /// <summary>
         /// 

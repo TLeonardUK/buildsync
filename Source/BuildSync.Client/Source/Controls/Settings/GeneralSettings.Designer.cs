@@ -39,6 +39,7 @@
             this.viewLogsButton = new System.Windows.Forms.Button();
             this.autoFixValidationErrorsCheckBox = new System.Windows.Forms.CheckBox();
             this.allowRemoteActionsCheckBox = new System.Windows.Forms.CheckBox();
+            this.autoInstallUpdatesCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // RunOnStartupCheckbox
@@ -118,7 +119,7 @@
             // logLevelComboBox
             // 
             this.logLevelComboBox.FormattingEnabled = true;
-            this.logLevelComboBox.Location = new System.Drawing.Point(16, 274);
+            this.logLevelComboBox.Location = new System.Drawing.Point(16, 295);
             this.logLevelComboBox.Name = "logLevelComboBox";
             this.logLevelComboBox.Size = new System.Drawing.Size(367, 21);
             this.logLevelComboBox.TabIndex = 39;
@@ -127,7 +128,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 255);
+            this.label1.Location = new System.Drawing.Point(16, 276);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(74, 13);
             this.label1.TabIndex = 40;
@@ -135,7 +136,7 @@
             // 
             // viewLogsButton
             // 
-            this.viewLogsButton.Location = new System.Drawing.Point(390, 274);
+            this.viewLogsButton.Location = new System.Drawing.Point(390, 295);
             this.viewLogsButton.Name = "viewLogsButton";
             this.viewLogsButton.Size = new System.Drawing.Size(120, 21);
             this.viewLogsButton.TabIndex = 41;
@@ -167,9 +168,22 @@
             this.allowRemoteActionsCheckBox.UseVisualStyleBackColor = true;
             this.allowRemoteActionsCheckBox.CheckedChanged += new System.EventHandler(this.StateChanged);
             // 
+            // autoInstallUpdatesCheckBox
+            // 
+            this.autoInstallUpdatesCheckBox.AutoSize = true;
+            this.autoInstallUpdatesCheckBox.Location = new System.Drawing.Point(16, 247);
+            this.autoInstallUpdatesCheckBox.Margin = new System.Windows.Forms.Padding(2);
+            this.autoInstallUpdatesCheckBox.Name = "autoInstallUpdatesCheckBox";
+            this.autoInstallUpdatesCheckBox.Size = new System.Drawing.Size(124, 17);
+            this.autoInstallUpdatesCheckBox.TabIndex = 44;
+            this.autoInstallUpdatesCheckBox.Text = "Auto install updates?";
+            this.autoInstallUpdatesCheckBox.UseVisualStyleBackColor = true;
+            this.autoInstallUpdatesCheckBox.CheckedChanged += new System.EventHandler(this.StateChanged);
+            // 
             // GeneralSettings
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.Controls.Add(this.autoInstallUpdatesCheckBox);
             this.Controls.Add(this.allowRemoteActionsCheckBox);
             this.Controls.Add(this.autoFixValidationErrorsCheckBox);
             this.Controls.Add(this.viewLogsButton);
@@ -183,7 +197,7 @@
             this.Controls.Add(this.RunOnStartupCheckbox);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "GeneralSettings";
-            this.Size = new System.Drawing.Size(519, 310);
+            this.Size = new System.Drawing.Size(519, 333);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -202,5 +216,6 @@
 		private System.Windows.Forms.Button viewLogsButton;
         private System.Windows.Forms.CheckBox autoFixValidationErrorsCheckBox;
 		private System.Windows.Forms.CheckBox allowRemoteActionsCheckBox;
-	}
+        private System.Windows.Forms.CheckBox autoInstallUpdatesCheckBox;
+    }
 }

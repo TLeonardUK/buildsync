@@ -44,20 +44,22 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ApplyClicked(object sender, EventArgs e)
         {
-            OpenFileDialog dialog = new OpenFileDialog();
-            dialog.Filter = "License files (*.dat)|*.dat|All files (*.*)|*.*";
-            dialog.Title = "Select license file ...";
-            dialog.CheckFileExists = true;
-            if (dialog.ShowDialog() == DialogResult.OK)
+            using (OpenFileDialog dialog = new OpenFileDialog())
             {
-                License license = License.Load(dialog.FileName);
-                if (license == null)
+                dialog.Filter = "License files (*.dat)|*.dat|All files (*.*)|*.*";
+                dialog.Title = "Select license file ...";
+                dialog.CheckFileExists = true;
+                if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    MessageBox.Show("File does not appear to be a valid license file", "License file invalid", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                else
-                {
-                    Program.NetClient.RequestApplyLicense(license);
+                    License license = License.Load(dialog.FileName);
+                    if (license == null)
+                    {
+                        MessageBox.Show("File does not appear to be a valid license file", "License file invalid", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    else
+                    {
+                        Program.NetClient.RequestApplyLicense(license);
+                    }
                 }
             }
         }

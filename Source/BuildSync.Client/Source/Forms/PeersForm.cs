@@ -208,9 +208,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void PeerAvailabilityClicked(object sender, EventArgs e)
         {
-            PeerAvailabilityForm Form = new PeerAvailabilityForm();
-            Form.Peer = ContextMenuPeer; 
-            Form.ShowDialog();
+            using (PeerAvailabilityForm Form = new PeerAvailabilityForm())
+            {
+                Form.Peer = ContextMenuPeer;
+                Form.ShowDialog();
+            }
         }
 
         /// <summary>

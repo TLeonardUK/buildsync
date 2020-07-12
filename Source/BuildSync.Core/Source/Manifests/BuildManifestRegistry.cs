@@ -38,7 +38,7 @@ namespace BuildSync.Core.Manifests
     {
         /// <summary>
         /// </summary>
-        public VirtualFileSystem ManifestFileSystem = new VirtualFileSystem();
+        private VirtualFileSystem ManifestFileSystem = new VirtualFileSystem();
 
         /// <summary>
         /// </summary>
@@ -50,7 +50,7 @@ namespace BuildSync.Core.Manifests
 
         /// <summary>
         /// </summary>
-        public TagRegistry TagRegistry = null;
+        private TagRegistry TagRegistry = null;
 
         /// <summary>
         /// 
@@ -192,7 +192,7 @@ namespace BuildSync.Core.Manifests
         /// <summary>
         /// </summary>
         /// <param name="Path"></param>
-        public void Open(string Path, int InMaxManifests, bool CacheDownloadInfo)
+        public void Open(string Path, int InMaxManifests)
         {
             MaximumManifests = InMaxManifests;
             RootPath = Path;
@@ -220,7 +220,7 @@ namespace BuildSync.Core.Manifests
                     {
                         Logger.Log(LogLevel.Verbose, LogCategory.Manifest, "Loading manifest: {0}", FilePath);
 
-                        BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath, CacheDownloadInfo);
+                        BuildManifest Manifest = BuildManifest.ReadFromFile(FilePath);
                         if (Manifest != null)
                         {
                             string MetaFile = FilePath + ".metadata";
@@ -273,7 +273,7 @@ namespace BuildSync.Core.Manifests
         {
             foreach (BuildManifest Manifest in Manifests)
             {
-                Manifest.LazyTrimBlockInfo();
+                Manifest.Poll();
             }
         }
 

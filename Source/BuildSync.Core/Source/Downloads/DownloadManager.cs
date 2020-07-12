@@ -111,7 +111,7 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public const long ReplicationMaxIdleDays = 3;
+        public const long ReplicationMaxIdleHours = 1;
 
         /// <summary>
         /// </summary>
@@ -575,13 +575,12 @@ namespace BuildSync.Core.Downloads
             ulong Elapsed = TimeUtils.Ticks - LastReplicationRequestTime;
             if (Elapsed > ReplicationCheckInterval && bHadConnection)
             {
-                Logger.Log(LogLevel.Info, LogCategory.Download, "Requesting update on published builds.");
-
                 DateTime OldTimestamp = ReplicationNewerThanTime;
 
                 ReplicationNewerThanTime = DateTime.UtcNow;
                 LastReplicationRequestTime = TimeUtils.Ticks;
 
+                Logger.Log(LogLevel.Info, LogCategory.Download, "Requesting update on published builds after timestamp: {0}", OldTimestamp);
                 OnRequestReplicatedBuilds?.Invoke(ReplicateSelectTags, ReplicateIgnoreTags, OldTimestamp);
             }        
         }
@@ -725,6 +724,9 @@ namespace BuildSync.Core.Downloads
                 }
             }
 
+            // Only download a single auto-replication download at a time, more efficient than dozens downloading at the same time.
+            Guid UnpausedAutoDownload = Guid.Empty;
+
             // Remove auto replication downloads as required.
             for (int i = 0; i < StateCollection.States.Count; i++)
             {
@@ -753,17 +755,18 @@ namespace BuildSync.Core.Downloads
 
                     // Download has not recieved any blocks in a long time, remove.
                     TimeSpan Elapsed = DateTime.UtcNow - Downloader.LastRecievedData;
-                    if (Elapsed.TotalDays > ReplicationMaxIdleDays)
+                    if (Elapsed.TotalHours > ReplicationMaxIdleHours)
                     {
                         ShouldRemove = true;
                     }
 
                     // Automatically resume replication downloads if they are in an error state.
-                    if (State.Paused)
+                    if (UnpausedAutoDownload == Guid.Empty)
                     {
-                        State.Paused = false;
-                        //ManifestDownloader.ResumeDownload(Downloader.ManifestId);
+                        UnpausedAutoDownload = State.ActiveManifestId;
                     }
+
+                    State.Paused = (UnpausedAutoDownload != State.ActiveManifestId);
 
                     if (ShouldRemove)
                     {
@@ -807,42 +810,70 @@ namespace BuildSync.Core.Downloads
                 {
                     case ManifestDownloadProgressState.Initializing:
                     {
-                        RawEstimateSeconds = Downloader.InitializeBytesRemaining / (double)Downloader.InitializeRateStats.RateIn;
+                        /*RawEstimateSeconds = Downloader.InitializeBytesRemaining / (double)Downloader.InitializeRateStats.RateIn;
                         RawProgress = Downloader.InitializeProgress;
                         if (Downloader.InitializeRateStats.RateIn == 0)
                         {
                             RawEstimateSeconds = 0;
                         }
+                        break;*/
+
+                        Downloader.InitializeRateEstimater.SetProgress(Downloader.InitializeProgress);
+                        Downloader.InitializeRateEstimater.Poll();
+
+                        RawEstimateSeconds = Downloader.InitializeRateEstimater.EstimatedSeconds;
+                        RawProgress = Downloader.InitializeRateEstimater.EstimatedProgress;
                         break;
                     }
                     case ManifestDownloadProgressState.DeltaCopying:
                     {
-                        RawEstimateSeconds = Downloader.DeltaCopyBytesRemaining / (double)Downloader.DeltaCopyRateStats.RateIn;
+                        /*RawEstimateSeconds = Downloader.DeltaCopyBytesRemaining / (double)Downloader.DeltaCopyRateStats.RateIn;
                         RawProgress = Downloader.DeltaCopyProgress;
                         if (Downloader.DeltaCopyRateStats.RateIn == 0)
                         {
                             RawEstimateSeconds = 0;
                         }
+                        break;*/
+
+                        Downloader.DeltaCopyRateEstimater.SetProgress(Downloader.DeltaCopyProgress);
+                        Downloader.DeltaCopyRateEstimater.Poll();
+
+                        RawEstimateSeconds = Downloader.DeltaCopyRateEstimater.EstimatedSeconds;
+                        RawProgress = Downloader.DeltaCopyRateEstimater.EstimatedProgress;
                         break;
                     }
                     case ManifestDownloadProgressState.Validating:
                     {
-                        RawEstimateSeconds = Downloader.ValidateBytesRemaining / (double)Downloader.ValidateRateStats.RateOut;
+                        /*RawEstimateSeconds = Downloader.ValidateBytesRemaining / (double)Downloader.ValidateRateStats.RateOut;
                         RawProgress = Downloader.ValidateProgress;
                         if (Downloader.ValidateRateStats.RateOut == 0)
                         {
                             RawEstimateSeconds = 0;
                         }
+                        break;*/
+
+                        Downloader.ValidateRateEstimater.SetProgress(Downloader.ValidateProgress);
+                        Downloader.ValidateRateEstimater.Poll();
+
+                        RawEstimateSeconds = Downloader.ValidateRateEstimater.EstimatedSeconds;
+                        RawProgress = Downloader.ValidateRateEstimater.EstimatedProgress;
                         break;
                     }
                     case ManifestDownloadProgressState.Downloading:
                     {
-                        RawEstimateSeconds = Downloader.BytesRemaining / (double)Downloader.BandwidthStats.RateIn;
+                        /*RawEstimateSeconds = Downloader.BytesRemaining / (double)Downloader.BandwidthStats.RateIn;
                         RawProgress = Downloader.Progress;
                         if (Downloader.BandwidthStats.RateIn == 0)
                         {
                             RawEstimateSeconds = 0;
                         }
+                        break;*/
+                            
+                        Downloader.DownloadRateEstimater.SetProgress(Downloader.Progress);
+                        Downloader.DownloadRateEstimater.Poll();
+
+                        RawEstimateSeconds = Downloader.DownloadRateEstimater.EstimatedSeconds;
+                        RawProgress = Downloader.DownloadRateEstimater.EstimatedProgress;
                         break;
                     }
                     case ManifestDownloadProgressState.Installing:

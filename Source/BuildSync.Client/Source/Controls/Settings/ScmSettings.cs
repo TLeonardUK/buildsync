@@ -68,13 +68,15 @@ namespace BuildSync.Client.Controls.Settings
         /// <param name="e"></param>
         private void AddClicked(object sender, EventArgs e)
         {
-            AddScmWorkspaceForm Form = new AddScmWorkspaceForm();
-            if (Form.ShowDialog(this) == DialogResult.OK)
+            using (AddScmWorkspaceForm Form = new AddScmWorkspaceForm())
             {
-                Program.Settings.ScmWorkspaces.Add(Form.Settings);
-                Program.SaveSettings();
+                if (Form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.Settings.ScmWorkspaces.Add(Form.Settings);
+                    Program.SaveSettings();
 
-                RefreshItems();
+                    RefreshItems();
+                }
             }
         }
 

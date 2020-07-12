@@ -1478,8 +1478,8 @@ namespace BuildSync.Core.Server
                 foreach (RemoteActionServerState Action in RemoteActionServer.States)
                 {
                     NetMessage_GetServerStateResponse.RemoteInstallState NewState = new NetMessage_GetServerStateResponse.RemoteInstallState();
-                    NewState.Requester = Action.ForClient.Handshake.MachineName;
-                    NewState.AssignedTo = Action.AllocatedClient == null ? "Pending" : Action.AllocatedClient.Handshake.MachineName;
+                    NewState.Requester = Action.ForClient != null && Action.ForClient.Handshake != null ? Action.ForClient.Handshake.MachineName : "";
+                    NewState.AssignedTo = Action.AllocatedClient != null && Action.AllocatedClient.Handshake != null ? Action.AllocatedClient.Handshake.MachineName : "Pending";
                     NewState.Progress = Action.Progress;
                     NewState.ProgressText = Action.ProgressText;
                     NewState.Id = Action.Id;
@@ -1801,7 +1801,7 @@ namespace BuildSync.Core.Server
                         {
                             foreach (var Candidate in Pool)
                             {
-                                Pool.Add(Candidate);
+                                Candidates.Add(Candidate);
                             }
                         }
 

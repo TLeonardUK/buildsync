@@ -327,7 +327,7 @@
     <Compile Include="Users\UserPermission.cs" />
     <Compile Include="Utils\DomainUtils.cs" />
     <Compile Include="Utils\FileCopyEx.cs" />
-    <Compile Include="Utils\InstallRateEstimater.cs" />
+    <Compile Include="Utils\ProgressRateEstimater.cs" />
     <Compile Include="Utils\ProgressParser.cs" />
     <Compile Include="Utils\RollingAverageOverTime.cs" />
     <Compile Include="Utils\Sha1.cs" />

@@ -97,6 +97,9 @@ namespace BuildSync.Client.Tasks
                     {
                         Guid NewManifestId = Guid.NewGuid();
 
+                        // Don't allow downloading of this manifest until we have fully committed it.
+                        Program.ManifestDownloadManager.BlockDownload(NewManifestId);
+
                         // Calculate max size of all files in folder to publish.
                         string[] Files = Directory.GetFiles(LocalPath, "*", SearchOption.AllDirectories);
                         long TotalSize = 0;
@@ -110,12 +113,10 @@ namespace BuildSync.Client.Tasks
                         {
                             Logger.Log(LogLevel.Error, LogCategory.Main, "Failed to allocate space, storage folders likely at capacity.");
 
+                            Program.ManifestDownloadManager.UnblockDownload(NewManifestId);
                             State = BuildPublishingState.Failed;
                             return;
                         }
-
-                        // Don't allow downloading of this manifest until we have fully committed it.
-                        Program.ManifestDownloadManager.BlockDownload(NewManifestId);
 
                         // Recreated directory.
                         if (Directory.Exists(StoragePath))
@@ -202,6 +203,7 @@ namespace BuildSync.Client.Tasks
                         if (!Program.NetClient.PublishManifest(Manifest))
                         {
                             State = BuildPublishingState.Failed;
+                            Program.ManifestDownloadManager.UnblockDownload(NewManifestId);
                             return;
                         }
 
@@ -213,6 +215,7 @@ namespace BuildSync.Client.Tasks
                         // Abort here if publishing failed.
                         if (State != BuildPublishingState.UploadingManifest)
                         {
+                            Program.ManifestDownloadManager.UnblockDownload(NewManifestId);
                             return;
                         }
 

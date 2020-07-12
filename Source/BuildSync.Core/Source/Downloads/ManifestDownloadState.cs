@@ -166,6 +166,42 @@ namespace BuildSync.Core.Downloads
         internal Task ValidationTask = null;
 
         /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal bool StateWaitingForFinalize = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal List<int> ValidateFailedBlocks = new List<int>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal Dictionary<BuildManifestFileInfo, string> DeltaCopyFilesToCopy = new Dictionary<BuildManifestFileInfo, string>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal bool InitializeFailed = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized]
+        internal bool InstallFailed = false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [NonSerialized] 
+        internal bool DeltaCopyFailed = false;
+
+        /// <summary>
         /// </summary>
         public bool Active { get; set; }
 
@@ -210,7 +246,7 @@ namespace BuildSync.Core.Downloads
 
         /// <summary>
         /// </summary>
-        public List<ManifestFileCompletedState> FileCompletedStates { get; set; } = new List<ManifestFileCompletedState>();
+        //public List<ManifestFileCompletedState> FileCompletedStates { get; set; } = new List<ManifestFileCompletedState>();
 
         /// <summary>
         /// </summary>
@@ -299,6 +335,31 @@ namespace BuildSync.Core.Downloads
         /// <summary>
         /// 
         /// </summary>
-        public InstallRateEstimater InstallRateEstimater = new InstallRateEstimater();
+        public ProgressRateEstimater InitializeRateEstimater = new ProgressRateEstimater();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ProgressRateEstimater InstallRateEstimater = new ProgressRateEstimater();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ProgressRateEstimater DownloadRateEstimater = new ProgressRateEstimater();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ProgressRateEstimater ValidateRateEstimater = new ProgressRateEstimater();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ProgressRateEstimater AllocateRateEstimater = new ProgressRateEstimater();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public ProgressRateEstimater DeltaCopyRateEstimater = new ProgressRateEstimater();
     }
 }

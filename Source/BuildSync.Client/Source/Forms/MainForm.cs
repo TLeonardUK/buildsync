@@ -314,9 +314,11 @@ namespace BuildSync.Client.Forms
 
             if (Program.Settings.FirstRun)
             {
-                SetupForm form = new SetupForm();
-                form.QuitOnClose = true;
-                form.ShowDialog(this);
+                using (SetupForm form = new SetupForm())
+                {
+                    form.QuitOnClose = true;
+                    form.ShowDialog(this);
+                }
             }
         }
 
@@ -325,7 +327,10 @@ namespace BuildSync.Client.Forms
         /// </summary>
         public void ShowAddDownload()
         {
-            new AddDownloadForm().ShowDialog(this);
+            using (AddDownloadForm form = new AddDownloadForm())
+            { 
+                form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -354,8 +359,10 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void FirstTimeSetupClicked(object sender, EventArgs e)
         {
-            SetupForm form = new SetupForm();
-            form.ShowDialog(this);
+            using (SetupForm form = new SetupForm())
+            {
+                form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -364,92 +371,94 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void PushUpdateClicked(object sender, EventArgs e)
         {
-            OpenFileDialog Dialog = new OpenFileDialog();
-            Dialog.Title = "Select Update File";
-            Dialog.Filter = "Installer File (*.msi)|*.msi";
-            //Dialog.InitialDirectory = Environment.CurrentDirectory;
-            Dialog.CheckFileExists = true;
-            Dialog.ShowHelp = true;
+            using (OpenFileDialog Dialog = new OpenFileDialog())
+            { 
+                Dialog.Title = "Select Update File";
+                Dialog.Filter = "Installer File (*.msi)|*.msi";
+                //Dialog.InitialDirectory = Environment.CurrentDirectory;
+                Dialog.CheckFileExists = true;
+                Dialog.ShowHelp = true;
 
-            if (Dialog.ShowDialog(this) == DialogResult.OK)
-            {
-                string msiVersion = InstallUtils.GetMsiProperty(Dialog.FileName, "ProductVersion");
-                if (msiVersion.Length == 0)
+                if (Dialog.ShowDialog(this) == DialogResult.OK)
                 {
-                    MessageBox.Show("Failed to retrieve version data from msi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                BuildsRecievedHandler Handler = null;
-                Handler = (RootPath, Builds) =>
-                {
-                    Program.NetClient.OnBuildsRecieved -= Handler;
-
-                    // Find the next sequential build index.
-                    string NewVirtualPath = RootPath + "/" + msiVersion;
-
-                    bool Exists = false;
-                    foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
+                    string msiVersion = InstallUtils.GetMsiProperty(Dialog.FileName, "ProductVersion");
+                    if (msiVersion.Length == 0)
                     {
-                        if (Build.VirtualPath.ToUpper() == NewVirtualPath.ToUpper())
-                        {
-                            Exists = true;
-                            break;
-                        }
-                    }
-
-                    if (Exists)
-                    {
-                        MessageBox.Show("Version is already uploaded.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("Failed to retrieve version data from msi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
 
-                    // Publish a folder.
-                    string TempFolder = FileUtils.GetTempDirectory();
-                    File.Copy(Dialog.FileName, Path.Combine(TempFolder, "installer.msi"));
+                    BuildsRecievedHandler Handler = null;
+                    Handler = (RootPath, Builds) =>
+                    {
+                        Program.NetClient.OnBuildsRecieved -= Handler;
 
-                    // Publish the build.
-                    PublishBuildTask Publisher = new PublishBuildTask();
-                    Publisher.Start(NewVirtualPath, TempFolder);
+                        // Find the next sequential build index.
+                        string NewVirtualPath = RootPath + "/" + msiVersion;
 
-                    Task.Run(
-                        () =>
+                        bool Exists = false;
+                        foreach (NetMessage_GetBuildsResponse.BuildInfo Build in Builds)
                         {
-                            bool PublishComplete = false;
-                            while (!PublishComplete)
+                            if (Build.VirtualPath.ToUpper() == NewVirtualPath.ToUpper())
                             {
-                                switch (Publisher.State)
-                                {
-                                    case BuildPublishingState.CopyingFiles:
-                                    case BuildPublishingState.ScanningFiles:
-                                    case BuildPublishingState.UploadingManifest:
-                                    {
-                                        // Ignore
-                                        break;
-                                    }
-                                    case BuildPublishingState.Success:
-                                    {
-                                        Invoke((MethodInvoker) (() => { Publisher.Commit(); }));
-                                        Publisher = null;
-                                        PublishComplete = true;
-                                        break;
-                                    }
-                                    default:
-                                    {
-                                        Publisher = null;
-                                        PublishComplete = true;
-                                        break;
-                                    }
-                                }
-
-                                Thread.Sleep(1000);
+                                Exists = true;
+                                break;
                             }
                         }
-                    );
-                };
 
-                Program.NetClient.OnBuildsRecieved += Handler;
-                Program.NetClient.RequestBuilds("$Internal$/Updates");
+                        if (Exists)
+                        {
+                            MessageBox.Show("Version is already uploaded.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        // Publish a folder.
+                        string TempFolder = FileUtils.GetTempDirectory();
+                        File.Copy(Dialog.FileName, Path.Combine(TempFolder, "installer.msi"));
+
+                        // Publish the build.
+                        PublishBuildTask Publisher = new PublishBuildTask();
+                        Publisher.Start(NewVirtualPath, TempFolder);
+
+                        Task.Run(
+                            () =>
+                            {
+                                bool PublishComplete = false;
+                                while (!PublishComplete)
+                                {
+                                    switch (Publisher.State)
+                                    {
+                                        case BuildPublishingState.CopyingFiles:
+                                        case BuildPublishingState.ScanningFiles:
+                                        case BuildPublishingState.UploadingManifest:
+                                        {
+                                            // Ignore
+                                            break;
+                                        }
+                                        case BuildPublishingState.Success:
+                                        {
+                                            Invoke((MethodInvoker) (() => { Publisher.Commit(); }));
+                                            Publisher = null;
+                                            PublishComplete = true;
+                                            break;
+                                        }
+                                        default:
+                                        {
+                                            Publisher = null;
+                                            PublishComplete = true;
+                                            break;
+                                        }
+                                    }
+
+                                    Thread.Sleep(1000);
+                                }
+                            }
+                        );
+                    };
+
+                    Program.NetClient.OnBuildsRecieved += Handler;
+                    Program.NetClient.RequestBuilds("$Internal$/Updates");
+                }
             }
         }
 
@@ -459,7 +468,10 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewLicenseClicked(object sender, EventArgs e)
         {
-            new LicenseForm().ShowDialog(this);
+            using (LicenseForm form = new LicenseForm())
+            { 
+                form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -495,7 +507,10 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void PreferencesClicked(object sender, EventArgs e)
         {
-            new PreferencesForm().ShowDialog(this);
+            using (PreferencesForm form = new PreferencesForm())
+            { 
+                form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -517,7 +532,10 @@ namespace BuildSync.Client.Forms
         /// <param name="e">Event specific arguments.</param>
         private void AboutClicked(object sender, EventArgs e)
         {
-            new AboutForm().ShowDialog(this);
+            using (AboutForm form = new AboutForm())
+            {
+                form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -847,9 +865,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void SettingsClicked(object sender, EventArgs e)
         {
-            AddDownloadForm Dialog = new AddDownloadForm();
-            Dialog.EditState = ContextMenuDownloadItem.State;
-            Dialog.ShowDialog(this);
+            using (AddDownloadForm Dialog = new AddDownloadForm())
+            {
+                Dialog.EditState = ContextMenuDownloadItem.State;
+                Dialog.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -873,9 +893,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ViewAvailabilityClicked(object sender, EventArgs e)
         {
-            DownloadAvailabilityForm Form = new DownloadAvailabilityForm();
-            Form.Download = ContextMenuDownloadItem.State;
-            Form.ShowDialog();
+            using (DownloadAvailabilityForm Form = new DownloadAvailabilityForm())
+            {
+                Form.Download = ContextMenuDownloadItem.State;
+                Form.ShowDialog();
+            }
         }
 
         /// <summary>
@@ -902,7 +924,7 @@ namespace BuildSync.Client.Forms
                     {
                         case HandshakeResultType.InvalidVersion:
                         {
-                            peerCountLabel.Text = "Version is incompatible, please update application.";
+                            peerCountLabel.Text = "Version is incompatible, please manually update application.";
                             break;
                         }
                         case HandshakeResultType.MaxSeatsExceeded:
@@ -1080,7 +1102,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void AutoUpdaterClicked(object sender, EventArgs e)
         {
-            Program.InstallAutoUpdate();
+            Program.InstallAutoUpdate(false);
         }
 
         /// <summary>

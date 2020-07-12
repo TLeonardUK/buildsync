@@ -57,15 +57,17 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void BrowseForLocalFolderClicked(object sender, EventArgs e)
         {
-            CommonOpenFileDialog Dialog = new CommonOpenFileDialog();
-            Dialog.AllowNonFileSystemItems = true;
-            Dialog.Multiselect = true;
-            Dialog.IsFolderPicker = true;
-            Dialog.Title = "Select Build Folder";
-
-            if (Dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            using (CommonOpenFileDialog Dialog = new CommonOpenFileDialog())
             {
-                LocalFolderTextBox.Text = Dialog.FileName;
+                Dialog.AllowNonFileSystemItems = true;
+                Dialog.Multiselect = true;
+                Dialog.IsFolderPicker = true;
+                Dialog.Title = "Select Build Folder";
+
+                if (Dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    LocalFolderTextBox.Text = Dialog.FileName;
+                }
             }
         }
 

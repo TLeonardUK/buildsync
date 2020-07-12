@@ -536,6 +536,7 @@ namespace BuildSync.Core.Networking
         private readonly object SendThreadQueueLock = new object();
 
         private BlockingCollection<MessageQueueEntry> ProcessBufferQueue;
+        internal const int MaxProcessQueueSize = 128;
         internal static int ProcessQueueSize = 0;
         private Thread ProcessThread;
 
@@ -957,38 +958,69 @@ namespace BuildSync.Core.Networking
         /// </summary>
         public void ProcessThreadEntry()
         {
+            //List<MessageQueueEntry> MessagesToRequeue = new List<MessageQueueEntry>();
+
             while (!ProcessBufferQueue.IsCompleted)
             {
                 MessageQueueEntry Data;
+
                 if (ProcessBufferQueue.TryTake(out Data, 1000))
                 {
                     Interlocked.Decrement(ref ProcessQueueSize);
 
-                    if (ProcessMessage(ref Data.Data, Data.BufferSize))
+                    bool Failed = false;
+
+                    try
+                    {
+                        if (ProcessMessage(ref Data.Data, Data.BufferSize))
+                        {
+                            Failed = true;
+                        }
+                    }
+                    catch (Exception Ex)
+                    {
+                        // If an assert is generated, just treat it as if it succeeded.
+                        Logger.Log(LogLevel.Warning, LogCategory.Transport, "Failed to process message with exception: {0}", Ex.ToString());
+                    }
+
+                    if (Failed)
                     {
                         try
                         {
-                            /*NetMessage TmpMsg = new NetMessage();
-                            TmpMsg.ReadHeader(Data.Data);
-
-                            Console.WriteLine("Requeuing: {0}", TmpMsg.Index);
-                            */
-
                             Interlocked.Increment(ref ProcessQueueSize);
                             ProcessBufferQueue.Add(Data);
-
-                            Thread.Sleep(1);
                         }
                         catch (InvalidOperationException)
                         {
+                            Interlocked.Decrement(ref ProcessQueueSize);
                             // This can happen if another thread switches adding off.
                         }
+
+                        Thread.Sleep(1);
 
                         continue;
                     }
 
                     ReleaseMessageBuffer(Data.Data, "ProcessThreadEntry", "Recieve", false);
                 }
+                /*else
+                {
+                    foreach (MessageQueueEntry Entry in MessagesToRequeue)
+                    {
+                        try
+                        {
+                            Interlocked.Increment(ref ProcessQueueSize);
+                            ProcessBufferQueue.Add(Entry);
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            Interlocked.Decrement(ref ProcessQueueSize);
+                            // This can happen if another thread switches adding off.
+                        }
+                    }
+
+                    MessagesToRequeue.Clear();
+                }*/
             }
         }
 
@@ -1529,6 +1561,11 @@ namespace BuildSync.Core.Networking
 
                     ReleaseMessageBuffer(Data.Data, "EndSendThread", "Send", true);
                 }
+            }
+
+            if (ProcessBufferQueue != null && ProcessBufferQueue.Count > 0)
+            {
+                Interlocked.Add(ref ProcessQueueSize, -ProcessBufferQueue.Count);
             }
 
             ProcessBufferQueue = null;

@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace BuildSync.Core.Utils
 {
@@ -260,6 +261,8 @@ namespace BuildSync.Core.Utils
 
         private int ActiveTasks;
         private bool IsRunning;
+
+        private List<string> LockedPaths = new List<string>();
 
         private readonly ConcurrentQueue<Task> TaskQueue = new ConcurrentQueue<Task>();
 
@@ -595,6 +598,50 @@ namespace BuildSync.Core.Utils
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        /// <returns></returns>
+        private bool IsPathLocked(string Path)
+        {
+            lock (LockedPaths)
+            {
+                foreach (string Dir in LockedPaths)
+                {
+                    if (Path.StartsWith(Dir))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        private void LockPath(string Path)
+        {
+            lock (LockedPaths)
+            {
+                LockedPaths.Add(Path);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        private void UnlockPath(string Path)
+        {
+            lock (LockedPaths)
+            {
+                LockedPaths.Remove(Path);
+            }
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="Work"></param>
         private bool RunTask(Task Work)
@@ -614,6 +661,14 @@ namespace BuildSync.Core.Utils
             if (Stm != null && Stm.ActiveOperations >= StreamMaxConcurrentOps)
             {
                 return false;
+            }
+
+            // Should this be a failure or a deferal? Going to
+            // go with failure now as the only thing we use path locking for is deleting files.
+            if (IsPathLocked(Work.Path))
+            {
+                Work.Callback?.Invoke(false);
+                return true;
             }
 
             if (Work.Type == TaskType.Write)
@@ -697,9 +752,28 @@ namespace BuildSync.Core.Utils
                 {
                     CloseStreamsWithStall(Work.Path);
 
-                    FileUtils.DeleteDirectory(Work.Path);
+                    LockPath(Work.Path);
 
-                    Work.Callback?.Invoke(true);
+                    // Shifted into its own thread as it can take forever for large folders.
+                    System.Threading.Tasks.Task.Run(
+                        () =>
+                        {
+                            try
+                            {
+                                FileUtils.DeleteDirectory(Work.Path);
+                                Work.Callback?.Invoke(true);
+                            }
+                            catch (Exception Ex)
+                            {
+                                Logger.Log(LogLevel.Error, LogCategory.IO, "Failed to delete directory {0} with error: {1}", Work.Path, Ex.Message);
+                                Work.Callback?.Invoke(false);
+                            }
+                            finally
+                            {
+                                UnlockPath(Work.Path);
+                            }
+                        }
+                    );
                 }
                 catch (Exception Ex)
                 {
@@ -786,7 +860,7 @@ namespace BuildSync.Core.Utils
         {
             try
             {
-                if (File.Exists(Path))
+                if (FileUtils.FileExistsFast(Path))
                 {
                     FileAttributes attributes = File.GetAttributes(Path);
                     if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)

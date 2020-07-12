@@ -125,6 +125,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void RefreshTagList(object sender, EventArgs e)
         {
+            if (!Visible)
+            {
+                return;
+            }
+
             Program.NetClient.RequestTagList();
         }
 
@@ -277,11 +282,13 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void AddClicked(object sender, EventArgs e)
         {
-            AddTagForm form = new AddTagForm();
-            if (form.ShowDialog(this) == DialogResult.OK)
+            using (AddTagForm form = new AddTagForm())
             {
-                Program.NetClient.CreateTag(form.TagName, form.TagColor, form.TagUnique, form.TagDecayTagId);
-                Program.NetClient.RequestTagList();
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.NetClient.CreateTag(form.TagName, form.TagColor, form.TagUnique, form.TagDecayTagId);
+                    Program.NetClient.RequestTagList();
+                }
             }
         }
 
@@ -298,17 +305,19 @@ namespace BuildSync.Client.Forms
                 return;
             }
 
-            AddTagForm form = new AddTagForm();
-            form.TagName = Node.BuildTag.Name;
-            form.TagColor = Node.BuildTag.Color;
-            form.TagUnique = Node.BuildTag.Unique;
-            form.TagDecayTagId = Node.BuildTag.DecayTagId;
-            if (form.ShowDialog(this) == DialogResult.OK)
+            using (AddTagForm form = new AddTagForm())
             {
-                Node.Name = form.TagName;
+                form.TagName = Node.BuildTag.Name;
+                form.TagColor = Node.BuildTag.Color;
+                form.TagUnique = Node.BuildTag.Unique;
+                form.TagDecayTagId = Node.BuildTag.DecayTagId;
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Node.Name = form.TagName;
 
-                Program.NetClient.RenameTag(Node.BuildTag.Id, form.TagName, form.TagColor, form.TagUnique, form.TagDecayTagId);
-                Program.NetClient.RequestTagList();
+                    Program.NetClient.RenameTag(Node.BuildTag.Id, form.TagName, form.TagColor, form.TagUnique, form.TagDecayTagId);
+                    Program.NetClient.RequestTagList();
+                }
             }
         }
     }

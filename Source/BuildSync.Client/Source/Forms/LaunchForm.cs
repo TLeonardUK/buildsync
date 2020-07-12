@@ -74,30 +74,31 @@ namespace BuildSync.Client.Forms
             string ResultMessage = "";
             bool Success = true;
 
-            ProgressForm form = new ProgressForm();
-
-            ScriptBuildProgressDelegate Callback = (string InState, float InProgress) =>
+            using (ProgressForm form = new ProgressForm())
             {
-                form.SetProgress(InState, InProgress);
-            };
-
-            Task work = Task.Run(
-                () =>
+                ScriptBuildProgressDelegate Callback = (string InState, float InProgress) =>
                 {
-                    Success = Mode.Install(Downloader.LocalFolder, ref ResultMessage, Callback);
-                    if (Success)
+                    form.SetProgress(InState, InProgress);
+                };
+
+                Task work = Task.Run(
+                    () =>
                     {
-                        Downloader.Installed = true;
+                        Success = Mode.Install(Downloader.LocalFolder, ref ResultMessage, Callback);
+                        if (Success)
+                        {
+                            Downloader.Installed = true;
+                        }
                     }
+                );
+
+                form.Work = work;
+                form.ShowDialog();
+
+                if (!Success)
+                {
+                    MessageBox.Show("Failed to start install executable with error:\n\n" + ResultMessage, "Install Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-            );
-
-            form.Work = work;
-            form.ShowDialog();
-
-            if (!Success)
-            {
-                MessageBox.Show("Failed to start install executable with error:\n\n" + ResultMessage, "Install Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return Success;

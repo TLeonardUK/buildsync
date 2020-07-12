@@ -23,7 +23,7 @@ namespace BuildSync.Core.Networking.Messages
         /// <summary>
         ///     Which heuristic to use for selecting deletion candidate.
         /// </summary>
-        public ManifestStorageHeuristic Heuristic = ManifestStorageHeuristic.LeastAvailable;
+        public ManifestStorageHeuristic Heuristic = ManifestStorageHeuristic.OldestInLargestContainer;
 
         /// <summary>
         ///     Build tag id's to prioritize keeping.

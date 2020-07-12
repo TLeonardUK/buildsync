@@ -62,6 +62,7 @@ namespace BuildSync.Client.Controls.Settings
             logLevelComboBox.SelectedIndex = (int)Program.Settings.LoggingLevel;
             autoFixValidationErrorsCheckBox.Checked = Program.Settings.AutoFixValidationErrors;
             allowRemoteActionsCheckBox.Checked = Program.Settings.AllowRemoteActions;
+            autoInstallUpdatesCheckBox.Checked = Program.Settings.AutoInstallUpdates;
 
             SkipValidity = false;
             
@@ -95,6 +96,7 @@ namespace BuildSync.Client.Controls.Settings
             Program.Settings.LoggingLevel = (LogLevel)logLevelComboBox.SelectedIndex;
             Program.Settings.AutoFixValidationErrors = autoFixValidationErrorsCheckBox.Checked;
             Program.Settings.AllowRemoteActions = allowRemoteActionsCheckBox.Checked;
+            Program.Settings.AutoInstallUpdates = autoInstallUpdatesCheckBox.Checked;
 
             Logger.MaximumVerbosity = Program.Settings.LoggingLevel;
         }

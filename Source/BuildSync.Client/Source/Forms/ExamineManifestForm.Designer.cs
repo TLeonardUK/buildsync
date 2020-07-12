@@ -52,6 +52,7 @@ namespace BuildSync.Client.Forms
             this.components = new System.ComponentModel.Container();
             this.AvailabilityUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.SourceManifestDeltaTree = new BuildSync.Client.Controls.ManifestDeltaTree();
             this.manifestGuidLabel = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.manifestBlocksLabel = new System.Windows.Forms.Label();
@@ -64,7 +65,6 @@ namespace BuildSync.Client.Forms
             this.label3 = new System.Windows.Forms.Label();
             this.pathLabel = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.SourceManifestDeltaTree = new BuildSync.Client.Controls.ManifestDeltaTree();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -106,6 +106,16 @@ namespace BuildSync.Client.Forms
             this.splitContainer1.Size = new System.Drawing.Size(1146, 574);
             this.splitContainer1.SplitterDistance = 504;
             this.splitContainer1.TabIndex = 0;
+            // 
+            // SourceManifestDeltaTree
+            // 
+            this.SourceManifestDeltaTree.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.SourceManifestDeltaTree.Location = new System.Drawing.Point(0, 0);
+            this.SourceManifestDeltaTree.Margin = new System.Windows.Forms.Padding(2);
+            this.SourceManifestDeltaTree.Name = "SourceManifestDeltaTree";
+            this.SourceManifestDeltaTree.Size = new System.Drawing.Size(1146, 504);
+            this.SourceManifestDeltaTree.TabIndex = 1;
+            this.SourceManifestDeltaTree.OnSelectedNodeChanged += new BuildSync.Client.Controls.DeltaTreeNodeChanged(this.SelectedNodeChanged);
             // 
             // manifestGuidLabel
             // 
@@ -215,16 +225,6 @@ namespace BuildSync.Client.Forms
             this.label1.TabIndex = 0;
             this.label1.Text = "Path:";
             // 
-            // SourceManifestDeltaTree
-            // 
-            this.SourceManifestDeltaTree.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.SourceManifestDeltaTree.Location = new System.Drawing.Point(0, 0);
-            this.SourceManifestDeltaTree.Margin = new System.Windows.Forms.Padding(2);
-            this.SourceManifestDeltaTree.Name = "SourceManifestDeltaTree";
-            this.SourceManifestDeltaTree.Size = new System.Drawing.Size(1146, 504);
-            this.SourceManifestDeltaTree.TabIndex = 1;
-            this.SourceManifestDeltaTree.OnSelectedNodeChanged += new BuildSync.Client.Controls.DeltaTreeNodeChanged(this.SelectedNodeChanged);
-            // 
             // ExamineManifestForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -239,6 +239,8 @@ namespace BuildSync.Client.Forms
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Examine Manifest";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ExamineManifestForm_FormClosing);
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ExamineManifestForm_FormClosed);
             this.Load += new System.EventHandler(this.OnLoaded);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);

@@ -222,6 +222,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void RefreshTicked(object sender, EventArgs e)
         {
+            if (!Visible)
+            {
+                return;
+            }
+
             if (!Program.NetClient.Permissions.HasPermission(UserPermissionType.ModifyServer, "", false, true))
             {
                 Hide();

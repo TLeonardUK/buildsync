@@ -136,6 +136,7 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void OnShown(object sender, EventArgs e)
         {
+            Program.NetClient.RequestTagList();
             Program.NetClient.RequestRouteList();
         }
 
@@ -146,6 +147,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void RefreshTagList(object sender, EventArgs e)
         {
+            if (!Visible)
+            {
+                return;
+            }
+            Program.NetClient.RequestTagList();
             Program.NetClient.RequestRouteList();
         }
 
@@ -270,11 +276,13 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void AddClicked(object sender, EventArgs e)
         {
-            AddRouteForm form = new AddRouteForm();
-            if (form.ShowDialog(this) == DialogResult.OK)
+            using (AddRouteForm form = new AddRouteForm())
             {
-                Program.NetClient.CreateRoute(form.SourceTagId, form.DestinationTagId, form.Blacklisted, form.BandwidthLimit);
-                Program.NetClient.RequestRouteList();
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.NetClient.CreateRoute(form.SourceTagId, form.DestinationTagId, form.Blacklisted, form.BandwidthLimit);
+                    Program.NetClient.RequestRouteList();
+                }
             }
         }
 
@@ -291,25 +299,27 @@ namespace BuildSync.Client.Forms
                 return;
             }
 
-            AddRouteForm form = new AddRouteForm();
-            form.SourceTagId = Node.Route.SourceTagId;
-            form.DestinationTagId = Node.Route.DestinationTagId;
-            form.Blacklisted = Node.Route.Blacklisted;
-            form.BandwidthLimit = Node.Route.BandwidthLimit;
-            if (form.ShowDialog(this) == DialogResult.OK)
+            using (AddRouteForm form = new AddRouteForm())
             {
-                Node.Route.SourceTagId = form.SourceTagId;
-                Node.Route.DestinationTagId = form.DestinationTagId;
-                Node.Route.Blacklisted = form.Blacklisted;
-                Node.Route.BandwidthLimit = form.BandwidthLimit;
+                form.SourceTagId = Node.Route.SourceTagId;
+                form.DestinationTagId = Node.Route.DestinationTagId;
+                form.Blacklisted = Node.Route.Blacklisted;
+                form.BandwidthLimit = Node.Route.BandwidthLimit;
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Node.Route.SourceTagId = form.SourceTagId;
+                    Node.Route.DestinationTagId = form.DestinationTagId;
+                    Node.Route.Blacklisted = form.Blacklisted;
+                    Node.Route.BandwidthLimit = form.BandwidthLimit;
 
-                Node.Source = Program.TagRegistry.IdToString(form.SourceTagId);
-                Node.Destination = Program.TagRegistry.IdToString(form.DestinationTagId);
-                Node.Blacklisted = form.Blacklisted ? "Yes" : "No";
-                Node.BandwidthLimit = form.BandwidthLimit == 0 ? "Unlimited" : StringUtils.FormatAsTransferRate(form.BandwidthLimit);
+                    Node.Source = Program.TagRegistry.IdToString(form.SourceTagId);
+                    Node.Destination = Program.TagRegistry.IdToString(form.DestinationTagId);
+                    Node.Blacklisted = form.Blacklisted ? "Yes" : "No";
+                    Node.BandwidthLimit = form.BandwidthLimit == 0 ? "Unlimited" : StringUtils.FormatAsTransferRate(form.BandwidthLimit);
 
-                Program.NetClient.UpdateRoute(Node.Route.Id, form.SourceTagId, form.DestinationTagId, form.Blacklisted, form.BandwidthLimit);
-                Program.NetClient.RequestRouteList();
+                    Program.NetClient.UpdateRoute(Node.Route.Id, form.SourceTagId, form.DestinationTagId, form.Blacklisted, form.BandwidthLimit);
+                    Program.NetClient.RequestRouteList();
+                }
             }
         }
     }

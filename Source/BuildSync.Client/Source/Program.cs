@@ -202,8 +202,10 @@ namespace BuildSync.Client
             {
                 Logger.Log(LogLevel.Info, LogCategory.Main, "ApplySettings: Apply storage path change");
 
-                MoveStorageDirectoryForm Dialog = new MoveStorageDirectoryForm();
-                Dialog.ShowDialog();
+                using (MoveStorageDirectoryForm Dialog = new MoveStorageDirectoryForm())
+                {
+                    Dialog.ShowDialog();
+                }
 
                 SaveSettings();
             }
@@ -354,7 +356,7 @@ namespace BuildSync.Client
 
         /// <summary>
         /// </summary>
-        public static void InstallAutoUpdate()
+        public static void InstallAutoUpdate(bool SilentInstall)
         {
             ManifestDownloadState AutoUpdateDownload = null;
             if (InternalUpdateDownload != null)
@@ -382,14 +384,19 @@ namespace BuildSync.Client
 
                     Process p = new Process();
                     p.StartInfo.FileName = "msiexec";
-                    p.StartInfo.Arguments = "/i \"" + InstallerPath + "\"";
+                    if (SilentInstall)
+                    {
+                        p.StartInfo.Arguments = "/i \"" + InstallerPath + "\" /passive /norestart REINSTALL=ALL REINSTALLMODE=A MSIRMSHUTDOWN=1 MSIDISABLERMRESTART=0 ADDLOCAL=All";
+                    }
+                    else
+                    {
+                        p.StartInfo.Arguments = "/i \"" + InstallerPath + "\"";
+                    }
                     p.StartInfo.UseShellExecute = false;
                     p.StartInfo.WorkingDirectory = AutoUpdateDownload.LocalFolder;
                     p.Start();
 
-                    //Process.Start(InstallerPath, "/passive /norestart REINSTALL=ALL REINSTALLMODE=A MSIRMSHUTDOWN=1 MSIDISABLERMRESTART=0 ADDLOCAL=All");
-
-                    Application.Exit();
+                    Environment.Exit(0);
                 }
                 catch (Exception Ex)
                 {
@@ -527,6 +534,12 @@ namespace BuildSync.Client
             PollIpcServer();
             PollAutoUpdate();
             RecordPeerStates();
+
+            if (AutoUpdateAvailable && Settings.AutoInstallUpdates)
+            {
+                Logger.Log(LogLevel.Verbose, LogCategory.Main, "Running silent update.");
+                Program.InstallAutoUpdate(true);
+            }
         }
 
         /// <summary>
@@ -558,10 +571,10 @@ namespace BuildSync.Client
             RouteRegistry = new RouteRegistry(null, TagRegistry);
             BuildRegistry = new BuildManifestRegistry(TagRegistry);
 
-            StorageManager = new StorageManager(Settings.StorageLocations, ManifestDownloadManager, BuildRegistry, IOQueue);
+            StorageManager = new StorageManager(Settings.StorageLocations, ManifestDownloadManager, BuildRegistry, IOQueue, Settings.StorageHeuristic, Settings.PrioritizeKeepingBuildTagIds, Settings.PrioritizeDeletingBuildTagIds);
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up network client");
-            BuildRegistry.Open(Path.Combine(AppDataDir, "Manifests"), int.MaxValue, true);
+            BuildRegistry.Open(Path.Combine(AppDataDir, "Manifests"), int.MaxValue);
 
             Logger.Log(LogLevel.Info, LogCategory.Main, "OnStart: Setting up network client");
             NetClient.Start(

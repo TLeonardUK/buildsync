@@ -125,13 +125,15 @@ namespace BuildSync.Client.Controls.Settings
         /// <param name="e"></param>
         private void AddStorageClicked(object sender, EventArgs e)
         {
-            AddStorageLocationForm Form = new AddStorageLocationForm();
-            if (Form.ShowDialog(this) == DialogResult.OK)
+            using (AddStorageLocationForm Form = new AddStorageLocationForm())
             {
-                Program.Settings.StorageLocations.Add(Form.Settings);
-                Program.SaveSettings();
+                if (Form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.Settings.StorageLocations.Add(Form.Settings);
+                    Program.SaveSettings();
 
-                RefreshItems();
+                    RefreshItems();
+                }
             }
         }
 
@@ -176,13 +178,15 @@ namespace BuildSync.Client.Controls.Settings
                 return;
             }
 
-            AddStorageLocationForm Form = new AddStorageLocationForm();
-            Form.Settings = storageLocationList.SelectedItems[0].Tag as StorageLocation;
-            if (Form.ShowDialog(this) == DialogResult.OK)
+            using (AddStorageLocationForm Form = new AddStorageLocationForm())
             {
-                Program.SaveSettings();
+                Form.Settings = storageLocationList.SelectedItems[0].Tag as StorageLocation;
+                if (Form.ShowDialog(this) == DialogResult.OK)
+                {
+                    Program.SaveSettings();
 
-                RefreshItems();
+                    RefreshItems();
+                }
             }
         }
     }

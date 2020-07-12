@@ -22,8 +22,10 @@
 //#define LOG_COMPRESS_RATIO
 
 using System;
+using System.Text;
 using System.Threading;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -221,7 +223,12 @@ namespace BuildSync.Core.Utils
 
             foreach (string file in Files)
             {
-                File.SetAttributes(file, FileAttributes.Normal);
+                FileInfo fileInfo = new FileInfo(file);
+                if ((fileInfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                {
+                    File.SetAttributes(file, FileAttributes.Normal);
+                }
+
                 File.Delete(file);
             }
 
@@ -335,6 +342,25 @@ namespace BuildSync.Core.Utils
         {
             byte[] Data = WriteToArray(objectToWrite);
             File.WriteAllBytes(filePath, Data);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        [DllImport("Shlwapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private extern static bool PathFileExists(StringBuilder path);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="Path"></param>
+        public static bool FileExistsFast(string Path)
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append(Path);
+            return PathFileExists(builder);
         }
     }
 }

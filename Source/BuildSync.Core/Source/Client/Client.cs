@@ -239,6 +239,22 @@ namespace BuildSync.Core.Client
 
     /// <summary>
     /// </summary>
+    public class Statistic_AverageBlockWriteTime : Statistic
+    {
+        public Statistic_AverageBlockWriteTime()
+        {
+            Name = @"Peers\Average Block Write Duration (ms)";
+            MaxLabel = "1000 ms";
+            MaxValue = 1000;
+            DefaultShown = false;
+
+            Series.YAxis.AutoAdjustMax = true;
+            Series.YAxis.FormatMaxLabelAsInteger = true;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
     public class Statistic_AverageBlockSize : Statistic
     {
         public Statistic_AverageBlockSize()
@@ -354,6 +370,10 @@ namespace BuildSync.Core.Client
 
         /// <summary>
         /// </summary>
+        private const int MinBlockListUpdateInterval = 1 * 1000;
+
+        /// <summary>
+        /// </summary>
         private const int ClientStateUpdateInterval = 3 * 1000;
 
         /// <summary>
@@ -371,6 +391,11 @@ namespace BuildSync.Core.Client
         /// <summary>
         /// </summary>
         private const int MaxConcurrentPeerRequests = 200;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        private const float MaxWriteBacklogMs = 5 * 1000;
 
         /// <summary>
         /// </summary>
@@ -532,6 +557,11 @@ namespace BuildSync.Core.Client
         /// 
         /// </summary>
         private List<Guid> TagIdsInternal = new List<Guid>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public RollingAverageOverTime AverageBlockWriteTime = new RollingAverageOverTime(10 * 1000);
 
         /// <summary>
         ///     List of all client tags id's for the client.
@@ -998,7 +1028,7 @@ namespace BuildSync.Core.Client
                 }
 
                 ulong ElapsedTime = TimeUtils.Ticks - LastBlockListUpdateTime;
-                if (ElapsedTime > BlockListUpdateInterval && BlockListUpdatePending || ForceBlockListUpdate)
+                if (ElapsedTime > BlockListUpdateInterval && BlockListUpdatePending || (ElapsedTime > MinBlockListUpdateInterval && ForceBlockListUpdate))
                 {
                     SendBlockListUpdate();
 
@@ -1088,6 +1118,7 @@ namespace BuildSync.Core.Client
                 Statistic.Get<Statistic_DataInFlight>().AddSample(DataInFlight / 1024 / 1024);
                 Statistic.Get<Statistic_BlocksInFlight>().AddSample(BlocksInFlight);
                 Statistic.Get<Statistic_AverageBlockLatency>().AddSample((float)AverageBlockLatency);
+                Statistic.Get<Statistic_AverageBlockWriteTime>().AddSample((float)AverageBlockWriteTime.Get());
                 Statistic.Get<Statistic_AverageBlockSize>().AddSample((float)AverageBlockSize / 1024 / 1024);
 
                 Statistic.Get<Statistic_ActiveBlockRequests>().AddSample(ActivePeerRequests);
@@ -2072,11 +2103,16 @@ namespace BuildSync.Core.Client
                         return;
                     }
 
+                    ulong StartTime = TimeUtils.Ticks;
+
                     BlockAccessCompleteHandler Callback = bSuccess =>
                     {
                         Msg.Cleanup();
 
                         //Console.WriteLine("[Finished] BlockIndex={0} Manifest={1} bSuccess={2} From={3}", Msg.BlockIndex, Msg.ManifestId.ToString(), bSuccess, HostnameCache.GetHostname(Connection.Address.ToString()));
+
+                        ulong Elapsed = TimeUtils.Ticks - StartTime;
+                        AverageBlockWriteTime.Add(Elapsed);
 
                         lock (DeferredActions)
                         {
@@ -2479,6 +2515,9 @@ namespace BuildSync.Core.Client
                     peer.PruneTimeoutDownloads();
                 }
 
+                // Calculate
+                ulong ActiveBlockRequests = 0;
+
                 // Hash all the active downloads to save lookup time.
                 HashSet<ManifestPendingDownloadBlock> ActiveDownloads = new HashSet<ManifestPendingDownloadBlock>();
                 foreach (Peer peer in Peers)
@@ -2488,13 +2527,28 @@ namespace BuildSync.Core.Client
                         foreach (ManifestPendingDownloadBlock Download in peer.ActiveBlockDownloads)
                         {
                             ActiveDownloads.Add(Download);
+                            ActiveBlockRequests++;
                         }
                     }
                 }
 
+                float ExpectedWriteTime = (float)(ActiveBlockRequests * Math.Max(10.0, AverageBlockWriteTime.Get()));
+
                 for (int i = 0; i < ManifestDownloadManager.DownloadQueue.Count; i++)
                 {
                     ManifestPendingDownloadBlock Item = ManifestDownloadManager.DownloadQueue[i];
+
+                    // Don't request if write backlog is too large.
+                    if (ExpectedWriteTime > MaxWriteBacklogMs)
+                    {
+                        continue;
+                    }
+
+                    // Don't request new files if backlog is too large.
+                    if (NetConnection.ProcessQueueSize >= NetConnection.MaxProcessQueueSize)
+                    {
+                        continue;
+                    }
 
                     // Make sure block is not already being downloaded.
                     // TODO: Change to a set lookup, this is slow.

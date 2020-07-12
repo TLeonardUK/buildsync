@@ -109,17 +109,17 @@ namespace BuildSync.Client.Forms
             HashSet<string> FileHashes = new HashSet<string>();
             HashSet<uint> BlockHashes = new HashSet<uint>();
 
-            foreach (BuildManifestFileInfo File in SourceManifest.Files)
+            foreach (BuildManifestFileInfo File in SourceManifest.GetFiles())
             {
                 FileHashes.Add(File.Checksum);
             }
 
             for (int i = 0; i < SourceManifest.BlockCount; i++)
             {
-                BlockHashes.Add(SourceManifest.BlockChecksums[i]);
+                BlockHashes.Add(SourceManifest.GetBlockChecksum(i));
             }
 
-            foreach (BuildManifestFileInfo File in DestinationManifest.Files)
+            foreach (BuildManifestFileInfo File in DestinationManifest.GetFiles())
             {
                 if (FileHashes.Contains(File.Checksum))
                 {
@@ -130,7 +130,7 @@ namespace BuildSync.Client.Forms
 
             for (int i = 0; i < DestinationManifest.BlockCount; i++)
             {
-                if (BlockHashes.Contains(DestinationManifest.BlockChecksums[i]))
+                if (BlockHashes.Contains(DestinationManifest.GetBlockChecksum(i)))
                 {
                     BuildManifestBlockInfo Info = new BuildManifestBlockInfo();
                     if (DestinationManifest.GetBlockInfo(i, ref Info))

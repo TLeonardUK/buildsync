@@ -77,12 +77,14 @@ namespace BuildSync.Client.Controls.Setup
         /// <param name="e"></param>
         private void FindServerClicked(object sender, EventArgs e)
         {
-            FindServerForm form = new FindServerForm();
-            if (form.ShowDialog() == DialogResult.OK)
+            using (FindServerForm form = new FindServerForm())
             {
-                ServerHostnameTextBox.Text = form.SelectedHostname;
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    ServerHostnameTextBox.Text = form.SelectedHostname;
 
-                UpdateValidityState();
+                    UpdateValidityState();
+                }
             }
         }
 

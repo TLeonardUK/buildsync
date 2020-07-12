@@ -69,6 +69,12 @@ namespace BuildSync.Client.Controls
             public BuildManifestFileDiff Diff;
         }
 
+        private Image icon_folder_open = Resources.appbar_folder_open;
+        private Image icon_added = Resources.appbar_page_add;
+        private Image icon_edited = Resources.appbar_page_edit;
+        private Image icon_removed = Resources.appbar_page_delete;
+        private Image icon_unchanged = Resources.appbar_page;
+
         /// <summary>
         /// 
         /// </summary>
@@ -120,6 +126,8 @@ namespace BuildSync.Client.Controls
 
         private Dictionary<string, BuildManifestFileDiffType> FolderDiffTypes = new Dictionary<string, BuildManifestFileDiffType>();
 
+        private Dictionary<string, Node> NodeCache = new Dictionary<string, Node>();
+
         /// <summary>
         /// </summary>
         public ManifestDeltaTree()
@@ -166,6 +174,15 @@ namespace BuildSync.Client.Controls
                 CreatedControl.ParentColumn = CreatedColumn;
                 CreatedControl.DataPropertyName = "ChecksumFormatted";
                 MainTreeView.NodeControls.Add(CreatedControl);*/
+
+            Disposed += OnDisposal;
+        }
+
+        private void OnDisposal(object sender, EventArgs e)
+        {
+            NodeCache.Clear();
+            Model.Nodes.Clear();
+            MainTreeView.FullUpdate();
         }
 
         /// <summary>
@@ -225,6 +242,9 @@ namespace BuildSync.Client.Controls
             pathTextBox.Text = InManifest.VirtualPath;
 
             Model.Nodes.Clear();
+            NodeCache.Clear();
+
+            MainTreeView.BeginUpdate();
 
             // Create folders first.
             foreach (BuildManifestFileDiff Diff in InDiff)
@@ -299,7 +319,8 @@ namespace BuildSync.Client.Controls
                 }
             }
 
-            MainTreeView.FullUpdate();
+            MainTreeView.EndUpdate();
+            //MainTreeView.FullUpdate();
         }
 
         /// <summary>
@@ -315,16 +336,21 @@ namespace BuildSync.Client.Controls
                 return Model.Root;
             }
 
+            if (NodeCache.ContainsKey(Path))
+            {
+                return NodeCache[Path];
+            }
+
             string ChildNode = VirtualFileSystem.GetNodeName(Path);
 
             Node Parent = GetOrCreateNode(VirtualFileSystem.GetParentPath(Path), null);
-            foreach (Node node in Parent.Nodes)
+            /*foreach (Node node in Parent.Nodes)
             {
                 if (node.Text == ChildNode)
                 {
                     return node;
                 }
-            }
+            }*/
 
             if (DoNotCreate)
             {
@@ -337,6 +363,7 @@ namespace BuildSync.Client.Controls
             NewNode.Text = ChildNode;
             NewNode.FullPath = Path;
             Parent.Nodes.Add(NewNode);
+            NodeCache.Add(Path, NewNode);
             UpdateNode(NewNode);
 
             return NewNode;
@@ -357,7 +384,7 @@ namespace BuildSync.Client.Controls
         /// <param name="Node"></param>
         private void UpdateNode(DeltaTreeNode TrNode)
         {
-            TrNode.Icon = Resources.appbar_folder_open;
+            TrNode.Icon = icon_folder_open;
 
             if (TrNode.Diff != null)
             {
@@ -365,22 +392,22 @@ namespace BuildSync.Client.Controls
                 {
                     case BuildManifestFileDiffType.Added:
                         {
-                            TrNode.Icon = Resources.appbar_page_add;
+                            TrNode.Icon = icon_added;
                             break;
                         }
                     case BuildManifestFileDiffType.Modified:
                         {
-                            TrNode.Icon = Resources.appbar_page_edit;
+                            TrNode.Icon = icon_edited;
                             break;
                         }
                     case BuildManifestFileDiffType.Removed:
                         {
-                            TrNode.Icon = Resources.appbar_page_delete;
+                            TrNode.Icon = icon_removed;
                             break;
                         }
                     case BuildManifestFileDiffType.Unchanged:
                         {
-                            TrNode.Icon = Resources.appbar_page;
+                            TrNode.Icon = icon_unchanged;
                             break;
                         }
                 }

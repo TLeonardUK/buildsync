@@ -113,9 +113,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void AddBuildClicked(object sender, EventArgs e)
         {
-            PublishBuildForm Form = new PublishBuildForm();
-            Form.VirtualPath = downloadFileSystemTree.SelectedPathRaw != "" ? downloadFileSystemTree.SelectedPathRaw + "/1" : "";
-            Form.ShowDialog(this);
+            using (PublishBuildForm Form = new PublishBuildForm())
+            {
+                Form.VirtualPath = downloadFileSystemTree.SelectedPathRaw != "" ? downloadFileSystemTree.SelectedPathRaw + "/1" : "";
+                Form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -158,9 +160,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void DownloadClicked(object sender, EventArgs e)
         {
-            AddDownloadForm Form = new AddDownloadForm();
-            Form.SelectedPath = downloadFileSystemTree.SelectedPathRaw;
-            Form.ShowDialog(this);
+            using (AddDownloadForm Form = new AddDownloadForm())
+            {
+                Form.SelectedPath = downloadFileSystemTree.SelectedPathRaw;
+                Form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -170,10 +174,12 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void RemoteInstallClicked(object sender, EventArgs e)
         {
-            RemoteInstallForm Form = new RemoteInstallForm();
-            Form.ManifestId = downloadFileSystemTree.SelectedManifestId;
-            Form.ManifestPath = downloadFileSystemTree.SelectedPath;
-            Form.ShowDialog(this);
+            using (RemoteInstallForm Form = new RemoteInstallForm())
+            {
+                Form.ManifestId = downloadFileSystemTree.SelectedManifestId;
+                Form.ManifestPath = downloadFileSystemTree.SelectedPath;
+                Form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -183,10 +189,12 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void DiffBuildsClicked(object sender, EventArgs e)
         {
-            DiffManifestForm Form = new DiffManifestForm();
-            Form.SourceManifestId = downloadFileSystemTree.SelectedManifestIds[0];
-            Form.DestinationManifestId = downloadFileSystemTree.SelectedManifestIds[1];
-            Form.ShowDialog(this);
+            using (DiffManifestForm Form = new DiffManifestForm())
+            {
+                Form.SourceManifestId = downloadFileSystemTree.SelectedManifestIds[0];
+                Form.DestinationManifestId = downloadFileSystemTree.SelectedManifestIds[1];
+                Form.ShowDialog(this);
+            }
         }
 
         /// <summary>
@@ -196,9 +204,11 @@ namespace BuildSync.Client.Forms
         /// <param name="e"></param>
         private void ExampleBuildClicked(object sender, EventArgs e)
         {
-            ExamineManifestForm Form = new ExamineManifestForm();
-            Form.ManifestId = downloadFileSystemTree.SelectedManifestIds[0];
-            Form.ShowDialog(this);
+            using (ExamineManifestForm Form = new ExamineManifestForm())
+            {
+                Form.ManifestId = downloadFileSystemTree.SelectedManifestIds[0];
+                Form.ShowDialog(this);
+            }
         }
 
         /// <summary>

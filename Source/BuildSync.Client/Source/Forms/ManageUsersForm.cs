@@ -427,30 +427,36 @@ namespace BuildSync.Client.Forms
             // Add usergroup.
             if (Node == null || Node.IsGroup)
             {
-                AddUserGroupForm form = new AddUserGroupForm();
-                if (form.ShowDialog(this) == DialogResult.OK)
+                using (AddUserGroupForm form = new AddUserGroupForm())
                 {
-                    Program.NetClient.CreateUserGroup(form.GroupName);
+                    if (form.ShowDialog(this) == DialogResult.OK)
+                    {
+                        Program.NetClient.CreateUserGroup(form.GroupName);
+                    }
                 }
             }
 
             // Add permission.
             else if (Node.IsPermission || Node.IsPermissionFolder)
             {
-                AddPermissionForm form = new AddPermissionForm();
-                if (form.ShowDialog(this) == DialogResult.OK)
+                using (AddPermissionForm form = new AddPermissionForm())
                 {
-                    Program.NetClient.AddUserGroupPermission(Node.Group.Name, form.Permission.Type, form.Permission.VirtualPath);
+                    if (form.ShowDialog(this) == DialogResult.OK)
+                    {
+                        Program.NetClient.AddUserGroupPermission(Node.Group.Name, form.Permission.Type, form.Permission.VirtualPath);
+                    }
                 }
             }
 
             // Add user.
             else if (Node.IsUser || Node.IsUserFolder)
             {
-                AddUserForm form = new AddUserForm(AllUsers);
-                if (form.ShowDialog(this) == DialogResult.OK)
+                using (AddUserForm form = new AddUserForm(AllUsers))
                 {
-                    Program.NetClient.AddUserToUserGroup(Node.Group.Name, form.Username);
+                    if (form.ShowDialog(this) == DialogResult.OK)
+                    {
+                        Program.NetClient.AddUserToUserGroup(Node.Group.Name, form.Username);
+                    }
                 }
             }
         }

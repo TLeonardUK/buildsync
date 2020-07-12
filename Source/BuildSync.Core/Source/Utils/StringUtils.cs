@@ -192,6 +192,35 @@ namespace BuildSync.Core.Utils
 
         /// <summary>
         /// </summary>
+        /// <param name="Seconds"></param>
+        /// <returns></returns>
+        public static string FormatAsTextDuration(long Time)
+        {
+            long Seconds = Time % 60;
+            Time = Time / 60;
+
+            long Minutes = Time % 60;
+            Time = Time / 60;
+
+            long Hours = Time;
+
+            if (Hours > 0)
+            {
+                return string.Format("{0} hour{1} {2} minute{3}", Hours, Hours > 1 ? "s" : "", Minutes, Minutes > 1 ? "s" : "");
+            }
+            if (Minutes > 0)
+            {
+                return string.Format("{0} minute{1}", Minutes, Minutes > 1 ? "s" : "");
+            }
+            if (Seconds > 0)
+            {
+                return string.Format("{0} second{1}", Seconds, Seconds > 1 ? "s" : "");
+            }
+            return "-";
+        }
+
+        /// <summary>
+        /// </summary>
         /// <param name="Rate"></param>
         /// <returns></returns>
         public static string FormatAsSize(long RateBytes)

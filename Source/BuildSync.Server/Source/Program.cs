@@ -258,7 +258,7 @@ namespace BuildSync.Server
             };
 
             BuildRegistry = new BuildManifestRegistry(TagRegistry);
-            BuildRegistry.Open(Path.Combine(AppDataDir, "Manifests"), Settings.MaximumManifests, false);
+            BuildRegistry.Open(Path.Combine(AppDataDir, "Manifests"), Settings.MaximumManifests);
             BuildRegistry.ManifestLastSeenTimes = new Dictionary<string, DateTime>(Settings.ManifestLastSeenTimes);
 
             LicenseMgr = new LicenseManager();

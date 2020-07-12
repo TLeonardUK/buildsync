@@ -206,7 +206,10 @@ namespace BuildSync.Client.Controls
         /// <param name="e"></param>
         private void AddDownloadClicked(object sender, EventArgs e)
         {
-            new AddDownloadForm().ShowDialog(this);
+            using (AddDownloadForm form = new AddDownloadForm())
+            {   
+                form.ShowDialog(this);
+            }
         }
     }
 }

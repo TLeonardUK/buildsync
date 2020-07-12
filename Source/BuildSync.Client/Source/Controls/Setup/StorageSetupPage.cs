@@ -83,18 +83,20 @@ namespace BuildSync.Client.Controls.Setup
         /// <param name="e"></param>
         private void BrowseClicked(object sender, EventArgs e)
         {
-            CommonOpenFileDialog Dialog = new CommonOpenFileDialog();
-            Dialog.AllowNonFileSystemItems = true;
-            Dialog.Multiselect = true;
-            Dialog.IsFolderPicker = true;
-            Dialog.Title = "Select Storage Folder";
-            Dialog.InitialDirectory = StoragePathTextBox.Text;
-
-            if (Dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            using (CommonOpenFileDialog Dialog = new CommonOpenFileDialog())
             {
-                StoragePathTextBox.Text = Dialog.FileName;
-                
-                UpdateValidityState();
+                Dialog.AllowNonFileSystemItems = true;
+                Dialog.Multiselect = true;
+                Dialog.IsFolderPicker = true;
+                Dialog.Title = "Select Storage Folder";
+                Dialog.InitialDirectory = StoragePathTextBox.Text;
+
+                if (Dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                {
+                    StoragePathTextBox.Text = Dialog.FileName;
+
+                    UpdateValidityState();
+                }
             }
         }
 

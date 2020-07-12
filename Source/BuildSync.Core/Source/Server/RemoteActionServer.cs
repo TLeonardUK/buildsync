@@ -182,7 +182,7 @@ namespace BuildSync.Core.Server
                     // Client has not updated us in quite a while :(
                     if (TimeUtils.Ticks - State.LastUpdateRecieved > RemoteActionServerState.LastUpdateTimeout)
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.Main, "Remote action '{0}' failed as no response has been hear from allocated client.", State.Id.ToString());
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "Remote action '{0}' failed as no response has been heard from allocated client.", State.Id.ToString());
 
                         State.ResultMessage = "Remote client failed to send update in time.";
                         State.Completed = true;
@@ -274,10 +274,11 @@ namespace BuildSync.Core.Server
                     // We have a client who can do the job!
                     else if (State.SolicitationReplies.Count > 0 && TimeUtils.Ticks - State.LastSolicitBroadcast > RemoteActionServerState.MinSolicitWait)
                     {
-                        Logger.Log(LogLevel.Info, LogCategory.Main, "Remote action '{0}' recieved solicitation request and is starting.", State.Id.ToString());
+                        Logger.Log(LogLevel.Info, LogCategory.Main, "Remote action '{0}' recieved solicitation reply and is starting.", State.Id.ToString());
 
                         State.AllocatedClient = State.SolicitationReplies[SolicitSelectionRandom.Next(0, State.SolicitationReplies.Count - 1)];
                         State.SolicitationReplies.Clear();
+                        State.LastUpdateRecieved = TimeUtils.Ticks;
 
                         NetMessage_RequestRemoteAction Msg = new NetMessage_RequestRemoteAction();
                         Msg.ActionId = State.Id;
